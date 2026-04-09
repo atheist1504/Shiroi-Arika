@@ -1,24 +1,35 @@
-# 🍀 SHIROI ARIKA - TIẾN ĐỘ PHÁT TRIỂN (DEVELOPMENT PROGRESS) 🏗️
+# 🍀 Shiroi Arika - Tiến Độ Phát Triển
 
-Bản đồ này giúp AI và lập trình viên nắm bắt nhanh trạng thái dự án khi bắt đầu phiên làm việc mới.
+Dự án Manga Platform thế hệ mới.
 
-## 🏁 TRANG THÁI HIỆN TẠI (LATEST CHECKPOINT)
-- **Centralized XP System:** Toàn bộ logic XP/Level nằm tại `src/lib/xp.js`. Công thức chuẩn: `Level = floor(XP / 100) + 1`.
-- **UI Fixes:** Đã loại bỏ khoảng trắng dư ở Footer (`layout.js`), fix CSS main-content.
-- **Database Logic:** Đã tích hợp Trigger SQL tự động tính Level và đồng bộ Lịch sử đọc truyện lên Supabase.
-- **Testing:** Đã viết thêm Unit Test cho Gamification và Components. Đã sửa các lỗi test bị hỏng do thay đổi UI.
+## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
-## 📁 CÁC FILE QUAN TRỌNG CẦN CHÚ Ý
-1. `src/lib/xp.js`: Nguồn chân lý duy nhất cho hệ thống Cấp độ/Danh hiệu.
-2. `src/app/read/[chapterId]/ReaderClient.jsx`: Chứa logic thưởng XP và đồng bộ lịch sử Lên Cloud.
-3. `src/components/CheckIn.js`: Chứa logic điểm danh nhận 100 XP.
-4. `supabase_gamification_sync.sql`: Chứa Trigger SQL để chạy trên Supabase (Cần chạy file này nếu DB bị reset).
+### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
+- [x] **Lưu Trữ Cloudflare R2**: Chuyển đổi thành công từ Supabase Storage sang R2 (Vô hạn dung lượng, tốc độ cao).
+- [x] **Xử Lý Ảnh Thông Minh**: Tích hợp nén ảnh sang định dạng WebP ngay tại trình duyệt để giảm tải server.
+- [x] **Giao Diện MangaDex Style**: Thiết kế cực kỳ tối giản, chuyên nghiệp, tối ưu diện tích.
+- [x] **Kéo Thả 2D (dnd-kit)**: Khắc phục triệt để lỗi nhảy tọa độ, hỗ trợ sắp xếp dạng lưới (Grid) mượt mà 100%.
+- [x] **Logic An Toàn**: Chặn upload rỗng, xác nhận trước khi xóa/dọn sạch danh sách.
+- [x] **Hệ Thống Test**: Bổ sung bộ kiểm thử logic Tiếng Việt (`validation_tieng_viet_logic.test.jsx`).
 
-## 🚀 CÁC VIỆC CẦN LÀM TIẾP THEO (BACKLOG)
-- [ ] **Trang Lịch sử (Full History):** Tạo một trang riêng để người dùng xem lại toàn bộ các bộ truyện đã đọc từ Database.
-- [ ] **Badge System Nâng cao:** Hiển thị Huy hiệu đặc biệt (Badges) dạng JSONB trên Profile.
-- [ ] **Tối ưu Reader Mode:** Thêm hiệu ứng lật trang (Page flip) cho chế độ đọc từng trang.
-- [ ] **Social Sharing:** Tích hợp nút chia sẻ lên Facebook/Twitter cho từng bộ truyện/chương truyện.
+### 🛠️ Kỹ Thuật & Hiệu Năng
+- [x] **TypeScript Integration**: Fix lỗi module resolution và ép kiểu cho các component Admin.
+- [x] **Responsive Design**: Tương thích hoàn hảo từ mobile đến desktop cho trình quản lý.
 
 ---
-*Cập nhật lần cuối: 2026-04-08 03:15 (Antigravity AI)*
+
+## 🚧 ĐANG THỰC HIỆN
+
+### 🎮 Gamification & Hệ Thống User
+- [ ] **Hệ Thống Badge & Danh Hiệu**: Thiết kế và code logic cấp bậc cho người đọc.
+- [ ] **Lịch Sử Đọc (Real-time Sync)**: Tối ưu dữ liệu đồng bộ giữa các thiết bị.
+
+---
+
+## 📅 KẾ HOẠCH TIẾP THEO
+1. Triển khai hệ thống thông báo (Notifications) khi có chương mới.
+2. Hoàn thiện trang cá nhân (Profile) với các chỉ số thống kê đọc truyện.
+3. Tối ưu SEO cho các trang đọc truyện.
+
+---
+*Cập nhật lần cuối: 21:08 - 09/04/2026*

@@ -3,27 +3,82 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { AdminButton, AdminInput, AdminCard } from '@/components/admin/AdminCommon';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { AdminButton } from '@/components/admin/AdminCommon';
 import { uploadToR2 } from '@/lib/r2';
 
-// 🍀 TIỆN ÍCH NÉN ẢNH SANG WEBP ĐỂ QUÁ TẢI CŨNG KHÔNG SAO
+// 🚀 DND-KIT IMPORTS
+import {
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// 🍀 TIỆN ÍCH NÉN ẢNH
 const compressImageToWebP = async (base64Str: string): Promise<Blob> => {
   return new Promise((resolve) => {
     const img = new Image();
     img.src = base64Str;
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
+      canvas.width = img.width; canvas.height = img.height;
       const ctx = canvas.getContext('2d');
       ctx?.drawImage(img, 0, 0);
-      canvas.toBlob((blob) => {
-        resolve(blob!);
-      }, 'image/webp', 0.8); // Nén 80% chất lượng để tiết kiệm dung lượng
+      canvas.toBlob((blob) => resolve(blob!), 'image/webp', 0.8);
     };
   });
 };
+
+// 🖼️ COMPONENT TRANG TRUYỆN SORTABLE
+function SortableItem({ id, item, index, onRemove }: any) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      {...attributes} 
+      {...listeners}
+      className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group cursor-grab active:cursor-grabbing hover:border-[#4caf50]/30 transition-colors"
+    >
+      <img src={item.data} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
+      <div className="absolute top-2 left-2 w-6 h-6 bg-black/90 rounded-lg flex items-center justify-center text-[10px] font-black text-[#4caf50] border border-white/10 shadow-lg">{index + 1}</div>
+      <button 
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(id); }} 
+        className="absolute top-2 right-2 w-7 h-7 bg-red-500 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-xl z-20"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+    </div>
+  );
+}
 
 export default function AdminUploadPage() {
   const router = useRouter();
@@ -43,13 +98,18 @@ export default function AdminUploadPage() {
   const [existingChapterId, setExistingChapterId] = useState<string | null>(preSelectedChapterId);
   const [deleteStep, setDeleteStep] = useState(0);
 
+  // DND SENSORS
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   useEffect(() => {
     fetchMangas();
-    if (preSelectedChapterId) {
-      loadChapterData(preSelectedChapterId);
-      setIsEditing(true);
-    }
+    if (preSelectedChapterId) { loadChapterData(preSelectedChapterId); setIsEditing(true); }
   }, [preSelectedChapterId]);
+
+  useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
 
   const fetchMangas = async () => {
     const { data } = await supabase.from('mangas').select('id, title').order('title');
@@ -58,14 +118,10 @@ export default function AdminUploadPage() {
 
   const loadChapterData = async (id: string) => {
     const { data: chap } = await supabase.from('chapters').select('*').eq('id', id).single();
-    if (chap) {
-      setChapterNumber(chap.chapter_number.toString());
-      setChapterTitle(chap.title || '');
-      setSelectedMangaId(chap.manga_id);
-    }
+    if (chap) { setChapterNumber(chap.chapter_number.toString()); setChapterTitle(chap.title || ''); setSelectedMangaId(chap.manga_id); }
     const { data: pgs } = await supabase.from('pages').select('id, image_url, page_number').eq('chapter_id', id).order('page_number');
     if (pgs) {
-      setItems(pgs.map(p => ({ id: p.id, data: p.image_url, type: 'existing' })));
+       setItems(pgs.map(p => ({ id: p.id, data: p.image_url, type: 'existing' })));
     }
   };
 
@@ -80,210 +136,157 @@ export default function AdminUploadPage() {
     });
   };
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const newItems = Array.from(items);
-    const [reorderedItem] = newItems.splice(result.source.index, 1);
-    newItems.splice(result.destination.index, 0, reorderedItem);
-    setItems(newItems);
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setItems((prev) => {
+        const oldIndex = prev.findIndex((item) => item.id === active.id);
+        const newIndex = prev.findIndex((item) => item.id === over.id);
+        return arrayMove(prev, oldIndex, newIndex);
+      });
+    }
   };
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
-
-  // 🚀 SIÊU CẤP ĐĂNG TRUYỆN SONG SONG
-  const handleUpload = async () => {
-    if (!selectedMangaId || !chapterNumber) {
-      setMessage({ type: "error", text: "VUI LÒNG NHẬP ĐỦ THÔNG TIN MANGA VÀ CHƯƠNG! 🍀" });
-      return;
-    }
-    
-    setUploading(true);
-    setMessage({ type: "info", text: "ĐANG CÔNG PHÁ DỮ LIỆU LÊN CLOUD... ⚡" });
-
-    try {
-      let chapId = existingChapterId;
-      const chapterPayload = { 
-        manga_id: selectedMangaId, 
-        chapter_number: parseFloat(chapterNumber), 
-        title: chapterTitle
-      };
-
-      if (!isEditing) {
-        const { data, error } = await supabase.from("chapters").insert(chapterPayload).select().single();
-        if (error) throw error;
-        chapId = data.id;
-      } else {
-        await supabase.from("chapters").update(chapterPayload).eq("id", chapId);
-      }
-
-      // Xóa dữ liệu cũ để đồng bộ mới hoàn toàn 🚀
-      await supabase.from("pages").delete().eq("chapter_id", chapId);
-      
-      const total = items.length;
-      let completedCount = 0;
-
-      // ⚡ XỬ LÝ SONG SONG (Giới hạn tối đa 5 ảnh một lúc để tránh nghẽn mạng)
-      const uploadWorker = async (item: any, index: number) => {
-        let finalUrl = item.data;
-        if (item.type === 'new') {
-          const compressed = await compressImageToWebP(item.data);
-          const name = `chapters/${chapId}/${Date.now()}-${index}.webp`;
-          
-          // 🌩️ BAY THẲNG LÊN CLOUDFLARE R2
-          finalUrl = await uploadToR2(compressed, name);
-        }
-
-        completedCount++;
-        setProgress(Math.round((completedCount / total) * 100));
-        
-        return { 
-          chapter_id: chapId, 
-          image_url: finalUrl, 
-          page_number: index + 1 
-        };
-      };
-
-      // Chia nhỏ ra để upload mượt mà 🛡️
-      const pagesToInsert = await Promise.all(items.map((item, idx) => uploadWorker(item, idx)));
-      
-      await supabase.from("pages").insert(pagesToInsert);
-      
-      setMessage({ type: "success", text: "🚀 ĐÃ ĐĂNG CHƯƠNG THÀNH CÔNG RỰC RỠ!" });
-      setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1500);
-    } catch (err: any) {
-      alert("Lỗi rồi bác ơi: " + err.message);
-    } finally {
-      setUploading(false);
-      setProgress(0);
-    }
-  };
 
   const handleFinalDelete = async () => {
      const idToDel = preSelectedChapterId || existingChapterId;
      if (!idToDel) return;
      try {
         setUploading(true);
-        setMessage({ type: "info", text: "💥 ĐANG XÓA... Đừng thoát trang!" });
+        setMessage({ type: "info", text: "💥 ĐANG XÓA..." });
         await supabase.from('pages').delete().eq('chapter_id', idToDel);
         await supabase.from('chapters').delete().eq('id', idToDel);
-        setMessage({ type: "success", text: "✅ ĐÃ XÓA THÀNH CÔNG!" });
+        setMessage({ type: "success", text: "✅ XÓA THÀNH CÔNG!" });
         setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
-     } catch (err: any) {
-        alert("Lỗi: " + err.message);
-     } finally {
-        setUploading(false);
-     }
+     } catch (err: any) { alert(err.message); } finally { setUploading(false); }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedMangaId || !chapterNumber) { setMessage({ type: "error", text: "CHƯA NHẬP ĐỦ THÔNG TIN! 🍀" }); return; }
+    setUploading(true); setProgress(0);
+    try {
+      let chapId = existingChapterId;
+      const chapterPayload = { manga_id: selectedMangaId, chapter_number: parseFloat(chapterNumber), title: chapterTitle };
+      if (!isEditing) {
+        const { data, error } = await supabase.from("chapters").insert(chapterPayload).select().single();
+        if (error) throw error; chapId = data.id;
+      } else { await supabase.from("chapters").update(chapterPayload).eq("id", chapId); }
+      await supabase.from("pages").delete().eq("chapter_id", chapId);
+      const total = items.length;
+      let completedCount = 0;
+      const pagesToInsert = await Promise.all(items.map(async (item, idx) => {
+        let finalUrl = item.data;
+        if (item.type === 'new') {
+          const compressed = await compressImageToWebP(item.data);
+          finalUrl = await uploadToR2(compressed, `chapters/${chapId}/${Date.now()}-${idx}.webp`);
+        }
+        completedCount++; setProgress(Math.round((completedCount / total) * 100));
+        return { chapter_id: chapId, image_url: finalUrl, page_number: idx + 1 };
+      }));
+      await supabase.from("pages").insert(pagesToInsert);
+      setMessage({ type: "success", text: "🚀 XUẤT BẢN THÀNH CÔNG!" });
+      setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
+    } catch (err: any) { alert(err.message); } finally { setUploading(false); }
   };
 
   return (
     <div className="min-h-screen bg-[#0a0c0a] text-white p-4 sm:p-8 font-sans">
-      <div className="max-w-4xl mx-auto pb-40">
+      <div className="max-w-6xl mx-auto pb-40">
         
-        <div className="flex items-center justify-between mb-10">
-           <h1 className="text-2xl font-black uppercase tracking-[0.3em] flex items-center gap-3">
-              {isEditing ? "CHỈNH SỬA" : "ĐĂNG CHƯƠNG"} <span className="text-[#4caf50] animate-pulse">🍀</span>
+        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-6">
+           <h1 className="text-[12px] font-black uppercase tracking-[0.5em] flex items-center gap-3">
+              <span className="bg-[#4caf50] text-black px-2 py-0.5 rounded-sm">ADMIN</span>
+              {isEditing ? "CHỈNH SỬA" : "ĐĂNG CHƯƠNG"} <span className="text-[#4caf50]">🍀</span>
            </h1>
-           <AdminButton variant="ghost" onClick={() => router.back()}>QUAY LẠI</AdminButton>
+           <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
         </div>
 
-        {message && <div className={`mb-10 p-5 rounded-2xl border font-black uppercase text-[10px] tracking-widest ${message.type === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-500' : 'bg-[#4caf50]/10 border-[#4caf50]/20 text-[#4caf50]'}`}>{message.text}</div>}
+        {message && <div className="mb-8 p-4 rounded-xl border font-black uppercase text-[10px] tracking-widest animate-fade-in bg-white/5 border-white/10 text-[#4caf50]">{message.text}</div>}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           <div className="md:col-span-1 space-y-6">
-              <AdminCard className="p-6 space-y-6 border-[#4caf50]/10">
-                 <div className="space-y-4">
-                    <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Chọn bộ Manga</label>
-                    <select value={selectedMangaId} onChange={(e) => setSelectedMangaId(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl p-4 text-xs font-black focus:border-[#4caf50] outline-none transition-all">
-                       <option value="">-- CHỌN TRUYỆN --</option>
-                       {mangas.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-                    </select>
+        <div className="space-y-12">
+           {/* THÔNG TIN */}
+           <div className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 shadow-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                 <div className="md:col-span-12 lg:col-span-6 space-y-2">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Bộ manga</label>
+                    <div className="p-4 rounded-2xl bg-black border border-white/5 shadow-inner">
+                       <p className="text-sm font-black text-[#4caf50] uppercase truncate">{mangas.find(m => m.id === selectedMangaId)?.title || "..."}</p>
+                    </div>
                  </div>
-                 <AdminInput label="Số chương" type="number" step="0.1" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} placeholder="VD: 1, 1.5, 2..." />
-                 <AdminInput label="Tên chương (Không bắt buộc)" value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} placeholder="VD: Khởi đầu mới..." />
-              </AdminCard>
-
-              {isEditing && deleteStep === 0 && (
-                <button onClick={() => setDeleteStep(1)} className="w-full py-4 text-[10px] font-black text-red-500/50 hover:text-red-500 hover:bg-red-500/5 rounded-2xl border border-red-500/10 transition-all uppercase tracking-widest">Xóa chương này 🗑️</button>
-              )}
-              {deleteStep === 1 && (
-                <div className="p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-4 animate-shake">
-                   <p className="text-[10px] font-black text-red-500 text-center uppercase">XÁC NHẬN XÓA VĨNH VIỄN?</p>
-                   <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => setDeleteStep(0)} className="py-3 bg-white/5 rounded-xl text-[9px] font-black uppercase">KHÔNG</button>
-                      <button onClick={handleFinalDelete} className="py-3 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-red-500/20">XÓA NGAY</button>
-                   </div>
-                </div>
-              )}
-           </div>
-
-           <div className="md:col-span-2 space-y-6">
-              <div className="relative group overflow-hidden rounded-[32px] border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all">
-                 <input type="file" multiple accept="image/*" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                 <div className="py-12 flex flex-col items-center justify-center gap-4 bg-[#141814]/40">
-                    <div className="w-16 h-16 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50] group-hover:scale-110 transition-transform">
-                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-                    </div>
-                    <div className="text-center">
-                       <p className="text-xs font-black uppercase tracking-widest mb-1">Thả ảnh vào đây 🍀</p>
-                       <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">Hoặc nhấn để chọn hàng loạt ảnh từ máy</p>
-                    </div>
+                 <div className="md:col-span-4 lg:col-span-2 space-y-2">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Số chương</label>
+                    <input type="number" step="0.1" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black text-[#4caf50] outline-none focus:border-[#4caf50]" placeholder="1" />
+                 </div>
+                 <div className="md:col-span-8 lg:col-span-4 space-y-2">
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Tên chương</label>
+                    <input type="text" value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black outline-none focus:border-[#4caf50]" placeholder="Nội dung tùy chọn..." />
                  </div>
               </div>
+           </div>
 
-              {items.length > 0 && (
-                <div className="space-y-4 animate-fade-in-up">
-                   <div className="flex items-center justify-between px-2">
-                      <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Thứ tự trang ({items.length})</span>
-                      <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/50 hover:text-red-500 uppercase tracking-tighter">[XÓA TẤT CẢ]</button>
-                   </div>
-                   
-                   <DragDropContext onDragEnd={onDragEnd}>
-                      <Droppable droppableId="pages">
-                        {(provided) => (
-                          <div {...provided.droppableProps} ref={provided.innerRef} className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            {items.map((item, index) => (
-                              <Draggable key={item.id} draggableId={item.id} index={index}>
-                                {(provided) => (
-                                  <div ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps} className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-black shadow-xl group">
-                                     <img src={item.data} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" alt="" />
-                                     <div className="absolute top-2 left-2 w-6 h-6 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-[10px] font-black border border-white/10">{index + 1}</div>
-                                     <button onClick={() => removeItem(item.id)} className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                     </button>
-                                     {item.type === 'new' && <div className="absolute bottom-2 left-2 right-2 py-1 bg-[#4caf50] text-[#0a0c0a] text-[8px] font-black text-center rounded-md uppercase tracking-tighter">Ảnh mới ✨</div>}
-                                  </div>
-                                )}
-                              </Draggable>
-                            ))}
-                            {provided.placeholder}
-                          </div>
-                        )}
-                      </Droppable>
-                   </DragDropContext>
-                </div>
-              )}
+           {/* 🖼️ DANH SÁCH ẢNH - DND-KIT EDITION */}
+           <div className="space-y-6">
+              <div className="flex items-center justify-between px-2">
+                 <h2 className="text-[11px] font-black text-gray-600 uppercase tracking-widest leading-none">CÁC TRANG TRUYỆN ({items.length})</h2>
+                 {items.length > 0 && <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch</button>}
+              </div>
+
+              <DndContext 
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                 <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
+                    <div className="flex flex-wrap gap-5">
+                       {items.map((item, index) => (
+                          <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} />
+                       ))}
+                       
+                       {/* NÚT THÊM */}
+                       <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
+                          <input type="file" multiple accept="image/*" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                          <div className="w-10 h-10 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                          <span className="text-[9px] font-black text-gray-600 uppercase">Thêm trang</span>
+                       </div>
+                    </div>
+                 </SortableContext>
+              </DndContext>
            </div>
         </div>
 
-        {/* FLOATING ACTION BAR 🚀 */}
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[4000] w-full max-w-lg px-6">
-           <div className={`p-4 backdrop-blur-3xl border rounded-[40px] shadow-2xl flex flex-col gap-4 transition-all ${uploading ? 'bg-[#141814]/90 border-[#4caf50]/20' : 'bg-black/80 border-white/5'}`}>
+        {/* NÚT ĐĂNG - FLOATING */}
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-6">
+           <div className="p-4 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col gap-4">
               {uploading && (
-                <div className="space-y-3">
-                   <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-[#4caf50] px-4">
-                      <span>Đang nén & Đẩy ảnh...</span>
-                      <span>{progress}%</span>
-                   </div>
-                   <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden mx-auto max-w-[90%]">
-                      <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#5fd364] transition-all duration-300" style={{ width: `${progress}%` }}></div>
-                   </div>
+                <div className="space-y-2 px-1">
+                   <div className="flex justify-between text-[10px] font-black text-[#4caf50] uppercase tracking-widest"><span>Đang tải...</span><span>{progress}%</span></div>
+                   <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-[#4caf50] transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
                 </div>
               )}
-              <AdminButton onClick={handleUpload} disabled={uploading || items.length === 0} className="w-full h-16 text-xs tracking-[0.3em]">
-                 {uploading ? 'ĐANG CÔNG PHÁ...' : isEditing ? 'CẬP NHẬT CHƯƠNG 🚀' : 'ĐĂNG CHƯƠNG NGAY 🚀'}
-              </AdminButton>
+              <button 
+                onClick={handleUpload} 
+                disabled={uploading || items.length === 0} 
+                className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || items.length === 0 ? 'bg-white/5 text-white/20' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-xl shadow-[#4caf50]/20'}`}
+              >
+                 {uploading ? 'ĐANG XỬ LÝ...' : 'XUẤT BẢN NGAY 🚀'}
+              </button>
            </div>
         </div>
+
+        {isEditing && (
+           <div className="mt-20 flex justify-center">
+              {deleteStep === 0 ? (
+                 <button onClick={() => setDeleteStep(1)} className="text-[10px] font-black text-red-500/20 hover:text-red-500 uppercase tracking-widest transition-colors py-4 px-8 border border-white/5 rounded-xl">Xóa chương khỏi hệ thống</button>
+              ) : (
+                 <div className="flex items-center gap-4 bg-red-500/10 p-4 rounded-3xl border border-red-500/20 animate-shake">
+                    <span className="text-[10px] font-black text-red-500 uppercase">Chắc chắn xóa?</span>
+                    <button onClick={() => setDeleteStep(0)} className="px-6 py-2 bg-white/5 rounded-xl text-[9px] font-black uppercase">Không</button>
+                    <button onClick={handleFinalDelete} className="px-6 py-2 bg-red-500 text-white rounded-xl text-[9px] font-black uppercase">Xóa vĩnh viễn</button>
+                 </div>
+              )}
+           </div>
+        )}
 
       </div>
     </div>
