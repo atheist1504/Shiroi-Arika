@@ -12,6 +12,7 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false); // TRẠNG THÁI RIÊNG CHO AVATAR 🍀
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
@@ -31,7 +32,7 @@ export default function ProfilePage() {
         const { data, error } = await supabase
           .from('shiroi_users')
           .select('*')
-          .ilike('username', userData.username)
+          .eq('id', userData.id) // ĐỒNG BỘ THEO ID - CHUẨN XÁC 100% 🛡️
           .single();
 
         if (!error && data) {
@@ -143,11 +144,11 @@ export default function ProfilePage() {
     if (!file || !user) return;
 
     try {
-      setUpdating(true);
+      setAvatarLoading(true);
       setMessage('Đang truyền ảnh lên mây Shiroi... ☁️');
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.username}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`; // DÙNG ID ĐỂ ĐỊNH DANH 🛡️
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -160,12 +161,28 @@ export default function ProfilePage() {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      setAvatarUrl(publicUrl);
-      setMessage('Tải ảnh thành công! 🍀');
+      // 🚀 LƯU LUÔN VÀO DATABASE (INSTANT SAVE UX)
+      const { data: updatedUser, error: updateError } = await supabase
+        .from('shiroi_users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (updatedUser) {
+        setAvatarUrl(publicUrl);
+        setUser(updatedUser);
+        localStorage.setItem('shiroi_user', JSON.stringify(updatedUser));
+        setMessage('DIỆN MẠO MỚI ĐÃ ĐƯỢC CẬP NHẬT! 🍀✨');
+        window.dispatchEvent(new Event('storage'));
+      }
     } catch (err) {
+      console.error("Lỗi thay ảnh:", err);
       setMessage(`Lỗi: ${err.message}`);
     } finally {
-      setUpdating(false);
+      setAvatarLoading(false);
     }
   };
 
@@ -208,30 +225,46 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0c0a] text-white p-6 pt-24 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0c0a] text-white p-6 pt-24 relative overflow-x-hidden">
       <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#4caf50]/5 rounded-full blur-[150px] pointer-events-none"></div>
 
       <div className="max-w-2xl mx-auto z-10 relative space-y-16">
         <div className="flex flex-col items-center gap-10 text-center">
           <div className="relative group p-1 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[56px] shadow-[0_0_50px_rgba(76,175,80,0.1)]">
-            <div className="w-56 h-56 rounded-[48px] overflow-hidden border-4 border-[#141814] shadow-2xl bg-[#0a0c0a] flex shrink-0 relative">
+            <div 
+              onClick={() => fileInputRef.current.click()}
+              className="w-56 h-56 rounded-[48px] overflow-hidden border-4 border-[#141814] shadow-2xl bg-[#0a0c0a] flex shrink-0 relative group/avatar cursor-pointer hover:border-[#4caf50]/40 transition-all active:scale-95"
+            >
               {avatarUrl ? (
-                <img src={avatarUrl} className="w-full h-full object-cover animate-fade-in border-4 border-[#4caf50]/20" alt="Avatar" />
+                <img src={avatarUrl} className={`w-full h-full object-cover animate-fade-in border-4 border-[#4caf50]/20 transition-all duration-500 ${avatarLoading ? 'blur-sm grayscale opacity-50' : ''}`} alt="Avatar" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[#4caf50] text-7xl font-black italic shadow-inner">
                   {user?.username?.charAt(0).toUpperCase()}
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center pointer-events-none gap-2">
-                <svg className="w-8 h-8 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                <span className="text-white text-[10px] font-black uppercase tracking-[0.2em]">Thay hình đổi diện 🍀</span>
+              
+              {/* LOADING OVERLAY 🌀 */}
+              {avatarLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-30">
+                   <div className="w-12 h-12 border-4 border-[#4caf50]/10 border-t-[#4caf50] rounded-full animate-spin shadow-[0_0_20px_rgba(76,175,80,0.5)]"></div>
+                </div>
+              )}
+
+              {/* MOBILE TIP & ICON 📱 */}
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 md:group-hover/avatar:opacity-100 sm:opacity-0 transition-opacity flex flex-col items-center justify-center gap-2 z-20">
+                <div className="w-12 h-12 bg-[#4caf50] text-[#0a0c0a] rounded-2xl flex items-center justify-center shadow-lg">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                </div>
+                <span className="text-white text-[10px] font-black uppercase tracking-[0.2em] hidden md:block">Thay hình đổi diện 🍀</span>
+                <span className="text-white text-[8px] font-black uppercase tracking-[0.2em] md:hidden">Chạm để thay ảnh</span>
               </div>
             </div>
 
+            {/* FLOATING ACTION BUTTON FOR MOBILE 📱 */}
             <button
               type="button"
-              onClick={() => fileInputRef.current.click()}
-              className="absolute bottom-4 right-4 p-5 bg-[#4caf50] text-[#0a0c0a] rounded-3xl shadow-[0_10px_30px_rgba(76,175,80,0.4)] hover:scale-110 active:scale-95 transition-all z-20"
+              onClick={(e) => { e.stopPropagation(); fileInputRef.current.click(); }}
+              className="absolute -bottom-2 -right-2 p-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] shadow-[0_10px_30px_rgba(76,175,80,0.4)] hover:scale-110 active:scale-90 transition-all z-20 md:hidden"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>

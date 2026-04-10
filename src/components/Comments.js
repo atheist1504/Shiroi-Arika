@@ -59,9 +59,15 @@ export default function Comments({ mangaId, chapterId }) {
            badge: u.selected_badge || 'Lữ Khách', 
            level: calculateLevel(u.xp)
          };
+         // ƯU TIÊN ID LÀM KEY 🛡️
          if (u.id) uMap[u.id] = info;
-         uMap[cK(u.username)] = info;
-         uMap[cK(u.display_name)] = info;
+         
+         // Fallback bằng tên (Chỉ dành cho các comment cũ chưa có user_id)
+         const nameKey = cK(u.username);
+         if (!uMap[nameKey]) uMap[nameKey] = info;
+         
+         const displayNameKey = cK(u.display_name);
+         if (!uMap[displayNameKey]) uMap[displayNameKey] = info;
       });
 
       const filtered = (chapterId 
@@ -71,7 +77,9 @@ export default function Comments({ mangaId, chapterId }) {
 
       const enriched = filtered.map(c => {
           const key = cK(c.user_name);
-          const info = (c.user_id && uMap[c.user_id]) ? uMap[c.user_id] : (uMap[key] || uMap[c.user_name.toLowerCase()]);
+          // ƯU TIÊN TÌM THEO ID 🎯
+          const info = (c.user_id && uMap[c.user_id]) ? uMap[c.user_id] : uMap[key];
+          
           const isAd = key.includes('admin') || key.includes('quan tri') || key.includes('shiroi arika');
           return {
              ...c,

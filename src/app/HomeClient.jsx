@@ -52,7 +52,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
   };
 
   return (
-    <main className="relative overflow-hidden">
+    <main className="relative overflow-x-hidden">
       {/* SHIROI AMBIENCE */}
       <div className="absolute top-[20%] left-[-10%] w-[60%] h-[60%] bg-[#4caf50]/5 rounded-full blur-[150px] pointer-events-none animate-pulse" />
       <div className="absolute bottom-0 right-0 w-[40%] h-[40%] bg-[#4caf50]/3 rounded-full blur-[120px] pointer-events-none" />

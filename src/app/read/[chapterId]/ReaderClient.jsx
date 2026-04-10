@@ -67,8 +67,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     try {
       // 1. Cập nhật "Lần đọc cuối" của bộ truyện (Upsert manga history)
       await supabase.from('shiroi_history').upsert({
-        username: user.username,
-        user_id: user.id,
+        user_id: user.id, // ĐỊNH DANH GỐC 🛡️
+        username: user.username, // Phụ trợ hiển thị
         manga_id: chapter.manga_id,
         chapter_id: chapterId,
         last_read_at: new Date().toISOString()
@@ -76,8 +76,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
       // 2. Lưu chi tiết chương đã đọc (Insert if not exists)
       await supabase.from('shiroi_read_chapters').upsert({
-        username: user.username,
-        user_id: user.id,
+        user_id: user.id, // ĐỊNH DANH GỐC 🛡️
+        username: user.username, // Phụ trợ hiển thị
         chapter_id: chapterId,
         manga_id: chapter.manga_id,
         read_at: new Date().toISOString()

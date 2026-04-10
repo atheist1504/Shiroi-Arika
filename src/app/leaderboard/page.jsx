@@ -56,7 +56,7 @@ export default function LeaderboardPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0c0a] pt-28 pb-32 px-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0c0a] pt-28 pb-32 px-4 relative overflow-x-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-[#4caf50]/10 to-transparent pointer-events-none blur-[120px]"></div>
         
         <div className="max-w-6xl mx-auto relative z-10">
@@ -159,7 +159,8 @@ export default function LeaderboardPage() {
 
                     {/* BẢNG DANH SÁCH TOP 10 📜 - LUÔN HIỂN THỊ */}
                     <div className="max-w-4xl mx-auto bg-[#141814]/40 backdrop-blur-2xl border border-white/5 rounded-[40px] overflow-hidden shadow-2xl mb-24">
-                        <table className="w-full text-left border-collapse">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[500px]">
                             <thead>
                                 <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
                                     <th className="py-6 px-8">#</th>
@@ -203,6 +204,7 @@ export default function LeaderboardPage() {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </>
             )}
