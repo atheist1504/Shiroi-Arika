@@ -6,14 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/cloudinary";
 
-export default function HomeClient({ initialMangas }) {
-  const [allMangas, setAllMangas] = useState(initialMangas);
+export default function HomeClient({ initialFeatured, initialLatest }) {
+  const [allMangas, setAllMangas] = useState(initialLatest);
+  const [featured, setFeatured] = useState(initialFeatured && initialFeatured.length > 0 ? initialFeatured : initialLatest.slice(0, 5));
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(initialMangas.length === 15);
+  const [hasMore, setHasMore] = useState(initialLatest.length === 15);
   const [activeSlide, setActiveSlide] = useState(0);
-
-  const featured = allMangas.slice(0, 5);
 
   // Tự động chuyển slide sau mỗi 5 giây
   useEffect(() => {
@@ -66,6 +65,7 @@ export default function HomeClient({ initialMangas }) {
         <section className="max-w-6xl mx-auto px-4 mb-16 relative group/banner">
             <div className="relative aspect-[21/9] w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5">
                 <AnimatePresence mode="wait">
+                    {featured[activeSlide] && (
                     <motion.div
                         key={featured[activeSlide].id}
                         initial={{ opacity: 0, x: 30 }}
@@ -121,6 +121,7 @@ export default function HomeClient({ initialMangas }) {
                             </div>
                         </div>
                     </motion.div>
+                    )}
                 </AnimatePresence>
 
                 {/* DOTS NAVIGATION */}
@@ -179,7 +180,7 @@ export default function HomeClient({ initialMangas }) {
                         ) : (
                           <div className="flex flex-col items-center justify-center w-full h-full text-gray-600 bg-black/40">
                             <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            <span className="text-xs">No Cover</span>
+                            <span className="text-xs">Không có ảnh bìa</span>
                           </div>
                         )}
                         

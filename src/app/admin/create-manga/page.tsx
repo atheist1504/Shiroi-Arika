@@ -24,6 +24,7 @@ export default function CreateMangaPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [defaultReadingMode, setDefaultReadingMode] = useState("scroll");
+  const [isFeatured, setIsFeatured] = useState(false);
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -51,6 +52,7 @@ export default function CreateMangaPage() {
         setGenres(data.genres || []);
         setCoverPreview(data.cover_image);
         setDefaultReadingMode(data.default_reading_mode || "scroll");
+        setIsFeatured(data.is_featured || false);
         setIsEditing(true);
       }
     } catch (err) {
@@ -104,7 +106,8 @@ export default function CreateMangaPage() {
         description: description || null,
         genres: genres.length > 0 ? genres : null,
         cover_image: coverImageUrl,
-        default_reading_mode: defaultReadingMode
+        default_reading_mode: defaultReadingMode,
+        is_featured: isFeatured
       };
 
       if (!isEditing) {
@@ -195,6 +198,23 @@ export default function CreateMangaPage() {
                       )}
                     </div>
                     <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*" onChange={handleCoverChange} />
+                 </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#4caf50]/70 uppercase tracking-widest block pl-1">Vị trí hiển thị</label>
+                    <button 
+                       type="button"
+                       onClick={() => setIsFeatured(!isFeatured)}
+                       className={`w-full p-4 rounded-2xl border transition-all flex items-center justify-between group ${isFeatured ? 'bg-[#4caf50]/10 border-[#4caf50] shadow-[0_0_20px_rgba(76,175,80,0.1)]' : 'bg-black/40 border-[#2a332a] hover:border-[#4caf50]/30'}`}
+                    >
+                       <div className="flex flex-col items-start gap-1">
+                          <span className={`text-[10px] font-black uppercase tracking-widest ${isFeatured ? 'text-[#4caf50]' : 'text-gray-500'}`}>Ghim lên Banner</span>
+                          <span className="text-[8px] text-gray-600 font-medium uppercase">Xuất hiện tại khu vực siêu phẩm đầu trang</span>
+                       </div>
+                       <div className={`w-10 h-6 rounded-full relative transition-colors ${isFeatured ? 'bg-[#4caf50]' : 'bg-gray-800'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isFeatured ? 'right-1' : 'left-1'}`}></div>
+                       </div>
+                    </button>
                  </div>
 
                  <div className="space-y-4">

@@ -11,14 +11,14 @@ export const optimizeImage = (url, width = '', height = '') => {
   // Nếu là ảnh từ Blob hoặc base64 thì không xử lý qua Cloudinary (do là ảnh tạm local) 🍀
   if (url.startsWith('blob:') || url.startsWith('data:')) return url;
 
-  // Cấu hình tối ưu "Thần thánh" cho web lớn: 
-  // f_auto: Tự động đổi sag WebP/AVIF tiết kiệm 70% dung lượng
-  // q_auto: Tự động giữ nét cao nhất trong khi dung lượng thấp nhất
+  // 🌩️ Nếu là ảnh từ R2 (đã nén WebP sẵn) thì không cần qua Cloudinary nữa
+  if (url.includes('r2.dev')) return url;
+
+  // Cấu hình tối ưu "Thần thánh" cho các nguồn ảnh khác (Supabase, v.v.)
   let transformations = 'f_auto,q_auto:best';
-  
   if (width) transformations += `,w_${width}`;
   if (height) transformations += `,h_${height},c_fill`;
 
-  // Sử dụng Cloudinary Fetch API để tối ưu hóa ảnh từ Supabase hoặc bất kỳ nguồn nào
+  // Sử dụng Cloudinary Fetch API
   return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(url)}`;
 };

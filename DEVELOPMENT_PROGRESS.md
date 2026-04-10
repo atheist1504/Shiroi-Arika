@@ -21,15 +21,16 @@ Dự án Manga Platform thế hệ mới.
 ## 🚧 ĐANG THỰC HIỆN
 
 ### 🎮 Gamification & Hệ Thống User
-- [ ] **Hệ Thống Badge & Danh Hiệu**: Thiết kế và code logic cấp bậc cho người đọc.
-- [ ] **Lịch Sử Đọc (Real-time Sync)**: Tối ưu dữ liệu đồng bộ giữa các thiết bị.
+- [x] **Hệ Thống Badge & Danh Hiệu**: Thiết kế và code logic cấp bậc cho người đọc.
+- [x] **Streak Mode (Chuỗi Điểm Danh)**: Thưởng XP nhân dịp chuỗi 3, 7, 30 ngày.
+- [x] **Lịch Sử Đọc (Real-time Sync)**: Tối ưu dữ liệu đồng bộ và thống kê chi tiết chương đã đọc.
 
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
 1. Triển khai hệ thống thông báo (Notifications) khi có chương mới.
-2. Hoàn thiện trang cá nhân (Profile) với các chỉ số thống kê đọc truyện.
-3. Tối ưu SEO cho các trang đọc truyện.
+2. Thiết lặp hệ thống SEO nâng cao cho các trang đọc truyện.
+3. Hoàn thiện Trang cá nhân (Profile) với hệ thống Avatar Frame.
 
 ---
-*Cập nhật lần cuối: 21:08 - 09/04/2026*
+*Cập nhật lần cuối: 11:32 - 10/04/2026*

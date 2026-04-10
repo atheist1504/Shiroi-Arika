@@ -27,7 +27,7 @@ export default function HistoryPage() {
             manga:mangas(*),
             chapter:chapters(*)
           `)
-          .eq('username', user.username)
+          .eq('user_id', user.id)
           .order('last_read_at', { ascending: false });
 
         if (!error && cloudHistory) {
@@ -89,7 +89,12 @@ export default function HistoryPage() {
             await supabase
                 .from('shiroi_history')
                 .delete()
-                .eq('username', user.username);
+                .eq('user_id', user.id);
+
+            await supabase
+                .from('shiroi_read_chapters')
+                .delete()
+                .eq('user_id', user.id);
         }
 
         localStorage.removeItem('shiroi_history');

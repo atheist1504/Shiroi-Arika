@@ -154,14 +154,14 @@ export default function CheckIn() {
         }`}
       >
         <div className="flex items-center gap-2">
+          <span className="text-sm">🔥</span>
+          <span className="text-[12px] font-black mr-1">{user?.check_in_streak || 0}</span>
           {canCheckIn ? (
             <>
-              <span className="text-sm">🍀</span>
               {checking ? "ĐANG GỬI..." : "NHẬN QUÀ"}
             </>
           ) : (
             <>
-              <span className="text-sm">✨</span>
               HẸN MAI NHÉ
             </>
           )}

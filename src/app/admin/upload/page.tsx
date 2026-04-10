@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { uploadToR2 } from '@/lib/r2';
+import { uploadImageAction } from '@/lib/actions';
 
 // 🚀 DND-KIT IMPORTS
 import {
@@ -42,7 +42,7 @@ const compressImageToWebP = async (base64Str: string): Promise<Blob> => {
 };
 
 // 🖼️ COMPONENT TRANG TRUYỆN SORTABLE
-function SortableItem({ id, item, index, onRemove }: any) {
+function SortableItem({ id, item, index, onRemove, onPreview }: any) {
   const {
     attributes,
     listeners,
@@ -63,16 +63,30 @@ function SortableItem({ id, item, index, onRemove }: any) {
     <div 
       ref={setNodeRef} 
       style={style} 
-      {...attributes} 
-      {...listeners}
-      className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group cursor-grab active:cursor-grabbing hover:border-[#4caf50]/30 transition-colors"
+      className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
       <img src={item.data} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
-      <div className="absolute top-2 left-2 w-6 h-6 bg-black/90 rounded-lg flex items-center justify-center text-[10px] font-black text-[#4caf50] border border-white/10 shadow-lg">{index + 1}</div>
+      
+      {/* ✋ VÙNG KÉO THẢ (Toàn bộ ảnh) */}
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="absolute inset-0 cursor-grab active:cursor-grabbing z-10"
+      ></div>
+
+      {/* 🔍 NÚT PHÓNG TO - Tách biệt để không lỗi kéo thả */}
       <button 
-        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreview(item.data); }}
+        className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 backdrop-blur-md rounded-xl flex items-center justify-center text-[#4caf50] opacity-0 group-hover:opacity-100 transition-all hover:bg-[#4caf50] hover:text-black z-20 shadow-lg border border-white/10"
+        title="Xem to"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </button>
+
+      <div className="absolute top-2 left-2 w-6 h-6 bg-black/90 rounded-lg flex items-center justify-center text-[10px] font-black text-[#4caf50] border border-white/10 shadow-lg z-20">{index + 1}</div>
+      <button 
         onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(id); }} 
-        className="absolute top-2 right-2 w-7 h-7 bg-red-500 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-xl z-20"
+        className="absolute top-2 right-2 w-7 h-7 bg-red-500/80 backdrop-blur-md rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:scale-110 shadow-xl z-20 border border-white/10"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
       </button>
@@ -97,6 +111,7 @@ export default function AdminUploadPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [existingChapterId, setExistingChapterId] = useState<string | null>(preSelectedChapterId);
   const [deleteStep, setDeleteStep] = useState(0);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // DND SENSORS
   const sensors = useSensors(
@@ -125,20 +140,38 @@ export default function AdminUploadPage() {
     }
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setItems(prev => [...prev, { id: `new-${Date.now()}-${Math.random()}`, data: ev.target?.result, type: 'new' }]);
-      };
-      reader.readAsDataURL(file);
-    });
+    if (files.length === 0) return;
+
+    setMessage({ type: 'info', text: `ĐANG XỬ LÝ ${files.length} ẢNH... ⏳` });
+
+    try {
+      const newItems = await Promise.all(files.map((file, idx) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            // Cấp ID duy nhất tuyệt đối kèm theo index
+            resolve({ 
+              id: `new-${Date.now()}-${idx}-${Math.random()}`, 
+              data: ev.target?.result, 
+              type: 'new' 
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      }));
+
+      setItems(prev => [...prev, ...newItems]);
+      setMessage(null);
+    } catch (err) {
+      setMessage({ type: 'error', text: 'LỖI KHI ĐỌC FILE! 🆘' });
+    }
   };
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-    if (active.id !== over?.id) {
+    if (active && over && active.id !== over.id) {
       setItems((prev) => {
         const oldIndex = prev.findIndex((item) => item.id === active.id);
         const newIndex = prev.findIndex((item) => item.id === over.id);
@@ -168,22 +201,60 @@ export default function AdminUploadPage() {
     try {
       let chapId = existingChapterId;
       const chapterPayload = { manga_id: selectedMangaId, chapter_number: parseFloat(chapterNumber), title: chapterTitle };
+
+      // 🔍 KIỂM TRA XEM CHƯƠNG ĐÃ TỒN TẠI CHƯA (Tránh lỗi Duplicate)
       if (!isEditing) {
-        const { data, error } = await supabase.from("chapters").insert(chapterPayload).select().single();
-        if (error) throw error; chapId = data.id;
-      } else { await supabase.from("chapters").update(chapterPayload).eq("id", chapId); }
+        const { data: existingChap } = await supabase
+          .from("chapters")
+          .select("id")
+          .eq("manga_id", selectedMangaId)
+          .eq("chapter_number", parseFloat(chapterNumber))
+          .single();
+
+        if (existingChap) {
+          chapId = existingChap.id;
+          await supabase.from("chapters").update(chapterPayload).eq("id", chapId);
+        } else {
+          const { data, error } = await supabase.from("chapters").insert(chapterPayload).select().single();
+          if (error) throw error; 
+          chapId = data.id;
+        }
+      } else { 
+        await supabase.from("chapters").update(chapterPayload).eq("id", chapId); 
+      }
       await supabase.from("pages").delete().eq("chapter_id", chapId);
+      
       const total = items.length;
-      let completedCount = 0;
-      const pagesToInsert = await Promise.all(items.map(async (item, idx) => {
+      const pagesToInsert = [];
+
+      // 🔄 TẢI TUẦN TỰ (Đảm bảo thứ tự tuyệt đối 100% 🍀)
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         let finalUrl = item.data;
+
         if (item.type === 'new') {
           const compressed = await compressImageToWebP(item.data);
-          finalUrl = await uploadToR2(compressed, `chapters/${chapId}/${Date.now()}-${idx}.webp`);
+          
+          const formData = new FormData();
+          formData.append('file', compressed);
+          formData.append('fileName', `chapters/${chapId}/${Date.now()}-${i}.webp`);
+          
+          const result = await uploadImageAction(formData);
+          if (!result.success) throw new Error(result.error);
+          finalUrl = result.url;
         }
-        completedCount++; setProgress(Math.round((completedCount / total) * 100));
-        return { chapter_id: chapId, image_url: finalUrl, page_number: idx + 1 };
-      }));
+
+        pagesToInsert.push({ 
+          chapter_id: chapId, 
+          image_url: finalUrl, 
+          page_number: i + 1 
+        });
+
+        // Cập nhật tiến độ mượt mà
+        setProgress(Math.round(((i + 1) / total) * 100));
+      }
+
+      // Lưu toàn bộ vào DB trong một lượt
       await supabase.from("pages").insert(pagesToInsert);
       setMessage({ type: "success", text: "🚀 XUẤT BẢN THÀNH CÔNG!" });
       setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
@@ -229,7 +300,17 @@ export default function AdminUploadPage() {
            <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                  <h2 className="text-[11px] font-black text-gray-600 uppercase tracking-widest leading-none">CÁC TRANG TRUYỆN ({items.length})</h2>
-                 {items.length > 0 && <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch</button>}
+                 <div className="flex gap-4">
+                    {items.length > 0 && (
+                      <>
+                        <button onClick={() => setItems(prev => [...prev].reverse())} className="text-[9px] font-black text-[#4caf50]/50 hover:text-[#4caf50] transition-colors uppercase flex items-center gap-1.5">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Đảo ngược
+                        </button>
+                        <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch</button>
+                      </>
+                    )}
+                 </div>
               </div>
 
               <DndContext 
@@ -240,7 +321,7 @@ export default function AdminUploadPage() {
                  <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
                     <div className="flex flex-wrap gap-5">
                        {items.map((item, index) => (
-                          <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} />
+                          <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} onPreview={setPreviewImage} />
                        ))}
                        
                        {/* NÚT THÊM */}
@@ -286,6 +367,27 @@ export default function AdminUploadPage() {
                  </div>
               )}
            </div>
+        )}
+
+        {/* 🔍 MODAL XEM TRƯỚC ẢNH */}
+        {previewImage && (
+          <div 
+            className="fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 sm:p-20 animate-fade-in"
+            onClick={() => setPreviewImage(null)}
+          >
+             <button className="absolute top-6 right-6 w-12 h-12 bg-white/5 hover:bg-white/10 rounded-full flex items-center justify-center text-white transition-all z-10">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+             </button>
+             <img 
+               src={previewImage} 
+               className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
+               alt="Preview" 
+               onClick={(e) => e.stopPropagation()} 
+             />
+             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-black/40 border border-white/5 backdrop-blur-md rounded-2xl text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                Click ra ngoài để đóng
+             </div>
+          </div>
         )}
 
       </div>

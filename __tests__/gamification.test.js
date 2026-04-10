@@ -35,8 +35,17 @@ describe('Thư viện Logic Cấp độ (src/lib/xp.js)', () => {
   });
 
   it('phải có các hằng số phần thưởng tiêu chuẩn', () => {
-    expect(XP_REWARDS.DAILY_CHECKIN).toBe(50);
+    expect(XP_REWARDS.DAILY_CHECKIN).toBe(100);
     expect(XP_REWARDS.READ_CHAPTER).toBe(20);
     expect(XP_REWARDS.POST_COMMENT).toBe(5);
+  });
+
+  it('phải tính toán thưởng chuỗi (Streak Bonus) chính xác', () => {
+    const { getStreakBonus, STREAK_BONUSES } = require('../src/lib/xp');
+    expect(getStreakBonus(3)).toBe(STREAK_BONUSES.DAY_3);
+    expect(getStreakBonus(7)).toBe(STREAK_BONUSES.DAY_7);
+    expect(getStreakBonus(30)).toBe(STREAK_BONUSES.DAY_30);
+    expect(getStreakBonus(1)).toBe(0);
+    expect(getStreakBonus(5)).toBe(0);
   });
 });

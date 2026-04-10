@@ -6,6 +6,12 @@ export const XP_REWARDS = {
   POST_COMMENT: 5,    // Thưởng 5 XP mỗi bình luận
 };
 
+export const STREAK_BONUSES = {
+    DAY_3: 200,   // Thưởng khi đạt chuỗi 3 ngày
+    DAY_7: 500,   // Thưởng khi đạt chuỗi 7 ngày
+    DAY_30: 5000, // Thưởng khi đạt chuỗi 30 ngày (Đại Sư)
+};
+
 export const calculateLevel = (xp) => {
   return Math.floor((xp || 0) / 100) + 1;
 };
@@ -22,4 +28,11 @@ export const calculateTitle = (xp) => {
     if (lvl >= 20) return { name: 'HỘ VỆ', color: '#2196f3', icon: '🛡️', lv: 20 };
     if (lvl >= 10) return { name: 'CHIẾN BINH', color: '#f44336', icon: '🗡️', lv: 10 };
     return { name: 'LỮ KHÁCH', color: '#9e9e9e', icon: '🚶', lv: 1 };
+};
+
+export const getStreakBonus = (newStreak) => {
+    if (newStreak === 30) return STREAK_BONUSES.DAY_30;
+    if (newStreak === 7) return STREAK_BONUSES.DAY_7;
+    if (newStreak === 3) return STREAK_BONUSES.DAY_3;
+    return 0;
 };

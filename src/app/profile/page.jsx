@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { calculateLevel, calculateProgress, calculateTitle } from '@/lib/xp';
+import { calculateLevel, calculateProgress, calculateTitle, XP_REWARDS, getStreakBonus } from '@/lib/xp';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -12,7 +12,9 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [checkInLoading, setCheckInLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const fileInputRef = useRef(null);
   const router = useRouter();
 
@@ -38,8 +40,10 @@ export default function ProfilePage() {
           setBio(data.bio || '');
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
+          fetchStats(data.id);
         } else {
           setUser(userData);
+          fetchStats(userData.id);
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -50,6 +54,89 @@ export default function ProfilePage() {
 
     checkSession();
   }, [router]);
+
+  const fetchStats = async (userId) => {
+    try {
+      if (!userId) return;
+
+      // Đếm số bộ truyện đã đọc (Dựa trên ID thống nhất)
+      const { count: mangaCount } = await supabase
+        .from('shiroi_history')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      // Đếm tổng số chương đã đọc
+      const { count: chapterCount } = await supabase
+        .from('shiroi_read_chapters')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      setStats({
+        total_mangas: mangaCount || 0,
+        total_chapters: chapterCount || 0
+      });
+    } catch (err) {
+      console.error("Lỗi tải thống kê:", err);
+    }
+  };
+
+  const handleCheckIn = async () => {
+    if (!user || checkInLoading) return;
+
+    try {
+      setCheckInLoading(true);
+      setMessage('Đang điểm danh... ✨');
+
+      const now = new Date();
+      const lastCheckIn = user.last_check_in ? new Date(user.last_check_in) : null;
+      
+      // Kiểm tra xem đã check-in hôm nay chưa (theo ngày cục bộ)
+      if (lastCheckIn && lastCheckIn.toDateString() === now.toDateString()) {
+        setMessage('Hôm nay bạn đã điểm danh rồi! 🍀');
+        setCheckInLoading(false);
+        return;
+      }
+
+      // Tính toán Streak
+      let newStreak = 1;
+      if (lastCheckIn) {
+        const diffTime = Math.abs(now - lastCheckIn);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+          newStreak = (user.check_in_streak || 0) + 1;
+        } else if (diffDays > 1) {
+          newStreak = 1; // Reset chuỗi nếu quá 1 ngày không check-in
+        }
+      }
+
+      const streakBonus = getStreakBonus(newStreak);
+      const totalReward = XP_REWARDS.DAILY_CHECKIN + streakBonus;
+      const newXP = (user.xp || 0) + totalReward;
+
+      const { data, error } = await supabase
+        .from('shiroi_users')
+        .update({
+          xp: newXP,
+          last_check_in: now.toISOString(),
+          check_in_streak: newStreak
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (!error && data) {
+        setUser(data);
+        localStorage.setItem('shiroi_user', JSON.stringify(data));
+        setMessage(`THÀNH CÔNG! Nhận ${totalReward} XP ${streakBonus > 0 ? `(Thưởng chuỗi +${streakBonus}!)` : ''} 💎`);
+        window.dispatchEvent(new Event('storage'));
+      }
+    } catch (err) {
+      setMessage(`Lỗi: ${err.message}`);
+    } finally {
+      setCheckInLoading(false);
+    }
+  };
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -154,29 +241,86 @@ export default function ProfilePage() {
 
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-2">
-              {user?.selected_badge && (
-                <span className="text-[10px] font-black px-4 py-1.5 rounded-xl border border-[#4caf50]/30 text-[#4caf50] uppercase tracking-[0.3em] bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.2)] animate-pulse">
-                  {user.selected_badge}
-                </span>
+              {(user.selected_badge || calculateTitle(user.xp).name) && (
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-black px-6 py-2 rounded-xl border border-[#4caf50]/30 text-[#4caf50] uppercase tracking-[0.4em] bg-[#4caf50]/15 shadow-[0_0_30px_rgba(76,175,80,0.2)] animate-pulse border-t-[#4caf50]/60">
+                    {user.selected_badge || calculateTitle(user.xp).name}
+                  </span>
+                  {user.selected_badge && user.selected_badge !== calculateTitle(user.xp).name && (
+                    <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest opacity-40">
+                       DANH HIỆU GỐC: {calculateTitle(user.xp).name}
+                    </span>
+                  )}
+                </div>
               )}
               <h1 className="text-5xl font-black tracking-tight uppercase gradient-text drop-shadow-2xl">{user?.display_name || user?.username}</h1>
             </div>
           </div>
 
+          {/* DAILY CHECK-IN & STATS 💎 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            <div className={`p-8 rounded-[48px] border-2 transition-all duration-700 relative overflow-hidden flex flex-col items-center gap-6 group ${
+                user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString()
+                ? 'bg-[#141814]/40 border-white/10 shadow-inner'
+                : 'bg-gradient-to-br from-[#1a221a] to-[#0a0c0a] border-[#4caf50]/20 shadow-[0_20px_50px_rgba(76,175,80,0.1)] hover:border-[#4caf50]/40'
+              }`}>
+              <div className="absolute top-0 right-0 p-10 bg-[#4caf50]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+              
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4caf50] animate-pulse">Daily Blessing</span>
+                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Chuỗi điểm danh</h3>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <div className="text-5xl mb-2 group-hover:scale-125 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(255,165,0,0.5)]">🔥</div>
+                <div className="px-5 py-2 bg-black/60 rounded-2xl border border-white/10 backdrop-blur-md">
+                   <span className="text-[11px] font-black text-white uppercase tracking-widest whitespace-nowrap">
+                      Chuỗi: <span className="text-[#4caf50] text-xl">{user.check_in_streak || 0}</span> ngày ⚡
+                   </span>
+                </div>
+              </div>
+
+              <button
+                disabled={checkInLoading || (user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())}
+                onClick={handleCheckIn}
+                className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-3xl text-xs uppercase tracking-widest shadow-[0_15px_30px_rgba(76,175,80,0.3)] hover:scale-[1.03] active:scale-95 transition-all disabled:bg-white/5 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
+              >
+                {checkInLoading ? 'ĐANG ĐIỂM DANH...' : (user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString() ? 'ĐÃ NHẬN HÔM NAY' : 'ĐIỂM DANH NGAY ✨')}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 h-full">
+               <div className="bg-[#141814]/60 border border-white/5 p-8 rounded-[40px] flex flex-col justify-center items-center gap-2 group hover:bg-[#141814] transition-all">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Hành trình đã đi</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-black text-white italic group-hover:text-[#4caf50] transition-colors">{stats.total_mangas}</span>
+                    <span className="text-[10px] font-black text-gray-500 uppercase">Bộ truyện</span>
+                  </div>
+               </div>
+               <div className="bg-[#141814]/60 border border-white/5 p-8 rounded-[40px] flex flex-col justify-center items-center gap-2 group hover:bg-[#141814] transition-all">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Kiến thức tích lũy</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-black text-white italic group-hover:text-[#4caf50] transition-colors">{stats.total_chapters}</span>
+                    <span className="text-[10px] font-black text-gray-500 uppercase">Chương đọc</span>
+                  </div>
+               </div>
+            </div>
+          </div>
+
           {/* GAMIFICATION STATS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-            <div className="bg-[#141814] border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2">
-              <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest opacity-60">Cấp độ hiện tại</span>
+            <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Cấp độ hiện tại</span>
               <span className="text-4xl font-black text-[#4caf50] italic drop-shadow-[0_0_15px_rgba(76,175,80,0.3)]">{calculateLevel(user.xp)}</span>
             </div>
-            <div className="bg-[#141814] border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2">
-              <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest opacity-60">Tổng Thánh tích (XP)</span>
+            <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Tổng Thánh tích (XP)</span>
               <span className="text-4xl font-black text-gray-200 italic">{user.xp || 0}</span>
             </div>
-            <div className="bg-[#141814] border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2">
-              <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest opacity-60">Thanh tiến trình ({calculateProgress(user.xp)}/100)</span>
-              <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden mt-2">
-                <div className="h-full bg-[#4caf50] shadow-[0_0_10px_#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
+            <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Tiến trình ({calculateProgress(user.xp)}/100)</span>
+              <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden mt-2 border border-white/5">
+                <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_15px_#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
               </div>
             </div>
           </div>

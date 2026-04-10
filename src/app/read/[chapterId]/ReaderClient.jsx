@@ -65,14 +65,23 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const user = JSON.parse(raw);
     
     try {
-      // Sử dụng UPSERT để cập nhật hoặc tạo mới bản ghi lịch sử
+      // 1. Cập nhật "Lần đọc cuối" của bộ truyện (Upsert manga history)
       await supabase.from('shiroi_history').upsert({
         username: user.username,
         user_id: user.id,
         manga_id: chapter.manga_id,
         chapter_id: chapterId,
         last_read_at: new Date().toISOString()
-      }, { onConflict: 'username, manga_id' });
+      }, { onConflict: 'user_id, manga_id' });
+
+      // 2. Lưu chi tiết chương đã đọc (Insert if not exists)
+      await supabase.from('shiroi_read_chapters').upsert({
+        username: user.username,
+        user_id: user.id,
+        chapter_id: chapterId,
+        manga_id: chapter.manga_id,
+        read_at: new Date().toISOString()
+      }, { onConflict: 'user_id, chapter_id' });
     } catch (err) {
       console.error("Lỗi đồng bộ lịch sử:", err);
     }

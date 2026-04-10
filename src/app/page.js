@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import HomeClient from "./HomeClient";
 
-export const revalidate = 60; // Cache trang trong 60 giây (ISR) - Giúp giảm tải tối đa cho Supabase
+export const revalidate = 0; // Tạm thời tắt cache để bạn thấy thay đổi tức thì 🚀
 
 export const metadata = {
   title: "Shiroi Arika (🍀) - Đọc Truyện Tranh Online Miễn Phí",
@@ -9,7 +9,16 @@ export const metadata = {
 }
 
 export default async function Home() {
-  const { data: mangas, error } = await supabase
+  // 1. Lấy danh sách SIÊU PHẨM (Được Ghim) 🍀
+  const { data: featuredMangas } = await supabase
+    .from("mangas")
+    .select("id, title, cover_image, description, genres, is_featured")
+    .eq("is_featured", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  // 2. Lấy danh sách TRUYỆN MỚI CẬP NHẬT (Theo thời gian) 🕒
+  const { data: latestMangas, error } = await supabase
     .from("mangas")
     .select("id, title, cover_image, description, genres, created_at, chapters(chapter_number, created_at)")
     .order("created_at", { ascending: false })
@@ -18,10 +27,13 @@ export default async function Home() {
     .limit(1, { foreignTable: "chapters" });
 
   if (error) {
-    console.error("Lỗi khi tải truyện:", error);
+    console.error("Lỗi khi tải truyện mới:", error);
   }
 
   return (
-    <HomeClient initialMangas={mangas || []} />
+    <HomeClient 
+      initialFeatured={featuredMangas || []} 
+      initialLatest={latestMangas || []} 
+    />
   );
 }
