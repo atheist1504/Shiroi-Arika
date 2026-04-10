@@ -90,7 +90,8 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="glass sticky-nav z-[1000] border-b border-white/5 h-[70px] flex items-center">
+    <>
+      <nav className="glass sticky-nav z-[1000] border-b border-white/5 h-[70px] flex items-center">
       <div className="container mx-auto px-4 flex justify-between items-center w-full relative">
         
         {/* LEFT: HAMBURGER (MOBILE ONLY) */}
