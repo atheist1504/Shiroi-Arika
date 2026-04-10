@@ -288,7 +288,7 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0">
+              <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0 flex flex-col gap-4">
                 {user ? (
                    <button 
                      onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
@@ -302,6 +302,9 @@ export default function Navbar() {
                     Đăng nhập ngay
                   </Link>
                 )}
+                <div className="text-center">
+                  <span className="text-[8px] font-black text-gray-700 uppercase tracking-[0.3em]">v1.2 - Shiroi Mobile Fix</span>
+                </div>
               </div>
             </motion.div>
           </div>
