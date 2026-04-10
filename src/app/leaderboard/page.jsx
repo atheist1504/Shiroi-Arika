@@ -112,8 +112,8 @@ export default function LeaderboardPage() {
                         {top3[1] && (
                             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="order-2 md:order-1 w-full md:w-1/4">
                                 <div className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl">
-                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-gray-400 bg-black">
-                                        <img src={optimizeImage(top3[1].avatar_url || '', 200)} alt="" className="w-full h-full object-cover" />
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-gray-400 bg-[#141814]">
+                                        <img src={optimizeImage(top3[1].avatar_url || 'https://res.cloudinary.com/demo/image/fetch/https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="mt-10 mb-4 inline-block px-4 py-1 bg-gray-400 text-black text-[10px] font-black rounded-full uppercase">Á QUÂN 🥈</div>
                                     <h3 className="text-xl font-black text-white mb-1 truncate">{top3[1].display_name || top3[1].username}</h3>
@@ -126,8 +126,8 @@ export default function LeaderboardPage() {
                         {top3[0] && (
                             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="order-1 md:order-2 w-full md:w-1/3 mb-12">
                                 <div className="bg-[#1a221a] backdrop-blur-3xl border-2 border-[#4caf50]/30 p-10 rounded-[50px] text-center relative shadow-[0_40px_80px_rgba(76,175,80,0.15)] animate-float">
-                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-28 h-28 rounded-[35px] overflow-hidden border-4 border-[#4caf50] shadow-[0_0_40px_rgba(76,175,80,0.4)] bg-black">
-                                        <img src={optimizeImage(top3[0].avatar_url || '', 300)} alt="" className="w-full h-full object-cover" />
+                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-28 h-28 rounded-[35px] overflow-hidden border-4 border-[#4caf50] shadow-[0_0_40px_rgba(76,175,80,0.4)] bg-[#141814]">
+                                        <img src={optimizeImage(top3[0].avatar_url || 'https://res.cloudinary.com/demo/image/fetch/https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 300)} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="mt-14 mb-5 inline-block px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-xs font-black rounded-full uppercase shadow-lg animate-pulse">QUÁN QUÂN 🥇</div>
                                     <h3 className="text-3xl font-black text-white mb-2 truncate">{top3[0].display_name || top3[0].username}</h3>
@@ -145,8 +145,8 @@ export default function LeaderboardPage() {
                         {top3[2] && (
                             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="order-3 w-full md:w-1/4">
                                 <div className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl">
-                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-orange-700 bg-black">
-                                        <img src={optimizeImage(top3[2].avatar_url || '', 200)} alt="" className="w-full h-full object-cover" />
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-orange-700 bg-[#141814]">
+                                        <img src={optimizeImage(top3[2].avatar_url || 'https://res.cloudinary.com/demo/image/fetch/https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="mt-10 mb-4 inline-block px-4 py-1 bg-orange-700 text-white text-[10px] font-black rounded-full uppercase">HẠNG 3 🥉</div>
                                     <h3 className="text-xl font-black text-white mb-1 truncate">{top3[2].display_name || top3[2].username}</h3>
@@ -179,8 +179,8 @@ export default function LeaderboardPage() {
                                         <td className="py-6 px-8 font-black text-gray-600 group-hover:text-[#4caf50] text-sm">{(index + 1).toString().padStart(2, '0')}</td>
                                         <td className="py-6 px-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0">
-                                                    <img src={u.avatar_url || '/placeholder-avatar.jpg'} alt="" className="w-full h-full object-cover" />
+                                                <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-[#141814]">
+                                                    <img src={u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} alt="" className="w-full h-full object-cover" />
                                                 </div>
                                                 <div>
                                                     <div className="text-white font-black text-sm">{u.display_name || u.username}</div>

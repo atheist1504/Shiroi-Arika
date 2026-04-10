@@ -75,7 +75,7 @@ export default function Comments({ mangaId, chapterId }) {
           const isAd = key.includes('admin') || key.includes('quan tri') || key.includes('shiroi arika');
           return {
              ...c,
-             display_avatar: info?.avatar || (isAd ? "https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/Admin-1775229030334.jpg" : null),
+             display_avatar: info?.avatar || (isAd ? "https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/Admin-1775229030334.jpg" : "https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png"),
              display_badge: info?.badge || (isAd ? 'BAN QUẢN TRỊ' : 'Lữ Khách'),
              display_level: info?.level || 1
           };
@@ -218,7 +218,7 @@ export default function Comments({ mangaId, chapterId }) {
       <div className={`${isReply ? 'ml-10 border-l border-white/5 pl-6' : ''} group animate-fade-in`}>
         <div className="flex gap-4">
           <div className={`${isReply ? 'w-8 h-8 rounded-lg' : 'w-12 h-12 rounded-2xl'} overflow-hidden bg-[#141814] border border-white/10 shrink-0 shadow-xl`}>
-             {comment.display_avatar ? <img src={comment.display_avatar} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center text-[#4caf50] font-black text-xs uppercase">{(comment.user_name || '?').charAt(0)}</div>}
+             <img src={comment.display_avatar} className="w-full h-full object-cover" alt="" />
           </div>
           <div className="flex-1 space-y-2">
              <div className="flex items-center gap-2">
@@ -297,7 +297,7 @@ export default function Comments({ mangaId, chapterId }) {
              <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-[#4caf50]/20 to-transparent"></div>
              <div className="flex items-center gap-3 mb-4">
                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shadow-lg bg-[#0a0c0a]">
-                    {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full bg-[#4caf50]/10 text-[#4caf50] flex items-center justify-center font-black text-xs uppercase">{user.username.charAt(0)}</div>}
+                    <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="" />
                  </div>
                  <div className="flex flex-col">
                      <span className="text-[8px] text-gray-600 font-black uppercase tracking-widest mb-0.5 italic">Gửi lời thảo luận 🍀</span>

@@ -117,7 +117,7 @@ export default function Navbar() {
                       onClick={() => setShowSearch(false)}
                       className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
                     >
-                        <img src={manga.cover_image} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0" alt="" />
+                        <img src={manga.cover_image || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0 bg-black/40" alt="" />
                         <span className="text-[12px] font-bold text-gray-400 truncate">{manga.title}</span>
                     </Link>
                 ))}
@@ -166,14 +166,8 @@ export default function Navbar() {
                      </div>
                   </div>
 
-                  <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all shadow-xl shadow-black/50 hover:scale-105 active:scale-95 group">
-                      {user.avatar_url ? (
-                          <img src={user.avatar_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Avatar" />
-                      ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-[#1c221c] to-black flex items-center justify-center text-[#4caf50] font-black text-xs uppercase tracking-widest shadow-inner">
-                              {user.username.charAt(0)}
-                          </div>
-                      )}
+                  <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all shadow-xl shadow-black/50 hover:scale-105 active:scale-95 group bg-[#141814]">
+                      <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Avatar" />
                   </Link>
 
                   <button 
