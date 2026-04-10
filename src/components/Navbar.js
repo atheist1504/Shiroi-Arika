@@ -204,24 +204,26 @@ export default function Navbar() {
           )}
         </div>
       </div>
+    </nav>
 
-      {/* MOBILE MENU OVERLAY */}
+      {/* MOBILE MENU OVERLAY - MOVED OUTSIDE NAV FOR SOLID BACKGROUND */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <>
+          <div className="fixed inset-0 z-[2000]">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[99]"
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm shadow-2xl"
             />
             <motion.div 
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-[300px] bg-[#0a0c0a] border-r border-[#4caf50]/20 z-[2000] p-6 flex flex-col shadow-[10px_0_50px_rgba(0,0,0,0.9)]"
+              className="absolute top-0 left-0 bottom-0 w-[85%] max-w-[300px] bg-[#0a0c0a] border-r border-[#4caf50]/30 p-6 flex flex-col shadow-[20px_0_100px_rgba(0,0,0,1)] z-[2001]"
+              style={{ backgroundColor: '#0a0c0a' }} // Ép màu nền đen đặc 🛡️
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
@@ -234,19 +236,19 @@ export default function Navbar() {
               </div>
 
               {/* Mobile Search */}
-              <form onSubmit={handleSearchSubmit} className="relative mb-8">
+              <form onSubmit={handleSearchSubmit} className="relative mb-6">
                 <input 
                   type="text" 
                   placeholder="Tìm truyện..." 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full bg-[#141814] border border-white/5 rounded-2xl py-3 px-5 pl-12 text-sm focus:border-[#4caf50] outline-none"
+                  className="w-full bg-[#141814] border border-white/5 rounded-2xl py-3 px-5 pl-12 text-sm focus:border-[#4caf50] outline-none text-white"
                 />
                 <svg className="w-4 h-4 absolute left-4 top-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </form>
 
-              <div className="flex flex-col gap-3">
-                <div className="bg-[#141814] p-4 rounded-3xl mb-4 border border-white/5 shadow-inner">
+              <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
+                <div className="bg-[#141814] p-4 rounded-3xl mb-2 border border-white/5 shadow-inner">
                    <CheckIn />
                 </div>
                 
@@ -286,11 +288,11 @@ export default function Navbar() {
                 )}
               </div>
 
-              <div className="mt-auto pt-6 border-t border-white/5">
+              <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0">
                 {user ? (
                    <button 
                      onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                     className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all"
+                     className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg"
                    >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                       Đăng xuất
@@ -302,9 +304,9 @@ export default function Navbar() {
                 )}
               </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
-    </nav>
+    </>
   );
 }
