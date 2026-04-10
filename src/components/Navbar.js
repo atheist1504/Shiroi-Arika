@@ -7,11 +7,13 @@ import { supabase } from '@/lib/supabase';
 
 import CheckIn from "./CheckIn";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -88,9 +90,22 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="glass sticky-nav z-[1000] border-b border-white/5">
-      <div className="container nav-content px-4">
-        <Link href="/" className="logo shrink-0 flex items-center gap-2 group">
+    <nav className="glass sticky-nav z-[1000] border-b border-white/5 h-[70px] flex items-center">
+      <div className="container mx-auto px-4 flex justify-between items-center w-full relative">
+        
+        {/* LEFT: HAMBURGER (MOBILE ONLY) */}
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden p-2 text-[#4caf50] hover:bg-[#4caf50]/10 rounded-xl transition-all"
+        >
+          {isMobileMenuOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+          )}
+        </button>
+
+        <Link href="/" className="logo shrink-0 flex items-center gap-2 group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
           <span className="clover-icon text-2xl group-hover:rotate-12 transition-transform drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">🍀</span>
           <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
         </Link>
@@ -125,7 +140,7 @@ export default function Navbar() {
            )}
         </div>
 
-        <div className="flex items-center gap-7 shrink-0">
+        <div className="flex items-center gap-3 lg:gap-7 shrink-0 ml-auto lg:ml-0">
           <div className="hidden lg:flex items-center gap-7">
             <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Kho Truyện</Link>
             <Link href="/leaderboard" className="text-[#4caf50] hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-1.5 group">
@@ -133,7 +148,7 @@ export default function Navbar() {
             </Link>
             <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Lịch sử</Link>
             
-            {/* ADMIN LINK - Phục hồi nút đăng truyện cho Quản trị viên */}
+            {/* ADMIN LINK */}
             {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
                <Link href="/admin/create-manga" className="flex items-center gap-2 px-4 py-2 bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all shadow-lg shadow-[#4caf50]/5 animate-pulse">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
@@ -145,13 +160,13 @@ export default function Navbar() {
           {user ? (
              <div className="flex items-center gap-5 border-l border-white/5 pl-8 animate-fade-in group/user">
                 
-                {/* ĐIỂM DANH COMPONENT - HIỆN TRÊN MỌI THIẾT BỊ 🍀 */}
-                <div className="block">
+                {/* ĐIỂM DANH COMPONENT - Ẩn trên Mobile Header (Đã có trong Menu) 🍀 */}
+                <div className="hidden lg:block">
                   <CheckIn />
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-end gap-1 group">
+                  <div className="hidden sm:flex flex-col items-end gap-1 group">
                     <div className="flex items-center gap-2">
                         <span className="bg-[#4caf50] text-[#0a0c0a] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 shadow-lg italic">
                            LVL {calculateLevel(user.xp)}
@@ -189,6 +204,99 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      {/* MOBILE MENU OVERLAY */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[99]"
+            />
+            <motion.div 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-[#0a0c0a] border-r border-white/5 z-[100] p-6 flex flex-col shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-10">
+                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="logo flex items-center gap-2">
+                  <span className="text-2xl">🍀</span>
+                  <span className="logo-text gradient-text font-black text-lg">SHIROI ARIKA</span>
+                </Link>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-500">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {/* Mobile Search */}
+              <form onSubmit={handleSearchSubmit} className="relative mb-8">
+                <input 
+                  type="text" 
+                  placeholder="Tìm truyện..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-[#141814] border border-white/5 rounded-2xl py-3 px-5 pl-12 text-sm focus:border-[#4caf50] outline-none"
+                />
+                <svg className="w-4 h-4 absolute left-4 top-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </form>
+
+              <div className="flex flex-col gap-2">
+                <div className="bg-[#141814] p-4 rounded-2xl mb-4 border border-white/5">
+                   <CheckIn />
+                </div>
+                
+                <Link href="/manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                  Kho Truyện
+                </Link>
+
+                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-[#4caf50]/5 hover:bg-[#4caf50]/10 rounded-2xl text-[#4caf50] font-bold transition-all border border-[#4caf50]/10">
+                  <span className="text-xl">🏆</span> 
+                  BẢNG XẾP HẠNG
+                </Link>
+
+                <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Lịch sử đọc
+                </Link>
+
+                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  Trang cá nhân
+                </Link>
+
+                {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 mt-2 bg-orange-500/10 hover:bg-orange-500 text-orange-500 hover:text-white rounded-2xl font-bold transition-all border border-orange-500/20">
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                     Admin: Đăng Truyện
+                  </Link>
+                )}
+              </div>
+
+              <div className="mt-auto pt-6 border-t border-white/5">
+                {user ? (
+                   <button 
+                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
+                     className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all"
+                   >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                      Đăng xuất
+                   </button>
+                ) : (
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full flex items-center justify-center p-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-bold">
+                    Đăng nhập ngay
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }
