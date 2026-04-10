@@ -143,7 +143,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0c0a] pt-24 px-4 sm:px-8">
+      <div className="min-h-screen bg-[#0a0c0a] pt-28 px-4 sm:px-8">
         <div className="max-w-5xl mx-auto">
           <MangaDetailSkeleton />
         </div>
@@ -194,18 +194,18 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
       </div>
 
       {/* Background Banner */}
-      <div className="relative w-full h-[350px] md:h-[450px] overflow-hidden">
+      <div className="relative w-full h-[250px] md:h-[450px] overflow-hidden">
         {manga.cover_image && (
           <div 
             className="absolute inset-0 bg-cover bg-center opacity-30 transform scale-110" 
-            style={{ backgroundImage: `url(${optimizeImage(manga.cover_image, 800)})`, filter: 'blur(20px)' }}
+            style={{ backgroundImage: `url(${optimizeImage(manga.cover_image, 800) || manga.cover_image})`, filter: 'blur(20px)' }}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0c0a] via-[#0a0c0a]/60 to-transparent" />
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 relative -mt-[120px] md:-mt-[160px] z-10 transition-all duration-700">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 relative -mt-[80px] md:-mt-[160px] z-10 transition-all duration-700">
         
         {/* THANH CÔNG CỤ QUẢN TRỊ VIÊN 🍀 (Full Width) */}
         {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
@@ -257,7 +257,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
           </div>
 
           <div className="w-full md:flex-1 flex flex-col mt-4 md:mt-2">
-            <h1 className="text-4xl md:text-6xl font-black text-white mb-8 leading-tight drop-shadow-2xl tracking-tighter">
+            <h1 className="text-3xl md:text-6xl font-black text-white mb-8 leading-tight drop-shadow-2xl tracking-tighter text-center md:text-left">
               {manga.title}
             </h1>
             

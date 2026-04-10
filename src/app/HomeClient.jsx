@@ -63,7 +63,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
       {/* FEATURED BANNER - SIÊU PHẨM SHIROI */}
       {featured.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 mb-16 relative group/banner">
-            <div className="relative aspect-[21/9] w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5">
+            <div className="relative md:aspect-[21/9] min-h-[400px] md:min-h-0 w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5">
                 <AnimatePresence mode="wait">
                     {featured[activeSlide] && (
                     <motion.div
@@ -110,7 +110,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
                                         ))}
                                         <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[9px] font-black text-amber-500 uppercase tracking-widest animate-pulse">SIÊU PHẨM</span>
                                     </div>
-                                    <h2 className="text-3xl md:text-5xl font-black text-white leading-none tracking-tighter drop-shadow-2xl">{featured[activeSlide].title}</h2>
+                                    <h2 className="text-2xl md:text-5xl font-black text-white leading-tight md:leading-none tracking-tighter drop-shadow-2xl">{featured[activeSlide].title}</h2>
                                     <p className="text-gray-400 text-xs md:text-sm font-medium line-clamp-3 md:line-clamp-2 max-w-xl">
                                         {featured[activeSlide].description || "Đang cập nhật nội dung cho bộ truyện này. Shiroi Arika hứa hẹn mang lại trải nghiệm đọc tốt nhất cho bạn."}
                                     </p>
