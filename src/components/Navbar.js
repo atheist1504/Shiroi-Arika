@@ -220,16 +220,16 @@ export default function Navbar() {
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 bottom-0 w-[80%] max-w-[320px] bg-[#0a0c0a] border-r border-white/5 z-[100] p-6 flex flex-col shadow-2xl"
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-[300px] bg-[#0a0c0a] border-r border-[#4caf50]/20 z-[2000] p-6 flex flex-col shadow-[10px_0_50px_rgba(0,0,0,0.9)]"
             >
-              <div className="flex items-center justify-between mb-10">
-                <Link href="/" onClick={() => setIsMobileMenuOpen(false)} className="logo flex items-center gap-2">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
                   <span className="text-2xl">🍀</span>
-                  <span className="logo-text gradient-text font-black text-lg">SHIROI ARIKA</span>
-                </Link>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-gray-500">
-                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <span className="logo-text gradient-text font-black text-lg tracking-tighter">SHIROI ARIKA</span>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-[#4caf50] hover:bg-[#4caf50]/10 rounded-full transition-all">
+                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
 
@@ -245,34 +245,42 @@ export default function Navbar() {
                 <svg className="w-4 h-4 absolute left-4 top-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
               </form>
 
-              <div className="flex flex-col gap-2">
-                <div className="bg-[#141814] p-4 rounded-2xl mb-4 border border-white/5">
+              <div className="flex flex-col gap-3">
+                <div className="bg-[#141814] p-4 rounded-3xl mb-4 border border-white/5 shadow-inner">
                    <CheckIn />
                 </div>
                 
-                <Link href="/manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                <Link href="/manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all border border-transparent hover:border-[#4caf50]/20 group">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:bg-[#4caf50] group-hover:text-[#0a0c0a] transition-all">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                  </div>
                   Kho Truyện
                 </Link>
 
-                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-[#4caf50]/5 hover:bg-[#4caf50]/10 rounded-2xl text-[#4caf50] font-bold transition-all border border-[#4caf50]/10">
-                  <span className="text-xl">🏆</span> 
+                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#141814] to-transparent hover:from-[#4caf50]/10 rounded-2xl text-[#4caf50] font-black transition-all border border-[#4caf50]/10">
+                  <div className="w-10 h-10 bg-[#4caf50]/10 rounded-xl flex items-center justify-center text-xl">🏆</div> 
                   BẢNG XẾP HẠNG
                 </Link>
 
-                <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </div>
                   Lịch sử đọc
                 </Link>
 
-                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-white/5 rounded-2xl text-gray-400 font-bold transition-all">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                  </div>
                   Trang cá nhân
                 </Link>
 
                 {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 mt-2 bg-orange-500/10 hover:bg-orange-500 text-orange-500 hover:text-white rounded-2xl font-bold transition-all border border-orange-500/20">
-                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
+                     <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+                     </div>
                      Admin: Đăng Truyện
                   </Link>
                 )}
