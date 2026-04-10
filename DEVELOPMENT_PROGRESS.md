@@ -11,11 +11,15 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Kéo Thả 2D (dnd-kit)**: Khắc phục triệt để lỗi nhảy tọa độ, hỗ trợ sắp xếp dạng lưới (Grid) mượt mà 100%.
 - [x] **Logic An Toàn**: Chặn upload rỗng, xác nhận trước khi xóa/dọn sạch danh sách.
 - [x] **Banner Thủ Công (Manual featured)**: Tách biệt Banner và Truyện mới, thêm nút Ghim truyện trong Admin. 🚀
+- [x] **Carousel Safety Check**: Khắc phục triệt để lỗi mất ảnh khi quay vòng slide, đảm bảo hiển thị mượt mà.
 - [x] **Tổng Audit & Việt Hóa**: Dịch 100% tệp test sang Tiếng Việt, sửa lỗi ảnh đại diện (Broken Avatars).
 
 ### 🛠️ Kỹ Thuật & Hiệu Năng
 - [x] **TypeScript Integration**: Fix lỗi module resolution và ép kiểu cho các component Admin.
-- [x] **Responsive Design**: Tương thích hoàn hảo từ mobile đến desktop cho trình quản lý.
+- [x] **Server-Side Rendering (SSR)**: Chuyển đổi Trang Chi tiết truyện sang SSR để tối ưu hóa SEO và tốc độ tải.
+- [x] **Dynamic Metadata**: Tự động tạo thẻ Meta (Title, OG, Twitter) dựa trên thông tin truyện thực tế.
+- [x] **Search Infrastructure**: Hoàn thiện `sitemap.js` và `robots.js` giúp Google index dữ liệu.
+- [x] **Responsive Design**: Tương thích hoàn hảo từ mobile đến desktop cho toàn bộ nền tảng.
 
 ---
 
@@ -25,6 +29,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Hệ Thống Badge & Danh Hiệu**: Thiết kế và code logic cấp bậc cho người đọc.
 - [x] **Streak Mode (Chuỗi Điểm Danh)**: Thưởng XP nhân dịp chuỗi 3, 7, 30 ngày.
 - [x] **Lịch Sử Đọc (Real-time Sync)**: Tối ưu dữ liệu đồng bộ và thống kê chi tiết chương đã đọc.
+- [x] **Loại Bỏ Fake Stats**: Logic lọc tài khoản Admin ra khỏi Bảng xếp hạng để đảm bảo tính công bằng.
 - [x] **Định Danh Thống Kê**: Đồng bộ truy vấn theo `user_id` thay vì username (Tránh sai lệch dữ liệu). 🛡️
 
 ---
@@ -36,4 +41,4 @@ Dự án Manga Platform thế hệ mới.
 4. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới.
 
 ---
-*Cập nhật lần cuối: 15:10 - 10/04/2026*
+*Cập nhật lần cuối: 15:15 - 10/04/2026*
