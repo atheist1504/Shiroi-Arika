@@ -4,19 +4,21 @@ Dự án Manga Platform thế hệ mới.
 
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
-### 🛠️ Hệ Thống & Hiệu Năng (Sửa lỗi & Tối ưu) 🍀
-- [x] **Direct-to-R2 Ultra Upload (v3.0 - STABLE)**: Hệ thống upload siêu tốc đã hoàn hiện. Vượt qua giới hạn 4.5MB của Vercel, hỗ trợ tải ảnh song song, nén WebP thích ứng và đã sửa lỗi hiển thị ảnh R2 trên Production. 🚀⚡🍀
-- [x] **R2 Credential Fix**: Cấu trúc lại logic kết nối Cloudflare R2, tự động nhận diện phím `NEXT_PUBLIC_` giúp đăng chương mượt mà trên Production.
-- [x] **Admin Preview Sync**: Tích hợp `optimizeImage` vào trang Admin, đảm bảo ảnh xem trước không bao giờ bị lỗi (Broken Images). 🖼️
-- [x] **Smooth Scrolling (Native)**: Gỡ bỏ thanh cuộn xanh tùy chỉnh để dùng thanh cuộn gốc, tối ưu hiệu năng cuộn trang mượt mà như native app. 🚀
-- [x] **Reader Smoothness**: Loại bỏ `backdrop-blur` khi cuộn và dùng `cubic-bezier` cho thanh điều hướng, triệt tiêu hiện tượng giật hình (UI Jitter). 📱
-- [x] **Global Smart R2 Recovery (v4 - FINAL)**: Chuyển đổi logic vá lỗi ảnh thành thư viện dùng chung. Đã sửa lỗi hiển thị trên trang **Reader** và đồng nhất trải nghiệm trên toàn hệ thống. Hỗ trợ tự phục hồi URL ngay cả khi cấu hình môi trường bị thiếu. 🖼️🚀🛡️✨
-- [x] **Leaderboard UI Optimization**: Di chuyển ô tìm kiếm xuống sát bảng danh sách thành viên để tối ưu trải nghiệm (UX Search). 🔍🔥
-- [x] **Elite Comments System (v2)**: Đại tu toàn diện hệ thống bình luận. Triệt tiêu 100% hiện tượng nháy khi gõ chữ, tích hợp cộng XP (+5 XP) và thông báo trực quan. 💬💎🚀
-- [x] **Reader Smoothness (v3)**: Tối ưu hàng rào render (Memoization), GPU decoding và CSS transitions. Triệt tiêu lag khi cuộn nhanh trên PC. 📱🚀
-- [x] **SEO & Social Preview (OG)**: Cấu hình OpenGraph chuyên nghiệp. Đã thêm banner 1200x630 xịn xò khi chia sẻ link lên Facebook/Discord/Zalo. 🍀✨📈
-- [x] **Admin Preview CORS Fix**: Sửa lỗi ảnh vỡ khi phóng to trong trang quản trị, tích hợp cơ chế tự động khôi phục (Fallback). 🖼️🛠️
-- [x] **Build Stability**: Hướng dẫn xóa sạch `.next` cache để xử lý triệt để lỗi `MODULE_NOT_FOUND` khi cập nhật lớn.
+### 🛡️ Gamification & Security (v2 - FINAL) 🍀
+- [x] **Secure XP Awarding**: Chuyển đổi logic cộng XP đọc truyện sang xác thực bằng Database (`shiroi_read_chapters`). Mỗi chương chỉ nhận XP duy nhất một lần trên mỗi tài khoản, chặn đứng việc cày điểm ảo. 🛡️✨
+- [x] **Secure Check-in**: Gia cố bảo mật điểm danh bằng xác thực thời gian thực từ Server, ngăn chặn hành vi điểm danh kép qua proxy/local hack.
+- [x] **Anti-Spam Comments**: Triển khai thuật toán cộng XP phân cấp (10 XP đầu, 5 XP sau) với cơ chế cooldown 60s và giới hạn 100 XP/ngày để chống spam bình luận. 💬🚀
+- [x] **Unified Title Colors**: Đồng bộ hóa toàn bộ màu sắc danh hiệu người dùng về tông xanh `#4caf50` để tạo sự nhất quán và chuyên nghiệp trên BXH.
+- [x] **Leaderboard Badge Sync**: Đã truyền tham số `selected_badge` vào hàm Title, đảm bảo BXH hiển thị đúng danh hiệu người dùng đã chọn thay vì danh hiệu mặc định theo cấp độ. 🏆
+
+### 📖 Reader & UX Optimization (v4)
+- [x] **Seamless Reading**: Loại bỏ hoàn toàn khoảng cách giữa các trang (`margin: -0.5px`), tạo cảm giác dải phim liền mạch khi đọc. 🎞️
+- [x] **Manga-Specific Sync**: Chế độ đọc (Cuộn/Trang) và Theme được lưu theo `mangaId`, giúp cá nhân hóa trải nghiệm cho từng bộ truyện riêng biệt. 📔
+- [x] **Mobile DND Support**: Tích hợp `TouchSensor` (giữ 0.25s để kéo) cho phép sắp xếp thứ tự ảnh đăng chương cực kỳ mượt mà trên điện thoại. 📱🚀
+- [x] **Quick Photo Picker**: Tối ưu thuộc tính `accept` gợi ý trình duyệt di động mở ngay Thư viện ảnh gần đây thay vì trình quản lý file chung.
+- [x] **Admin Tooling Fix**: Sửa lỗi chính tả "BAN QUẢN TRỊ" và triệt tiêu hiện tượng nháy nút Preview khi thêm trang. 🛠️
+- [x] **SEO v2 Cache Bypass**: Triển khai cơ chế đổi tên tệp `/og-banner-v2.png` để ép các mạng xã hội cập nhật hình ảnh chia sẻ mới nhất. (Pending: Social Cache Refresh). 🍀⚡
+
 
 ### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
 - [x] **Trang Tìm Kiếm (Search Page)**: Hoàn thiện trang `/search` với bộ lọc thể loại thông minh và giao diện Glassmorphism cao cấp. 🔍
