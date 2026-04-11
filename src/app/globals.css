@@ -4,9 +4,17 @@
 
 /* 🎨 SHIROI THEME SYSTEM - ĐỒNG BỘ TOÀN DIỆN 🍀 */
 :root {
+  /* 🎨 CẤU HÌNH THEME ĐỒNG BỘ 🍀 */
   --bg-dark: #0a0c0a;
   --bg-deep: #141814;
   --bg-light: #ffffff;
+
+  /* 🌿 MÀU SẮC ĐẶC TRƯNG SHIROI (KHÔI PHỤC) */
+  --accent: #4caf50;
+  --accent-hover: #66bb6a;
+  --accent-gradient: linear-gradient(135deg, #2e7d32 0%, #4caf50 50%, #81c784 100%);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --border: rgba(255, 255, 255, 0.1);
 }
 
 [data-theme='dark'] { --bg-current: var(--bg-dark); --text-current: #ffffff; --border-current: rgba(255,255,255,0.05); }
