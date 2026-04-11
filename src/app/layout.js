@@ -3,9 +3,32 @@ import PageTransition from "../components/PageTransition";
 import "./globals.css";
 
 export const metadata = {
-  title: "Shiroi Arika (🍀) - Free Manga Reading Online",
-  description: "Read your favorite manga online for free at Shiroi Arika. High performance, premium experience, and luck in every story.",
-  keywords: ["manga", "read manga", "manga online", "free manga", "manga reader", "Shiroi Arika"],
+  metadataBase: new URL('https://shiroiarika.vercel.app'),
+  title: "Shiroi Arika (🍀) - Manga Online Premium Miễn Phí",
+  description: "Đọc Manga online miễn phí tại Shiroi Arika. Trải nghiệm tốc độ cao, giao diện tối giản và không quảng cáo khó chịu.",
+  keywords: ["manga", "đọc truyện tranh", "manga online", "truyện tranh online", "Shiroi Arika", "manga việt hóa"],
+  openGraph: {
+    title: "Shiroi Arika (🍀) - Thánh địa Manga Premium",
+    description: "Trải nghiệm đọc Manga tốc độ cao với giao diện tối ưu nhất cho độc giả.",
+    url: 'https://shiroiarika.vercel.app',
+    siteName: 'Shiroi Arika',
+    images: [
+      {
+        url: '/og-banner.png',
+        width: 1200,
+        height: 630,
+        alt: 'Shiroi Arika Banner',
+      },
+    ],
+    locale: 'vi_VN',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Shiroi Arika (🍀) - Thánh địa Manga Premium",
+    description: "Đọc Manga miễn phí với trải nghiệm tốt nhất.",
+    images: ['/og-banner.png'],
+  },
 };
 
 export default function RootLayout({ children }) {

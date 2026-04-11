@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,6 +8,32 @@ import Link from 'next/link';
 import Comments from '@/components/Comments';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { XP_REWARDS } from '@/lib/xp';
+
+// 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
+const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
+  return (
+    <div className={`flex flex-col items-center w-full leading-[0] ${theme === 'light' ? 'bg-white' : 'shadow-2xl bg-black'}`}>
+      {pages.map((page) => (
+        <img 
+          key={page.id} 
+          src={optimizeImage(fixR2Url(page.image_url), 1200)} 
+          alt="" 
+          className="w-full h-auto block m-0 p-0 will-change-transform" 
+          loading="lazy" 
+          decoding="async"
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const raw = fixR2Url(page.image_url);
+            if (e.target.src !== raw) e.target.src = raw;
+          }}
+        />
+      ))}
+    </div>
+  );
+});
+
+MangaPages.displayName = 'MangaPages';
 
 export default function ReaderClient({ chapterId, initialChapter, initialManga, initialPages, initialSiblings }) {
   const router = useRouter();
@@ -23,10 +49,10 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [allChapters] = useState(initialSiblings || []); 
   
   const [showNav, setShowNav] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [xpToast, setXpToast] = useState(false); // THÔNG BÁO NHẬN XP 🍀
+  const [lastScrollYState, setLastScrollYState] = useState(0); // Dùng cho UI (Back to Top)
+  const [xpToast, setXpToast] = useState(false); 
   const [showSettings, setShowSettings] = useState(false);
-  const [theme, setTheme] = useState('dark'); // 'dark' | 'deep' | 'light'
+  const [theme, setTheme] = useState('dark'); 
 
   useEffect(() => {
     if (initialSiblings) {
@@ -35,7 +61,6 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         setNextChapterId(initialSiblings[idx + 1]?.id || null);
     }
     
-    // 💾 LƯU LỊCH SỬ ĐỌC (LỚP 1: LOCALSTORAGE)
     if (chapter) {
         const historyKey = 'shiroi_history';
         const history = JSON.parse(localStorage.getItem(historyKey) || '{}');
@@ -48,14 +73,10 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             read.push(chapterId);
             localStorage.setItem(readKey, JSON.stringify(read));
         }
-
-        // 🚀 LƯU LỊCH SỬ ĐỌC (LỚP 2: SUPABASE - NẾU ĐÃ LOGIN)
         syncHistoryToDB();
     }
 
     if (manga?.default_reading_mode) setReadingMode(manga.default_reading_mode);
-    
-    // THƯỞNG XP KHI ĐỌC TRUYỆN
     giveReadXP();
   }, [chapterId]);
 
@@ -63,64 +84,31 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const raw = localStorage.getItem('shiroi_user');
     if (!raw) return;
     const user = JSON.parse(raw);
-    
     try {
-      // 1. Cập nhật "Lần đọc cuối" của bộ truyện (Upsert manga history)
-      await supabase.from('shiroi_history').upsert({
-        user_id: user.id, // ĐỊNH DANH GỐC 🛡️
-        username: user.username, // Phụ trợ hiển thị
-        manga_id: chapter.manga_id,
-        chapter_id: chapterId,
-        last_read_at: new Date().toISOString()
-      }, { onConflict: 'user_id, manga_id' });
-
-      // 2. Lưu chi tiết chương đã đọc (Insert if not exists)
-      await supabase.from('shiroi_read_chapters').upsert({
-        user_id: user.id, // ĐỊNH DANH GỐC 🛡️
-        username: user.username, // Phụ trợ hiển thị
-        chapter_id: chapterId,
-        manga_id: chapter.manga_id,
-        read_at: new Date().toISOString()
-      }, { onConflict: 'user_id, chapter_id' });
-    } catch (err) {
-      console.error("Lỗi đồng bộ lịch sử:", err);
-    }
+      await supabase.from('shiroi_history').upsert({ user_id: user.id, username: user.username, manga_id: chapter.manga_id, chapter_id: chapterId, last_read_at: new Date().toISOString() }, { onConflict: 'user_id, manga_id' });
+      await supabase.from('shiroi_read_chapters').upsert({ user_id: user.id, username: user.username, chapter_id: chapterId, manga_id: chapter.manga_id, read_at: new Date().toISOString() }, { onConflict: 'user_id, chapter_id' });
+    } catch (err) { console.error("Lỗi đồng bộ lịch sử:", err); }
   };
 
   const giveReadXP = async () => {
     const storedUser = localStorage.getItem('shiroi_user');
     if (!storedUser || !chapterId) return;
-
     const userData = JSON.parse(storedUser);
     const sessionKey = `xp_read_${chapterId}`;
     if (sessionStorage.getItem(sessionKey)) return;
-
     try {
-      // 🍀 CHIẾN THUẬT AN TOÀN: Lấy dữ liệu mới nhất từ DB để tránh ghi đè sai điểm
-      const { data: latestUser } = await supabase
-        .from('shiroi_users')
-        .select('xp')
-        .eq('id', userData.id)
-        .single();
-
+      const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', userData.id).single();
       const newXP = (latestUser?.xp || 0) + XP_REWARDS.READ_CHAPTER;
-
-      const { error } = await supabase
-        .from('shiroi_users')
-        .update({ xp: newXP })
-        .eq('id', userData.id);
-
+      const { error } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', userData.id);
       if (!error) {
         const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', userData.id).single();
         if (updated) localStorage.setItem('shiroi_user', JSON.stringify(updated));
         sessionStorage.setItem(sessionKey, 'true');
-        setXpToast(true); // HIỆN THÔNG BÁO THÀNH CÔNG ✨
+        setXpToast(true);
         setTimeout(() => setXpToast(false), 4000);
         window.dispatchEvent(new Event('storage'));
       }
-    } catch (err) {
-      console.error("Lỗi cộng XP:", err);
-    }
+    } catch (err) { console.error("Lỗi cộng XP:", err); }
   };
 
   const lastScrollYRef = useRef(0);
@@ -135,18 +123,24 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
       
-      // Chỉ cập nhật state nếu thực sự cần thay đổi để tránh re-render thừa 🍀
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+      // 1. Logic ẩn hiện Nav
+      if (currentScrollY > lastScrollY && currentScrollY > 150) {
         setShowNav(false);
       } else {
         setShowNav(true);
       }
+
+      // 2. Cập nhật state UI (Back to top) ít thường xuyên hơn để giữ mượt 🍀
+      if (Math.abs(currentScrollY - lastScrollYState) > 200 || currentScrollY < 100) {
+          setLastScrollYState(currentScrollY);
+      }
+
       lastScrollYRef.current = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [readingMode]);
+  }, [readingMode, lastScrollYState]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -165,33 +159,19 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const goToNextChapter = () => nextChapterId && router.push(`/read/${nextChapterId}`);
   const goToPrevChapter = () => prevChapterId && router.push(`/read/${prevChapterId}`);
 
-  // Structured Data (Article/Chapter/Book)
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Chapter",
-    "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`,
-    "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`,
-    "url": `https://shiroiarika.vercel.app/read/${chapterId}`,
-    "isPartOf": {
-       "@type": "BookSeries",
-       "name": manga?.title,
-       "url": `https://shiroiarika.vercel.app/manga/${manga?.id}`
-    }
-  };
+  const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroiarika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroiarika.vercel.app/manga/${manga?.id}` } };
 
   return (
     <div id="shiroi-reader-mode" className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a] text-gray-300'}`}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style dangerouslySetInnerHTML={{ __html: `
         nav.sticky-nav, footer.footer { display: none !important; }
         .main-content { padding: 0 !important; margin: 0 !important; }
         #shiroi-reader-mode { width: 100%; min-height: 100vh; position: relative; z-index: 1; }
       `}} />
 
-      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'}`}>
+      {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
+      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'}`}>
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
             <Link href={`/manga/${chapter?.manga_id}`} className="text-gray-500 hover:text-white">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -218,24 +198,15 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             <div className={`px-2 py-1 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[9px] font-black uppercase tracking-tighter`}>
                {readingMode === 'scroll' ? 'CUỘN ĐỌC' : `TRANG ${currentPageIndex + 1}/${pages.length}`}
             </div>
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`}
-            >
+            <button onClick={() => setShowSettings(!showSettings)} className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
         </div>
       </div>
 
-      {/* SETTINGS POPUP ⚙️ */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className={`fixed top-16 right-4 z-[20001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`}
-          >
+          <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[20001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
              <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-4">Cài đặt đọc truyện</h3>
              <div className="space-y-4">
                 <div className="space-y-2">
@@ -258,56 +229,25 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
       </AnimatePresence>
 
-      {/* XP EARNED TOAST ✨ */}
       <AnimatePresence>
         {xpToast && (
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: -50, opacity: 0 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[30000] bg-[#4caf50] text-[#0a0c0a] px-8 py-4 rounded-3xl font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(76,175,80,0.4)] flex items-center gap-3 border-2 border-white/20"
-          >
-             <span className="text-xl animate-bounce">💎</span>
-             KHO THÀNH TỰU +20 XP !
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[30000] bg-[#4caf50] text-[#0a0c0a] px-8 py-4 rounded-3xl font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(76,175,80,0.4)] flex items-center gap-3 border-2 border-white/20" >
+             <span className="text-xl animate-bounce">💎</span> KHO THÀNH TỰU +20 XP !
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-20 transition-colors duration-500 ${theme === 'deep' ? 'bg-[#0e110e]' : theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a]'} ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
+      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 ${theme === 'deep' ? 'bg-[#0e110e]' : theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a]'} ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
         {readingMode === 'scroll' && (
           <div className="w-full">
-            {/* 📖 PHẦN 1: TRANG TRUYỆN (DÍNH LIỀN 🚀) */}
-            <div className={`flex flex-col items-center w-full leading-[0] ${theme === 'light' ? 'bg-white' : 'shadow-2xl bg-black'}`}>
-              {pages.map((page) => (
-                <img 
-                  key={page.id} 
-                  src={optimizeImage(fixR2Url(page.image_url), 1200)} 
-                  alt="" 
-                  className="w-full h-auto block m-0 p-0" 
-                  loading="lazy" 
-                  crossOrigin="anonymous"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const raw = fixR2Url(page.image_url);
-                    if (e.target.src !== raw) e.target.src = raw;
-                  }}
-                />
-              ))}
-            </div>
-
+            <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
             <div className="space-y-10 mt-10">
-               {/* ⏭️ PHẦN 2: CHUYỂN CHƯƠNG KẾ TIẾP */}
                <div className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
                    <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === 'light' ? 'text-gray-400' : 'text-gray-700'}`}>ĐÃ HẾT CHƯƠNG {chapter?.chapter_number}</span>
-                   <button 
-                     onClick={goToNextChapter} 
-                     className="px-16 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95"
-                   >
+                   <button onClick={goToNextChapter} className="px-16 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95" >
                        ĐỌC TIẾP CHƯƠNG SAU 🚀
                    </button>
                </div>
-
-               {/* 💬 PHẦN 3: THẢO LUẬN SHIROI */}
                <div className={`w-full pb-40 ${theme === 'light' ? 'bg-white text-black' : ''}`}>
                    <div className={`h-px mb-12 ${theme === 'light' ? 'bg-gray-200' : 'bg-gradient-to-r from-transparent via-white/5 to-transparent'}`}></div>
                    <Comments chapterId={chapterId} mangaId={chapter?.manga_id} />
@@ -319,17 +259,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         {readingMode === 'page' && (
           <div className="relative w-full h-full flex flex-col items-center justify-center p-2 pt-14">
             <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)]">
-                <img 
-                  src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} 
-                  alt="" 
-                  className="max-w-full max-h-[calc(100vh-120px)] object-contain select-none shadow-2xl rounded-sm" 
-                  crossOrigin="anonymous"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const raw = fixR2Url(pages[currentPageIndex]?.image_url);
-                    if (e.target.src !== raw) e.target.src = raw;
-                  }}
-                />
+                <img src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} alt="" className="max-w-full max-h-[calc(100vh-120px)] object-contain select-none shadow-2xl rounded-sm" crossOrigin="anonymous" referrerPolicy="no-referrer" onError={(e) => { const raw = fixR2Url(pages[currentPageIndex]?.image_url); if (e.target.src !== raw) e.target.src = raw; }} />
             </div>
             <div onClick={() => currentPageIndex > 0 && setCurrentPageIndex(c => c - 1)} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
             <div onClick={() => currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter()} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
@@ -337,12 +267,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
       </div>
 
-      {/* BACK TO TOP 🍀 */}
-      {readingMode === 'scroll' && lastScrollY > 1000 && (
-        <button 
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-10 right-10 z-[10000] p-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all animate-fade-in"
-        >
+      {readingMode === 'scroll' && lastScrollYState > 1000 && (
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="fixed bottom-10 right-10 z-[10000] p-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all animate-fade-in" >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"/></svg>
         </button>
       )}
