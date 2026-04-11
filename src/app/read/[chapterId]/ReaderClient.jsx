@@ -12,13 +12,13 @@ import { XP_REWARDS } from '@/lib/xp';
 // 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
   return (
-    <div className={`flex flex-col items-center w-full leading-[0] bg-[var(--bg-reader)] ${theme === 'light' ? '' : 'shadow-2xl'}`}>
+    <div className={`flex flex-col items-center w-full bg-[var(--bg-reader)] ${theme === 'light' ? '' : 'shadow-2xl'}`}>
       {pages.map((page) => (
         <img 
           key={page.id} 
           src={optimizeImage(fixR2Url(page.image_url), 1200)} 
           alt="" 
-          className="w-full h-auto block m-0 p-0 will-change-transform" 
+          className="w-full h-auto block m-[-0.5px] p-0 will-change-transform" 
           loading="lazy" 
           decoding="async"
           crossOrigin="anonymous"
