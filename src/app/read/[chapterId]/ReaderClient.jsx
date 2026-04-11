@@ -56,15 +56,23 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   // 🔄 ĐỒNG BỘ THEME & CHẾ ĐỘ ĐỌC VĨNH VIỄN (CHỈ TRONG READER) 🍀
   useEffect(() => {
-    const savedTheme = localStorage.getItem('shiroi_theme') || 'dark';
-    const savedMode = localStorage.getItem('shiroi_reading_mode') || 'scroll';
-    setThemeState(savedTheme);
-    setReadingModeState(savedMode);
+    const savedTheme = localStorage.getItem('shiroi_reader_theme');
+    const savedMode = localStorage.getItem('shiroi_reading_mode');
+    if (savedMode) setReadingModeState(savedMode);
+    if (savedTheme) setThemeState(savedTheme);
   }, []);
+
+  // 💾 LƯU TRẠNG THÁI VĨNH VIỄN 🍀
+  useEffect(() => {
+    localStorage.setItem('shiroi_reading_mode', readingMode);
+  }, [readingMode]);
+
+  useEffect(() => {
+    localStorage.setItem('shiroi_reader_theme', theme);
+  }, [theme]);
 
   const setTheme = (newTheme) => {
     setThemeState(newTheme);
-    localStorage.setItem('shiroi_theme', newTheme);
   };
 
   const setReadingMode = (newMode) => {
