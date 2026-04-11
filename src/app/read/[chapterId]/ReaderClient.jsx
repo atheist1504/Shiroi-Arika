@@ -159,7 +159,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const goToNextChapter = () => nextChapterId && router.push(`/read/${nextChapterId}`);
   const goToPrevChapter = () => prevChapterId && router.push(`/read/${prevChapterId}`);
 
-  const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroiarika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroiarika.vercel.app/manga/${manga?.id}` } };
+  const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
   return (
     <div id="shiroi-reader-mode" className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a] text-gray-300'}`}>
