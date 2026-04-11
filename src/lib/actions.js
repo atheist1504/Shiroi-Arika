@@ -37,7 +37,7 @@ export async function uploadImageAction(formData) {
     const publicUrl = await uploadToR2(buffer, fileName);
 
     return { success: true, url: publicUrl };
-  } catch (error: any) {
+  } catch (error) {
     const errorMsg = error.message || String(error);
     console.error('Lỗi Server Action Upload:', errorMsg);
 
