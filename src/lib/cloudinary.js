@@ -32,3 +32,39 @@ export const optimizeImage = (url, width = '', height = '') => {
     return url; // Fallback về ảnh gốc nếu có lỗi 🛡️
   }
 };
+
+/**
+ * 🛠️ SMART R2 RECOVERY ENGINE 🍀
+ * Tự động sửa lỗi Domain R2 cũ, undefined/ và đường dẫn tương đối
+ */
+export const fixR2Url = (url) => {
+    if (!url || url.startsWith('blob:') || url.startsWith('data:')) return url;
+
+    const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
+    const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
+
+    let finalData = url;
+
+    // 1. Sửa lỗi undefined/
+    if (finalData.includes('undefined/')) {
+        finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
+    }
+
+    // 2. Tự động chuyển đổi Domain R2 cũ sang mới
+    // Nếu link chứa r2.dev nhưng không khớp domain hiện tại (Chỉ áp dụng nếu có config r2Url)
+    if (finalData.includes('r2.dev') && cleanR2Url && !finalData.includes(cleanR2Url)) {
+        const pathMatch = finalData.match(/r2\.dev\/(.*)/);
+        const cleanPath = pathMatch ? pathMatch[1] : null;
+        if (cleanPath) {
+            finalData = `${cleanR2Url}/${cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath}`;
+        }
+    }
+
+    // 3. Xử lý đường dẫn tương đối
+    if (!finalData.startsWith('http') && cleanR2Url) {
+        const separator = finalData.startsWith('/') ? '' : '/';
+        finalData = `${cleanR2Url}${separator}${finalData}`;
+    }
+
+    return finalData;
+};

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
 import { getUploadUrlAction } from '@/lib/actions';
-import { optimizeImage } from '@/lib/cloudinary';
+import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 
 // 🚀 DND-KIT IMPORTS
 import {
@@ -186,50 +186,8 @@ export default function AdminUploadPage() {
     if (chap) { setChapterNumber(chap.chapter_number.toString()); setChapterTitle(chap.title || ''); setSelectedMangaId(chap.manga_id); }
     const { data: pgs } = await supabase.from('pages').select('id, image_url, page_number').eq('chapter_id', id).order('page_number');
     if (pgs) {
-        const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
-        const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
-
-        // 🔍 SIÊU LOGIC: Tự động đoán Domain R2 nếu thiếu cấu hình (Domain Guessing) 🍀
-        let guessedR2Url = cleanR2Url;
-        if (!guessedR2Url && pgs.length > 0) {
-            const firstValidR2 = pgs.find(p => p.image_url?.includes('r2.dev'));
-            if (firstValidR2) {
-                const match = firstValidR2.image_url.match(/https:\/\/[^/]+/);
-                if (match) guessedR2Url = match[0];
-            }
-        }
-
         setItems(pgs.map(p => {
-            let finalData = p.image_url || '';
-            
-            // 🛠️ SIÊU LOGIC VÁ URL (SUPER FIX v2) 🍀
-            if (finalData) {
-                const activeR2 = guessedR2Url || cleanR2Url;
-
-                // 1. Sửa lỗi undefined/ do biến môi trường server cũ
-                if (finalData.includes('undefined/')) {
-                    finalData = finalData.replace(/.*undefined\//, `${activeR2}/`);
-                }
-                
-                // 2. TỰ ĐỘNG CHUYỂN ĐỔI DOMAIN R2 CŨ SANG MỚI (Chỉ khi domain trong DB bị sai/lỗi) 🔄
-                const isIncorrectR2 = finalData.includes('r2.dev') && activeR2 && !finalData.includes(activeR2);
-                const isBrokenUrl = finalData.includes('undefined/') || !finalData.startsWith('http');
-                
-                if ((isIncorrectR2 || isBrokenUrl) && activeR2) {
-                    const pathMatch = finalData.match(/r2\.dev\/(.*)/) || [null, finalData.split('undefined/').pop() || finalData];
-                    const cleanPath = pathMatch[1] || finalData;
-                    if (cleanPath) {
-                        finalData = `${activeR2}/${cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath}`;
-                    }
-                }
-
-                // 3. Chuyển đường dẫn tương đối thành tuyệt đối
-                if (!finalData.startsWith('http') && !finalData.startsWith('blob:') && !finalData.startsWith('data:')) {
-                    const separator = finalData.startsWith('/') ? '' : '/';
-                    if (activeR2) finalData = `${activeR2}${separator}${finalData}`;
-                }
-            }
-            
+            const finalData = fixR2Url(p.image_url);
             return { id: p.id, data: finalData, type: 'existing' };
         }));
     }

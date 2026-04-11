@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Comments from '@/components/Comments';
-import { optimizeImage } from '@/lib/cloudinary';
+import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { XP_REWARDS } from '@/lib/xp';
 
 export default function ReaderClient({ chapterId, initialChapter, initialManga, initialPages, initialSiblings }) {
@@ -281,10 +281,16 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
               {pages.map((page) => (
                 <img 
                   key={page.id} 
-                  src={optimizeImage(page.image_url, 1200)} 
+                  src={optimizeImage(fixR2Url(page.image_url), 1200)} 
                   alt="" 
                   className="w-full h-auto block m-0 p-0" 
                   loading="lazy" 
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const raw = fixR2Url(page.image_url);
+                    if (e.target.src !== raw) e.target.src = raw;
+                  }}
                 />
               ))}
             </div>
@@ -313,7 +319,17 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         {readingMode === 'page' && (
           <div className="relative w-full h-full flex flex-col items-center justify-center p-2 pt-14">
             <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)]">
-                <img src={optimizeImage(pages[currentPageIndex]?.image_url, 1600)} alt="" className="max-w-full max-h-[calc(100vh-120px)] object-contain select-none shadow-2xl rounded-sm" />
+                <img 
+                  src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} 
+                  alt="" 
+                  className="max-w-full max-h-[calc(100vh-120px)] object-contain select-none shadow-2xl rounded-sm" 
+                  crossOrigin="anonymous"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const raw = fixR2Url(pages[currentPageIndex]?.image_url);
+                    if (e.target.src !== raw) e.target.src = raw;
+                  }}
+                />
             </div>
             <div onClick={() => currentPageIndex > 0 && setCurrentPageIndex(c => c - 1)} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
             <div onClick={() => currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter()} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
