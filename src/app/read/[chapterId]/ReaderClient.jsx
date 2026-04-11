@@ -12,7 +12,7 @@ import { XP_REWARDS } from '@/lib/xp';
 // 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
   return (
-    <div className={`flex flex-col items-center w-full leading-[0] ${theme === 'light' ? 'bg-white' : 'shadow-2xl bg-black'}`}>
+    <div className={`flex flex-col items-center w-full leading-[0] bg-[var(--bg-reader)] ${theme === 'light' ? '' : 'shadow-2xl'}`}>
       {pages.map((page) => (
         <img 
           key={page.id} 
@@ -275,9 +275,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
 
         {readingMode === 'page' && (
-          <div className="relative w-full h-full flex flex-col items-center justify-center p-2 pt-14">
-            <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)]">
-                <img src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} alt="" className="max-w-full max-h-[calc(100vh-120px)] object-contain select-none shadow-2xl rounded-sm" crossOrigin="anonymous" referrerPolicy="no-referrer" onError={(e) => { const raw = fixR2Url(pages[currentPageIndex]?.image_url); if (e.target.src !== raw) e.target.src = raw; }} />
+          <div className="relative w-full h-full flex flex-col items-center justify-center p-0 md:p-2 pt-14">
+            <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)] w-full">
+                <img src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} alt="" className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} crossOrigin="anonymous" referrerPolicy="no-referrer" onError={(e) => { const raw = fixR2Url(pages[currentPageIndex]?.image_url); if (e.target.src !== raw) e.target.src = raw; }} />
             </div>
             <div onClick={() => currentPageIndex > 0 && setCurrentPageIndex(c => c - 1)} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
             <div onClick={() => currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter()} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
