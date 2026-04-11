@@ -212,7 +212,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
            <div className="flex flex-wrap items-center gap-3 mb-10 p-5 bg-[#141814]/80 backdrop-blur-3xl border border-[#4caf50]/30 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in relative overflow-hidden group/admin">
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#4caf50]/30 to-transparent"></div>
               <div className="flex items-center gap-2 pr-5 border-r border-white/5 mr-1">
-                 <span className="text-[11px] font-black text-[#4caf50] uppercase tracking-[0.2em] leading-none">BẢN QUẢN TRỊ</span>
+                 <span className="text-[11px] font-black text-[#4caf50] uppercase tracking-[0.2em] leading-none">BAN QUẢN TRỊ</span>
               </div>
               <Link 
                 href={`/admin/create-manga?id=${mangaId}`}
