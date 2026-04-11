@@ -211,11 +211,15 @@ export default function AdminUploadPage() {
                     finalData = finalData.replace(/.*undefined\//, `${activeR2}/`);
                 }
                 
-                // 2. TỰ ĐỘNG CHUYỂN ĐỔI DOMAIN R2 CŨ SANG MỚI 🔄
-                if (finalData.includes('r2.dev') && activeR2 && !finalData.includes(activeR2)) {
-                    const pathMatch = finalData.match(/r2\.dev\/(.*)/);
-                    if (pathMatch && pathMatch[1]) {
-                        finalData = `${activeR2}/${pathMatch[1]}`;
+                // 2. TỰ ĐỘNG CHUYỂN ĐỔI DOMAIN R2 CŨ SANG MỚI (Chỉ khi domain trong DB bị sai/lỗi) 🔄
+                const isIncorrectR2 = finalData.includes('r2.dev') && activeR2 && !finalData.includes(activeR2);
+                const isBrokenUrl = finalData.includes('undefined/') || !finalData.startsWith('http');
+                
+                if ((isIncorrectR2 || isBrokenUrl) && activeR2) {
+                    const pathMatch = finalData.match(/r2\.dev\/(.*)/) || [null, finalData.split('undefined/').pop() || finalData];
+                    const cleanPath = pathMatch[1] || finalData;
+                    if (cleanPath) {
+                        finalData = `${activeR2}/${cleanPath.startsWith('/') ? cleanPath.slice(1) : cleanPath}`;
                     }
                 }
 
