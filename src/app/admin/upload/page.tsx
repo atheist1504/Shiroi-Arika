@@ -97,6 +97,9 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
         className="w-full h-full object-cover pointer-events-none" 
         draggable="false" 
         alt="" 
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
+        title={displaySrc} // 🔍 Di chuột vào để xem link thực tế nếu bị lỗi
         onError={(e: any) => {
           // 🛡️ FALLBACK: Nếu Cloudinary lỗi, thử dùng ảnh gốc 🍀
           if (e.target.src !== displaySrc) {
@@ -186,30 +189,40 @@ export default function AdminUploadPage() {
         const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
         const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
 
+        // 🔍 SIÊU LOGIC: Tự động đoán Domain R2 nếu thiếu cấu hình (Domain Guessing) 🍀
+        let guessedR2Url = cleanR2Url;
+        if (!guessedR2Url && pgs.length > 0) {
+            const firstValidR2 = pgs.find(p => p.image_url?.includes('r2.dev'));
+            if (firstValidR2) {
+                const match = firstValidR2.image_url.match(/https:\/\/[^/]+/);
+                if (match) guessedR2Url = match[0];
+            }
+        }
+
         setItems(pgs.map(p => {
             let finalData = p.image_url || '';
             
-            // 🛠️ SIÊU LOGIC VÁ URL (SUPER FIX) 🍀
+            // 🛠️ SIÊU LOGIC VÁ URL (SUPER FIX v2) 🍀
             if (finalData) {
+                const activeR2 = guessedR2Url || cleanR2Url;
+
                 // 1. Sửa lỗi undefined/ do biến môi trường server cũ
                 if (finalData.includes('undefined/')) {
-                    finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
+                    finalData = finalData.replace(/.*undefined\//, `${activeR2}/`);
                 }
                 
                 // 2. TỰ ĐỘNG CHUYỂN ĐỔI DOMAIN R2 CŨ SANG MỚI 🔄
-                // Nếu ảnh thuộc r2.dev nhưng không khớp với domain hiện tại
-                if (finalData.includes('r2.dev') && !finalData.includes(cleanR2Url) && cleanR2Url) {
-                    // Extract phần path sau domain (bắt đầu từ chapters/ hoặc tên folder đầu tiên)
+                if (finalData.includes('r2.dev') && activeR2 && !finalData.includes(activeR2)) {
                     const pathMatch = finalData.match(/r2\.dev\/(.*)/);
                     if (pathMatch && pathMatch[1]) {
-                        finalData = `${cleanR2Url}/${pathMatch[1]}`;
+                        finalData = `${activeR2}/${pathMatch[1]}`;
                     }
                 }
 
                 // 3. Chuyển đường dẫn tương đối thành tuyệt đối
                 if (!finalData.startsWith('http') && !finalData.startsWith('blob:') && !finalData.startsWith('data:')) {
                     const separator = finalData.startsWith('/') ? '' : '/';
-                    finalData = `${cleanR2Url}${separator}${finalData}`;
+                    if (activeR2) finalData = `${activeR2}${separator}${finalData}`;
                 }
             }
             
