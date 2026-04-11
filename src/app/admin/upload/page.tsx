@@ -13,6 +13,8 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -152,7 +154,13 @@ export default function AdminUploadPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { 
+      activationConstraint: { 
+        delay: 250, // Giữ 250ms để bắt đầu kéo (tránh xung đột với cuộn trang) 🍀
+        tolerance: 5 
+      } 
+    }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
