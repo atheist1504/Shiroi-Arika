@@ -129,7 +129,8 @@ export default function AdminUploadPage() {
   const [items, setItems] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState<{type: 'error' | 'success' | 'info', text: string} | null>(null);
+  const [message, setMessage] = useState<{type: 'error' | 'success' | 'info', text: string, details?: string, suggestion?: string} | null>(null);
+  const [showDebug, setShowDebug] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [existingChapterId, setExistingChapterId] = useState<string | null>(preSelectedChapterId);
   const [deleteStep, setDeleteStep] = useState(0);
@@ -311,8 +312,13 @@ export default function AdminUploadPage() {
       setMessage({ type: "success", text: "🚀 XUẤT BẢN THÀNH CÔNG!" });
       setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
     } catch (err: any) { 
-      setMessage({ type: "error", text: err.message });
-      alert(`QUÁ TRÌNH THẤT BẠI: ${err.message}`); 
+      setMessage({ 
+        type: "error", 
+        text: err.name === 'Error' ? err.message : "QUÁ TRÌNH THẤT BẠI!",
+        details: err.stack || String(err),
+        suggestion: err.message.includes('4.5MB') ? "Vui lòng dùng ảnh có dung lượng thấp hơn hoặc nén thêm." : "Kiểm tra lại kết nối mạng và các thiết lập Cloudflare R2."
+      });
+      console.error("LỖI CHI TIẾT:", err);
     } finally { 
       setUploading(false); 
     }
@@ -330,7 +336,35 @@ export default function AdminUploadPage() {
            <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
         </div>
 
-        {message && <div className="mb-8 p-4 rounded-xl border font-black uppercase text-[10px] tracking-widest animate-fade-in bg-white/5 border-white/10 text-[#4caf50]">{message.text}</div>}
+        {message && (
+          <div className={`mb-8 p-6 rounded-3xl border animate-fade-in shadow-2xl ${message.type === 'error' ? 'bg-red-500/5 border-red-500/20' : 'bg-white/5 border-white/10'}`}>
+             <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${message.type === 'error' ? 'bg-red-500/20 text-red-500' : 'bg-[#4caf50]/20 text-[#4caf50]'}`}>
+                   {message.type === 'error' ? '🆘' : '✨'}
+                </div>
+                <div className="flex-1 space-y-2">
+                   <p className={`font-black uppercase text-[11px] tracking-widest ${message.type === 'error' ? 'text-red-500' : 'text-[#4caf50]'}`}>{message.text}</p>
+                   {message.suggestion && <p className="text-[10px] text-gray-400 font-medium">💡 Gợi ý: {message.suggestion}</p>}
+                   
+                   {message.type === 'error' && (
+                     <div className="pt-2">
+                        <button 
+                          onClick={() => setShowDebug(!showDebug)} 
+                          className="text-[9px] font-black uppercase text-gray-500 hover:text-white border-b border-gray-500/30 pb-0.5 transition-all"
+                        >
+                          {showDebug ? "Ẩn chi tiết kỹ thuật 🔼" : "Xem chi tiết kỹ thuật 🔍"}
+                        </button>
+                        {showDebug && message.details && (
+                          <pre className="mt-4 p-4 bg-black rounded-xl border border-white/5 text-[9px] text-red-400 overflow-x-auto font-mono leading-relaxed max-h-40">
+                             {message.details}
+                          </pre>
+                        )}
+                     </div>
+                   )}
+                </div>
+             </div>
+          </div>
+        )}
 
         <div className="space-y-12">
            <div className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 shadow-2xl">

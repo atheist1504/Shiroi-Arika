@@ -5,6 +5,7 @@
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo'; // Thay 'demo' bằng Cloud Name của bạn
 
+export const optimizeImage = (url, width = '', height = '') => {
   // Nếu là ảnh từ Blob, base64 hoặc đường dẫn local thì không xử lý 🍀
   if (!url || url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('/')) {
     return url;
