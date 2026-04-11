@@ -124,8 +124,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     if (!raw) return;
     const user = JSON.parse(raw);
     try {
+      // 📍 CHỈ CẬP NHẬT LỊCH SỬ GẦN NHẤT (Không ghi vào bảng log vĩnh viễn ở đây) 🍀
       await supabase.from('shiroi_history').upsert({ user_id: user.id, username: user.username, manga_id: chapter.manga_id, chapter_id: chapterId, last_read_at: new Date().toISOString() }, { onConflict: 'user_id, manga_id' });
-      await supabase.from('shiroi_read_chapters').upsert({ user_id: user.id, username: user.username, chapter_id: chapterId, manga_id: chapter.manga_id, read_at: new Date().toISOString() }, { onConflict: 'user_id, chapter_id' });
     } catch (err) { console.error("Lỗi đồng bộ lịch sử:", err); }
   };
 
@@ -133,13 +133,34 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const storedUser = localStorage.getItem('shiroi_user');
     if (!storedUser || !chapterId) return;
     const userData = JSON.parse(storedUser);
+    
     const sessionKey = `xp_read_${chapterId}`;
     if (sessionStorage.getItem(sessionKey)) return;
+
     try {
+      // 🛡️ KIỂM TRA TỪ DATABASE: Chặn cộng dồn XP ảo trên nhiều thiết bị 🍀
+      const { data: alreadyRead } = await supabase
+        .from('shiroi_read_chapters')
+        .select('id')
+        .eq('user_id', userData.id)
+        .eq('chapter_id', chapterId)
+        .single();
+
+      if (alreadyRead) {
+        // Nếu đã đọc rồi thì đánh dấu session để khỏi check lại lần sau trong cùng phiên
+        sessionStorage.setItem(sessionKey, 'true');
+        return;
+      }
+
       const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', userData.id).single();
       const newXP = (latestUser?.xp || 0) + XP_REWARDS.READ_CHAPTER;
+      
       const { error } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', userData.id);
+      
       if (!error) {
+        // ✅ GHI NHẬN ĐÃ NHẬN THƯỞNG: Chỉ ghi vào database sau khi cộng XP thành công 🍀
+        await supabase.from('shiroi_read_chapters').upsert({ user_id: userData.id, username: userData.username, chapter_id: chapterId, manga_id: chapter.manga_id, read_at: new Date().toISOString() }, { onConflict: 'user_id, chapter_id' });
+        
         const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', userData.id).single();
         if (updated) localStorage.setItem('shiroi_user', JSON.stringify(updated));
         sessionStorage.setItem(sessionKey, 'true');
@@ -147,7 +168,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         setTimeout(() => setXpToast(false), 4000);
         window.dispatchEvent(new Event('storage'));
       }
-    } catch (err) { console.error("Lỗi cộng XP:", err); }
+    } catch (err) { console.error("Lỗi xác thực XP:", err); }
   };
 
   const lastScrollYRef = useRef(0);
