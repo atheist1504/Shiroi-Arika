@@ -5,6 +5,7 @@ Dự án Manga Platform thế hệ mới.
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
 ### 🛠️ Hệ Thống & Hiệu Năng (Sửa lỗi & Tối ưu) 🍀
+- [x] **Ultra-Optimized Admin Upload (v2.1)**: Nâng cấp toàn diện hệ thống đăng chương. Sử dụng `ObjectURL` để tiết kiệm RAM, tự động nén và Scale ảnh về 1600px ngay tại client, thêm chốt chặn kiểm tra URL `undefined` để bảo vệ dữ liệu. 🚀
 - [x] **R2 Credential Fix**: Cấu trúc lại logic kết nối Cloudflare R2, tự động nhận diện phím `NEXT_PUBLIC_` giúp đăng chương mượt mà trên Production.
 - [x] **Admin Preview Sync**: Tích hợp `optimizeImage` vào trang Admin, đảm bảo ảnh xem trước không bao giờ bị lỗi (Broken Images). 🖼️
 - [x] **Smooth Scrolling (Native)**: Gỡ bỏ thanh cuộn xanh tùy chỉnh để dùng thanh cuộn gốc, tối ưu hiệu năng cuộn trang mượt mà như native app. 🚀

@@ -34,17 +34,13 @@ jest.mock('../src/lib/supabase', () => ({
   },
 }));
 
-describe('Trang Admin Quản Lý Upload', () => {
+describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa 🍀', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    Storage.prototype.getItem = jest.fn((key) => {
-      if (key === 'shiroi_user') return JSON.stringify({ username: 'ADMIN' });
-      return null;
-    });
   });
 
-  it('hiển thị danh sách Manga để chọn ban đầu', async () => {
-    const mockMangas = [{ id: 'm1', title: 'Dragon Ball' }];
+  it('hiển thị danh sách Manga để chọn ban đầu từ Database', async () => {
+    const mockMangas = [{ id: 'm1', title: 'Code Geass: Lelouch of the Rebellion' }];
 
     supabase.from.mockImplementationOnce(() => ({
       select: () => ({
@@ -54,14 +50,14 @@ describe('Trang Admin Quản Lý Upload', () => {
 
     render(<AdminUploadPage />);
 
-    // Giao diện sẽ render thẻ select chứa tên truyện
+    // Kiểm tra xem tên truyện có xuất hiện trong danh sách không
     await waitFor(() => {
-      expect(screen.getByText('Dragon Ball')).toBeInTheDocument();
+      expect(screen.getByText('Code Geass: Lelouch of the Rebellion')).toBeInTheDocument();
     });
   });
 
-  it('cảnh báo yêu cầu nhập thông tin khi gửi form trống', async () => {
-    // Không có manga nào
+  it('thông báo lỗi khi nhấn nút xuất bản mà chưa nhập đủ thông tin', async () => {
+    // Không có manga nào được chọn mặc định
     supabase.from.mockImplementationOnce(() => ({
       select: () => ({
         order: () => Promise.resolve({ data: [], error: null })
@@ -70,13 +66,19 @@ describe('Trang Admin Quản Lý Upload', () => {
 
     render(<AdminUploadPage />);
 
-    // Tìm form và gọi hàm submit trực tiếp (bỏ qua validation HTML5 của DOM ảo)
-    const submitBtn = screen.getByText(/LƯU & ĐĂNG CHƯƠNG/i);
-    const form = submitBtn.closest('form');
-    fireEvent.submit(form);
+    // Tìm nút xuất bản theo đúng text mới
+    const publishBtn = screen.getByText(/XUẤT BẢN NGAY 🚀/i);
+    fireEvent.click(publishBtn);
 
     await waitFor(() => {
-      expect(screen.getByText(/VUI LÒNG NHẬP ĐỦ THÔNG TIN MANGA/i)).toBeInTheDocument();
+      // Thông báo lỗi phải khớp với logic mới trong page.tsx
+      expect(screen.getByText(/CHƯA NHẬP ĐỦ THÔNG TIN! 🍀/i)).toBeInTheDocument();
     });
+  });
+
+  it('hiển thị khu vực thêm trang truyện bằng hình ảnh', async () => {
+    render(<AdminUploadPage />);
+    expect(screen.getByText(/Thêm trang/i)).toBeInTheDocument();
+    expect(screen.getByText(/CÁC TRANG TRUYỆN/i)).toBeInTheDocument();
   });
 });

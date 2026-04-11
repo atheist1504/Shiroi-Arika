@@ -26,17 +26,39 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// 🍀 TIỆN ÍCH NÉN ẢNH
-const compressImageToWebP = async (base64Str: string): Promise<Blob> => {
-  return new Promise((resolve) => {
+// 🍀 TIỆN ÍCH NÉN ẢNH (Bản siêu tối ưu 🚀)
+const compressImageToWebP = async (file: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
     const img = new Image();
-    img.src = base64Str;
+    const url = URL.createObjectURL(file);
+    img.src = url;
+
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width; canvas.height = img.height;
+      const maxWidth = 1600; // Giới hạn chiều rộng để tối ưu dung lượng
+      const scale = Math.min(1, maxWidth / img.width);
+
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+
       const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0);
-      canvas.toBlob((blob) => resolve(blob!), 'image/webp', 0.8);
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        return reject("Lỗi khởi tạo Canvas");
+      }
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(url); // Giải phóng bộ nhớ 🍀
+        if (!blob) return reject("Nén ảnh thất bại");
+        resolve(blob);
+      }, 'image/webp', 0.85);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject("Không thể tải ảnh");
     };
   });
 };
@@ -59,24 +81,25 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // 💡 Logic hiển thị ảnh: Nếu là ảnh mới thì dùng preview (blob), nếu ảnh cũ thì dùng data (url)
+  const displaySrc = item.type === 'new' ? item.preview : item.data;
+
   return (
     <div 
       ref={setNodeRef} 
       style={style} 
       className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
-      <img src={optimizeImage(item.data, 200)} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
+      <img src={optimizeImage(displaySrc, 200)} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
       
-      {/* ✋ VÙNG KÉO THẢ (Toàn bộ ảnh) */}
       <div 
         {...attributes} 
         {...listeners} 
         className="absolute inset-0 cursor-grab active:cursor-grabbing z-10"
       ></div>
 
-      {/* 🔍 NÚT PHÓNG TO */}
       <button 
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreview(item.data); }}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onPreview(displaySrc); }}
         className="absolute bottom-2 right-2 w-8 h-8 bg-black/60 backdrop-blur-md rounded-xl flex items-center justify-center text-[#4caf50] opacity-0 group-hover:opacity-100 transition-all hover:bg-[#4caf50] hover:text-black z-20 shadow-lg border border-white/10"
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -134,7 +157,6 @@ export default function AdminUploadPage() {
     if (chap) { setChapterNumber(chap.chapter_number.toString()); setChapterTitle(chap.title || ''); setSelectedMangaId(chap.manga_id); }
     const { data: pgs } = await supabase.from('pages').select('id, image_url, page_number').eq('chapter_id', id).order('page_number');
     if (pgs) {
-        // 🛠️ VÁ LỖI THÔNG MINH
         const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
         const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
 
@@ -152,25 +174,17 @@ export default function AdminUploadPage() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
     setMessage({ type: 'info', text: `ĐANG XỬ LÝ ${files.length} ẢNH... ⏳` });
-    try {
-      const newItems = await Promise.all(files.map((file, idx) => {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            resolve({ 
-              id: `new-${Date.now()}-${idx}-${Math.random()}`, 
-              data: ev.target?.result, 
-              type: 'new' 
-            });
-          };
-          reader.readAsDataURL(file);
-        });
-      }));
-      setItems(prev => [...prev, ...newItems]);
-      setMessage(null);
-    } catch (err) {
-      setMessage({ type: 'error', text: 'LỖI KHI ĐỌC FILE! 🆘' });
-    }
+    
+    // Tối ưu: Dùng ObjectURL thay vì Base64 để tiết kiệm RAM 🍀
+    const newItems = files.map((file, idx) => ({
+      id: `new-${Date.now()}-${idx}-${Math.random()}`,
+      file, 
+      preview: URL.createObjectURL(file),
+      type: 'new'
+    }));
+
+    setItems(prev => [...prev, ...newItems]);
+    setMessage(null);
   };
 
   const handleDragEnd = (event: any) => {
@@ -184,7 +198,13 @@ export default function AdminUploadPage() {
     }
   };
 
-  const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
+  const removeItem = (id: string) => {
+    setItems(prev => {
+      const itemToDrop = prev.find(i => i.id === id);
+      if (itemToDrop?.preview) URL.revokeObjectURL(itemToDrop.preview); // Dọn dẹp bộ nhớ 🍀
+      return prev.filter(i => i.id !== id);
+    });
+  };
 
   const handleFinalDelete = async () => {
      const idToDel = preSelectedChapterId || existingChapterId;
@@ -246,15 +266,23 @@ export default function AdminUploadPage() {
 
         if (item.type === 'new') {
           try {
-            const compressed = await compressImageToWebP(item.data);
+            // Sử dụng bộ nén siêu tối ưu (maxWidth 1600) 🍀
+            const compressed = await compressImageToWebP(item.file);
             const formData = new FormData();
             formData.append('file', compressed);
             formData.append('fileName', `chapters/${chapId}/${Date.now()}-${i}.webp`);
             
             const result = await uploadImageAction(formData);
+            
             if (!result || !result.success || !result.url) {
-              throw new Error(result?.error || `Lỗi upload ảnh thứ ${i + 1}`);
+              throw new Error(result?.error || `Upload thất bại tại trang ${i + 1}`);
             }
+
+            // 🚨 CHỐT CHẶN CUỐI: Kiểm tra URL hợp lệ
+            if (result.url.includes("undefined")) {
+              throw new Error("Hệ thống trả về URL không hợp lệ (undefined)! Vui lòng kiểm tra cấu hình R2.");
+            }
+
             finalUrl = result.url;
           } catch (uploadErr: any) {
             console.error(`Lỗi tại ảnh index ${i}:`, uploadErr);
