@@ -52,7 +52,22 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [lastScrollYState, setLastScrollYState] = useState(0); // Dùng cho UI (Back to Top)
   const [xpToast, setXpToast] = useState(false); 
   const [showSettings, setShowSettings] = useState(false);
-  const [theme, setTheme] = useState('dark'); 
+  const [theme, setThemeState] = useState('dark'); 
+
+  // 🔄 ĐỒNG BỘ THEME VỚI TOÀN TRANG 🍀
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('shiroi_theme') || 'dark';
+    setThemeState(savedTheme);
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }, []);
+
+  const setTheme = (newTheme) => {
+    setThemeState(newTheme);
+    localStorage.setItem('shiroi_theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+    // Dispatch event để các component khác (nếu có) cập nhật theo
+    window.dispatchEvent(new Event('storage'));
+  };
 
   useEffect(() => {
     if (initialSiblings) {
@@ -220,8 +235,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                    <label className="text-[9px] text-gray-500 font-bold uppercase">Màu phong nền</label>
                    <div className="grid grid-cols-2 gap-2">
                       <button onClick={() => setTheme('dark')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'dark' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>ĐEN TUYỀN</button>
-                      <button onClick={() => setTheme('deep')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'deep' ? 'bg-[#141814] text-white border-[#2a332a]' : 'bg-black/20 text-gray-400 border-white/5'}`}>XÁM ĐẬM</button>
-                      <button onClick={() => setTheme('light')} className={`py-2 text-[8px] font-black rounded-lg border transition-all col-span-2 ${theme === 'light' ? 'bg-black text-white border-black' : (theme === 'light' ? 'bg-white text-black' : 'bg-white text-black border-white shadow-xl')}`}>NỀN TRẮNG</button>
+                      <button onClick={() => setTheme('deep')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'deep' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>XÁM ĐẬM</button>
+                      <button onClick={() => setTheme('light')} className={`py-2 text-[8px] font-black rounded-lg border transition-all col-span-2 ${theme === 'light' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-white text-black border-white shadow-xl'}`}>NỀN TRẮNG</button>
                    </div>
                 </div>
              </div>
