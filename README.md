@@ -33,4 +33,28 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🛠️ Troubleshooting & Development
+
+### 1. Sửa lỗi "Cannot find module" hoặc Build lỗi
+Nếu bạn gặp lỗi `MODULE_NOT_FOUND` hoặc giao diện local không cập nhật sau khi xóa code lớn, hãy chạy lệnh sau trong Terminal:
+```powershell
+# Xóa bộ nhớ đệm Next.js
+Remove-Item -Path .next -Recurse -Force
+# Sau đó chạy lại
+npm run dev
+```
+
+### 2. Cấu hình Production (Vercel)
+Để hệ thống đăng chương và ảnh hoạt động trên web chính thức, bạn **bắt buộc** phải cấu hình các biến môi trường sau trong Vercel Project Settings:
+- `R2_ACCESS_KEY_ID` / `NEXT_PUBLIC_R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY` / `NEXT_PUBLIC_R2_SECRET_ACCESS_KEY`
+- `R2_ACCOUNT_ID` / `NEXT_PUBLIC_R2_ACCOUNT_ID`
+- `R2_BUCKET_NAME`
+- `R2_PUBLIC_URL`
+
+### 3. Quy trình Triển khai (Deployment)
+Mọi thay đổi code sau khi được xác nhận ổn định ở môi trường Local sẽ được **tự động Push lên GitHub** branch `main`. Vercel sẽ tự động bắt lấy thay đổi này để cập nhật trang web chính thức.
+
+---
