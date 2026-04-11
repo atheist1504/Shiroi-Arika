@@ -179,6 +179,8 @@ export default function AdminUploadPage() {
     if (pgs) {
         const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
         const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
+        
+        console.log('🔍 HỆ THỐNG ĐANG DÙNG R2 URL:', cleanR2Url || 'TRỐNG (MISSING!) 🆘');
 
         setItems(pgs.map(p => {
             let finalData = p.image_url;
