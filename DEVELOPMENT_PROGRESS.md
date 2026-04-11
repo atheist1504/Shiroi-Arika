@@ -4,6 +4,13 @@ Dự án Manga Platform thế hệ mới.
 
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
+### 🛠️ Hệ Thống & Hiệu Năng (Sửa lỗi & Tối ưu) 🍀
+- [x] **R2 Credential Fix**: Cấu trúc lại logic kết nối Cloudflare R2, tự động nhận diện phím `NEXT_PUBLIC_` giúp đăng chương mượt mà trên Production.
+- [x] **Admin Preview Sync**: Tích hợp `optimizeImage` vào trang Admin, đảm bảo ảnh xem trước không bao giờ bị lỗi (Broken Images). 🖼️
+- [x] **Smooth Scrolling (Native)**: Gỡ bỏ thanh cuộn xanh tùy chỉnh để dùng thanh cuộn gốc, tối ưu hiệu năng cuộn trang mượt mà như native app. 🚀
+- [x] **Reader Smoothness**: Loại bỏ `backdrop-blur` khi cuộn và dùng `cubic-bezier` cho thanh điều hướng, triệt tiêu hiện tượng giật hình (UI Jitter). 📱
+- [x] **Build Stability**: Hướng dẫn xóa sạch `.next` cache để xử lý triệt để lỗi `MODULE_NOT_FOUND` khi cập nhật lớn.
+
 ### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
 - [x] **Trang Tìm Kiếm (Search Page)**: Hoàn thiện trang `/search` với bộ lọc thể loại thông minh và giao diện Glassmorphism cao cấp. 🔍
 - [x] **Hệ Thống Thể Loại Mới**: Đã thêm các phân loại One Shot, Truyện màu, Manga, Manhua, Manhwa vào hệ thống. 📑
