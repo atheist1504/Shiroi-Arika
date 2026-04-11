@@ -97,13 +97,11 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
         className="w-full h-full object-cover pointer-events-none" 
         draggable="false" 
         alt="" 
-        crossOrigin="anonymous"
-        referrerPolicy="no-referrer"
-        title={displaySrc} // 🔍 Di chuột vào để xem link thực tế nếu bị lỗi
         onError={(e: any) => {
           // 🛡️ FALLBACK: Nếu Cloudinary lỗi, thử dùng ảnh gốc 🍀
           if (e.target.src !== displaySrc) {
             console.warn("🔄 Cloudinary Preview fail, falling back to raw:", displaySrc);
+            e.target.removeAttribute('crossOrigin'); 
             e.target.src = displaySrc;
           }
         }}
@@ -488,13 +486,12 @@ export default function AdminUploadPage() {
                src={optimizeImage(previewImage, '1200')} 
                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
                alt="Preview" 
-               crossOrigin="anonymous"
-               referrerPolicy="no-referrer"
                onClick={(e) => e.stopPropagation()} 
                onError={(e: any) => {
                   // 🛡️ FALLBACK: Nếu Cloudinary/Proxy lỗi, thử dùng ảnh gốc 🍀
                   if (e.target.src !== previewImage) {
                     console.warn("🔄 Preview fallback to raw:", previewImage);
+                    e.target.removeAttribute('crossOrigin');
                     e.target.src = previewImage;
                   }
                }}
