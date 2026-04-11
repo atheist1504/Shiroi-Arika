@@ -92,7 +92,13 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
       style={style} 
       className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
-      <img src={optimizeImage(displaySrc, 200)} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
+      <img 
+        src={optimizeImage(displaySrc, 200)} 
+        className="w-full h-full object-cover pointer-events-none" 
+        draggable="false" 
+        alt="" 
+        onError={(e: any) => console.error("🆘 LỖI TẢI ẢNH TẠI ĐÂY:", e.target.src)}
+      />
       
       <div 
         {...attributes} 
