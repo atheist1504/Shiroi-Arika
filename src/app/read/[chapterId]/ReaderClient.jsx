@@ -41,7 +41,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [chapter] = useState(initialChapter);
   const [pages] = useState(initialPages);
   const [manga] = useState(initialManga);
-  const [readingMode, setReadingMode] = useState('scroll'); 
+  const [readingMode, setReadingModeState] = useState('scroll'); 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   
   const [prevChapterId, setPrevChapterId] = useState(null);
@@ -54,19 +54,22 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [showSettings, setShowSettings] = useState(false);
   const [theme, setThemeState] = useState('dark'); 
 
-  // 🔄 ĐỒNG BỘ THEME VỚI TOÀN TRANG 🍀
+  // 🔄 ĐỒNG BỘ THEME & CHẾ ĐỘ ĐỌC VĨNH VIỄN (CHỈ TRONG READER) 🍀
   useEffect(() => {
     const savedTheme = localStorage.getItem('shiroi_theme') || 'dark';
+    const savedMode = localStorage.getItem('shiroi_reading_mode') || 'scroll';
     setThemeState(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    setReadingModeState(savedMode);
   }, []);
 
   const setTheme = (newTheme) => {
     setThemeState(newTheme);
     localStorage.setItem('shiroi_theme', newTheme);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    // Dispatch event để các component khác (nếu có) cập nhật theo
-    window.dispatchEvent(new Event('storage'));
+  };
+
+  const setReadingMode = (newMode) => {
+    setReadingModeState(newMode);
+    localStorage.setItem('shiroi_reading_mode', newMode);
   };
 
   useEffect(() => {
@@ -177,7 +180,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
   return (
-    <div id="shiroi-reader-mode" className={`min-h-screen transition-colors duration-500 overflow-x-hidden ${theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a] text-gray-300'}`}>
+    <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 overflow-x-hidden bg-[var(--bg-reader)] text-[var(--text-reader)]">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style dangerouslySetInnerHTML={{ __html: `
         nav.sticky-nav, footer.footer { display: none !important; }
@@ -186,7 +189,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       `}} />
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
-      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
             <Link href={`/manga/${chapter?.manga_id}`} className="text-gray-500 hover:text-white">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -252,7 +255,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
       </AnimatePresence>
 
-      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 ${theme === 'deep' ? 'bg-[#0e110e]' : theme === 'light' ? 'bg-white text-black' : 'bg-[#0a0c0a]'} ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
+      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 ${theme === 'light' ? 'bg-white text-black' : 'bg-[var(--bg-reader)]'} ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
         {readingMode === 'scroll' && (
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />

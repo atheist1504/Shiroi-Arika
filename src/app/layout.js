@@ -40,14 +40,6 @@ export default function RootLayout({ children }) {
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="antialiased">
-        <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            try {
-              var theme = localStorage.getItem('shiroi_theme') || 'dark';
-              document.documentElement.setAttribute('data-theme', theme);
-            } catch (e) {}
-          })();
-        `}} />
         <div className="layout-root">
           <Navbar />
 
@@ -69,9 +61,8 @@ export default function RootLayout({ children }) {
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-current, #0a0c0a);
+            background-color: #0a0c0a;
             overflow-x: hidden;
-            transition: background-color 0.4s ease;
           }
 
           .main-content {
@@ -89,13 +80,12 @@ export default function RootLayout({ children }) {
             z-index: 10000;
             width: 100%;
             height: 70px;
-            background: var(--bg-current, #0a0c0a);
+            background: rgba(10, 12, 10, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-current);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             display: flex;
             align-items: center;
-            transition: all 0.4s ease;
           }
 
           .footer {
@@ -104,12 +94,10 @@ export default function RootLayout({ children }) {
             padding: 3rem 0;
             text-align: center;
             font-size: 0.8rem;
-            color: var(--text-current);
-            opacity: 0.6;
-            background: var(--bg-current, #0a0c0a);
-            border-top: 1px solid var(--border-current);
+            color: #b0b8b0;
+            background: #0a0c0a;
+            border-top: 1px solid rgba(255,255,255,0.03);
             width: 100%;
-            transition: all 0.4s ease;
           }
         `}} />
       </body>
