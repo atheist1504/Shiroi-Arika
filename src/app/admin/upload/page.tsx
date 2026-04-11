@@ -187,16 +187,27 @@ export default function AdminUploadPage() {
         const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
 
         setItems(pgs.map(p => {
-            let finalData = p.image_url;
+            let finalData = p.image_url || '';
             
-            // 🛠️ XỬ LÝ URL THÔNG MINH 🍀
+            // 🛠️ SIÊU LOGIC VÁ URL (SUPER FIX) 🍀
             if (finalData) {
                 // 1. Sửa lỗi undefined/ do biến môi trường server cũ
                 if (finalData.includes('undefined/')) {
                     finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
                 }
-                // 2. Chuyển đường dẫn tương đối thành tuyệt đối nếu cần
-                else if (!finalData.startsWith('http') && !finalData.startsWith('blob:') && !finalData.startsWith('data:')) {
+                
+                // 2. TỰ ĐỘNG CHUYỂN ĐỔI DOMAIN R2 CŨ SANG MỚI 🔄
+                // Nếu ảnh thuộc r2.dev nhưng không khớp với domain hiện tại
+                if (finalData.includes('r2.dev') && !finalData.includes(cleanR2Url) && cleanR2Url) {
+                    // Extract phần path sau domain (bắt đầu từ chapters/ hoặc tên folder đầu tiên)
+                    const pathMatch = finalData.match(/r2\.dev\/(.*)/);
+                    if (pathMatch && pathMatch[1]) {
+                        finalData = `${cleanR2Url}/${pathMatch[1]}`;
+                    }
+                }
+
+                // 3. Chuyển đường dẫn tương đối thành tuyệt đối
+                if (!finalData.startsWith('http') && !finalData.startsWith('blob:') && !finalData.startsWith('data:')) {
                     const separator = finalData.startsWith('/') ? '' : '/';
                     finalData = `${cleanR2Url}${separator}${finalData}`;
                 }
