@@ -19,36 +19,46 @@ const GENRES = [
 function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  
   const query = searchParams.get('q') || '';
   const initialGenre = searchParams.get('genre') || 'All';
+  const currentPage = parseInt(searchParams.get('page') || '1') || 1;
+  const pageSize = 20;
 
   const [mangas, setMangas] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedGenre, setSelectedGenre] = useState(initialGenre);
   const [searchInput, setSearchInput] = useState(query);
 
   useEffect(() => {
     setSearchInput(query);
+    setSelectedGenre(initialGenre);
     fetchResults();
-  }, [query, selectedGenre]);
+  }, [query, initialGenre, currentPage]);
 
   const fetchResults = async () => {
     try {
       setLoading(true);
+      const from = (currentPage - 1) * pageSize;
+      const to = from + pageSize - 1;
+
       let supabaseQuery = supabase.from('mangas').select(`
         *,
         chapters(chapter_number)
-      `);
+      `, { count: 'exact' });
 
       if (query) {
         supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
       }
 
-      if (selectedGenre !== 'All') {
-        supabaseQuery = supabaseQuery.contains('genres', [selectedGenre]);
+      if (initialGenre !== 'All') {
+        supabaseQuery = supabaseQuery.contains('genres', [initialGenre]);
       }
 
-      const { data, error } = await supabaseQuery.order('title');
+      const { data, error, count } = await supabaseQuery
+        .order('updated_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
 
@@ -58,6 +68,7 @@ function SearchContent() {
       })) || [];
 
       setMangas(processed);
+      setTotalCount(count || 0);
     } catch (err) {
       console.error('Lỗi tìm kiếm:', err);
     } finally {
@@ -70,16 +81,26 @@ function SearchContent() {
     const params = new URLSearchParams(searchParams);
     if (searchInput) params.set('q', searchInput);
     else params.delete('q');
+    params.set('page', '1');
     router.push(`/search?${params.toString()}`);
   };
 
   const handleGenreChange = (genre) => {
-    setSelectedGenre(genre);
     const params = new URLSearchParams(searchParams);
     if (genre !== 'All') params.set('genre', genre);
     else params.delete('genre');
+    params.set('page', '1');
     router.push(`/search?${params.toString()}`);
   };
+
+  const handlePageChange = (p) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', p);
+    router.push(`/search?${params.toString()}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   return (
     <div className="min-h-screen bg-[#0a0c0a] text-white p-6 md:p-12 relative overflow-hidden">
@@ -171,57 +192,111 @@ function SearchContent() {
              </button>
           </motion.div>
         ) : (
-          <motion.div 
-            initial="hidden"
-            animate="show"
-            variants={{
-                show: { transition: { staggerChildren: 0.05 } }
-            }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8"
-          >
-            {mangas.map((manga) => (
-              <motion.div
-                key={manga.id}
-                variants={{
-                    hidden: { opacity: 0, y: 20 },
-                    show: { opacity: 1, y: 0 }
-                }}
-              >
-                <Link 
-                  href={`/manga/${manga.id}`}
-                  className="group flex flex-col bg-[#141814]/60 border border-white/5 hover:border-[#4caf50]/50 rounded-[24px] overflow-hidden shadow-2xl transition-all hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] h-full"
+          <>
+            <motion.div 
+              initial="hidden"
+              animate="show"
+              variants={{
+                  show: { transition: { staggerChildren: 0.05 } }
+              }}
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 md:gap-8"
+            >
+              {mangas.map((manga) => (
+                <motion.div
+                  key={manga.id}
+                  variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      show: { opacity: 1, y: 0 }
+                  }}
                 >
-                  <div className="aspect-[2/3] relative overflow-hidden bg-black/40">
-                    <img 
-                      src={optimizeImage(manga.cover_image, 400)} 
-                      alt={manga.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
-                    
-                    {manga.latestChapter && (
-                      <div className="absolute bottom-3 left-3">
-                         <span className="bg-[#4caf50] text-[#0a0c0a] text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl shadow-[#4caf50]/20 border border-[#4caf50]/20">
-                           CHAP {manga.latestChapter.chapter_number}
-                         </span>
+                  <Link 
+                    href={`/manga/${manga.id}`}
+                    className="group flex flex-col bg-[#141814]/60 border border-white/5 hover:border-[#4caf50]/50 rounded-[24px] overflow-hidden shadow-2xl transition-all hover:-translate-y-2 hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)] h-full"
+                  >
+                    <div className="aspect-[2/3] relative overflow-hidden bg-black/40">
+                      <img 
+                        src={optimizeImage(manga.cover_image, 400)} 
+                        alt={manga.title}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
+                      
+                      {manga.latestChapter && (
+                        <div className="absolute bottom-3 left-3">
+                           <span className="bg-[#4caf50] text-[#0a0c0a] text-[9px] font-black px-2.5 py-1 rounded-lg shadow-xl shadow-[#4caf50]/20 border border-[#4caf50]/20">
+                             CHAP {manga.latestChapter.chapter_number}
+                           </span>
+                        </div>
+                      )}
+
+                      <div className="absolute top-3 left-3 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         {manga.genres?.slice(0, 2).map((g, i) => (
+                           <span key={i} className="bg-black/80 backdrop-blur-md text-[8px] text-[#4caf50] px-2 py-0.5 rounded-md border border-[#4caf50]/20 uppercase font-black tracking-widest">{g}</span>
+                         ))}
                       </div>
-                    )}
-
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                       {manga.genres?.slice(0, 2).map((g, i) => (
-                         <span key={i} className="bg-black/80 backdrop-blur-md text-[8px] text-[#4caf50] px-2 py-0.5 rounded-md border border-[#4caf50]/20 uppercase font-black tracking-widest">{g}</span>
-                       ))}
                     </div>
-                  </div>
 
-                  <div className="p-4 flex-1 flex flex-col justify-center">
-                    <h3 className="font-bold text-sm md:text-base line-clamp-2 group-hover:text-[#4caf50] transition-colors leading-tight">{manga.title}</h3>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+                    <div className="p-4 flex-1 flex flex-col justify-center">
+                      <h3 className="font-bold text-sm md:text-base line-clamp-2 group-hover:text-[#4caf50] transition-colors leading-tight">{manga.title}</h3>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Pagination UI 🍀 */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex flex-wrap justify-center items-center gap-2 pb-10">
+                <button
+                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                    currentPage === 1 
+                    ? 'opacity-30 cursor-not-allowed border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
+                  }`}
+                >
+                  TRƯỚC
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => {
+                  const p = i + 1;
+                  if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-all border ${
+                          currentPage === p
+                          ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a] scale-110 shadow-lg shadow-[#4caf50]/20'
+                          : 'bg-[#141814] border-white/5 text-gray-500 hover:border-[#4caf50] hover:text-[#4caf50]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  }
+                  if (p === currentPage - 3 || p === currentPage + 3) return <span key={p} className="text-gray-700">...</span>;
+                  return null;
+                })}
+
+                <button
+                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                    currentPage === totalPages 
+                    ? 'opacity-30 cursor-not-allowed border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
+                  }`}
+                >
+                  SAU
+                </button>
+              </div>
+            )}
+
+            <div className="text-center mt-6">
+               <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Trang {currentPage} / {totalPages} (Tổng {totalCount} kết quả)</span>
+            </div>
+          </>
         )}
       </div>
 

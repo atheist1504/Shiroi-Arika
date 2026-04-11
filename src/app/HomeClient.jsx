@@ -6,13 +6,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { optimizeImage } from "@/lib/cloudinary";
 
-export default function HomeClient({ initialFeatured, initialLatest }) {
-  const [allMangas, setAllMangas] = useState(initialLatest);
+export default function HomeClient({ initialFeatured, initialLatest, totalCount, currentPage, pageSize }) {
   const [featured, setFeatured] = useState(initialFeatured && initialFeatured.length > 0 ? initialFeatured : initialLatest.slice(0, 5));
-  const [page, setPage] = useState(1);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(initialLatest.length === 15);
   const [activeSlide, setActiveSlide] = useState(0);
+  const totalPages = Math.ceil(totalCount / pageSize);
 
   // Tự động chuyển slide sau mỗi 5 giây
   useEffect(() => {
@@ -23,34 +20,6 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
     return () => clearInterval(timer);
   }, [featured.length]);
 
-  const loadMore = async () => {
-    if (loadingMore || !hasMore) return;
-    
-    setLoadingMore(true);
-    const from = page * 15;
-    const to = from + 14;
-
-    try {
-      const { data, error } = await supabase
-        .from("mangas")
-        .select("id, title, cover_image, chapters(chapter_number, created_at)")
-        .order("created_at", { ascending: false })
-        .order("chapter_number", { foreignTable: "chapters", ascending: false })
-        .range(from, to)
-        .limit(1, { foreignTable: "chapters" });
-
-      if (error) throw error;
-      
-      if (data.length < 15) setHasMore(false);
-      setAllMangas([...allMangas, ...data]);
-      setPage(page + 1);
-    } catch (error) {
-      console.error("Lỗi khi tải thêm:", error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
   return (
     <main className="relative overflow-x-hidden">
       {/* SHIROI AMBIENCE */}
@@ -60,8 +29,8 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
 
       <div className="pt-24 relative z-10" />
 
-      {/* FEATURED BANNER - SIÊU PHẨM SHIROI */}
-      {featured.length > 0 && (
+      {/* FEATURED BANNER - SIÊU PHẨM SHIROI (Chỉ hiện ở trang 1) 🍀 */}
+      {currentPage === 1 && featured.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 mb-16 relative group/banner">
             <div className="relative md:aspect-[21/9] min-h-[400px] md:min-h-0 w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5">
                 <AnimatePresence mode="wait">
@@ -73,19 +42,6 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
                         exit={{ opacity: 0, x: -30 }}
                         transition={{ duration: 0.6, ease: "circOut" }}
                         className="absolute inset-0 cursor-grab active:cursor-grabbing select-none"
-                        drag="x"
-                        dragListener={true}
-                        dragConstraints={{ left: 0, right: 0 }}
-                        dragElastic={0.2}
-                        onDragEnd={(e, { offset, velocity }) => {
-                            const swipe = offset.x;
-                            const threshold = 50;
-                            if (swipe < -threshold) {
-                                setActiveSlide((prev) => (prev + 1) % featured.length);
-                            } else if (swipe > threshold) {
-                                setActiveSlide((prev) => (prev - 1 + featured.length) % featured.length);
-                            }
-                        }}
                     >
                         {/* BACKGROUND LAYER */}
                         <div className="absolute inset-0">
@@ -144,7 +100,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
           <h2 className="text-2xl font-black text-gray-100 uppercase tracking-tighter">Truyện mới cập nhật</h2>
         </div>
 
-        {allMangas.length === 0 ? (
+        {initialLatest.length === 0 ? (
           <div className="text-center py-20 text-gray-500 glass rounded-2xl border-dashed border-2 border-[#2a332a]">
             Kho truyện hiện đang trống. Đang chờ những siêu phẩm đầu tiên!
           </div>
@@ -160,7 +116,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
               className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6"
             >
               <AnimatePresence>
-                {allMangas.map((manga) => (
+                {initialLatest.map((manga) => (
                   <motion.div
                     key={manga.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -184,7 +140,7 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
                           </div>
                         )}
                         
-                        {manga.chapters && manga.chapters.length > 0 && (
+                        {(manga.chapters || []).length > 0 && (
                           <div className="absolute top-2 right-2 z-20">
                             <div className="bg-[#4caf50] text-[#0a0c0a] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl border border-[#4caf50]/20">
                               Ch. {Math.max(...manga.chapters.map(c => c.chapter_number))}
@@ -206,29 +162,60 @@ export default function HomeClient({ initialFeatured, initialLatest }) {
               </AnimatePresence>
             </motion.div>
 
-            {/* NÚT LOAD MORE CỰC SANG */}
-            {hasMore && (
-              <div className="mt-10 flex justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className={`px-12 py-4 rounded-xl font-black text-[10px] tracking-[0.3em] uppercase transition-all flex items-center gap-3 ${
-                    loadingMore 
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed' 
-                    : 'bg-[#141814] text-[#4caf50] border border-[#2a332a] hover:border-[#4caf50] hover:shadow-[0_0_20px_rgba(76,175,80,0.2)]'
+            {/* PHÂN TRANG 1, 2, 3... 🍀 */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex flex-wrap justify-center items-center gap-2">
+                <Link
+                  href={`/?page=${Math.max(1, currentPage - 1)}`}
+                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                    currentPage === 1 
+                    ? 'opacity-30 pointer-events-none border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
                   }`}
                 >
-                  {loadingMore ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-gray-600 border-t-[#4caf50] rounded-full animate-spin"></div>
-                      ĐANG TẢI...
-                    </>
-                  ) : 'XEM THÊM TRUYỆN'}
-                </motion.button>
+                  TRƯỚC
+                </Link>
+
+                {[...Array(totalPages)].map((_, i) => {
+                  const p = i + 1;
+                  // Hiển thị tối đa 5 trang xung quanh trang hiện tại
+                  if (p === 1 || p === totalPages || (p >= currentPage - 2 && p <= currentPage + 2)) {
+                    return (
+                      <Link
+                        key={p}
+                        href={`/?page=${p}`}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-all border ${
+                          currentPage === p
+                          ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a] shadow-lg shadow-[#4caf50]/20 scale-110'
+                          : 'bg-[#141814] border-white/5 text-gray-500 hover:border-[#4caf50] hover:text-[#4caf50]'
+                        }`}
+                      >
+                        {p}
+                      </Link>
+                    );
+                  }
+                  if (p === currentPage - 3 || p === currentPage + 3) {
+                    return <span key={p} className="text-gray-700">...</span>;
+                  }
+                  return null;
+                })}
+
+                <Link
+                  href={`/?page=${Math.min(totalPages, currentPage + 1)}`}
+                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                    currentPage === totalPages 
+                    ? 'opacity-30 pointer-events-none border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
+                  }`}
+                >
+                  SAU
+                </Link>
               </div>
             )}
+            
+            <div className="text-center mt-6">
+               <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">TRANG {currentPage} / {totalPages} (TỔNG {totalCount} TRUYỆN)</span>
+            </div>
           </>
         )}
       </div>
