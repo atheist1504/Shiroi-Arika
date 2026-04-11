@@ -359,7 +359,7 @@ export default function AdminUploadPage() {
            </h1>
            <div className="flex flex-col items-end gap-1">
              <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
-             <span className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest animate-pulse border border-[#4caf50]/20 px-2 py-0.5 rounded-full bg-[#4caf50]/5">v2.7 - Direct-to-R2 ⚡</span>
+             <span className="text-[9px] font-black text-[#9333ea] uppercase tracking-widest animate-pulse border border-[#9333ea]/20 px-2 py-0.5 rounded-full bg-[#9333ea]/5">v2.8 - Direct-to-R2 (Purple Test) ⚡</span>
            </div>
         </div>
 
@@ -457,7 +457,7 @@ export default function AdminUploadPage() {
               <button 
                 onClick={handleUpload} 
                 disabled={uploading || items.length === 0} 
-                className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || items.length === 0 ? 'bg-white/5 text-white/20' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-xl shadow-[#4caf50]/20'}`}
+                className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || items.length === 0 ? 'bg-white/5 text-white/20' : 'bg-[#9333ea] text-white hover:bg-[#a855f7] shadow-xl shadow-[#9333ea]/20'}`}
               >
                  {uploading ? 'ĐANG XỬ LÝ...' : 'XUẤT BẢN NGAY 🚀'}
               </button>
