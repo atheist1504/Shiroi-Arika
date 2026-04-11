@@ -163,16 +163,17 @@ export default function AdminUploadPage() {
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
 
-  // 🧹 FIX MEMORY LEAK: Dọn dẹp ObjectURL khi thoát hoặc đổi danh sách 🍀
+  // 🧹 FIX MEMORY LEAK: Chỉ dọn dẹp khi thoát hẳn trang Admin 🍀
   useEffect(() => {
+    const currentItems = items;
     return () => {
-      items.forEach(item => {
+      currentItems.forEach(item => {
         if (item.type === 'new' && item.preview && item.preview.startsWith('blob:')) {
           URL.revokeObjectURL(item.preview);
         }
       });
     };
-  }, [items]);
+  }, []); // Chạy duy nhất 1 lần khi unmount 🚀
 
   const fetchMangas = async () => {
     const { data } = await supabase.from('mangas').select('id, title').order('title');
@@ -488,8 +489,10 @@ export default function AdminUploadPage() {
                alt="Preview" 
                onClick={(e) => e.stopPropagation()} 
                onError={(e: any) => {
-                  // 🛡️ FALLBACK: Nếu có lỗi gì đó, hãy thử lại chính nó nhưng xóa crossOrigin nếu còn sót 🍀
+                  // 🛡️ CHẶN VÒNG LẶP: Nếu đã thử rồi mà vẫn lỗi thì dừng 🍀
+                  if (e.target.dataset.failed) return;
                   console.warn("🔄 Preview failed, retrying raw source.");
+                  e.target.dataset.failed = "true";
                   e.target.removeAttribute('crossOrigin');
                   e.target.src = previewImage;
                }}
