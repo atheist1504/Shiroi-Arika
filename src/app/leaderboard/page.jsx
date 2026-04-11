@@ -112,18 +112,6 @@ function LeaderboardContent() {
                     Vinh danh những độc giả trung thành nhất của Thánh địa Shiroi Arika
                 </p>
 
-                <form onSubmit={handleSearchSubmit} className="mt-12 max-w-md mx-auto relative group">
-                    <input 
-                       type="text" 
-                       placeholder="Tìm kiếm danh tính thành viên..." 
-                       value={searchInput}
-                       onChange={(e) => setSearchInput(e.target.value)}
-                       className="w-full bg-[#141814]/40 border border-white/5 rounded-2xl py-3.5 px-6 pl-12 text-xs font-bold text-white focus:border-[#4caf50] outline-none transition-all placeholder:text-gray-700 shadow-2xl"
-                    />
-                    <button type="submit" className="absolute left-4 top-3.5 text-gray-700 group-focus-within:text-[#4caf50]">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </button>
-                </form>
             </div>
 
             {loading ? (
@@ -204,6 +192,21 @@ function LeaderboardContent() {
                     )}
 
                     {/* BẢNG DANH SÁCH THÀNH VIÊN 📜 */}
+                    <div className="max-w-4xl mx-auto mb-8">
+                        <form onSubmit={handleSearchSubmit} className="relative group">
+                            <input 
+                               type="text" 
+                               placeholder="Tìm kiếm danh tính thành viên..." 
+                               value={searchInput}
+                               onChange={(e) => setSearchInput(e.target.value)}
+                               className="w-full bg-[#141814]/40 border border-white/5 rounded-2xl py-3.5 px-6 pl-12 text-xs font-bold text-white focus:border-[#4caf50] outline-none transition-all placeholder:text-gray-700 shadow-xl"
+                            />
+                            <button type="submit" className="absolute left-4 top-3.5 text-gray-700 group-focus-within:text-[#4caf50]">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </button>
+                        </form>
+                    </div>
+
                     <div className="max-w-4xl mx-auto bg-[#141814]/40 backdrop-blur-2xl border border-white/5 rounded-[40px] overflow-hidden shadow-2xl mb-12">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[500px]">
