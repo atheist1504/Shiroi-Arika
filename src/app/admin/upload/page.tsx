@@ -137,7 +137,18 @@ export default function AdminUploadPage() {
     if (chap) { setChapterNumber(chap.chapter_number.toString()); setChapterTitle(chap.title || ''); setSelectedMangaId(chap.manga_id); }
     const { data: pgs } = await supabase.from('pages').select('id, image_url, page_number').eq('chapter_id', id).order('page_number');
     if (pgs) {
-       setItems(pgs.map(p => ({ id: p.id, data: p.image_url, type: 'existing' })));
+        // 🛠️ VÁ LỖI THÔNG MINH: Nếu đường dẫn chứa 'undefined/', thay nó bằng R2_PUBLIC_URL chuẩn 🍀
+        const r2Url = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
+        const cleanR2Url = r2Url.endsWith('/') ? r2Url.slice(0, -1) : r2Url;
+
+        setItems(pgs.map(p => {
+            let finalData = p.image_url;
+            if (finalData && finalData.includes('undefined/')) {
+                finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
+                console.log("🩹 Đã vá link lỗi:", finalData);
+            }
+            return { id: p.id, data: finalData, type: 'existing' };
+        }));
     }
   };
 
