@@ -45,5 +45,31 @@ Dự án Manga Platform thế hệ mới.
 2. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
 3. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
 
+
 ---
-*Cập nhật lần cuối: 15:15 - 10/04/2026*
+
+## 🛠️ HƯỚNG DẪN VẬN HÀNH & FIX LỖI (OPERATION GUIDE)
+
+### 1. Sửa lỗi "Cannot find module" hoặc Build lỗi
+Nếu bạn gặp lỗi `MODULE_NOT_FOUND` hoặc giao diện local không cập nhật sau khi xóa code lớn, hãy chạy lệnh sau trong Terminal:
+```powershell
+# Xóa bộ nhớ đệm Next.js
+Remove-Item -Path .next -Recurse -Force
+# Sau đó chạy lại
+npm run dev
+```
+
+### 2. Cấu hình Production (Vercel)
+Để hệ thống đăng chương và ảnh hoạt động trên web chính thức, bạn **bắt buộc** phải cấu hình các biến môi trường sau trong Vercel Project Settings:
+- `R2_ACCESS_KEY_ID` / `NEXT_PUBLIC_R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY` / `NEXT_PUBLIC_R2_SECRET_ACCESS_KEY`
+- `R2_ACCOUNT_ID` / `NEXT_PUBLIC_R2_ACCOUNT_ID`
+- `R2_BUCKET_NAME`
+- `R2_PUBLIC_URL`
+
+### 3. Quy trình Triển khai (Deployment)
+Mọi thay đổi code sau khi được xác nhận ổn định ở môi trường Local sẽ được **tự động Push lên GitHub** branch `main`. Vercel sẽ tự động bắt lấy thay đổi này để cập nhật trang web chính thức.
+
+---
+
+*Cập nhật lần cuối: 17:55 - 11/04/2026*
