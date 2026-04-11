@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
 import { uploadImageAction } from '@/lib/actions';
+import { optimizeImage } from '@/lib/cloudinary';
 
 // 🚀 DND-KIT IMPORTS
 import {
@@ -65,7 +66,7 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
       style={style} 
       className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
-      <img src={item.data} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
+      <img src={optimizeImage(item.data, 200)} className="w-full h-full object-cover pointer-events-none" draggable="false" alt="" />
       
       {/* ✋ VÙNG KÉO THẢ (Toàn bộ ảnh) */}
       <div 
@@ -379,7 +380,7 @@ export default function AdminUploadPage() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
              </button>
              <img 
-               src={previewImage} 
+               src={optimizeImage(previewImage, 1200)} 
                className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
                alt="Preview" 
                onClick={(e) => e.stopPropagation()} 
