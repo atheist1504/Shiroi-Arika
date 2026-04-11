@@ -12,6 +12,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Reader Smoothness**: Loại bỏ `backdrop-blur` khi cuộn và dùng `cubic-bezier` cho thanh điều hướng, triệt tiêu hiện tượng giật hình (UI Jitter). 📱
 - [x] **Global Smart R2 Recovery (v4 - FINAL)**: Chuyển đổi logic vá lỗi ảnh thành thư viện dùng chung. Đã sửa lỗi hiển thị trên trang **Reader** và đồng nhất trải nghiệm trên toàn hệ thống. Hỗ trợ tự phục hồi URL ngay cả khi cấu hình môi trường bị thiếu. 🖼️🚀🛡️✨
 - [x] **Leaderboard UI Optimization**: Di chuyển ô tìm kiếm xuống sát bảng danh sách thành viên để tối ưu trải nghiệm (UX Search). 🔍🔥
+- [x] **Elite Comments System (v2)**: Đại tu toàn diện hệ thống bình luận. Triệt tiêu 100% hiện tượng nháy khi gõ chữ, tích hợp cộng XP (+5 XP) và thông báo trực quan. 💬💎🚀
 - [x] **Build Stability**: Hướng dẫn xóa sạch `.next` cache để xử lý triệt để lỗi `MODULE_NOT_FOUND` khi cập nhật lớn.
 
 ### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
