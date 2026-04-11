@@ -78,6 +78,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const setReadingMode = (newMode) => {
     setReadingModeState(newMode);
     localStorage.setItem('shiroi_reading_mode', newMode);
+    if (manga?.id) {
+        localStorage.setItem(`shiroi_reading_mode_${manga.id}`, newMode);
+    }
   };
 
   useEffect(() => {
@@ -102,7 +105,17 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         syncHistoryToDB();
     }
 
-    if (manga?.default_reading_mode) setReadingMode(manga.default_reading_mode);
+    if (manga?.id) {
+        const mangaSpecificMode = localStorage.getItem(`shiroi_reading_mode_${manga.id}`);
+        if (mangaSpecificMode) {
+            setReadingModeState(mangaSpecificMode);
+        } else if (manga?.default_reading_mode) {
+            setReadingModeState(manga.default_reading_mode);
+        } else {
+            const globalMode = localStorage.getItem('shiroi_reading_mode');
+            if (globalMode) setReadingModeState(globalMode);
+        }
+    }
     giveReadXP();
   }, [chapterId]);
 

@@ -483,17 +483,15 @@ export default function AdminUploadPage() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
              </button>
              <img 
-               src={optimizeImage(previewImage, '1200')} 
+               src={previewImage} 
                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
                alt="Preview" 
                onClick={(e) => e.stopPropagation()} 
                onError={(e: any) => {
-                  // 🛡️ FALLBACK: Nếu Cloudinary/Proxy lỗi, thử dùng ảnh gốc 🍀
-                  if (e.target.src !== previewImage) {
-                    console.warn("🔄 Preview fallback to raw:", previewImage);
-                    e.target.removeAttribute('crossOrigin');
-                    e.target.src = previewImage;
-                  }
+                  // 🛡️ FALLBACK: Nếu có lỗi gì đó, hãy thử lại chính nó nhưng xóa crossOrigin nếu còn sót 🍀
+                  console.warn("🔄 Preview failed, retrying raw source.");
+                  e.target.removeAttribute('crossOrigin');
+                  e.target.src = previewImage;
                }}
              />
              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-black/40 border border-white/5 backdrop-blur-md rounded-2xl text-[10px] font-black text-gray-400 uppercase tracking-widest">Click ra ngoài để đóng</div>
