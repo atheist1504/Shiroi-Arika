@@ -61,7 +61,7 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
           </div>
           <div className="flex-1 space-y-2">
              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-white uppercase tracking-tight">{comment.user_name}</span>
+                <span className="text-[10px] font-black uppercase tracking-tight" style={{ color: 'var(--text-heading, var(--text-reader, white))' }}>{comment.user_name}</span>
                 {isAdmin ? (
                   <span className="text-[10px] text-[#4caf50] font-black uppercase tracking-widest bg-[#4caf50]/5 px-3 py-1 rounded-lg border border-[#4caf50]/20 shadow-[0_0_10px_rgba(76,175,80,0.1)] shrink-0">BAN QUẢN TRỊ 🍀</span>
                 ) : (
@@ -87,8 +87,8 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
                 )}
                 <span className="text-[8px] text-gray-700 font-bold ml-auto">{new Date(comment.created_at).toLocaleTimeString('vi-VN')}</span>
              </div>
-             <div className="bg-[#141814]/50 p-4 rounded-2xl rounded-tl-none border border-white/5 group-hover:bg-[#141814]/80 transition-all shadow-sm">
-                <p className="text-gray-400 text-sm leading-relaxed">{comment.content}</p>
+             <div className="p-4 rounded-2xl rounded-tl-none border border-white/5 transition-all shadow-sm" style={{ backgroundColor: 'var(--bg-card-reader, rgba(20, 24, 20, 0.5))' }}>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted-reader, #9ca3af)' }}>{comment.content}</p>
              </div>
              <div className="flex items-center gap-6 ml-1">
                 <button onClick={() => handleLike(comment.id)} className={`flex items-center gap-1.5 text-[9px] font-black transition-all ${localLikes[comment.id] ? 'text-red-500 scale-110' : 'text-gray-600 hover:text-red-500'}`}>
@@ -257,7 +257,7 @@ export default function Comments({ mangaId, chapterId }) {
     <div className="w-full max-w-4xl mx-auto px-4 pb-12">
       <div className="flex items-center space-x-3 mb-10">
         <div className="w-1.5 h-6 bg-[#4caf50] rounded-full shadow-[0_0_10px_#4caf50]"></div>
-        <h2 className="text-xl font-black text-white tracking-tight uppercase">Thảo luận Shiroi <span className="text-gray-600 font-normal ml-1">({comments.length})</span></h2>
+        <h2 className="text-xl font-black tracking-tight uppercase" style={{ color: 'var(--text-reader, white)' }}>Thảo luận Shiroi <span className="text-gray-600 font-normal ml-1">({comments.length})</span></h2>
       </div>
 
       {xpToast && (
@@ -273,9 +273,9 @@ export default function Comments({ mangaId, chapterId }) {
                  <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/5 shadow-lg bg-[#0a0c0a]">
                     <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="" />
                  </div>
-                 <span className="text-[8px] text-gray-600 font-black uppercase tracking-widest italic">Gửi lời thảo luận 🍀</span>
+                 <span className="text-[8px] font-black uppercase tracking-widest italic" style={{ color: 'var(--text-muted-reader, #6b7280)' }}>Gửi lời thảo luận 🍀</span>
              </div>
-             <textarea placeholder={chapterId ? "Cảm nhận về chương này..." : "Cảm nhận về truyện..."} value={content} onChange={(e) => setContent(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:border-[#4caf50] outline-none transition-all min-h-[100px] resize-none text-gray-300 placeholder:text-gray-800 shadow-inner"></textarea>
+             <textarea placeholder={chapterId ? "Cảm nhận về chương này..." : "Cảm nhận về truyện..."} value={content} onChange={(e) => setContent(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:border-[#4caf50] outline-none transition-all min-h-[100px] resize-none shadow-inner" style={{ color: 'var(--text-reader, #d1d5db)' }}></textarea>
              <div className="flex justify-end mt-4">
                  <button disabled={submitting} className="px-10 py-3 bg-[#4caf50] text-[#0a0c0a] font-black rounded-2xl shadow-xl shadow-[#4caf50]/20 hover:scale-105 active:scale-95 transition-all text-[10px] uppercase tracking-widest">{submitting ? '...' : 'XÁC NHẬN GỬI 🚀'}</button>
              </div>

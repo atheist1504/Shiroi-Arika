@@ -17,9 +17,9 @@
   --border: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme='dark'] { --bg-current: var(--bg-dark); --text-current: #ffffff; --border-current: rgba(255,255,255,0.05); }
-[data-theme='deep'] { --bg-current: var(--bg-deep); --text-current: #ffffff; --border-current: rgba(255,255,255,0.08); }
-[data-theme='light'] { --bg-current: var(--bg-light); --text-current: #000000; --border-current: rgba(0,0,0,0.1); }
+[data-theme='dark'] { --bg-current: var(--bg-dark); --text-current: #ffffff; --text-muted: #9ca3af; --border-current: rgba(255,255,255,0.05); }
+[data-theme='deep'] { --bg-current: var(--bg-deep); --text-current: #ffffff; --text-muted: #9ca3af; --border-current: rgba(255,255,255,0.08); }
+[data-theme='light'] { --bg-current: var(--bg-light); --text-current: #000000; --text-muted: #5d4037; --border-current: rgba(0,0,0,0.1); }
 
 html,
 body {
@@ -34,9 +34,9 @@ body {
 }
 
 /* 🎨 THEME CHỈ DÀNH RIÊNG CHO READER */
-#shiroi-reader-mode[data-theme='dark'] { --bg-reader: #0a0c0a; --text-reader: #d1d5db; }
-#shiroi-reader-mode[data-theme='deep'] { --bg-reader: #141814; --text-reader: #d1d5db; }
-#shiroi-reader-mode[data-theme='light'] { --bg-reader: #ffffff; --text-reader: #000000; }
+#shiroi-reader-mode[data-theme='dark'] { --bg-reader: #0a0c0a; --text-reader: #d1d5db; --text-muted-reader: #6b7280; --bg-card-reader: rgba(20, 24, 20, 0.6); }
+#shiroi-reader-mode[data-theme='deep'] { --bg-reader: #141814; --text-reader: #d1d5db; --text-muted-reader: #6b7280; --bg-card-reader: rgba(30, 40, 30, 0.6); }
+#shiroi-reader-mode[data-theme='light'] { --bg-reader: #ffffff; --text-reader: #1a1a1a; --text-muted-reader: #5d4037; --bg-card-reader: rgba(0, 0, 0, 0.03); }
 
 /* LỚP PHỦ HẠT (NOISE) - LUÔN GIỮ ĐỂ TẠO TEXTURE 🍀 */
 body::before {

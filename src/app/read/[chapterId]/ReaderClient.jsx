@@ -191,12 +191,12 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
       <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
-            <Link href={`/manga/${chapter?.manga_id}`} className="text-gray-500 hover:text-white">
+            <Link href={`/manga/${chapter?.manga_id}`} className={`${theme === 'light' ? 'text-gray-900' : 'text-gray-500'} hover:text-[#4caf50] transition-colors`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
             </Link>
-            <div className="hidden sm:flex flex-col truncate">
-                <h2 className="text-[10px] font-black uppercase tracking-tighter truncate max-w-[150px]">{manga?.title}</h2>
-                <span className="text-[9px] text-[#4caf50] font-bold">Chương {chapter?.chapter_number}</span>
+            <div className="flex flex-col truncate">
+                <h1 className="text-[10px] font-black uppercase tracking-tight truncate" style={{ color: 'var(--text-reader, white)' }}>{manga?.title}</h1>
+                <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted-reader, #6b7280)' }}>Chương {chapter?.chapter_number}</span>
             </div>
         </div>
 
@@ -255,7 +255,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
       </AnimatePresence>
 
-      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 ${theme === 'light' ? 'bg-white text-black' : 'bg-[var(--bg-reader)]'} ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
+      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
         {readingMode === 'scroll' && (
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
