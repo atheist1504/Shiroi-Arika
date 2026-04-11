@@ -294,13 +294,15 @@ export default function AdminUploadPage() {
           const fileName = `chapters/${chapId}/${Date.now()}-${i}.webp`;
 
           // 2. Lấy Signed URL (Vé thông hành) từ Server
-          const ticket = await getUploadUrlAction(fileName);
-          if (!ticket.success || !ticket.signedUrl) {
+          const ticket: any = await getUploadUrlAction(fileName);
+          if (!ticket.success) {
               throw new Error(ticket.error || `Không thể xin vé upload cho trang ${i+1}`);
           }
+          const signedUrl = ticket.signedUrl;
+          const finalPublicUrl = ticket.finalPublicUrl;
 
           // 3. Upload TRỰC TIẾP từ Client lên R2 (Bỏ qua giới hạn Vercel) 🍀
-          const uploadResponse = await fetch(ticket.signedUrl, {
+          const uploadResponse = await fetch(signedUrl, {
               method: 'PUT',
               body: compressed,
               headers: { 'Content-Type': 'image/webp' }
