@@ -5,11 +5,10 @@
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo'; // Thay 'demo' bằng Cloud Name của bạn
 
-export const optimizeImage = (url, width = '', height = '') => {
-  if (!url) return '';
-  
-  // Nếu là ảnh từ Blob hoặc base64 thì không xử lý (do là ảnh tạm local) 🍀
-  if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+  // Nếu là ảnh từ Blob, base64 hoặc đường dẫn local thì không xử lý 🍀
+  if (!url || url.startsWith('blob:') || url.startsWith('data:') || url.startsWith('/')) {
+    return url;
+  }
 
   try {
     // Cấu hình tối ưu "Thần thánh" cho các nguồn ảnh khác (Supabase, v.v.)
