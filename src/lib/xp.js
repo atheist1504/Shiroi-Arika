@@ -20,14 +20,27 @@ export const calculateProgress = (xp) => {
   return (xp || 0) % 100;
 };
 
+export const TITLES = [
+    { name: 'HIỀN GIẢ', color: '#4caf50', icon: '🧙‍♂️', lv: 50 },
+    { name: 'ĐẠI SƯ', color: '#ff9800', icon: '🎨', lv: 35 },
+    { name: 'HỘ VỆ', color: '#2196f3', icon: '🛡️', lv: 20 },
+    { name: 'CHIẾN BINH', color: '#f44336', icon: '🗡️', lv: 10 },
+    { name: 'LỮ KHÁCH', color: '#9e9e9e', icon: '🚶', lv: 1 },
+];
+
 // Hàm tính danh xưng (Title) chuẩn Shiroi ✨
-export const calculateTitle = (xp) => {
+export const calculateTitle = (xp, selectedBadge = null) => {
     const lvl = calculateLevel(xp);
-    if (lvl >= 50) return { name: 'HIỀN GIẢ', color: '#4caf50', icon: '🧙‍♂️', lv: 50 };
-    if (lvl >= 35) return { name: 'ĐẠI SƯ', color: '#ff9800', icon: '🎨', lv: 35 };
-    if (lvl >= 20) return { name: 'HỘ VỆ', color: '#2196f3', icon: '🛡️', lv: 20 };
-    if (lvl >= 10) return { name: 'CHIẾN BINH', color: '#f44336', icon: '🗡️', lv: 10 };
-    return { name: 'LỮ KHÁCH', color: '#9e9e9e', icon: '🚶', lv: 1 };
+    const unlockedTitles = TITLES.filter(t => lvl >= t.lv);
+    
+    // Nếu có chọn danh hiệu và danh hiệu đó đã mở khóa -> Ưu tiên dùng 🍀
+    if (selectedBadge) {
+        const selected = TITLES.find(t => t.name.toUpperCase() === selectedBadge.toUpperCase());
+        if (selected && lvl >= selected.lv) return selected;
+    }
+
+    // Mặc định: Trả về danh hiệu cao nhất đã mở khóa
+    return unlockedTitles[0] || TITLES[TITLES.length - 1];
 };
 
 export const getStreakBonus = (newStreak) => {
