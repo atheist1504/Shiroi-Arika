@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { uploadImageAction } from '@/lib/actions';
+import { getUploadUrlAction } from '@/lib/actions';
 import { optimizeImage } from '@/lib/cloudinary';
 
 // 🚀 DND-KIT IMPORTS
@@ -26,7 +26,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// 🍀 TIỆN ÍCH NÉN ẢNH (Bản siêu tối ưu 🚀)
+// 🍀 TIỆN ÍCH NÉN ẢNH (Bản Adaptive Quality 🚀)
 const compressImageToWebP = async (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -35,7 +35,7 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxWidth = 1600; // Giới hạn chiều rộng để tối ưu dung lượng
+      const maxWidth = 1600; 
       const scale = Math.min(1, maxWidth / img.width);
 
       canvas.width = img.width * scale;
@@ -49,11 +49,14 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
+      // 🧠 Logic chất lượng thích ứng: Ảnh càng nặng thì nén càng mạnh
+      const quality = file.size > 2_000_000 ? 0.75 : 0.85;
+
       canvas.toBlob((blob) => {
-        URL.revokeObjectURL(url); // Giải phóng bộ nhớ 🍀
+        URL.revokeObjectURL(url); 
         if (!blob) return reject("Nén ảnh thất bại");
         resolve(blob);
-      }, 'image/webp', 0.85);
+      }, 'image/webp', quality);
     };
 
     img.onerror = () => {
@@ -81,7 +84,6 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // 💡 Logic hiển thị ảnh: Nếu là ảnh mới thì dùng preview (blob), nếu ảnh cũ thì dùng data (url)
   const displaySrc = item.type === 'new' ? item.preview : item.data;
 
   return (
@@ -148,6 +150,17 @@ export default function AdminUploadPage() {
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
 
+  // 🧹 FIX MEMORY LEAK: Dọn dẹp ObjectURL khi thoát hoặc đổi danh sách 🍀
+  useEffect(() => {
+    return () => {
+      items.forEach(item => {
+        if (item.type === 'new' && item.preview && item.preview.startsWith('blob:')) {
+          URL.revokeObjectURL(item.preview);
+        }
+      });
+    };
+  }, [items]);
+
   const fetchMangas = async () => {
     const { data } = await supabase.from('mangas').select('id, title').order('title');
     setMangas(data || []);
@@ -176,7 +189,6 @@ export default function AdminUploadPage() {
     if (files.length === 0) return;
     setMessage({ type: 'info', text: `ĐANG XỬ LÝ ${files.length} ẢNH... ⏳` });
     
-    // Tối ưu: Dùng ObjectURL thay vì Base64 để tiết kiệm RAM 🍀
     const newItems = files.map((file, idx) => ({
       id: `new-${Date.now()}-${idx}-${Math.random()}`,
       file, 
@@ -202,7 +214,7 @@ export default function AdminUploadPage() {
   const removeItem = (id: string) => {
     setItems(prev => {
       const itemToDrop = prev.find(i => i.id === id);
-      if (itemToDrop?.preview) URL.revokeObjectURL(itemToDrop.preview); // Dọn dẹp bộ nhớ 🍀
+      if (itemToDrop?.preview) URL.revokeObjectURL(itemToDrop.preview); 
       return prev.filter(i => i.id !== id);
     });
   };
@@ -228,6 +240,7 @@ export default function AdminUploadPage() {
     
     setUploading(true); 
     setProgress(0);
+    setMessage({ type: "info", text: "🚀 ĐANG KHỞI TẠO QUY TRÌNH UPLOAD SIÊU TỐC..." });
     
     try {
       let chapId = existingChapterId;
@@ -259,52 +272,54 @@ export default function AdminUploadPage() {
 
       await supabase.from("pages").delete().eq("chapter_id", chapId);
       
-      const pagesToInsert = [];
+      const total = items.length;
+      let completed = 0;
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+      // 🌪️ QUY TRÌNH UPLOAD SONG SONG (Parallel Upload) 🚀
+      const uploadPromises = items.map(async (item, i) => {
         let finalUrl = "";
 
         if (item.type === 'new') {
-          try {
-            // Sử dụng bộ nén siêu tối ưu (maxWidth 1600) 🍀
-            const compressed = await compressImageToWebP(item.file);
-            const formData = new FormData();
-            formData.append('file', compressed);
-            formData.append('fileName', `chapters/${chapId}/${Date.now()}-${i}.webp`);
-            
-            const result = await uploadImageAction(formData);
-            
-            if (!result || !result.success || !result.url) {
-              throw new Error(result?.error || `Upload thất bại tại trang ${i + 1}`);
-            }
+          // 1. Nén ảnh
+          const compressed = await compressImageToWebP(item.file);
+          const fileName = `chapters/${chapId}/${Date.now()}-${i}.webp`;
 
-            // 🚨 CHỐT CHẶN CUỐI: Kiểm tra URL hợp lệ
-            if (result.url.includes("undefined")) {
-              throw new Error("Hệ thống trả về URL không hợp lệ (undefined)! Vui lòng kiểm tra cấu hình R2.");
-            }
-
-            finalUrl = result.url;
-          } catch (uploadErr: any) {
-            console.error(`Lỗi tại ảnh index ${i}:`, uploadErr);
-            throw new Error(`Sự cố tại trang ${i + 1}: ${uploadErr.message}`);
+          // 2. Lấy Signed URL (Vé thông hành) từ Server
+          const ticket = await getUploadUrlAction(fileName);
+          if (!ticket.success || !ticket.signedUrl) {
+              throw new Error(ticket.error || `Không thể xin vé upload cho trang ${i+1}`);
           }
+
+          // 3. Upload TRỰC TIẾP từ Client lên R2 (Bỏ qua giới hạn Vercel) 🍀
+          const uploadResponse = await fetch(ticket.signedUrl, {
+              method: 'PUT',
+              body: compressed,
+              headers: { 'Content-Type': 'image/webp' }
+          });
+
+          if (!uploadResponse.ok) {
+              throw new Error(`Cloudflare từ chối tải ảnh trang ${i+1}. Vui lòng kiểm tra CORS.`);
+          }
+
+          finalUrl = ticket.finalPublicUrl;
         } else {
           finalUrl = item.data;
         }
 
-        pagesToInsert.push({ 
-          chapter_id: chapId, 
-          image_url: finalUrl, 
-          page_number: i + 1 
-        });
+        completed++;
+        setProgress(Math.round((completed / total) * 100));
 
-        setProgress(Math.round(((i + 1) / items.length) * 100));
-      }
+        return {
+          chapter_id: chapId,
+          image_url: finalUrl,
+          page_number: i + 1
+        };
+      });
 
-      if (pagesToInsert.length === 0) {
-        throw new Error("Không có dữ liệu trang để lưu! Vui lòng chọn ít nhất 1 ảnh.");
-      }
+      // Chờ tất cả upload xong
+      const pagesToInsert = await Promise.all(uploadPromises);
+
+      if (pagesToInsert.length === 0) throw new Error("Không có ảnh để lưu.");
 
       const { error: insertError } = await supabase.from("pages").insert(pagesToInsert);
       if (insertError) throw insertError;
@@ -314,11 +329,11 @@ export default function AdminUploadPage() {
     } catch (err: any) { 
       setMessage({ 
         type: "error", 
-        text: err.name === 'Error' ? err.message : "QUÁ TRÌNH THẤT BẠI!",
+        text: err.name === 'Error' ? err.message : "UPLOAD THẤT BẠI!",
         details: err.stack || String(err),
-        suggestion: err.message.includes('4.5MB') ? "Vui lòng dùng ảnh có dung lượng thấp hơn hoặc nén thêm." : "Kiểm tra lại kết nối mạng và các thiết lập Cloudflare R2."
+        suggestion: "Hãy kiểm tra lại quyền truy cập Cloudflare R2 hoặc nén ảnh nhỏ lại."
       });
-      console.error("LỖI CHI TIẾT:", err);
+      console.error("DEBUG UPLOAD:", err);
     } finally { 
       setUploading(false); 
     }
