@@ -150,6 +150,7 @@ export default function AdminUploadPage() {
   );
 
   useEffect(() => {
+    alert('🚀 Shiroi Ultra-Upload v2.7 Active!');
     fetchMangas();
     if (preSelectedChapterId) { loadChapterData(preSelectedChapterId); setIsEditing(true); }
   }, [preSelectedChapterId]);
@@ -358,7 +359,7 @@ export default function AdminUploadPage() {
            </h1>
            <div className="flex flex-col items-end gap-1">
              <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
-             <span className="text-[8px] font-black text-gray-700 uppercase tracking-tighter italic">Hệ thống: v2.6 (Direct-to-R2) 🛡️</span>
+             <span className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest animate-pulse border border-[#4caf50]/20 px-2 py-0.5 rounded-full bg-[#4caf50]/5">v2.7 - Direct-to-R2 ⚡</span>
            </div>
         </div>
 
