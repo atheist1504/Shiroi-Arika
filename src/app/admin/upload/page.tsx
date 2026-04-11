@@ -93,7 +93,7 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
       className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
       <img 
-        src={optimizeImage(displaySrc, 200)} 
+        src={optimizeImage(displaySrc, '200')} 
         className="w-full h-full object-cover pointer-events-none" 
         draggable="false" 
         alt="" 
@@ -483,7 +483,7 @@ export default function AdminUploadPage() {
              <button className="absolute top-6 right-6 w-12 h-12 bg-white/5 hover:bg-white/10 rounded-full flex items-center justify-center text-white transition-all z-10">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
              </button>
-             <img src={optimizeImage(previewImage, 1200)} className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" alt="Preview" onClick={(e) => e.stopPropagation()} />
+             <img src={optimizeImage(previewImage, '1200')} className="max-w-[85vw] max-h-[85vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" alt="Preview" onClick={(e) => e.stopPropagation()} />
              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 px-6 py-3 bg-black/40 border border-white/5 backdrop-blur-md rounded-2xl text-[10px] font-black text-gray-400 uppercase tracking-widest">Click ra ngoài để đóng</div>
           </div>
         )}
