@@ -356,7 +356,10 @@ export default function AdminUploadPage() {
               <span className="bg-[#4caf50] text-black px-2 py-0.5 rounded-sm">ADMIN</span>
               {isEditing ? "CHỈNH SỬA" : "ĐĂNG CHƯƠNG"} <span className="text-[#4caf50]">🍀</span>
            </h1>
-           <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
+           <div className="flex flex-col items-end gap-1">
+             <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
+             <span className="text-[8px] font-black text-gray-700 uppercase tracking-tighter italic">Hệ thống: v2.6 (Direct-to-R2) 🛡️</span>
+           </div>
         </div>
 
         {message && (
