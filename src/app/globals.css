@@ -26,25 +26,7 @@
   margin: 0;
 }
 
-/* CUSTOM GLOBAL SCROLLBAR 🍀 */
-::-webkit-scrollbar {
-  width: 10px;
-}
 
-::-webkit-scrollbar-track {
-  background: var(--bg-primary);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1c221c;
-  border: 2px solid var(--bg-primary);
-  border-radius: 10px;
-  transition: all 0.3s;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent);
-}
 
 html,
 body {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -123,23 +123,30 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     }
   };
 
+  const lastScrollYRef = useRef(0);
+
   useEffect(() => {
+    if (readingMode !== 'scroll') {
+      setShowNav(true);
+      return;
+    }
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const lastScrollY = lastScrollYRef.current;
+      
+      // Chỉ cập nhật state nếu thực sự cần thay đổi để tránh re-render thừa 🍀
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setShowNav(false);
       } else {
         setShowNav(true);
       }
-      setLastScrollY(currentScrollY);
+      lastScrollYRef.current = currentScrollY;
     };
-    if (readingMode === 'scroll') {
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
-    } else {
-      setShowNav(true); 
-    }
-  }, [lastScrollY, readingMode]);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [readingMode]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -184,7 +191,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         #shiroi-reader-mode { width: 100%; min-height: 100vh; position: relative; z-index: 1; }
       `}} />
 
-      <div className={`fixed top-0 left-0 right-0 z-[20000] backdrop-blur-xl border-b px-4 py-2 flex items-center justify-between transition-transform duration-500 ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white/90 border-black/5 shadow-sm' : 'bg-[#141814]/90 border-white/5'}`}>
+      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'}`}>
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
             <Link href={`/manga/${chapter?.manga_id}`} className="text-gray-500 hover:text-white">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
@@ -282,9 +289,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
               ))}
             </div>
 
-            <div className="space-y-24 mt-20">
+            <div className="space-y-10 mt-10">
                {/* ⏭️ PHẦN 2: CHUYỂN CHƯƠNG KẾ TIẾP */}
-               <div className={`py-20 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
+               <div className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
                    <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === 'light' ? 'text-gray-400' : 'text-gray-700'}`}>ĐÃ HẾT CHƯƠNG {chapter?.chapter_number}</span>
                    <button 
                      onClick={goToNextChapter} 
@@ -296,7 +303,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
                {/* 💬 PHẦN 3: THẢO LUẬN SHIROI */}
                <div className={`w-full pb-40 ${theme === 'light' ? 'bg-white text-black' : ''}`}>
-                   <div className={`h-px mb-20 ${theme === 'light' ? 'bg-gray-200' : 'bg-gradient-to-r from-transparent via-white/5 to-transparent'}`}></div>
+                   <div className={`h-px mb-12 ${theme === 'light' ? 'bg-gray-200' : 'bg-gradient-to-r from-transparent via-white/5 to-transparent'}`}></div>
                    <Comments chapterId={chapterId} mangaId={chapter?.manga_id} />
                </div>
             </div>

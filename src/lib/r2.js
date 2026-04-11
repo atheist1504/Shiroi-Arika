@@ -2,26 +2,38 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
- * 🌩️ CLOUDFLARE R2 CLIENT
- * Hệ thống lưu trữ vô tận cho Shiroi Arika 🍀
+ * 🌩️ CLOUDFLARE R2 CLIENT GETTER
+ * Giải quyết triệt để lỗi "Resolved credential object is not valid" bằng cách kiểm tra biến môi trường. 🍀
  */
+const getS3Client = () => {
+  const accountId = process.env.R2_ACCOUNT_ID || process.env.NEXT_PUBLIC_R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID || process.env.NEXT_PUBLIC_R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY || process.env.NEXT_PUBLIC_R2_SECRET_ACCESS_KEY;
 
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  },
-});
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    throw new Error(
+      "Hệ thống chưa cấu hình Cloudflare R2! Vui lòng thêm các biến môi trường (R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY) vào Vercel Project Settings."
+    );
+  }
+
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+    },
+  });
+};
 
 export const uploadToR2 = async (file, fileName) => {
-  const bucketName = process.env.R2_BUCKET_NAME || 'shiroi';
+  const bucketName = process.env.R2_BUCKET_NAME || process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'shiroi';
+  const S3 = getS3Client();
   
   try {
     // 🛠️ Đảm bảo dữ liệu ở dạng Uint8Array để AWS SDK xử lý tốt nhất
     let bodyValue = file;
-    if (file instanceof Blob || (typeof file.arrayBuffer === 'function')) {
+    if (file instanceof Blob || (typeof file?.arrayBuffer === 'function')) {
       const arrayBuffer = await file.arrayBuffer();
       bodyValue = new Uint8Array(arrayBuffer);
     }
@@ -55,7 +67,9 @@ export const uploadToR2 = async (file, fileName) => {
  * Cho phép Client nộp ảnh thẳng lên R2 🍀
  */
 export const getPresignedUploadUrl = async (fileName) => {
-  const bucketName = process.env.R2_BUCKET_NAME || 'shiroi';
+  const bucketName = process.env.R2_BUCKET_NAME || process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'shiroi';
+  const S3 = getS3Client();
+
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: fileName,
