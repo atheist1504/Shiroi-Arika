@@ -25,10 +25,10 @@ export const calculateProgress = (xp) => {
 
 export const TITLES = [
     { name: 'HIỀN GIẢ', color: '#4caf50', icon: '🧙‍♂️', lv: 50 },
-    { name: 'ĐẠI SƯ', color: '#ff9800', icon: '🎨', lv: 35 },
-    { name: 'HỘ VỆ', color: '#2196f3', icon: '🛡️', lv: 20 },
-    { name: 'CHIẾN BINH', color: '#f44336', icon: '🗡️', lv: 10 },
-    { name: 'LỮ KHÁCH', color: '#9e9e9e', icon: '🚶', lv: 1 },
+    { name: 'ĐẠI SƯ', color: '#4caf50', icon: '🎨', lv: 35 },
+    { name: 'HỘ VỆ', color: '#4caf50', icon: '🛡️', lv: 20 },
+    { name: 'CHIẾN BINH', color: '#4caf50', icon: '🗡️', lv: 10 },
+    { name: 'LỮ KHÁCH', color: '#4caf50', icon: '🚶', lv: 1 },
 ];
 
 // Hàm tính danh xưng (Title) chuẩn Shiroi ✨
