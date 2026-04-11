@@ -7,6 +7,7 @@ import { compressImageToWebP } from "../../../lib/imageOptimizer";
 import { AdminCard, AdminInput, AdminTextarea, AdminTag, AdminButton } from "../../../components/admin/AdminCommon";
 
 const GENRES_LIST = [
+  "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
   "Action", "Adventure", "Comedy", "Drama", "Fantasy",
   "Horror", "Mystery", "Psychological", "Romance", "Sci-Fi",
   "Slice of Life", "Supernatural", "Tragedy", "Historical",

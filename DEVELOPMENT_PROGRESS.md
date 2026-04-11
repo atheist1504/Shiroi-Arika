@@ -5,6 +5,12 @@ Dự án Manga Platform thế hệ mới.
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
 ### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
+- [x] **Trang Tìm Kiếm (Search Page)**: Hoàn thiện trang `/search` với bộ lọc thể loại thông minh và giao diện Glassmorphism cao cấp. 🔍
+- [x] **Hệ Thống Thể Loại Mới**: Đã thêm các phân loại One Shot, Truyện màu, Manga, Manhua, Manhwa vào hệ thống. 📑
+- [x] **Mobile Navigation & Parity** (v1.2): Đã tích hợp Menu Hamburger đầy đủ chức năng (Tìm kiếm, BXH, Lịch sử) và tối ưu Header di động. 📱
+- [x] **Database Security & Access**: Đã gỡ bỏ RLS giúp hiển thị dữ liệu BXH và Profile chuẩn xác. 🔓
+- [x] **Image Fallback System**: Tự động hiển thị ảnh gốc nếu hệ thống tối ưu hóa Cloudinary gặp sự cố. 🖼️
+- [ ] **SEO & OpenGraph**: Cấu hình Metadata để hiển thị đẹp khi chia sẻ link (Tiếp theo). 🚀
 - [x] **Lưu Trữ Cloudflare R2**: Chuyển đổi thành công từ Supabase Storage sang R2 (Vô hạn dung lượng, tốc độ cao).
 - [x] **Xử Lý Ảnh Thông Minh**: Tích hợp nén ảnh sang định dạng WebP ngay tại trình duyệt để giảm tải server.
 - [x] **Giao Diện MangaDex Style**: Thiết kế cực kỳ tối giản, chuyên nghiệp, tối ưu diện tích.
@@ -35,10 +41,9 @@ Dự án Manga Platform thế hệ mới.
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
-1. **Trang Tìm Kiếm (Search Page)**: Tạo trang kết quả tìm kiếm tập trung (Xử lý link /search).
-2. **SEO Metadata Premium**: Cấu hình tiêu đề/mô tả động chuẩn SEO cho từng trang riêng biệt.
-3. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
-4. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới.
+1. **SEO Metadata Premium**: Cấu hình tiêu đề/mô tả động chuẩn SEO cho từng trang riêng biệt.
+2. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
+3. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
 
 ---
 *Cập nhật lần cuối: 15:15 - 10/04/2026*

@@ -11,9 +11,11 @@ export default function MangaListPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const GENRES = [
-    "All", "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
+    "All", "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
+    "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
     "Horror", "Mystery", "Psychological", "Romance", 
-    "Sci-Fi", "Slice of Life", "Sports", "Supernatural", "Thriller"
+    "Sci-Fi", "Slice of Life", "Supernatural", "Tragedy", "Historical",
+    "Isekai", "School Life"
   ];
 
   useEffect(() => {
