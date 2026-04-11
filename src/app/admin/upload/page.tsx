@@ -197,12 +197,15 @@ export default function AdminUploadPage() {
     if (files.length === 0) return;
     setMessage({ type: 'info', text: `ĐANG XỬ LÝ ${files.length} ẢNH... ⏳` });
     
-    const newItems = files.map((file, idx) => ({
-      id: `new-${Date.now()}-${idx}-${Math.random()}`,
-      file, 
-      preview: URL.createObjectURL(file),
-      type: 'new'
-    }));
+    const newItems = files.map((file, idx) => {
+      const id = `new-${Date.now()}-${idx}-${Math.random()}`;
+      return {
+        id,
+        file, 
+        preview: URL.createObjectURL(file),
+        type: 'new'
+      };
+    });
 
     setItems(prev => [...prev, ...newItems]);
     setMessage(null);
@@ -484,6 +487,7 @@ export default function AdminUploadPage() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
              </button>
              <img 
+               key={previewImage}
                src={previewImage} 
                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
                alt="Preview" 
