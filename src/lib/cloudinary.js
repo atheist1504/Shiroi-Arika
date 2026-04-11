@@ -13,7 +13,8 @@ export const optimizeImage = (url, width = '', height = '') => {
     url.startsWith('data:') || 
     url.startsWith('/') ||
     url.includes('r2.cloudflarestorage.com') ||
-    url.includes('r2.dev')
+    url.includes('r2.dev') ||
+    !url.startsWith('http') // Bỏ qua nếu không phải URL tuyệt đối 🛡️
   ) {
     return url;
   }

@@ -98,7 +98,11 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
         draggable="false" 
         alt="" 
         onError={(e: any) => {
-          console.error("🆘 LỖI TẢI ẢNH TẠI ĐÂY:", e.target.src);
+          // 🛡️ FALLBACK: Nếu Cloudinary lỗi, thử dùng ảnh gốc 🍀
+          if (e.target.src !== displaySrc) {
+            console.warn("🔄 Cloudinary Preview fail, falling back to raw:", displaySrc);
+            e.target.src = displaySrc;
+          }
         }}
       />
       
@@ -184,9 +188,20 @@ export default function AdminUploadPage() {
 
         setItems(pgs.map(p => {
             let finalData = p.image_url;
-            if (finalData && finalData.includes('undefined/')) {
-                finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
+            
+            // 🛠️ XỬ LÝ URL THÔNG MINH 🍀
+            if (finalData) {
+                // 1. Sửa lỗi undefined/ do biến môi trường server cũ
+                if (finalData.includes('undefined/')) {
+                    finalData = finalData.replace(/.*undefined\//, `${cleanR2Url}/`);
+                }
+                // 2. Chuyển đường dẫn tương đối thành tuyệt đối nếu cần
+                else if (!finalData.startsWith('http') && !finalData.startsWith('blob:') && !finalData.startsWith('data:')) {
+                    const separator = finalData.startsWith('/') ? '' : '/';
+                    finalData = `${cleanR2Url}${separator}${finalData}`;
+                }
             }
+            
             return { id: p.id, data: finalData, type: 'existing' };
         }));
     }
