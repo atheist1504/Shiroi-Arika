@@ -21,11 +21,14 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
   }, [featured.length]);
 
   return (
-    <main className="relative overflow-x-hidden">
-      {/* SHIROI AMBIENCE */}
-      <div className="absolute top-[20%] left-[-10%] w-[60%] h-[60%] bg-[#4caf50]/5 rounded-full blur-[150px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-0 right-0 w-[40%] h-[40%] bg-[#4caf50]/3 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none" />
+    <main className="relative overflow-x-hidden min-h-screen">
+      {/* 🌑 SHIROI AMBIENCE - GREY & WHITE GLOWS 🍀 */}
+      <div className="absolute top-[-5%] left-[10%] w-[80%] h-[40%] bg-white/[0.03] rounded-full blur-[180px] pointer-events-none" />
+      <div className="absolute top-[30%] right-[-5%] w-[40%] h-[50%] bg-[#ffffff]/[0.02] rounded-full blur-[150px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[10%] left-[-10%] w-[50%] h-[50%] bg-[#4caf50]/[0.02] rounded-full blur-[150px] pointer-events-none" />
+      
+      {/* LỚP PHỦ HẠT SIÊU MỊN */}
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none z-0" />
 
       <div className="pt-24 relative z-10" />
 
