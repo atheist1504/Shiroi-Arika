@@ -161,20 +161,74 @@ export default function Comments({ mangaId, chapterId }) {
   const giveCommentXP = async () => {
     if (!user) return;
     try {
-        const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', user.id).single();
-        const newXP = (latestUser?.xp || 0) + XP_REWARDS.POST_COMMENT;
-        const { error } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', user.id);
-        if (!error) {
-            const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', user.id).single();
-            if (updated) {
-                localStorage.setItem('shiroi_user', JSON.stringify(updated));
-                setUser(updated);
-                setXpToast(true);
-                setTimeout(() => setXpToast(false), 3000);
-                window.dispatchEvent(new Event('storage'));
+        // 🕒 Thiết lập mốc thời gian "Hôm nay" (00:00:00) 🍀
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayISO = today.toISOString();
+
+        // 🔍 Lấy tất cả bình luận của người dùng trong ngày hôm nay để tính toán XP 🕵️‍♂️
+        const { data: todayComments, error: fetchErr } = await supabase
+            .from('comments')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .gte('created_at', todayISO)
+            .order('created_at', { ascending: true });
+
+        if (fetchErr || !todayComments || todayComments.length === 0) return;
+
+        // 🧠 THUẬT TOÁN MÔ PHỎNG PHẦN THƯỞNG (Simulated Rewards) 🏗️
+        let totalXPEarnedToday = 0;
+        let lastRewardedTime = 0;
+        let rewardedCount = 0;
+        let currentCommentShouldReward = false;
+        let rewardAmount = 0;
+
+        todayComments.forEach((c, index) => {
+            const cTime = new Date(c.created_at).getTime();
+            
+            if (index === 0) {
+                // Bình luận đầu tiên: Luôn nhận 10 XP 🥇
+                totalXPEarnedToday += XP_REWARDS.FIRST_COMMENT;
+                lastRewardedTime = cTime;
+                rewardedCount++;
+                if (index === todayComments.length - 1) {
+                    currentCommentShouldReward = true;
+                    rewardAmount = XP_REWARDS.FIRST_COMMENT;
+                }
+            } else {
+                // Các bình luận tiếp theo: Check Cooldown 60s & Giới hạn 100 XP 🛡️
+                if (cTime - lastRewardedTime >= XP_REWARDS.COMMENT_COOLDOWN && totalXPEarnedToday < XP_REWARDS.MAX_DAILY_COMMENT_XP) {
+                    const amount = XP_REWARDS.SUBSEQUENT_COMMENT;
+                    totalXPEarnedToday += amount;
+                    lastRewardedTime = cTime;
+                    rewardedCount++;
+                    if (index === todayComments.length - 1) {
+                        currentCommentShouldReward = true;
+                        rewardAmount = amount;
+                    }
+                }
+            }
+        });
+
+        // 🚀 Thực hiện cộng XP nếu thỏa mãn điều kiện
+        if (currentCommentShouldReward && rewardAmount > 0) {
+            const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', user.id).single();
+            const newXP = (latestUser?.xp || 0) + rewardAmount;
+            const { error: updateErr } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', user.id);
+            
+            if (!updateErr) {
+                const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', user.id).single();
+                if (updated) {
+                    localStorage.setItem('shiroi_user', JSON.stringify(updated));
+                    setUser(updated);
+                    // Hiển thị thông báo phần thưởng tương ứng 🔔
+                    setXpToast(rewardAmount === XP_REWARDS.FIRST_COMMENT ? "✨ KHỞI ĐẦU NGÀY MỚI +10 XP! 🥇" : `✨ THẢO LUẬN TÍCH CỰC +${rewardAmount} XP! 🚀`);
+                    setTimeout(() => setXpToast(false), 4000);
+                    window.dispatchEvent(new Event('storage'));
+                }
             }
         }
-    } catch (err) { console.error("Lỗi XP bình luận:", err); }
+    } catch (err) { console.error("Lỗi xác thực XP bình luận:", err); }
   };
 
   const fetchComments = async (silent = false) => {

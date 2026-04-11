@@ -3,7 +3,10 @@
 export const XP_REWARDS = {
   DAILY_CHECKIN: 100, // Thưởng 100 XP mỗi ngày
   READ_CHAPTER: 20,   // Thưởng 20 XP mỗi chương (giới hạn 1 ch/người)
-  POST_COMMENT: 5,    // Thưởng 5 XP mỗi bình luận
+  FIRST_COMMENT: 10,  // Thưởng 10 XP cho bình luận đầu tiên trong ngày
+  SUBSEQUENT_COMMENT: 5, // Thưởng 5 XP cho các bình luận tiếp theo
+  MAX_DAILY_COMMENT_XP: 100, // Giới hạn 100 XP từ bình luận mỗi ngày
+  COMMENT_COOLDOWN: 60000,   // 60 giây chờ giữa các lần nhận XP bình luận
 };
 
 export const STREAK_BONUSES = {

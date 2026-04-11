@@ -86,34 +86,45 @@ export default function ProfilePage() {
 
     try {
       setCheckInLoading(true);
-      setMessage('Đang điểm danh... ✨');
+      setMessage('Đang kết nối server để xác thực... ✨');
+
+      // 🛡️ BẢO MẬT: Phải lấy dữ liệu MỚI NHẤT từ DB để chặn điểm danh kép 🍀
+      const { data: latestUser, error: fetchErr } = await supabase
+        .from('shiroi_users')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchErr || !latestUser) throw new Error("Không thể xác thực danh tính!");
 
       const now = new Date();
-      const lastCheckIn = user.last_check_in ? new Date(user.last_check_in) : null;
+      const lastCheckIn = latestUser.last_check_in ? new Date(latestUser.last_check_in) : null;
       
-      // Kiểm tra xem đã check-in hôm nay chưa (theo ngày cục bộ)
+      // Kiểm tra xem đã check-in hôm nay chưa (theo ngày cục bộ server-safe)
       if (lastCheckIn && lastCheckIn.toDateString() === now.toDateString()) {
-        setMessage('Hôm nay bạn đã điểm danh rồi! 🍀');
+        setMessage('Hệ thống xác nhận: Bạn đã điểm danh hôm nay rồi! 🍀');
+        setUser(latestUser);
+        localStorage.setItem('shiroi_user', JSON.stringify(latestUser));
         setCheckInLoading(false);
         return;
       }
 
-      // Tính toán Streak
+      // Tính toán Streak dựa trên dữ liệu thật từ DB
       let newStreak = 1;
       if (lastCheckIn) {
         const diffTime = Math.abs(now - lastCheckIn);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
         if (diffDays === 1) {
-          newStreak = (user.check_in_streak || 0) + 1;
+          newStreak = (latestUser.check_in_streak || 0) + 1;
         } else if (diffDays > 1) {
-          newStreak = 1; // Reset chuỗi nếu quá 1 ngày không check-in
+          newStreak = 1; 
         }
       }
 
       const streakBonus = getStreakBonus(newStreak);
       const totalReward = XP_REWARDS.DAILY_CHECKIN + streakBonus;
-      const newXP = (user.xp || 0) + totalReward;
+      const newXP = (latestUser.xp || 0) + totalReward;
 
       const { data, error } = await supabase
         .from('shiroi_users')
@@ -129,11 +140,11 @@ export default function ProfilePage() {
       if (!error && data) {
         setUser(data);
         localStorage.setItem('shiroi_user', JSON.stringify(data));
-        setMessage(`THÀNH CÔNG! Nhận ${totalReward} XP ${streakBonus > 0 ? `(Thưởng chuỗi +${streakBonus}!)` : ''} 💎`);
+        setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
         window.dispatchEvent(new Event('storage'));
       }
     } catch (err) {
-      setMessage(`Lỗi: ${err.message}`);
+      setMessage(`Lỗi hệ thống: ${err.message}`);
     } finally {
       setCheckInLoading(false);
     }
