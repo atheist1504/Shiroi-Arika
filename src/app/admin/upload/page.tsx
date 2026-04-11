@@ -83,7 +83,6 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
     zIndex: isDragging ? 100 : 1,
     opacity: isDragging ? 0.5 : 1,
   };
-  const [hasError, setHasError] = useState(false);
 
   const displaySrc = item.type === 'new' ? item.preview : item.data;
 
@@ -100,15 +99,8 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
         alt="" 
         onError={(e: any) => {
           console.error("🆘 LỖI TẢI ẢNH TẠI ĐÂY:", e.target.src);
-          setHasError(true);
         }}
       />
-
-      {hasError && (
-        <div className="absolute inset-x-0 bottom-0 bg-red-600 text-[6px] font-mono p-1 break-all leading-tight text-white z-30 opacity-90">
-          ERR: {displaySrc}
-        </div>
-      )}
       
       <div 
         {...attributes} 
