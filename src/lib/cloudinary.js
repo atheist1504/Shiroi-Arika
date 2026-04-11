@@ -11,9 +11,6 @@ export const optimizeImage = (url, width = '', height = '') => {
   // Nếu là ảnh từ Blob hoặc base64 thì không xử lý (do là ảnh tạm local) 🍀
   if (url.startsWith('blob:') || url.startsWith('data:')) return url;
 
-  // 🌩️ Nếu là ảnh từ R2 (đã nén WebP sẵn) thì không cần qua Cloudinary nữa
-  if (url.includes('r2.dev')) return url;
-
   try {
     // Cấu hình tối ưu "Thần thánh" cho các nguồn ảnh khác (Supabase, v.v.)
     let transformations = 'f_auto,q_auto:best';

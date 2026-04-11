@@ -50,8 +50,12 @@ export const uploadToR2 = async (file, fileName) => {
     // Trả về URL công khai
     const publicBaseUrl = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
     
+    if (!publicBaseUrl) {
+        throw new Error("Lỗi: Thiếu biến môi trường R2_PUBLIC_URL trên Server! Không thể tạo đường dẫn ảnh.");
+    }
+
     // Đảm bảo không bị thừa dấu gạch chéo
-    const baseUrl = publicBaseUrl?.endsWith('/') ? publicBaseUrl.slice(0, -1) : publicBaseUrl;
+    const baseUrl = publicBaseUrl.endsWith('/') ? publicBaseUrl.slice(0, -1) : publicBaseUrl;
     const finalUrl = `${baseUrl}/${fileName}`;
     
     console.log(`🚀 R2 Upload Success: ${finalUrl}`);
@@ -81,7 +85,10 @@ export const getPresignedUploadUrl = async (fileName) => {
 
   // Tạo URL công khai cuối cùng
   const publicBaseUrl = process.env.R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_URL;
-  const baseUrl = publicBaseUrl?.endsWith('/') ? publicBaseUrl.slice(0, -1) : publicBaseUrl;
+  if (!publicBaseUrl) {
+    throw new Error("Lỗi: Thiếu biến môi trường R2_PUBLIC_URL trên Server! Không thể tạo đường dẫn ảnh.");
+  }
+  const baseUrl = publicBaseUrl.endsWith('/') ? publicBaseUrl.slice(0, -1) : publicBaseUrl;
   const finalPublicUrl = `${baseUrl}/${fileName}`;
 
   return { signedUrl, finalPublicUrl };
