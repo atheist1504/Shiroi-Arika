@@ -5,11 +5,11 @@ import "./globals.css";
 export const metadata = {
   metadataBase: new URL('https://shiroi-arika.vercel.app'),
   title: "Shiroi Arika (🍀) - Manga Online Premium Miễn Phí",
-  description: "Đọc Manga online miễn phí tại Shiroi Arika. Trải nghiệm tốc độ cao, giao diện tối giản và không quảng cáo khó chịu.",
+  description: "Trang đọc truyện của Shiroi Arika Edit, Free và không quảng cáo, cảm ơn~",
   keywords: ["manga", "đọc truyện tranh", "manga online", "truyện tranh online", "Shiroi Arika", "manga việt hóa"],
   openGraph: {
-    title: "Shiroi Arika (🍀) - Thánh địa Manga Premium",
-    description: "Trải nghiệm đọc Manga tốc độ cao với giao diện tối ưu nhất cho độc giả.",
+    title: "Shiroi Arika (🍀) - Manga Online Premium",
+    description: "Trang đọc truyện của Shiroi Arika Edit, Free và không quảng cáo, cảm ơn~",
     url: 'https://shiroi-arika.vercel.app',
     siteName: 'Shiroi Arika',
     images: [
@@ -25,8 +25,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Shiroi Arika (🍀) - Thánh địa Manga Premium",
-    description: "Đọc Manga miễn phí với trải nghiệm tốt nhất.",
+    title: "Shiroi Arika (🍀) - Manga Online Premium",
+    description: "Trang đọc truyện của Shiroi Arika Edit, Free và không quảng cáo, cảm ơn~",
     images: ['/og-banner.png'],
   },
 };
