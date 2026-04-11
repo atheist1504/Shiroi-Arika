@@ -180,7 +180,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
   return (
-    <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 overflow-x-hidden bg-[var(--bg-reader)] text-[var(--text-reader)]">
+    <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 overflow-x-hidden text-[var(--text-reader)]" style={{ backgroundColor: 'var(--bg-reader)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style dangerouslySetInnerHTML={{ __html: `
         nav.sticky-nav, footer.footer { display: none !important; }
@@ -255,7 +255,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
       </AnimatePresence>
 
-      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-2 transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
+      <div className={`max-w-5xl mx-auto flex flex-col items-center pt-[70px] md:pt-[80px] transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
         {readingMode === 'scroll' && (
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
