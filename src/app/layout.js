@@ -14,7 +14,7 @@ export const metadata = {
     siteName: 'Shiroi Arika',
     images: [
       {
-        url: '/og-banner-v7.png?v=7',
+        url: '/og-banner-v8.png?v=8',
         width: 1200,
         height: 630,
         alt: 'Shiroi Arika Banner',
@@ -27,7 +27,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: "Shiroi Arika (🍀) - Manga Online Premium",
     description: "Trang đọc truyện của Shiroi Arika Edit, Free và không quảng cáo, cảm ơn~",
-    images: ['/og-banner-v7.png?v=7'],
+    images: ['/og-banner-v8.png?v=8'],
   },
 };
 
