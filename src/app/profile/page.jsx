@@ -133,9 +133,11 @@ export default function ProfilePage() {
         return;
       }
 
-      // Tính toán Streak dựa trên dữ liệu thật từ DB
+      // Tính toán Streak dựa trên dữ liệu thật từ DB (Reset mỗi tháng 🍀)
       let newStreak = 1;
-      if (lastCheckIn) {
+      const isNewMonth = lastCheckIn && (now.getMonth() !== lastCheckIn.getMonth() || now.getFullYear() !== lastCheckIn.getFullYear());
+
+      if (lastCheckIn && !isNewMonth) {
         const diffTime = Math.abs(now - lastCheckIn);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         
