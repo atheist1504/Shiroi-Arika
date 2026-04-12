@@ -376,6 +376,62 @@ export default function ProfilePage() {
               <h2 className="text-xl font-black uppercase tracking-tighter text-white">Thánh tích & Danh hiệu</h2>
             </div>
 
+            {/* 📜 HƯỚNG DẪN TU LUYỆN (XP GUIDE) 🍀 */}
+            <div className="bg-[#141814]/40 border border-[#4caf50]/10 rounded-[40px] p-8 space-y-6 animate-fade-in relative group overflow-hidden">
+               <div className="absolute top-0 right-0 p-12 bg-[#4caf50]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-[#4caf50]/10 transition-all"></div>
+               
+               <div className="flex items-center gap-4 mb-2">
+                  <div className="w-10 h-10 bg-[#4caf50]/20 rounded-xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(76,175,80,0.2)]">📜</div>
+                  <h3 className="text-sm font-black text-[#4caf50] uppercase tracking-widest">Bí kíp thăng cấp Shiroi</h3>
+               </div>
+
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                     <div className="flex items-center gap-2">
+                        <span className="text-lg">🗓️</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Điểm danh</span>
+                     </div>
+                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                        Mỗi ngày nhận <span className="text-[#4caf50]">+100 XP</span>. <br/>
+                        Duy trì chuỗi 3, 7, 30 ngày để nhận thêm hàng nghìn XP quà tặng!
+                     </p>
+                  </div>
+
+                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                     <div className="flex items-center gap-2">
+                        <span className="text-lg">📖</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Đọc truyện</span>
+                     </div>
+                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                        Mỗi chương truyện đọc xong giúp bạn tích lũy <span className="text-[#4caf50]">+20 XP</span>. <br/>
+                        (Chỉ tính 1 lần duy nhất cho mỗi chương).
+                     </p>
+                  </div>
+
+                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                     <div className="flex items-center gap-2">
+                        <span className="text-lg">💬</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Bình luận</span>
+                     </div>
+                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                        Bình luận đầu ngày: <span className="text-[#4caf50]">+10 XP</span>. <br/>
+                        Bình luận tiếp theo: <span className="text-[#4caf50]">+5 XP</span>. (Max 100 XP/ngày)
+                     </p>
+                  </div>
+
+                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                     <div className="flex items-center gap-2">
+                        <span className="text-lg">⚡</span>
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Thăng cấp</span>
+                     </div>
+                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                        Cứ mỗi <span className="text-[#4caf50]">100 XP</span> bạn sẽ thăng 1 cấp. <br/>
+                        Cấp càng cao, danh hiệu và quyền hạn càng lớn trên Shiroi Arika!
+                     </p>
+                  </div>
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
               {[
                 { name: 'Lữ Khách', lv: 1, icon: '🚶' },
