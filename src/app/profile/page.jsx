@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
+  const [checkInDates, setCheckInDates] = useState([]); // 📅 Các ngày đã điểm danh 🍀
   const fileInputRef = useRef(null);
   const router = useRouter();
 
@@ -90,7 +91,15 @@ export default function ProfilePage() {
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(100);
-      if (!error && data) setXpLogs(data);
+      if (!error && data) {
+        setXpLogs(data);
+        
+        // 📅 Trích xuất các ngày điểm danh cho Lịch
+        const dates = data
+          .filter(log => log.type === 'checkin')
+          .map(log => new Date(log.created_at).getDate());
+        setCheckInDates([...new Set(dates)]);
+      }
     } catch (err) {
       console.error("Lỗi lấy nhật ký XP:", err);
     }
@@ -158,6 +167,7 @@ export default function ProfilePage() {
         
         // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
         await recordXpLog(supabase, user.id, totalReward, 'checkin', `Streak: ${newStreak}`);
+        await fetchXpLogs(user.id); // 🔄 Cập nhật lịch ngay lập tức 🍀
 
         setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
         window.dispatchEvent(new Event('storage'));
@@ -350,6 +360,52 @@ export default function ProfilePage() {
               >
                 {checkInLoading ? 'ĐANG ĐIỂM DANH...' : (user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString() ? 'ĐÃ NHẬN HÔM NAY' : 'ĐIỂM DANH NGAY ✨')}
               </button>
+
+              {/* 📅 CALENDAR GRID 🍀 */}
+              <div className="w-full pt-6 border-t border-white/5 space-y-4">
+                 <div className="flex items-center justify-between px-1">
+                    <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Lịch tháng {new Date().getMonth() + 1}</span>
+                    <span className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest">{(checkInDates.length / new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() * 100).toFixed(0)}% Lấp đầy</span>
+                 </div>
+                 <div className="grid grid-cols-7 gap-1.5">
+                    {(() => {
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth();
+                        const daysInMonth = new Date(year, month + 1, 0).getDate();
+                        const firstDay = new Date(year, month, 1).getDay();
+                        const today = now.getDate();
+                        
+                        const calendar = [];
+                        // Padding cho ngày trống đầu tuần
+                        for (let i = 0; i < firstDay; i++) {
+                            calendar.push(<div key={`empty-${i}`} className="aspect-square opacity-0"></div>);
+                        }
+                        // Các ngày trong tháng
+                        for (let d = 1; d <= daysInMonth; d++) {
+                            const isChecked = checkInDates.includes(d);
+                            const isToday = d === today;
+                            const isPast = d < today;
+                            
+                            calendar.push(
+                                <div 
+                                    key={`day-${d}`} 
+                                    title={`Ngày ${d}`}
+                                    className={`aspect-square rounded-lg flex items-center justify-center text-[9px] font-black transition-all relative
+                                        ${isChecked ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_0_15px_rgba(76,175,80,0.4)] scale-105 z-10' : 
+                                          isToday ? 'border-2 border-[#4caf50]/50 text-[#4caf50] animate-pulse' :
+                                          isPast ? 'bg-white/5 text-gray-700' : 'bg-white/[0.02] text-gray-800'}
+                                    `}
+                                >
+                                    {d}
+                                    {isChecked && <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full border-2 border-[#4caf50] animate-ping opacity-75"></div>}
+                                </div>
+                            );
+                        }
+                        return calendar;
+                    })()}
+                 </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 h-full">
