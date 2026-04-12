@@ -28,6 +28,8 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Image Fallback System**: Tự động hiển thị ảnh gốc nếu hệ thống tối ưu hóa Cloudinary gặp sự cố. 🖼️
 - [x] **SEO & OpenGraph**: Cấu hình Metadata để hiển thị đẹp khi chia sẻ link. 🚀
 - [x] **Lưu Trữ Cloudflare R2**: Chuyển đổi thành công từ Supabase Storage sang R2 (Vô hạn dung lượng, tốc độ cao).
+- [x] **Phase 11 (Leaderboard V2)**: [DONE] Tiered rankings (Monthly, Last Month, Total) powered by XP transaction logs.
+- [x] **Phase 12 (Gamification Help)**: [DONE] Added XP Guide explaining levels, streaks, and rewards on Profile page.
 - [x] **Xử Lý Ảnh Thông Minh**: Tích hợp nén ảnh sang định dạng WebP ngay tại trình duyệt để giảm tải server.
 - [x] **Giao Diện MangaDex Style**: Thiết kế cực kỳ tối giản, chuyên nghiệp, tối ưu diện tích.
 - [x] **Kéo Thả 2D (dnd-kit)**: Khắc phục triệt để lỗi nhảy tọa độ, hỗ trợ sắp xếp dạng lưới (Grid) mượt mà 100%.
@@ -40,6 +42,10 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Storage Usage Meter**: Triển khai hệ thống theo dõi dung lượng Cloudflare R2 ngay trên trang Admin, giúp quản lý giới hạn 10GB Free Tier dễ dàng. 📊⚡
 - [x] **Manga Deletion & R2 Cleanup**: Nút xóa truyện triệt để cấp độ Admin, tự động dọn dẹp cả dữ liệu database và tệp ảnh vật lý trên R2. 🗑️🌩️
 - [x] **UI Polish - Glass Artifact Fix**: Sửa lỗi "đường sáng" sub-pixel ở góc dưới các thẻ truyện bằng cách chuyển sang sử dụng `outline` với `offset` âm và kỹ thuật "tràn viền" (bleed). ✨🛡️
+- [x] **XP Guide section on Profile page**
+- [x] **Tiered Leaderboard (Monthly/Last Month/Total)**
+- [x] **XP Transaction logs (accurate monthly calculations)**
+- [x] **Database RPC for high-performance ranking calculation**
 - [x] **Home Page Read History**: Tích hợp mục "Tiếp tục đọc" ngay trên trang chủ, đồng bộ dữ liệu giữa mây (Cloud) và máy (Local), giúp người dùng quay lại chương truyện dở dang chỉ với 1 cú click. 📖🚀
 - [x] **Tổng Audit & Việt Hóa**: Dịch 100% tệp test sang Tiếng Việt, sửa lỗi ảnh đại diện (Broken Avatars).
 

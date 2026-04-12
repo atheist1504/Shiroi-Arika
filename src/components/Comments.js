@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { calculateLevel, calculateTitle, XP_REWARDS } from '@/lib/xp';
+import { calculateLevel, calculateTitle, XP_REWARDS, recordXpLog } from '@/lib/xp';
 import { fixR2Url } from '@/lib/cloudinary';
 
 // 🛠️ COMPONENT CON: FORM TRẢ LỜI (Đưa ra ngoài để tránh nháy 🚀)
@@ -217,6 +217,9 @@ export default function Comments({ mangaId, chapterId }) {
             const { error: updateErr } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', user.id);
             
             if (!updateErr) {
+                // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
+                await recordXpLog(supabase, user.id, rewardAmount, 'comment', mangaId || chapterId || 'General');
+
                 const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', user.id).single();
                 if (updated) {
                     localStorage.setItem('shiroi_user', JSON.stringify(updated));

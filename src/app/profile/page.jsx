@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { calculateLevel, calculateProgress, calculateTitle, XP_REWARDS, getStreakBonus } from '@/lib/xp';
+import { calculateLevel, calculateProgress, calculateTitle, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -140,6 +140,10 @@ export default function ProfilePage() {
       if (!error && data) {
         setUser(data);
         localStorage.setItem('shiroi_user', JSON.stringify(data));
+        
+        // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
+        await recordXpLog(supabase, user.id, totalReward, 'checkin', `Streak: ${newStreak}`);
+
         setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
         window.dispatchEvent(new Event('storage'));
       }

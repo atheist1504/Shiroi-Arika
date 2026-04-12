@@ -56,3 +56,21 @@ export const getStreakBonus = (newStreak) => {
     if (newStreak === 3) return STREAK_BONUSES.DAY_3;
     return 0;
 };
+
+/**
+ * 📝 Ghi lại nhật ký XP để phục vụ BXH Tháng 🍀
+ * Hàm này chỉ insert log, việc cộng XP tổng vẫn thực hiện ở bảng shiroi_users.
+ */
+export const recordXpLog = async (supabase, userId, amount, type, reason = null) => {
+    if (!userId || !amount) return;
+    try {
+        await supabase.from('shiroi_xp_logs').insert([{
+            user_id: userId,
+            amount: amount,
+            type: type,
+            reason: reason
+        }]);
+    } catch (err) {
+        console.error("Lỗi ghi log XP:", err);
+    }
+};

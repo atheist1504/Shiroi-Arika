@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Comments from '@/components/Comments';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
-import { XP_REWARDS } from '@/lib/xp';
+import { XP_REWARDS, recordXpLog } from '@/lib/xp';
 
 // 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
@@ -161,6 +161,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         // ✅ GHI NHẬN ĐÃ NHẬN THƯỞNG: Chỉ ghi vào database sau khi cộng XP thành công 🍀
         await supabase.from('shiroi_read_chapters').upsert({ user_id: userData.id, username: userData.username, chapter_id: chapterId, manga_id: chapter.manga_id, read_at: new Date().toISOString() }, { onConflict: 'user_id, chapter_id' });
         
+        // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
+        await recordXpLog(supabase, userData.id, XP_REWARDS.READ_CHAPTER, 'read', chapterId);
+
         const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', userData.id).single();
         if (updated) localStorage.setItem('shiroi_user', JSON.stringify(updated));
         sessionStorage.setItem(sessionKey, 'true');

@@ -22,6 +22,7 @@ function LeaderboardContent() {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(query);
+  const [activeTab, setActiveTab] = useState('total'); // 'total', 'this_month', 'last_month'
 
   useEffect(() => {
     const storedUser = localStorage.getItem('shiroi_user');
@@ -31,7 +32,7 @@ function LeaderboardContent() {
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [currentPage, query]);
+  }, [currentPage, query, activeTab]);
 
   const fetchAdmins = async () => {
     try {
@@ -51,23 +52,40 @@ function LeaderboardContent() {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Logic BXH: Chỉ lấy những người KHÔNG phải admin
-      let baseQuery = supabase.from('shiroi_users').select('*', { count: 'exact' });
-
-      // Lọc Admin để người dùng thường được lên đỉnh 🍀
-      baseQuery = baseQuery.not('username', 'ilike', '%admin%').not('display_name', 'ilike', '%quản trị%');
-
-      if (query) {
-        baseQuery = baseQuery.or(`username.ilike.%${query}%,display_name.ilike.%${query}%`);
-      }
-
-      const { data, error, count } = await baseQuery
-        .order('xp', { ascending: false })
-        .range(from, to);
-
-      if (!error && data) {
-        setUsers(data);
-        setTotalCount(count || 0);
+      if (activeTab === 'total') {
+          // 🏆 BXH TỔNG (Logic cũ)
+          let baseQuery = supabase.from('shiroi_users').select('*', { count: 'exact' });
+          baseQuery = baseQuery.not('username', 'ilike', '%admin%').not('display_name', 'ilike', '%quản trị%');
+          if (query) baseQuery = baseQuery.or(`username.ilike.%${query}%,display_name.ilike.%${query}%`);
+          
+          const { data, error, count } = await baseQuery.order('xp', { ascending: false }).range(from, to);
+          if (!error && data) {
+            setUsers(data.map(u => ({ ...u, total_xp: u.xp, ranking_xp: u.xp })));
+            setTotalCount(count || 0);
+          }
+      } else {
+          // 📅 BXH THÁNG (RPC Logic mới)
+          const monthOffset = activeTab === 'this_month' ? 0 : 1;
+          const { data, error } = await supabase.rpc('get_monthly_leaderboard', { month_offset: monthOffset });
+          
+          if (!error && data) {
+            // Lọc theo search query nếu có
+            let filtered = data;
+            if (query) {
+                const q = query.toLowerCase();
+                filtered = data.filter(u => 
+                    (u.username && u.username.toLowerCase().includes(q)) || 
+                    (u.display_name && u.display_name.toLowerCase().includes(q))
+                );
+            }
+            
+            setTotalCount(filtered.length);
+            setUsers(filtered.slice(from, to + 1).map(u => ({
+                ...u,
+                total_xp: u.total_xp,
+                ranking_xp: u.monthly_xp
+            })));
+          }
       }
     } catch (err) {
       console.error("Lỗi lấy BXH:", err);
@@ -100,7 +118,7 @@ function LeaderboardContent() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-[#4caf50]/10 to-transparent pointer-events-none blur-[120px]"></div>
         
         <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-20">
+            <div className="text-center mb-10">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full mb-6">
                     <span className="w-2 h-2 bg-[#4caf50] rounded-full animate-pulse"></span>
                     <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.3em]">Hệ thống Gamification</span>
@@ -108,10 +126,32 @@ function LeaderboardContent() {
                 <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter mb-6">
                     BẢNG VÀNG <span className="text-[#4caf50]">SHIROI</span> 🏆
                 </h1>
+                
+                {/* 🧧 TAB SWITCHER - BXH PHÂN CẤP 🍀 */}
+                <div className="flex items-center justify-center gap-2 mb-10 mt-12 bg-white/[0.02] p-1.5 rounded-3xl border border-white/5 w-fit mx-auto backdrop-blur-xl">
+                    <button 
+                        onClick={() => { setActiveTab('this_month'); handlePageChange(1); }}
+                        className={`px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'this_month' ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_10px_30px_rgba(76,175,80,0.3)]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Tháng này
+                    </button>
+                    <button 
+                        onClick={() => { setActiveTab('last_month'); handlePageChange(1); }}
+                        className={`px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'last_month' ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_10px_30px_rgba(76,175,80,0.3)]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Tháng trước
+                    </button>
+                    <button 
+                        onClick={() => { setActiveTab('total'); handlePageChange(1); }}
+                        className={`px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'total' ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_10px_30px_rgba(76,175,80,0.3)]' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Tổng hạng
+                    </button>
+                </div>
+                
                 <p className="text-gray-500 font-bold max-w-xl mx-auto uppercase tracking-widest text-[10px]">
-                    Vinh danh những độc giả trung thành nhất của Thánh địa Shiroi Arika
+                    {activeTab === 'total' ? 'Mọi nỗ lực từ trước đến nay đều được vinh danh tại đây' : (activeTab === 'this_month' ? 'Cuộc đua giành ngôi vương đầy kịch tính của tháng này' : 'Bảng thành tích huy hoàng của tháng vừa qua')}
                 </p>
-
             </div>
 
             {loading ? (
@@ -121,8 +161,8 @@ function LeaderboardContent() {
                 </div>
             ) : (
                 <>
-                    {/* KHU VỰC ADMIN (CHỈ HIỆN TRANG 1) */}
-                    {currentPage === 1 && adminUsers.length > 0 && (
+                    {/* KHU VỰC ADMIN (CHỈ HIỆN TRANG 1 & KHI XEM TỔNG HẠNG) */}
+                    {currentPage === 1 && activeTab === 'total' && adminUsers.length > 0 && (
                         <div className="max-w-4xl mx-auto bg-[#1a221a]/60 backdrop-blur-3xl border border-[#4caf50]/20 rounded-[30px] p-6 mb-16 text-center">
                             <h2 className="text-[#4caf50] text-[10px] font-black uppercase tracking-[0.3em] mb-6">👑 Đội ngũ quản trị 👑</h2>
                             <div className="flex flex-wrap items-center justify-center gap-4">
@@ -150,8 +190,8 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-gray-400 text-black text-[10px] font-black rounded-full uppercase">Á QUÂN 🥈</div>
                                         <h3 className="text-xl font-black text-white mb-1 truncate">{top3[1].display_name || top3[1].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[1].xp)} - {calculateTitle(top3[1].xp, top3[1].selected_badge).name}</p>
-                                        <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{top3[1].xp.toLocaleString()} XP</div>
+                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[1].total_xp || top3[1].xp)} - {calculateTitle(top3[1].total_xp || top3[1].xp, top3[1].selected_badge).name}</p>
+                                        <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[1].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
                                     </div>
                                 </motion.div>
                             )}
@@ -164,10 +204,10 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-14 mb-5 inline-block px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-xs font-black rounded-full uppercase shadow-lg animate-pulse">QUÁN QUÂN 🥇</div>
                                         <h3 className="text-3xl font-black text-white mb-2 truncate">{top3[0].display_name || top3[0].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em]">CẤP {calculateLevel(top3[0].xp)} - {calculateTitle(top3[0].xp, top3[0].selected_badge).name}</p>
+                                        <p className="text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em]">CẤP {calculateLevel(top3[0].total_xp || top3[0].xp)} - {calculateTitle(top3[0].total_xp || top3[0].xp, top3[0].selected_badge).name}</p>
                                         <div className="mt-8">
                                             <div className="inline-block px-5 py-2 bg-black/40 rounded-2xl border border-white/5">
-                                                <span className="text-lg font-black text-white">{top3[0].xp.toLocaleString()}</span>
+                                                <span className="text-lg font-black text-white">{(top3[0].ranking_xp || 0).toLocaleString()}</span>
                                                 <span className="text-[10px] text-[#4caf50] ml-1 font-black">XP</span>
                                             </div>
                                         </div>
@@ -183,8 +223,8 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-orange-700 text-white text-[10px] font-black rounded-full uppercase">HẠNG 3 🥉</div>
                                         <h3 className="text-xl font-black text-white mb-1 truncate">{top3[2].display_name || top3[2].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[2].xp)} - {calculateTitle(top3[2].xp, top3[2].selected_badge).name}</p>
-                                        <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{top3[2].xp.toLocaleString()} XP</div>
+                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[2].total_xp || top3[2].xp)} - {calculateTitle(top3[2].total_xp || top3[2].xp, top3[2].selected_badge).name}</p>
+                                        <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[2].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
                                     </div>
                                 </motion.div>
                             )}
@@ -215,12 +255,14 @@ function LeaderboardContent() {
                                     <th className="py-6 px-8">#</th>
                                     <th className="py-6 px-4">THÀNH VIÊN</th>
                                     <th className="py-6 px-4 text-center">CẤP ĐỘ</th>
-                                    <th className="py-6 px-4 text-right">KINH NGHIỆM</th>
+                                    <th className="py-6 px-4 text-right">{activeTab === 'total' ? 'KINH NGHIỆM' : 'KINH NGHIỆM THÁNG'}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/[0.03]">
                                 {users.length > 0 ? users.map((u, index) => {
                                     const rank = (currentPage - 1) * pageSize + index + 1;
+                                    const txp = u.total_xp || u.xp;
+                                    const rxp = u.ranking_xp || 0;
                                     return (
                                         <motion.tr 
                                           key={u.id} 
@@ -236,15 +278,15 @@ function LeaderboardContent() {
                                                     </div>
                                                     <div>
                                                         <div className="text-white font-black text-sm">{u.display_name || u.username}</div>
-                                                        <div className="text-[9px] font-black uppercase" style={{ color: calculateTitle(u.xp, u.selected_badge).color }}>{calculateTitle(u.xp, u.selected_badge).name}</div>
+                                                        <div className="text-[9px] font-black uppercase" style={{ color: calculateTitle(txp, u.selected_badge).color }}>{calculateTitle(txp, u.selected_badge).name}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="py-6 px-4 text-center">
-                                                <span className="px-3 py-1 bg-black/40 rounded-lg text-xs font-black text-[#4caf50] border border-white/5">LV.{calculateLevel(u.xp)}</span>
+                                                <span className="px-3 py-1 bg-black/40 rounded-lg text-xs font-black text-[#4caf50] border border-white/5">LV.{calculateLevel(txp)}</span>
                                             </td>
                                             <td className="py-6 px-4 text-right">
-                                                <span className="text-gray-100 font-black text-sm">{u.xp.toLocaleString()}</span>
+                                                <span className="text-gray-100 font-black text-sm">{rxp.toLocaleString()}</span>
                                                 <span className="text-[10px] text-gray-600 ml-2 font-black">XP</span>
                                             </td>
                                         </motion.tr>
