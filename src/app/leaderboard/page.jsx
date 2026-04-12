@@ -49,7 +49,8 @@ function LeaderboardContent() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
-      setUsers([]); // 🧹 Reset danh sách để tránh hiện dữ liệu cũ khi chuyển Tab 🍀
+      setUsers([]); 
+      setTotalCount(0); // 🧹 Reset cả phân trang để tránh nhầm lẫn 🍀
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
