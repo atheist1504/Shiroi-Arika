@@ -89,7 +89,7 @@ export default function ProfilePage() {
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
-        .limit(15);
+        .limit(100);
       if (!error && data) setXpLogs(data);
     } catch (err) {
       console.error("Lỗi lấy nhật ký XP:", err);
@@ -459,7 +459,7 @@ export default function ProfilePage() {
                      <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-xl">🕰️</div>
                      <h3 className="text-sm font-black text-white uppercase tracking-widest">Nhật ký tu luyện</h3>
                   </div>
-                  <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest italic">15 giao dịch gần nhất</span>
+                  <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest italic">100 giao dịch gần nhất</span>
                </div>
 
                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
