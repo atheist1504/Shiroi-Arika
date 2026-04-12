@@ -307,6 +307,7 @@ export default function AdminUploadPage() {
       // 🌪️ QUY TRÌNH UPLOAD SONG SONG (Parallel Upload) 🚀
       const uploadPromises = items.map(async (item, i) => {
         let finalUrl = "";
+        let fileSizeKb = 0;
 
         if (item.type === 'new') {
           // 1. Nén ảnh
@@ -320,7 +321,7 @@ export default function AdminUploadPage() {
           }
           const signedUrl = ticket.signedUrl;
           const finalPublicUrl = ticket.finalPublicUrl;
-          const fileSizeKb = Math.round(compressed.size / 1024);
+          fileSizeKb = Math.round(compressed.size / 1024);
 
           // 3. Upload TRỰC TIẾP từ Client lên R2 (Bỏ qua giới hạn Vercel) 🍀
           const uploadResponse = await fetch(signedUrl, {
