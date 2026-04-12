@@ -25,7 +25,8 @@ export async function generateMetadata({ params }) {
     ? manga.description.substring(0, 160) 
     : `Đọc truyện ${manga.title} online miễn phí bản đẹp, cập nhật sớm nhất tại Shiroi Arika. Trải nghiệm đọc truyện premium không quảng cáo.`;
 
-  const ogImageUrl = `https://shiroiarika.vercel.app/api/og/manga?mangaId=${mangaId}`;
+  const baseUrl = 'https://shiroi-arika.vercel.app';
+  const ogImageUrl = `${baseUrl}/api/og/manga?mangaId=${mangaId}`;
 
   return {
     title,
