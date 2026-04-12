@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
+  const [xpLogs, setXpLogs] = useState([]);
   const fileInputRef = useRef(null);
   const router = useRouter();
 
@@ -42,9 +43,11 @@ export default function ProfilePage() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           fetchStats(data.id);
+          fetchXpLogs(data.id);
         } else {
           setUser(userData);
           fetchStats(userData.id);
+          fetchXpLogs(userData.id);
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -60,13 +63,11 @@ export default function ProfilePage() {
     try {
       if (!userId) return;
 
-      // Đếm số bộ truyện đã đọc (Dựa trên ID thống nhất)
       const { count: mangaCount } = await supabase
         .from('shiroi_history')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId);
 
-      // Đếm tổng số chương đã đọc
       const { count: chapterCount } = await supabase
         .from('shiroi_read_chapters')
         .select('*', { count: 'exact', head: true })
@@ -78,6 +79,20 @@ export default function ProfilePage() {
       });
     } catch (err) {
       console.error("Lỗi tải thống kê:", err);
+    }
+  };
+
+  const fetchXpLogs = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('shiroi_xp_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(15);
+      if (!error && data) setXpLogs(data);
+    } catch (err) {
+      console.error("Lỗi lấy nhật ký XP:", err);
     }
   };
 
@@ -433,6 +448,52 @@ export default function ProfilePage() {
                         Cấp càng cao, danh hiệu và quyền hạn càng lớn trên Shiroi Arika!
                      </p>
                   </div>
+               </div>
+            </div>
+
+            {/* 🕰️ NHẬT KÝ TU LUYỆN (XP HISTORY) 🍀 */}
+            <div className="bg-[#141814]/40 border border-white/5 rounded-[40px] p-8 space-y-6 animate-fade-in relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#4caf50]/20 to-transparent"></div>
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-xl">🕰️</div>
+                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Nhật ký tu luyện</h3>
+                  </div>
+                  <span className="text-[9px] font-bold text-gray-600 uppercase tracking-widest italic">15 giao dịch gần nhất</span>
+               </div>
+
+               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                  {xpLogs && xpLogs.length > 0 ? xpLogs.map((log) => {
+                     const typeInfo = {
+                        'read': { label: 'Đọc truyện', icon: '📖', color: 'text-blue-400' },
+                        'checkin': { label: 'Điểm danh', icon: '🗓️', color: 'text-amber-400' },
+                        'comment': { label: 'Bình luận', icon: '💬', color: 'text-purple-400' }
+                     }[log.type] || { label: 'Khác', icon: '✨', color: 'text-gray-400' };
+
+                     return (
+                        <div key={log.id} className="flex items-center justify-between p-4 bg-black/40 rounded-2xl border border-white/5 hover:border-white/10 transition-all group">
+                           <div className="flex items-center gap-4">
+                              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-sm group-hover:scale-110 transition-transform">
+                                 {typeInfo.icon}
+                              </div>
+                              <div>
+                                 <div className="text-[10px] font-black text-white uppercase tracking-tight">{typeInfo.label}</div>
+                                 <div className="text-[8px] text-gray-600 font-bold">{new Date(log.created_at).toLocaleString('vi-VN')}</div>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <div className={`text-xs font-black ${typeInfo.color}`}>+{log.amount} XP</div>
+                              {log.reason && log.reason.includes('Streak') && (
+                                 <div className="text-[7px] font-black text-amber-500/80 uppercase tracking-tighter">🔥 {log.reason}</div>
+                              )}
+                           </div>
+                        </div>
+                     );
+                  }) : (
+                     <div className="py-10 text-center text-[10px] font-black uppercase text-gray-700 tracking-widest italic opacity-50">
+                        Chưa có dấu ấn tu luyện nào... ✨
+                     </div>
+                  )}
                </div>
             </div>
 
