@@ -17,7 +17,8 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
-  const [checkInDates, setCheckInDates] = useState([]); // 📅 Các ngày đã điểm danh 🍀
+  const [checkInDates, setCheckInDates] = useState([]); // 📅 Các ngày đã điểm danh THÁNG NÀY 🍀
+  const [totalCheckIns, setTotalCheckIns] = useState(0); // 🔥 Tổng số ngày điểm danh trọn đời 🍀
   const fileInputRef = useRef(null);
   const router = useRouter();
 
@@ -94,11 +95,28 @@ export default function ProfilePage() {
       if (!error && data) {
         setXpLogs(data);
         
-        // 📅 Trích xuất các ngày điểm danh cho Lịch
-        const dates = data
-          .filter(log => log.type === 'checkin')
+        // 📅 Lọc các ngày điểm danh CHỈ TRONG THÁNG NÀY 🍀
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const datesInMonth = data
+          .filter(log => {
+              const d = new Date(log.created_at);
+              return log.type === 'checkin' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+          })
           .map(log => new Date(log.created_at).getDate());
-        setCheckInDates([...new Set(dates)]);
+        
+        setCheckInDates([...new Set(datesInMonth)]);
+
+        // 🔥 Lấy TỔNG SỐ NGÀY điểm danh trọn đời 🛡️
+        const { count, error: countErr } = await supabase
+          .from('shiroi_xp_logs')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('type', 'checkin');
+        
+        if (!countErr) setTotalCheckIns(count || 0);
       }
     } catch (err) {
       console.error("Lỗi lấy nhật ký XP:", err);
@@ -350,7 +368,7 @@ export default function ProfilePage() {
                 <div className="text-5xl mb-2 group-hover:scale-125 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(255,165,0,0.5)]">🔥</div>
                 <div className="px-5 py-2 bg-black/60 rounded-2xl border border-white/10 backdrop-blur-md">
                    <span className="text-[11px] font-black text-white uppercase tracking-widest whitespace-nowrap">
-                      Chuỗi: <span className="text-[#4caf50] text-xl">{user.check_in_streak || 0}</span> ngày ⚡
+                      Đã điểm danh: <span className="text-[#4caf50] text-xl">{totalCheckIns}</span> ngày ⚡
                    </span>
                 </div>
               </div>
