@@ -10,9 +10,11 @@ export const XP_REWARDS = {
 };
 
 export const STREAK_BONUSES = {
-    DAY_3: 200,   // Thưởng khi đạt chuỗi 3 ngày
-    DAY_7: 500,   // Thưởng khi đạt chuỗi 7 ngày
-    DAY_30: 5000, // Thưởng khi đạt chuỗi 30 ngày (Đại Sư)
+    DAY_3: 100,   // Thưởng chuỗi 3 ngày
+    DAY_7: 200,   // Thưởng chuỗi 7 ngày
+    DAY_14: 500,  // Thưởng chuỗi 14 ngày
+    DAY_21: 500,  // Thưởng chuỗi 21 ngày
+    DAY_30: 1000, // Thưởng chuỗi 30 ngày
 };
 
 export const calculateLevel = (xp) => {
@@ -48,6 +50,8 @@ export const calculateTitle = (xp, selectedBadge = null) => {
 
 export const getStreakBonus = (newStreak) => {
     if (newStreak === 30) return STREAK_BONUSES.DAY_30;
+    if (newStreak === 21) return STREAK_BONUSES.DAY_21;
+    if (newStreak === 14) return STREAK_BONUSES.DAY_14;
     if (newStreak === 7) return STREAK_BONUSES.DAY_7;
     if (newStreak === 3) return STREAK_BONUSES.DAY_3;
     return 0;
