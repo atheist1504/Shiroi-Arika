@@ -393,7 +393,7 @@ export default function ProfilePage() {
                      </div>
                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
                         Mỗi ngày nhận <span className="text-[#4caf50]">+100 XP</span>. <br/>
-                        Duy trì chuỗi 3, 7, 30 ngày để nhận thêm hàng nghìn XP quà tặng!
+                        Quà chuỗi: 3 ngày <span className="text-[#4caf50] (+200)</span>, 7 ngày <span className="text-[#4caf50] (+500)</span>, 30 ngày <span className="text-[#4caf50] (+5000)</span>!
                      </p>
                   </div>
 
