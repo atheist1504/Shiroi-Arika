@@ -49,6 +49,7 @@ function LeaderboardContent() {
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
+      setUsers([]); // 🧹 Reset danh sách để tránh hiện dữ liệu cũ khi chuyển Tab 🍀
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
@@ -118,7 +119,7 @@ function LeaderboardContent() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-gradient-to-b from-[#4caf50]/10 to-transparent pointer-events-none blur-[120px]"></div>
         
         <div className="max-w-6xl mx-auto relative z-10">
-            <div className="text-center mb-10">
+            <div className="text-center mb-20">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full mb-6">
                     <span className="w-2 h-2 bg-[#4caf50] rounded-full animate-pulse"></span>
                     <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.3em]">Hệ thống Gamification</span>

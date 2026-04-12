@@ -55,8 +55,8 @@ BEGIN
         u.xp as total_xp,
         COALESCE(ms.m_xp, 0) as monthly_xp
     FROM shiroi_users u
-    JOIN monthly_stats ms ON u.id = ms.user_id
+    LEFT JOIN monthly_stats ms ON u.id = ms.user_id
     WHERE u.username NOT ILIKE '%admin%' AND u.display_name NOT ILIKE '%quản trị%'
-    ORDER BY ms.m_xp DESC;
+    ORDER BY monthly_xp DESC, total_xp DESC;
 END;
 $$ LANGUAGE plpgsql;
