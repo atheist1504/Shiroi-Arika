@@ -4,6 +4,21 @@ Dự án Manga Platform thế hệ mới.
 
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
+### 🎮 Gamification & Hệ Thống User (v3 - Hoàn Thiện) 🍀
+- [x] **Streak Reset Mỗi Tháng**: Đã triển khai cơ chế tự động Reset chuỗi điểm danh về 1 khi sang tháng mới để đảm bảo tính công bằng hàng tháng. 🔄
+- [x] **Lifetime Check-in Flame**: Chuyển đổi thông số "Ngọn lửa" từ chuỗi liên tiếp sang **"Tổng số ngày đã điểm danh trọn đời"**, giúp người dùng theo dõi hành trình dài hạn bền vững hơn. 🔥✨
+- [x] **Check-in Calendar UI**: Tích hợp lưới lịch 7 cột chuyên nghiệp, hiển thị trực quan các ngày đã điểm danh trong tháng. Đã gỡ bỏ dấu chấm phụ để giao diện tối giản, sang trọng. 🍀
+- [x] **Leaderboard V2 (Full Member)**: Cập nhật RPC `get_monthly_leaderboard` để gỡ bỏ bộ lọc Admin, cho phép người quản trị xuất hiện trên BXH để kiểm tra dữ liệu và thi đua cùng thành viên. 🏆
+
+### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
+- [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
+- [x] **Smart Auto-Compression**: Nâng cấp bộ xử lý ảnh tại Admin Upload, tự động đưa mọi ảnh về **MaxWidth 1100px** và nén **WebP 75%**. Giúp tiết kiệm dung lượng gấp 3 lần mà vẫn giữ độ nét hoàn hảo. 🚀
+- [x] **R2 Usage Optimization**: Đã tối ưu để một bộ truyện 150 chương chỉ chiếm ~1GB thay vì 3GB, sẵn sàng cho quy mô thư viện lớn với giới hạn 10GB Free Tier.
+
+### 🖼️ SEO & Marketing Automation (v9 - Brand Identity)
+- [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
+- [x] **Node.js Runtime Fix**: Chuyển đổi API sang Node.js Runtime để đảm bảo ổn định kết nối Database trên môi trường Edge của Vercel.
+
 ### 🛡️ Gamification & Security (v2 - FINAL) 🍀
 - [x] **Secure XP Awarding**: Chuyển đổi logic cộng XP đọc truyện sang xác thực bằng Database (`shiroi_read_chapters`). Mỗi chương chỉ nhận XP duy nhất một lần trên mỗi tài khoản, chặn đứng việc cày điểm ảo. 🛡️✨
 - [x] **Secure Check-in**: Gia cố bảo mật điểm danh bằng xác thực thời gian thực từ Server, ngăn chặn hành vi điểm danh kép qua proxy/local hack.
@@ -16,104 +31,24 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Manga-Specific Sync**: Chế độ đọc (Cuộn/Trang) và Theme được lưu theo `mangaId`, giúp cá nhân hóa trải nghiệm cho từng bộ truyện riêng biệt. 📔
 - [x] **Mobile DND Support**: Tích hợp `TouchSensor` (giữ 0.25s để kéo) cho phép sắp xếp thứ tự ảnh đăng chương cực kỳ mượt mà trên điện thoại. 📱🚀
 - [x] **Quick Photo Picker**: Tối ưu thuộc tính `accept` gợi ý trình duyệt di động mở ngay Thư viện ảnh gần đây thay vì trình quản lý file chung.
-- [x] **Admin Tooling Fix**: Sửa lỗi chính tả "BAN QUẢN TRỊ" và triệt tiêu hiện tượng nháy nút Preview khi thêm trang. 🛠️
-- [x] **SEO v2 Cache Bypass**: Triển khai cơ chế đổi tên tệp `/og-banner-v2.png` để ép các mạng xã hội cập nhật hình ảnh chia sẻ mới nhất. (Pending: Social Cache Refresh). 🍀⚡
-
-
-### 📤 Hệ Thống Admin Đăng Chương (V2 - Siêu Tốc)
-- [x] **Trang Tìm Kiếm (Search Page)**: Hoàn thiện trang `/search` với bộ lọc thể loại thông minh và giao diện Glassmorphism cao cấp. 🔍
-- [x] **Hệ Thống Thể Loại Mới**: Đã thêm các phân loại One Shot, Truyện màu, Manga, Manhua, Manhwa vào hệ thống. 📑
-- [x] **Mobile Navigation & Parity** (v1.2): Đã tích hợp Menu Hamburger đầy đủ chức năng (Tìm kiếm, BXH, Lịch sử) và tối ưu Header di động. 📱
-- [x] **Database Security & Access**: Đã gỡ bỏ RLS giúp hiển thị dữ liệu BXH và Profile chuẩn xác. 🔓
-- [x] **Image Fallback System**: Tự động hiển thị ảnh gốc nếu hệ thống tối ưu hóa Cloudinary gặp sự cố. 🖼️
-- [x] **SEO & OpenGraph**: Cấu hình Metadata để hiển thị đẹp khi chia sẻ link. 🚀
-- [x] **Lưu Trữ Cloudflare R2**: Chuyển đổi thành công từ Supabase Storage sang R2 (Vô hạn dung lượng, tốc độ cao).
-- [x] **Phase 11 (Leaderboard V2)**: [DONE] Tiered rankings (Monthly, Last Month, Total) powered by XP transaction logs.
-- [x] **Phase 12 (Gamification Help)**: [DONE] Added XP Guide explaining levels, streaks, and rewards on Profile page.
-- [x] **Xử Lý Ảnh Thông Minh**: Tích hợp nén ảnh sang định dạng WebP ngay tại trình duyệt để giảm tải server.
-- [x] **Giao Diện MangaDex Style**: Thiết kế cực kỳ tối giản, chuyên nghiệp, tối ưu diện tích.
-- [x] **Kéo Thả 2D (dnd-kit)**: Khắc phục triệt để lỗi nhảy tọa độ, hỗ trợ sắp xếp dạng lưới (Grid) mượt mà 100%.
-- [x] **Logic An Toàn**: Chặn upload rỗng, xác nhận trước khi xóa/dọn sạch danh sách.
-- [x] **Banner Thủ Công (Manual featured)**: Tách biệt Banner và Truyện mới, thêm nút Ghim truyện trong Admin. 🚀
-- [x] **Carousel Drag & Dots**: Khôi phục tính năng kéo (drag) cho Banner trang chủ và tối ưu diện tích bấm cho các dấu chấm điều hướng, đảm bảo không bị chặn bởi lớp phủ. 🎡✨
-- [x] **Smart Reader Navbar (v5)**: Tự động ẩn thanh công cụ khi lướt xuống và hiện lại ngay khi lướt lên, giúp tối ưu không gian đọc truyện mà vẫn đảm bảo điều hướng nhanh. 🚀📖
-- [x] **Mobile Upload Fix (v1.5)**: Đã khắc phục triệt để lỗi ảnh bị hỏng khi đăng từ điện thoại bằng cách tối ưu hóa cơ chế xử lý Blob URL và nhận diện tên miền R2 siêu chính xác. 📱🔥
-- [x] **SEO v8 (Universal Fit)**: Áp dụng kỹ thuật "Đóng khung an toàn" (Safe Fit Frame) cho Banner social, đảm bảo 100% nhân vật và tiêu đề hiển thị trọn vẹn, không bao giờ bị Zalo/Facebook cắt mất dù trên bất kỳ thiết bị nào. 🍀🏁
-- [x] **Storage Usage Meter**: Triển khai hệ thống theo dõi dung lượng Cloudflare R2 ngay trên trang Admin, giúp quản lý giới hạn 10GB Free Tier dễ dàng. 📊⚡
-- [x] **Manga Deletion & R2 Cleanup**: Nút xóa truyện triệt để cấp độ Admin, tự động dọn dẹp cả dữ liệu database và tệp ảnh vật lý trên R2. 🗑️🌩️
-- [x] **UI Polish - Glass Artifact Fix**: Sửa lỗi "đường sáng" sub-pixel ở góc dưới các thẻ truyện bằng cách chuyển sang sử dụng `outline` với `offset` âm và kỹ thuật "tràn viền" (bleed). ✨🛡️
-- [x] **XP Guide section on Profile page**
-- [x] **Tiered Leaderboard (Monthly/Last Month/Total)**
-- [x] **XP Transaction logs (accurate monthly calculations)**
-- [x] **Database RPC for high-performance ranking calculation**
-- [x] **Home Page Read History**: Tích hợp mục "Tiếp tục đọc" ngay trên trang chủ, đồng bộ dữ liệu giữa mây (Cloud) và máy (Local), giúp người dùng quay lại chương truyện dở dang chỉ với 1 cú click. 📖🚀
-- [x] **Tổng Audit & Việt Hóa**: Dịch 100% tệp test sang Tiếng Việt, sửa lỗi ảnh đại diện (Broken Avatars).
-
-### 🛠️ Kỹ Thuật & Hiệu Năng
-- [x] **TypeScript Integration**: Fix lỗi module resolution và ép kiểu cho các component Admin.
-- [x] **Server-Side Rendering (SSR)**: Chuyển đổi Trang Chi tiết truyện sang SSR để tối ưu hóa SEO và tốc độ tải.
-- [x] **Dynamic Metadata**: Tự động tạo thẻ Meta (Title, OG, Twitter) dựa trên thông tin truyện thực tế.
-- [x] **Search Infrastructure**: Hoàn thiện `sitemap.js` và `robots.js` giúp Google index dữ liệu.
-- [x] **Responsive Design**: Tương thích hoàn hảo từ mobile đến desktop cho toàn bộ nền tảng.
-
----
-
-## 🚧 ĐANG THỰC HIỆN
-
-### 🎮 Gamification & Hệ Thống User
-- [x] **Hệ Thống Badge & Danh Hiệu**: Thiết kế và code logic cấp bậc cho người đọc.
-- [x] **Streak Mode (Chuỗi Điểm Danh)**: Thưởng XP nhân dịp chuỗi 3, 7, 30 ngày.
-- [x] **Lịch Sử Đọc (Real-time Sync)**: Tối ưu dữ liệu đồng bộ và thống kê chi tiết chương đã đọc.
-- [x] **Loại Bỏ Fake Stats**: Logic lọc tài khoản Admin ra khỏi Bảng xếp hạng để đảm bảo tính công bằng.
-- [x] **Định Danh Thống Kê**: Đồng bộ truy vấn theo `user_id` thay vì username (Tránh sai lệch dữ liệu). 🛡️
 
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
-1. **SEO Metadata Premium**: Cấu hình tiêu đề/mô tả động chuẩn SEO cho từng trang riêng biệt.
-2. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
-3. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
-
-
----
-
-## 🛠️ HƯỚNG DẪN VẬN HÀNH & FIX LỖI (OPERATION GUIDE)
-
-### 1. Sửa lỗi "Cannot find module" hoặc Build lỗi
-Nếu bạn gặp lỗi `MODULE_NOT_FOUND` hoặc giao diện local không cập nhật sau khi xóa code lớn, hãy chạy lệnh sau trong Terminal:
-```powershell
-# Xóa bộ nhớ đệm Next.js
-Remove-Item -Path .next -Recurse -Force
-# Sau đó chạy lại
-npm run dev
-```
-
-### 2. Cấu hình Production (Vercel)
-Để hệ thống đăng chương và ảnh hoạt động trên web chính thức, bạn **bắt buộc** phải cấu hình các biến môi trường sau trong Vercel Project Settings:
-- `R2_ACCESS_KEY_ID` / `NEXT_PUBLIC_R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY` / `NEXT_PUBLIC_R2_SECRET_ACCESS_KEY`
-- `R2_ACCOUNT_ID` / `NEXT_PUBLIC_R2_ACCOUNT_ID`
-- `R2_BUCKET_NAME`
-- `R2_PUBLIC_URL`
-
-### 3. Quy trình Triển khai (Deployment)
-Mọi thay đổi code sau khi được xác nhận ổn định ở môi trường Local sẽ được **tự động Push lên GitHub** branch `main`. Vercel sẽ tự động bắt lấy thay đổi này để cập nhật trang web chính thức.
-
----
+1. **Kiểm tra Social Share**: ⚠️ **CẦN KIỂM TRA LẠI** bộ nhớ đệm (Cache) của Zalo/Facebook để xác nhận ảnh bìa động đã hiển thị chuẩn 100%. (Check back later).
+2. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
+3. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
 
 ---
 
 ## 🧪 KẾT QUẢ KIỂM THỬ (TEST RESULTS) 🍀
-- [x] **Kiểm tra URL Admin**: Đã xác nhận Logic `loadChapterData` tự động gắn `R2_PUBLIC_URL` vào các đường dẫn tương đối.
-- [x] **R2 Domain Migration**: Đã xác nhận Logic tự động chuyển đổi URL từ `pub-8418...` sang `pub-d501...` giúp hồi sinh ảnh cũ. 🔄
-- [x] **Global Smart Recovery (v4)**: Đã áp dụng logic vá lỗi cho cả trang **Reader**, giúp người đọc xem được truyện ngay cả khi link trong DB bị cũ. 🧠✨
-- [x] **Kiểm tra Cloudinary Skip**: Hàm `optimizeImage` đã bỏ qua chính xác các trường hợp không phải URL tuyệt đối để tránh làm hỏng link.
-- [x] **Kiểm tra Fallback UI**: Thêm `onError` cho thẻ ảnh giúp giao diện không bao giờ bị hiện icon lỗi xám.
-
+- [x] **Manga Compression**: Đã chạy thực tế, nén 491/535 trang thành công.
+- [x] **OG API Stability**: Chuyển sang Node.js Runtime đã fix lỗi kết nối Database.
+- [x] **RPC Leaderboard**: Đã xác nhận Admin hiện trên BXH tháng. 🏆
 
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GIT NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 23:35 - 12/04/2026*
+*Cập nhật lần cuối: 04:10 - 13/04/2026*
