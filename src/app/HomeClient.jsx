@@ -144,7 +144,7 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3, ease: "easeOut" }}
                   >
-                    <Link href={`/manga/${manga.id}`} className="group relative block rounded-xl overflow-hidden glass-card transition-all hover:-translate-y-2 hover:shadow-[0_10px_40px_rgba(0,0,0,0.5)]">
+                    <Link href={`/manga/${manga.id}`} className="group relative block rounded-xl overflow-hidden glass-card transition-all duration-500">
                       <div className="aspect-[2/3] w-full relative bg-[#141814]">
                         {manga.cover_image ? (
                           <img
@@ -168,9 +168,9 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                           </div>
                         )}
 
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 transition-opacity group-hover:opacity-100" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
                         
-                        <div className="absolute bottom-0 left-0 w-full p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
+                        <div className="absolute bottom-0 left-0 w-full p-4 z-30">
                           <h3 className="font-bold text-white text-sm md:text-base line-clamp-2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-tight">
                             <span>{manga.title}</span>
                           </h3>
