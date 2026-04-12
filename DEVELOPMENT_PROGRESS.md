@@ -39,7 +39,8 @@ Dự án Manga Platform thế hệ mới.
 - [x] **SEO v8 (Universal Fit)**: Áp dụng kỹ thuật "Đóng khung an toàn" (Safe Fit Frame) cho Banner social, đảm bảo 100% nhân vật và tiêu đề hiển thị trọn vẹn, không bao giờ bị Zalo/Facebook cắt mất dù trên bất kỳ thiết bị nào. 🍀🏁
 - [x] **Storage Usage Meter**: Triển khai hệ thống theo dõi dung lượng Cloudflare R2 ngay trên trang Admin, giúp quản lý giới hạn 10GB Free Tier dễ dàng. 📊⚡
 - [x] **Manga Deletion & R2 Cleanup**: Nút xóa truyện triệt để cấp độ Admin, tự động dọn dẹp cả dữ liệu database và tệp ảnh vật lý trên R2. 🗑️🌩️
-- [x] **UI Polish - Glass Artifact Fix**: Sửa lỗi "đường sáng" sub-pixel ở góc dưới các thẻ truyện bằng cách chuyển sang sử dụng inset-shadow cho hiệu ứng kính. ✨🛡️
+- [x] **UI Polish - Glass Artifact Fix**: Sửa lỗi "đường sáng" sub-pixel ở góc dưới các thẻ truyện bằng cách chuyển sang sử dụng `outline` với `offset` âm và kỹ thuật "tràn viền" (bleed). ✨🛡️
+- [x] **Home Page Read History**: Tích hợp mục "Tiếp tục đọc" ngay trên trang chủ, đồng bộ dữ liệu giữa mây (Cloud) và máy (Local), giúp người dùng quay lại chương truyện dở dang chỉ với 1 cú click. 📖🚀
 - [x] **Tổng Audit & Việt Hóa**: Dịch 100% tệp test sang Tiếng Việt, sửa lỗi ảnh đại diện (Broken Avatars).
 
 ### 🛠️ Kỹ Thuật & Hiệu Năng
