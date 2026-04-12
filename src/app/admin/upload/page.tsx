@@ -29,7 +29,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// 🍀 TIỆN ÍCH NÉN ẢNH (Bản Adaptive Quality 🚀)
+// 🍀 TIỆN ÍCH NÉN ẢNH (Bản Siêu Tối Ưu 10GB 🚀)
 const compressImageToWebP = async (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -38,7 +38,8 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxWidth = 1600; 
+      // 📏 Chiều ngang 1100px là "điểm vàng" cho Web & Mobile
+      const maxWidth = 1100; 
       const scale = Math.min(1, maxWidth / img.width);
 
       canvas.width = img.width * scale;
@@ -52,8 +53,8 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // 🧠 Logic chất lượng thích ứng: Ảnh càng nặng thì nén càng mạnh
-      const quality = file.size > 2_000_000 ? 0.75 : 0.85;
+      // 🧠 QUALITY 0.75: Giúp 150 chương chỉ chiếm ~1GB thay vì 3GB 🍀
+      const quality = 0.75; 
 
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(url); 

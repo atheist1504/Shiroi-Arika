@@ -25,20 +25,22 @@ export async function generateMetadata({ params }) {
     ? manga.description.substring(0, 160) 
     : `Đọc truyện ${manga.title} online miễn phí bản đẹp, cập nhật sớm nhất tại Shiroi Arika. Trải nghiệm đọc truyện premium không quảng cáo.`;
 
+  const ogImageUrl = `https://shiroiarika.vercel.app/api/og/manga?mangaId=${mangaId}`;
+
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      images: manga.cover_image ? [{ url: manga.cover_image }] : [],
+      images: [{ url: ogImageUrl, width: 1200, height: 630 }],
       type: "book",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: manga.cover_image ? [manga.cover_image] : [],
+      images: [ogImageUrl],
     },
     alternates: {
       canonical: `https://shiroiarika.vercel.app/manga/${mangaId}`,

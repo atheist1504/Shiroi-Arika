@@ -23,7 +23,10 @@ CREATE INDEX IF NOT EXISTS idx_xp_logs_user_date ON shiroi_xp_logs(user_id, crea
 -- BXH Tháng: Dùng Function RPC bên dưới để tính toán chính xác.
 
 -- 4. Function RPC để lấy BXH theo tháng (Cực nhanh & chính xác)
--- Chạy lệnh này để có thể gọi từ Javascript: supabase.rpc('get_monthly_leaderboard', { month_offset: 0 })
+-- Lưu ý: Phải xóa hàm cũ trước khi tạo mới để tránh xung đột tham số (Lỗi 400) 🛡️
+DROP FUNCTION IF EXISTS get_monthly_leaderboard(int);
+DROP FUNCTION IF EXISTS get_monthly_leaderboard();
+
 CREATE OR REPLACE FUNCTION get_monthly_leaderboard(month_offset INT DEFAULT 0)
 RETURNS TABLE (
     id UUID,
@@ -53,10 +56,10 @@ BEGIN
         u.avatar_url, 
         u.selected_badge,
         u.xp as total_xp,
-        COALESCE(ms.m_xp, 0) as monthly_xp
+        COALESCE(ms.m_xp, 0)::BIGINT as monthly_xp
     FROM shiroi_users u
     LEFT JOIN monthly_stats ms ON u.id = ms.user_id
-    WHERE u.username NOT ILIKE '%admin%' AND u.display_name NOT ILIKE '%quản trị%'
+    -- 🛑 ĐÃ GỠ BỘ LỌC ADMIN ĐỂ KIỂM TRA DỮ LIỆU CHÍNH XÁC 🍀
     ORDER BY monthly_xp DESC, total_xp DESC;
 END;
 $$ LANGUAGE plpgsql;
