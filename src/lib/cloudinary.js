@@ -7,6 +7,9 @@ const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo'; // T
 
 export const optimizeImage = (url, width = '', height = '') => {
   // 🚀 TỐI ƯU HIỂN THỊ: Không qua Cloudinary nếu là ảnh local hoặc đã nằm trên R2 🍀
+  const r2PublicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
+  const r2Domain = r2PublicUrl.replace(/^https?:\/\//, '').split('/')[0];
+
   if (
     !url || 
     url.startsWith('blob:') || 
@@ -14,7 +17,9 @@ export const optimizeImage = (url, width = '', height = '') => {
     url.startsWith('/') ||
     url.includes('r2.cloudflarestorage.com') ||
     url.includes('r2.dev') ||
-    !url.startsWith('http') // Bỏ qua nếu không phải URL tuyệt đối 🛡️
+    url.includes('cloudflarestorage.com') ||
+    (r2Domain && url.includes(r2Domain)) ||
+    !url.startsWith('http')
   ) {
     return url;
   }

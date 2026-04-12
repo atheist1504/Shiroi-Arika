@@ -95,14 +95,14 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
       className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl overflow-hidden border border-white/5 bg-[#1a1a1a] group shadow-xl transition-colors hover:border-[#4caf50]/40"
     >
       <img 
-        src={optimizeImage(displaySrc, '200')} 
+        src={item.type === 'new' ? displaySrc : optimizeImage(displaySrc, '200')} 
         className="w-full h-full object-cover pointer-events-none" 
         draggable="false" 
         alt="" 
         onError={(e: any) => {
-          // 🛡️ FALLBACK: Nếu Cloudinary lỗi, thử dùng ảnh gốc 🍀
+          // 🛡️ FALLBACK: Nếu Cloudinary lỗi hoặc Blob có vấn đề, thử dùng ảnh gốc 🍀
           if (e.target.src !== displaySrc) {
-            console.warn("🔄 Cloudinary Preview fail, falling back to raw:", displaySrc);
+            console.warn("🔄 Image preview fallback triggered for:", displaySrc);
             e.target.removeAttribute('crossOrigin'); 
             e.target.src = displaySrc;
           }
@@ -171,17 +171,17 @@ export default function AdminUploadPage() {
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
 
-  // 🧹 FIX MEMORY LEAK: Chỉ dọn dẹp khi thoát hẳn trang Admin 🍀
+  const itemsRef = useRef(items);
+  useEffect(() => { itemsRef.current = items; }, [items]);
+
+  // 🧹 FIX MEMORY LEAK: Dọn dẹp Blob URLs khi thoát trang Admin 🍀
   useEffect(() => {
-    const currentItems = items;
     return () => {
-      currentItems.forEach(item => {
-        if (item.type === 'new' && item.preview && item.preview.startsWith('blob:')) {
-          URL.revokeObjectURL(item.preview);
-        }
+      itemsRef.current.forEach(item => {
+        if (item.preview?.startsWith('blob:')) URL.revokeObjectURL(item.preview);
       });
     };
-  }, []); // Chạy duy nhất 1 lần khi unmount 🚀
+  }, []); 
 
   const fetchMangas = async () => {
     const { data } = await supabase.from('mangas').select('id, title').order('title');
