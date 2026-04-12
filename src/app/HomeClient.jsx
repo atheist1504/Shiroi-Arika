@@ -44,7 +44,18 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -30 }}
                         transition={{ duration: 0.6, ease: "circOut" }}
-                        className="absolute inset-0 cursor-grab active:cursor-grabbing select-none"
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.2}
+                        onDragEnd={(e, { offset, velocity }) => {
+                            const swipe = offset.x;
+                            if (swipe < -50) {
+                                setActiveSlide((prev) => (prev + 1) % featured.length);
+                            } else if (swipe > 50) {
+                                setActiveSlide((prev) => (prev - 1 + featured.length) % featured.length);
+                            }
+                        }}
+                        className="absolute inset-0 cursor-grab active:cursor-grabbing select-none z-10"
                     >
                         {/* BACKGROUND LAYER */}
                         <div className="absolute inset-0">
@@ -84,13 +95,19 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                 </AnimatePresence>
 
                 {/* DOTS NAVIGATION */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 z-30">
                     {featured.map((_, idx) => (
                         <button 
                             key={idx}
-                            onClick={() => setActiveSlide(idx)}
-                            className={`h-1.5 transition-all rounded-full ${idx === activeSlide ? 'w-8 bg-[#4caf50]' : 'w-1.5 bg-white/20'}`}
-                        />
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveSlide(idx);
+                            }}
+                            className={`group relative flex items-center justify-center p-2 transition-all`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                        >
+                            <div className={`h-1.5 rounded-full transition-all duration-300 ${idx === activeSlide ? 'w-8 bg-[#4caf50]' : 'w-2 bg-white/20 group-hover:bg-white/40'}`} />
+                        </button>
                     ))}
                 </div>
             </div>

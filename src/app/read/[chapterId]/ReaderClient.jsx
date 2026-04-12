@@ -182,15 +182,18 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
+      const delta = currentScrollY - lastScrollY;
       
-      // 1. Logic ẩn hiện Nav
-      if (currentScrollY > lastScrollY && currentScrollY > 150) {
+      // 1. Lướt xuống đáng kể (> 5px) và đã qua vùng header (100px) -> Ẩn
+      if (delta > 5 && currentScrollY > 100) {
         setShowNav(false);
-      } else {
+      } 
+      // 2. Lướt lên đáng kể (> 5px) HOẶC chạm đỉnh trang -> Hiện
+      else if (delta < -5 || currentScrollY <= 20) {
         setShowNav(true);
       }
 
-      // 2. Cập nhật state UI (Back to top) ít thường xuyên hơn để giữ mượt 🍀
+      // 3. Cập nhật state UI (Back to top) ít thường xuyên hơn để giữ mượt
       if (Math.abs(currentScrollY - lastScrollYState) > 200 || currentScrollY < 100) {
           setLastScrollYState(currentScrollY);
       }
