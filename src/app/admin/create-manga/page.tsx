@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../../../lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
+import { deleteMangaAction } from "../../../lib/actions";
 import { compressImageToWebP } from "../../../lib/imageOptimizer";
 import { AdminCard, AdminInput, AdminTextarea, AdminTag, AdminButton } from "../../../components/admin/AdminCommon";
 
@@ -29,6 +30,8 @@ export default function CreateMangaPage() {
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
 
   useEffect(() => {
@@ -126,6 +129,27 @@ export default function CreateMangaPage() {
       setMessage({ type: 'error', text: `THẤT BẠI: ${err.message}` });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteManga = async () => {
+    if (deleteConfirm !== title) return;
+    setLoading(true);
+    setMessage({ type: 'info', text: '🔥 ĐANG TIẾN HÀNH XÓA TRIỆT ĐỂ (DB + R2)...' });
+    
+    try {
+      const res = await deleteMangaAction(id);
+      if (res.success) {
+        setMessage({ type: 'success', text: '✅ ĐÃ XÓA TRUYỆN THÀNH CÔNG!' });
+        setTimeout(() => router.push('/'), 1500);
+      } else {
+        throw new Error(res.error);
+      }
+    } catch (err: any) {
+      setMessage({ type: 'error', text: `LỖI KHI XÓA: ${err.message}` });
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -247,6 +271,49 @@ export default function CreateMangaPage() {
             </div>
           </div>
         </form>
+
+        {isEditing && (
+           <div className="mt-20 pt-10 border-t border-red-500/10 flex flex-col items-center gap-6 pb-20">
+              <div className="text-center space-y-2">
+                 <h3 className="text-red-500 font-black uppercase text-[10px] tracking-widest">Khu vực nguy hiểm</h3>
+                 <p className="text-gray-600 text-[9px] font-medium uppercase">Xóa toàn bộ dữ liệu truyện và các tệp ảnh trên Cloudflare R2</p>
+              </div>
+              
+              {!showDeleteModal ? (
+                <button 
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-8 py-3 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all font-black text-[10px] uppercase tracking-widest"
+                >
+                  Xóa truyện vĩnh viễn
+                </button>
+              ) : (
+                <div className="w-full max-w-md bg-red-500/5 border border-red-500/20 p-8 rounded-[32px] space-y-6">
+                   <div className="space-y-2 text-center">
+                      <p className="text-xs font-bold text-red-500 uppercase">Xác nhận xóa?</p>
+                      <p className="text-[9px] text-gray-500 uppercase leading-relaxed">Nhập đúng tên truyện <span className="text-white font-black">"{title}"</span> để xác nhận hành động không thể hoàn tác này.</p>
+                   </div>
+                   <input 
+                      type="text" 
+                      value={deleteConfirm} 
+                      onChange={(e) => setDeleteConfirm(e.target.value)}
+                      className="w-full bg-black/40 border border-red-500/30 rounded-xl p-3 text-center text-xs font-bold text-white outline-none focus:border-red-500 transition-all"
+                      placeholder="Nhập tên truyện..."
+                   />
+                   <div className="flex gap-3">
+                      <button onClick={() => setShowDeleteModal(false)} className="flex-1 py-3 rounded-xl bg-white/5 text-[9px] font-black uppercase hover:bg-white/10 transition-all">Hủy</button>
+                      <button 
+                        onClick={handleDeleteManga}
+                        disabled={deleteConfirm !== title || loading}
+                        className={`flex-1 py-3 rounded-xl text-[9px] font-black uppercase transition-all ${deleteConfirm === title ? 'bg-red-500 text-white shadow-lg shadow-red-500/20' : 'bg-red-500/20 text-white/20 cursor-not-allowed'}`}
+                      >
+                        Xác nhận xóa
+                      </button>
+                   </div>
+                </div>
+              )}
+           </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectsCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -92,4 +92,46 @@ export const getPresignedUploadUrl = async (fileName) => {
   const finalPublicUrl = `${baseUrl}/${fileName}`;
 
   return { signedUrl, finalPublicUrl };
+};
+
+/**
+ * 🧹 XÓA TOÀN BỘ THƯ MỤC TRÊN R2
+ * Dùng để dọn dẹp ảnh khi xóa chương hoặc xóa truyện 🍀
+ */
+export const deleteFolderFromR2 = async (folderPath) => {
+  const bucketName = process.env.R2_BUCKET_NAME || process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'shiroi';
+  const S3 = getS3Client();
+
+  try {
+    // 1. Liệt kê tất cả tệp trong thư mục
+    const listCommand = new ListObjectsV2Command({
+      Bucket: bucketName,
+      Prefix: folderPath,
+    });
+
+    const listResponse = await S3.send(listCommand);
+
+    if (!listResponse.Contents || listResponse.Contents.length === 0) {
+      console.log(`ℹ️ Thư mục ${folderPath} trống hoặc không tồn tại.`);
+      return true;
+    }
+
+    // 2. Chuẩn bị danh sách xóa
+    const deleteParams = {
+      Bucket: bucketName,
+      Delete: {
+        Objects: listResponse.Contents.map((obj) => ({ Key: obj.Key })),
+      },
+    };
+
+    // 3. Thực hiện xóa hàng loạt
+    const deleteCommand = new DeleteObjectsCommand(deleteParams);
+    await S3.send(deleteCommand);
+
+    console.log(`✅ Đã xóa ${listResponse.Contents.length} tệp trong thư mục: ${folderPath}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Lỗi khi xóa thư mục ${folderPath}:`, error);
+    throw error;
+  }
 };

@@ -128,3 +128,40 @@ export const AdminButton: React.FC<AdminButtonProps> = ({ variant = 'primary', i
     </button>
   );
 };
+
+interface StorageMeterProps {
+  totalGB: number;
+  limitGB: number;
+}
+
+export const StorageMeter: React.FC<StorageMeterProps> = ({ totalGB, limitGB }) => {
+  const percentage = Math.min((totalGB / limitGB) * 100, 100);
+  const isWarning = percentage > 80;
+  const isCritical = percentage > 95;
+
+  return (
+    <div className="bg-black/40 border border-[#2a332a] rounded-2xl p-4 mb-8 shadow-inner">
+      <div className="flex justify-between items-center mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Storage Status</span>
+          {isCritical && <span className="text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black animate-pulse">CRITICAL</span>}
+        </div>
+        <span className="text-[11px] font-black text-white">{totalGB} GB <span className="text-gray-600">/ {limitGB} GB</span></span>
+      </div>
+      <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
+        <div 
+          className={`h-full rounded-full transition-all duration-1000 ${
+            isCritical ? 'bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 
+            isWarning ? 'bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' : 
+            'bg-[#4caf50] shadow-[0_0_15px_rgba(76,175,80,0.3)]'
+          }`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+      <div className="flex justify-between mt-2">
+         <span className="text-[8px] font-bold text-gray-600 uppercase">Cloudflare R2 Free Tier</span>
+         <span className="text-[8px] font-bold text-[#4caf50]/50 uppercase tracking-tighter">Shiroi Optimization Active 🍀</span>
+      </div>
+    </div>
+  );
+};

@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { getUploadUrlAction } from '@/lib/actions';
+import { getUploadUrlAction, getStorageUsageAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
+import { StorageMeter } from '@/components/admin/AdminCommon';
 
 // 🚀 DND-KIT IMPORTS
 import {
@@ -152,6 +153,7 @@ export default function AdminUploadPage() {
   const [existingChapterId, setExistingChapterId] = useState<string | null>(preSelectedChapterId);
   const [deleteStep, setDeleteStep] = useState(0);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [storageInfo, setStorageInfo] = useState<{totalGB: number, limitGB: number} | null>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -166,8 +168,16 @@ export default function AdminUploadPage() {
 
   useEffect(() => {
     fetchMangas();
+    fetchStorageUsage();
     if (preSelectedChapterId) { loadChapterData(preSelectedChapterId); setIsEditing(true); }
   }, [preSelectedChapterId]);
+
+  const fetchStorageUsage = async () => {
+    const res = await getStorageUsageAction();
+    if (res.success) {
+      setStorageInfo({ totalGB: res.totalGB || 0, limitGB: res.limitGB || 10 });
+    }
+  };
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
 
@@ -310,6 +320,7 @@ export default function AdminUploadPage() {
           }
           const signedUrl = ticket.signedUrl;
           const finalPublicUrl = ticket.finalPublicUrl;
+          const fileSizeKb = Math.round(compressed.size / 1024);
 
           // 3. Upload TRỰC TIẾP từ Client lên R2 (Bỏ qua giới hạn Vercel) 🍀
           const uploadResponse = await fetch(signedUrl, {
@@ -333,7 +344,8 @@ export default function AdminUploadPage() {
         return {
           chapter_id: chapId,
           image_url: finalUrl,
-          page_number: i + 1
+          page_number: i + 1,
+          size_kb: fileSizeKb || 150
         };
       });
 
@@ -373,6 +385,8 @@ export default function AdminUploadPage() {
              <AdminButton variant="ghost" onClick={() => router.back()} className="text-[9px] opacity-50">QUAY LẠI</AdminButton>
            </div>
         </div>
+
+        {storageInfo && <StorageMeter totalGB={storageInfo.totalGB} limitGB={storageInfo.limitGB} />}
 
         {message && (
           <div className={`mb-8 p-6 rounded-3xl border animate-fade-in shadow-2xl ${message.type === 'error' ? 'bg-red-500/5 border-red-500/20' : 'bg-white/5 border-white/10'}`}>
