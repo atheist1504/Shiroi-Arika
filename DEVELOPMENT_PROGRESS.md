@@ -17,34 +17,22 @@ Dự án Manga Platform thế hệ mới.
 
 ### 🖼️ SEO & Marketing Automation (v9 - Brand Identity)
 - [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
-- [x] **Node.js Runtime Fix**: Chuyển đổi API sang Node.js Runtime để đảm bảo ổn định kết nối Database trên môi trường Edge của Vercel.
-
-### 🛡️ Gamification & Security (v2 - FINAL) 🍀
-- [x] **Secure XP Awarding**: Chuyển đổi logic cộng XP đọc truyện sang xác thực bằng Database (`shiroi_read_chapters`). Mỗi chương chỉ nhận XP duy nhất một lần trên mỗi tài khoản, chặn đứng việc cày điểm ảo. 🛡️✨
-- [x] **Secure Check-in**: Gia cố bảo mật điểm danh bằng xác thực thời gian thực từ Server, ngăn chặn hành vi điểm danh kép qua proxy/local hack.
-- [x] **Anti-Spam Comments**: Triển khai thuật toán cộng XP phân cấp (10 XP đầu, 5 XP sau) với cơ chế cooldown 60s và giới hạn 100 XP/ngày để chống spam bình luận. 💬🚀
-- [x] **Unified Title Colors**: Đồng bộ hóa toàn bộ màu sắc danh hiệu người dùng về tông xanh `#4caf50` để tạo sự nhất quán và chuyên nghiệp trên BXH.
-- [x] **Leaderboard Badge Sync**: Đã truyền tham số `selected_badge` vào hàm Title, đảm bảo BXH hiển thị đúng danh hiệu người dùng đã chọn thay vì danh hiệu mặc định theo cấp độ. 🏆
-
-### 📖 Reader & UX Optimization (v4)
-- [x] **Seamless Reading**: Loại bỏ hoàn toàn khoảng cách giữa các trang (`margin: -0.5px`), tạo cảm giác dải phim liền mạch khi đọc. 🎞️
-- [x] **Manga-Specific Sync**: Chế độ đọc (Cuộn/Trang) và Theme được lưu theo `mangaId`, giúp cá nhân hóa trải nghiệm cho từng bộ truyện riêng biệt. 📔
-- [x] **Mobile DND Support**: Tích hợp `TouchSensor` (giữ 0.25s để kéo) cho phép sắp xếp thứ tự ảnh đăng chương cực kỳ mượt mà trên điện thoại. 📱🚀
-- [x] **Quick Photo Picker**: Tối ưu thuộc tính `accept` gợi ý trình duyệt di động mở ngay Thư viện ảnh gần đây thay vì trình quản lý file chung.
+- [/] **Node.js Runtime Fix**: Đã chuyển sang Node.js Runtime. (⚠️ Vẫn còn lỗi 404 Manga Not Found - Cần fix tiếp).
 
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
-1. **Kiểm tra Social Share**: ⚠️ **CẦN KIỂM TRA LẠI** bộ nhớ đệm (Cache) của Zalo/Facebook để xác nhận ảnh bìa động đã hiển thị chuẩn 100%. (Check back later).
-2. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
-3. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
+1. **⚠️ BUG FIX: OG Image API**: Xử lý lỗi "Manga not found" dù ID đúng. (Gợi ý: Kiểm tra Env Vars trên Vercel hoặc RLS trên Supabase).
+2. **Kiểm tra Social Share**: Xác nhận Banner hiển thị chuẩn sau khi fix API.
+3. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
+4. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
 
 ---
 
 ## 🧪 KẾT QUẢ KIỂM THỬ (TEST RESULTS) 🍀
 - [x] **Manga Compression**: Đã chạy thực tế, nén 491/535 trang thành công.
-- [x] **OG API Stability**: Chuyển sang Node.js Runtime đã fix lỗi kết nối Database.
-- [x] **RPC Leaderboard**: Đã xác nhận Admin hiện trên BXH tháng. 🏆
+- [x] **Leaderboard Admin Visibility**: Đã xác nhận Admin hiện trên BXH tháng. 🏆
+- [!] **OG Image API Status**: Đang lỗi kết nối Database (Tracing ID: f095d510...).
 
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GIT NGAY LẬP TỨC LUÔN NHÉ!!!
