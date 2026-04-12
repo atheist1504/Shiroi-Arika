@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export const runtime = 'edge';
 
@@ -12,7 +12,12 @@ export async function GET(request: Request) {
       return new Response('Missing mangaId', { status: 400 });
     }
 
-    // 🔍 LẤY DỮ LIỆU TRUYỆN TỪ SUPABASE (EDGE-FRIENDLY)
+    // 🔍 KẾT NỐI DATABASE TRỰC TIẾP TRONG REQUEST
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
     const { data: manga, error } = await supabase
       .from('mangas')
       .select('title, description, cover_image, genres, status, author')
@@ -20,7 +25,8 @@ export async function GET(request: Request) {
       .single();
 
     if (error || !manga) {
-      return new Response('Manga not found', { status: 404 });
+      console.error("Supabase Error:", error);
+      return new Response(`Manga not found (ID: ${mangaId})`, { status: 404 });
     }
 
     // 🛠️ XỬ LÝ DỮ LIỆU
