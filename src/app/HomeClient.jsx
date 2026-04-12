@@ -9,68 +9,7 @@ import { optimizeImage } from "@/lib/cloudinary";
 export default function HomeClient({ initialFeatured, initialLatest, totalCount, currentPage, pageSize }) {
   const [featured, setFeatured] = useState(initialFeatured && initialFeatured.length > 0 ? initialFeatured : initialLatest.slice(0, 5));
   const [activeSlide, setActiveSlide] = useState(0);
-  const [historyItems, setHistoryItems] = useState([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
   const totalPages = Math.ceil(totalCount / pageSize);
-
-  // 🕒 TẢI LỊCH SỬ ĐỌC (Đồng bộ với /history) 🍀
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        setLoadingHistory(true);
-        const storedUser = localStorage.getItem('shiroi_user');
-        
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          const { data: cloudHistory, error } = await supabase
-            .from('shiroi_history')
-            .select(`
-              last_read_at,
-              manga:mangas(*),
-              chapter:chapters(*)
-            `)
-            .eq('user_id', user.id)
-            .order('last_read_at', { ascending: false })
-            .limit(10); // Chỉ hiện 10 truyện gần nhất ở Home
-
-          if (!error && cloudHistory) {
-            setHistoryItems(cloudHistory.map(item => ({
-              ...item.manga,
-              lastReadChapter: item.chapter,
-              last_read_at: item.last_read_at
-            })));
-            setLoadingHistory(false);
-            return;
-          }
-        }
-
-        // Khách hoặc chưa đăng nhập -> LocalStorage
-        const history = JSON.parse(localStorage.getItem('shiroi_history') || '{}');
-        const mangaIds = Object.keys(history);
-        if (mangaIds.length === 0) {
-          setHistoryItems([]);
-          setLoadingHistory(false);
-          return;
-        }
-
-        const { data: mangas } = await supabase.from('mangas').select('*').in('id', mangaIds.slice(-10));
-        const chapterIds = Object.values(history).slice(-10);
-        const { data: chapters } = await supabase.from('chapters').select('id, chapter_number, manga_id').in('id', chapterIds);
-
-        const combined = (mangas || []).map(manga => ({
-          ...manga,
-          lastReadChapter: chapters?.find(c => c.manga_id === manga.id)
-        }));
-        setHistoryItems(combined);
-      } catch (err) {
-        console.error("Lỗi fetch history Home:", err);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
-
-    fetchHistory();
-  }, []);
 
   // Tự động chuyển slide sau mỗi 5 giây
   useEffect(() => {
@@ -172,45 +111,6 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                     ))}
                 </div>
             </div>
-        </section>
-      )}
-
-      {/* 📖 TIẾP TỤC ĐỌC (LỊCH SỬ) 🍀 */}
-      {!loadingHistory && historyItems.length > 0 && (
-        <section className="max-w-6xl mx-auto px-4 mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-1.5 h-7 bg-gradient-to-b from-orange-500 to-orange-700 rounded-full shadow-[0_0_15px_rgba(249,115,22,0.4)]"></div>
-              <h2 className="text-xl font-black text-gray-100 uppercase tracking-tighter">Tiếp tục đọc</h2>
-            </div>
-            <Link href="/history" className="text-[10px] font-black text-orange-500 hover:text-white transition-all uppercase tracking-widest bg-orange-500/10 px-4 py-2 rounded-xl border border-orange-500/20">Xem tất cả</Link>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {historyItems.slice(0, 6).map((item) => (
-              <motion.div 
-                key={`hist-${item.id}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="group relative"
-              >
-                <Link href={`/read/${item.lastReadChapter?.id || ''}`} className="block relative aspect-[3/4] rounded-2xl overflow-hidden glass-card transition-all duration-300 hover:scale-[1.03]">
-                  <img 
-                    src={optimizeImage(item.cover_image, 300)} 
-                    alt={item.title} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                  />
-                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-[#0a0c0a] via-[#0a0c0a]/80 to-transparent">
-                      <div className="text-[8px] font-black text-orange-500 uppercase tracking-widest mb-1 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span>
-                          Chương {item.lastReadChapter?.chapter_number || '??'}
-                      </div>
-                      <h3 className="text-[10px] font-black text-white line-clamp-1 group-hover:text-orange-500 transition-colors uppercase">{item.title}</h3>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
         </section>
       )}
 
