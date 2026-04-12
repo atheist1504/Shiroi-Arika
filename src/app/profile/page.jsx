@@ -418,7 +418,6 @@ export default function ProfilePage() {
                                     `}
                                 >
                                     {d}
-                                    {isChecked && <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full border-2 border-[#4caf50] opacity-75"></div>}
                                 </div>
                             );
                         }
