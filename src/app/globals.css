@@ -72,10 +72,11 @@ body {
 
 .glass-card {
   background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05); /* 🛡️ Thay viền thật bằng shadow nội bộ để tránh "lọt sáng" 🍀 */
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background-clip: padding-box; /* 🛡️ Bảo vệ góc không bị lọt sáng khi bo tròn 🍀 */
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease;
 }
 
 .glass-card:hover {

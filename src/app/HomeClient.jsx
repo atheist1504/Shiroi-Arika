@@ -94,7 +94,7 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                     )}
                 </AnimatePresence>
 
-                {/* DOTS NAVIGATION */}
+                {/* DOTS NAVIGATION - Moved inside the relative container to prevent leaking 🍀 */}
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center justify-center gap-3 z-30">
                     {featured.map((_, idx) => (
                         <button 
