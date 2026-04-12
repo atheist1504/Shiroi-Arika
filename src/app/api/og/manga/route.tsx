@@ -1,7 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { createClient } from '@supabase/supabase-js';
 
-export const runtime = 'edge';
+// 🚀 Chuyển sang Node.js Runtime để ổn định kết nối Database 🍀
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: Request) {
       return new Response('Missing mangaId', { status: 400 });
     }
 
-    // 🔍 KẾT NỐI DATABASE TRỰC TIẾP TRONG REQUEST
+    // 🔍 KẾT NỐI DATABASE
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -25,8 +26,7 @@ export async function GET(request: Request) {
       .single();
 
     if (error || !manga) {
-      console.error("Supabase Error:", error);
-      return new Response(`Manga not found (ID: ${mangaId})`, { status: 404 });
+      return new Response(`Manga not found (ID: ${mangaId}). Error: ${JSON.stringify(error)}`, { status: 404 });
     }
 
     // 🛠️ XỬ LÝ DỮ LIỆU
