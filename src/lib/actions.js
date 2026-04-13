@@ -351,8 +351,7 @@ export async function saveMangaAction(mangaData, mangaId = null) {
       const { data, error } = await client
         .from('mangas')
         .update({
-          ...mangaData,
-          updated_at: new Date().toISOString()
+          ...mangaData
         })
         .eq('id', mangaId)
         .select()
@@ -369,8 +368,7 @@ export async function saveMangaAction(mangaData, mangaId = null) {
       const { data, error } = await client
         .from('mangas')
         .insert([{
-          ...mangaData,
-          created_at: new Date().toISOString()
+          ...mangaData
         }])
         .select()
         .single();
@@ -446,8 +444,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
 
     // 1. Xử lý Chapter (Dùng UPSERT để an toàn tuyệt đối) 🛡️
     const chapterToSave = {
-      ...chapterPayload,
-      updated_at: new Date().toISOString()
+      ...chapterPayload
     };
 
     if (!isEditing) {
@@ -489,8 +486,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     // 3. Chèn các trang mới (Batch Insert) ⚡
     const pagesWithId = pagesData.map(p => ({ 
       ...p, 
-      chapter_id: chapId,
-      created_at: new Date().toISOString() 
+      chapter_id: chapId
     }));
 
     const { error: pagesError } = await client.from("pages").insert(pagesWithId);
