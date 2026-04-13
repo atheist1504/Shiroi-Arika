@@ -149,14 +149,37 @@ export async function getUploadUrlAction(fileName) {
  * 🌩️ SERVER ACTION: Upload Image to R2
  */
 export async function uploadImageAction(formData) {
-  // ... existing implementation
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const file = formData.get('file');
+    if (!file) throw new Error("Không tìm thấy file ảnh!");
+    
+    // Sử dụng helper uploadToR2 có sẵn
+    const { uploadToR2 } = await import('./r2');
+    const fileName = `covers/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+    const result: any = await uploadToR2(file, fileName);
+    
+    if (!result.success) throw new Error(result.error);
+    return { success: true, url: result.url };
+  } catch (error: any) {
+    console.error('Lỗi uploadImageAction:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 /**
  * 🔔 SERVER ACTION: Gửi thông báo chương mới
  */
 export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, coverImage) {
-  // ... existing implementation
+  try {
+    // 🔔 Gửi thông báo qua hệ thống (Silent check)
+    const title = `${mangaName} vừa có chương ${chapterNumber}! 📚`;
+    await sendMangaNotification(title, mangaName, mangaId, coverImage);
+    return { success: true };
+  } catch (error: any) {
+    console.warn('Lỗi gửi thông báo (không chặn luồng):', error);
+    return { success: true }; // Trả về true để không làm hỏng trải nghiệm người dùng
+  }
 }
 
 /**

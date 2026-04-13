@@ -186,10 +186,6 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   return (
     <div className="bg-[#0a0c0a] text-gray-200 font-sans pb-10 selection:bg-[#4caf50] selection:text-white">
       {/* Inject JSON-LD */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       
       {/* Header điều hướng Trở Về */}
       <div className="absolute top-4 left-4 sm:left-8 z-50">
