@@ -126,7 +126,7 @@ export default function Navbar() {
             {/* USER AREA TẦNG 1 - POINT ĐIỂM DANH DƯỚI AVATAR 🛡️ */}
             <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
               {user ? (
-                 <div className="flex items-center gap-6 animate-fade-in py-2">
+                 <div className="flex items-center gap-4 animate-fade-in">
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
@@ -135,37 +135,30 @@ export default function Navbar() {
                        </Link>
                     )}
 
-                    <div className="flex flex-col items-center gap-2">
-                      <div className="flex items-center gap-4 border-l border-white/5 pl-6 translate-y-1">
-                        <div className="hidden sm:flex flex-col items-end gap-1">
-                          <div className="flex items-center gap-2">
-                              <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
-                                 LVL {calculateLevel(user.xp)}
-                              </span>
-                              <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
-                           </div>
-                           <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
-                              <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
-                           </div>
-                        </div>
-
-                        <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
-                            <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                        </Link>
-
-                        <button 
-                          onClick={handleLogout}
-                          className="p-2 text-gray-700 hover:text-red-500 transition-colors"
-                          title="Đăng xuất"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        </button>
+                    <div className="flex items-center gap-4 border-l border-white/5 pl-6">
+                      <div className="hidden sm:flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                            <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
+                               LVL {calculateLevel(user.xp)}
+                            </span>
+                            <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
+                         </div>
+                         <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
+                         </div>
                       </div>
-                      
-                      {/* ĐIỂM DANH ĐẨY XUỐNG DƯỚI ⚡ */}
-                      <div className="hidden lg:block scale-90 -translate-y-1">
-                        <CheckIn />
-                      </div>
+
+                      <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                          <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
+                      </Link>
+
+                      <button 
+                        onClick={handleLogout}
+                        className="p-2 text-gray-700 hover:text-red-500 transition-colors"
+                        title="Đăng xuất"
+                      >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                      </button>
                     </div>
                  </div>
               ) : (
@@ -179,9 +172,9 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* TẦNG 2: SEARCH BAR 🔍 */}
-          <div className="hidden lg:flex h-14 items-center justify-center border-t border-white/[0.03] animate-fade-in py-2">
-            <div className="w-full max-w-2xl relative" ref={searchRef}>
+          {/* TẦNG 2: SEARCH BAR & CHECK-IN 🔍⚡ */}
+          <div className="hidden lg:flex h-14 items-center justify-center gap-8 border-t border-white/[0.03] animate-fade-in py-2">
+            <div className="w-full max-w-xl relative ml-[-50px]" ref={searchRef}>
                <form onSubmit={handleSearchSubmit} className="relative group w-full">
                   <input 
                     type="text" 
@@ -209,6 +202,11 @@ export default function Navbar() {
                     ))}
                  </div>
                )}
+            </div>
+
+            {/* ĐIỂM DANH Ở TẦNG 2 ⚡ */}
+            <div className="shrink-0 scale-95">
+              <CheckIn />
             </div>
           </div>
 
