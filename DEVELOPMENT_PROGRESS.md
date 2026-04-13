@@ -18,6 +18,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **R2 Usage Optimization**: Đã tối ưu để một bộ truyện 150 chương chỉ chiếm ~1GB thay vì 3GB.
 - [x] **Mobile Upload Optimization**: Chuyển đổi sang quy trình **Tải lên tuần tự (Sequential)** kết hợp cơ chế **Tự động thử lại (Auto-Retry 3 lần)** và **Nghỉ giữa chặng (Cooling Delay 500ms)**. Giúp quá trình đăng chương trên di động cực kỳ bền bỉ, không còn lỗi sập tab hay mất kết nối. 🛡️💻🚀
 - [x] **Reader Navigation UX**: Thêm nút Trang chủ (Home) và làm tiêu đề truyện có thể nhấn được để quay lại trang thông tin truyện một cách nhanh chóng. 🏠📖
+- [x] **Manga Detail Layout Optimization**: Tái cấu trúc trang chi tiết truyện, chuyển danh sách chương sang chế độ **Full-width** để loại bỏ khoảng trống thừa dưới ảnh bìa và tăng độ thoáng cho giao diện. 🖼️📐🚀
 
 ### 🖼️ SEO & Marketing Automation (v9 - Brand Identity)
 - [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
@@ -43,4 +44,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 20:42 - 13/04/2026*
+*Cập nhật lần cuối: 21:07 - 13/04/2026*

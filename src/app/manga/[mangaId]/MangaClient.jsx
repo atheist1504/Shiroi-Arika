@@ -344,84 +344,89 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
               </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-              <h2 className="text-2xl font-black text-white tracking-wide flex items-center gap-3 shrink-0">
-                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4caf50] to-[#2e7d32] rounded-full shadow-[0_0_15px_rgba(76,175,80,0.5)]"></div>
-                Kho Chương ({chapters.length})
-              </h2>
-
-              {/* Ô TÌM KIẾM THÔNG MINH 🔍 */}
-              <div className="relative w-full sm:w-64 group">
-                <input 
-                  type="text" 
-                  placeholder="TÌM CHƯƠNG NHANH..." 
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setVisibleCount(20); // Reset phân trang khi tìm kiếm
-                  }}
-                  className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
-                />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              </div>
-            </div>
-
-            {filteredChapters.length === 0 ? (
-              <div className="bg-[#141814] text-center p-12 rounded-[32px] text-gray-600 border-dashed border-2 border-gray-800 animate-pulse">
-                {searchTerm ? `KHÔNG TÌM THẤY CHƯƠNG NÀO KHỚP VỚI "${searchTerm.toUpperCase()}"` : "KHO TRUYỆN HIỆN ĐANG TRỐNG."}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {displayedChapters.map((chap) => {
-                    const isRead = readChapters.includes(chap.id);
-                    return (
-                        <div key={chap.id} className="flex gap-2 group">
-                            <Link 
-                            href={`/read/${chap.id}`} 
-                            className={`flex-1 flex justify-between items-center p-4 bg-[#141814]/40 backdrop-blur-sm border border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80 rounded-2xl transition-all duration-300 ${isRead ? 'opacity-50' : 'opacity-100'}`}
-                            >
-                            <div className="flex flex-col truncate">
-                                <span className={`font-black uppercase tracking-tight transition-colors truncate text-xs ${isRead ? 'text-gray-500' : 'text-gray-100 group-hover:text-[#4caf50]'}`}>
-                                Chương {chap.chapter_number}
-                                </span>
-                                {chap.title && (
-                                <span className="text-[9px] font-bold text-gray-500 mt-1 line-clamp-1 group-hover:text-gray-400">{chap.title}</span>
-                                )}
-                            </div>
-                            <span className="shrink-0 text-[10px] font-black text-gray-700 bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
-                                {new Date(chap.created_at).toLocaleDateString('vi-VN')}
-                            </span>
-                            </Link>
-                            
-                            {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                            <Link 
-                                href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
-                                className="flex items-center justify-center w-14 bg-[#141814] border border-white/5 rounded-2xl text-gray-700 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-xl"
-                                title="Sửa chương này"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </Link>
-                            )}
-                        </div>
-                    );
-                    })}
-                </div>
-
-                {/* NÚT XEM THÊM 🍀 */}
-                {hasMore && (
-                    <div className="flex justify-center pt-4">
-                        <button 
-                            onClick={() => setVisibleCount(prev => prev + 20)}
-                            className="px-10 py-4 bg-[#141814] border-2 border-[#2a332a] text-[#4caf50] rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:border-[#4caf50] hover:shadow-[0_0_30px_rgba(76,175,80,0.2)] transition-all active:scale-95"
-                        >
-                            XEM THÊM CHƯƠNG 🚀
-                        </button>
-                    </div>
-                )}
-              </div>
-            )}
           </div>
+        </div>
+
+        {/* 📜 KHO CHƯƠNG (Full Width để tận dụng không gian) 🍀 */}
+        <div className="mt-16">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+            <h2 className="text-2xl font-black text-white tracking-wide flex items-center gap-3 shrink-0">
+              <div className="w-1.5 h-6 bg-gradient-to-b from-[#4caf50] to-[#2e7d32] rounded-full shadow-[0_0_15px_rgba(76,175,80,0.5)]"></div>
+              Kho Chương ({chapters.length})
+            </h2>
+
+            {/* Ô TÌM KIẾM THÔNG MINH 🔍 */}
+            <div className="relative w-full sm:w-64 group">
+              <input 
+                type="text" 
+                placeholder="TÌM CHƯƠNG NHANH..." 
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setVisibleCount(20); // Reset phân trang khi tìm kiếm
+                }}
+                className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+          </div>
+
+          {filteredChapters.length === 0 ? (
+            <div className="bg-[#141814] text-center p-12 rounded-[32px] text-gray-600 border-dashed border-2 border-gray-800 animate-pulse">
+              {searchTerm ? `KHÔNG TÌM THẤY CHƯƠNG NÀO KHỚP VỚI "${searchTerm.toUpperCase()}"` : "KHO TRUYỆN HIỆN ĐANG TRỐNG."}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayedChapters.map((chap) => {
+                  const isRead = readChapters.includes(chap.id);
+                  return (
+                      <div key={chap.id} className="flex gap-2 group">
+                          <Link 
+                          href={`/read/${chap.id}`} 
+                          className={`flex-1 flex justify-between items-center p-5 bg-[#141814]/40 backdrop-blur-sm border border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80 rounded-2xl transition-all duration-300 ${isRead ? 'opacity-50' : 'opacity-100'}`}
+                          >
+                          <div className="flex flex-col truncate">
+                              <span className={`font-black uppercase tracking-tight transition-colors truncate text-xs ${isRead ? 'text-gray-500' : 'text-gray-100 group-hover:text-[#4caf50]'}`}>
+                              Chương {chap.chapter_number}
+                              </span>
+                              {chap.title && (
+                              <span className="text-[9px] font-bold text-gray-500 mt-1 line-clamp-1 group-hover:text-gray-400">{chap.title}</span>
+                              )}
+                          </div>
+                          <span className="shrink-0 text-[10px] font-black text-gray-700 bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
+                              {new Date(chap.created_at).toLocaleDateString('vi-VN')}
+                          </span>
+                          </Link>
+                          
+                          {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                          <Link 
+                              href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
+                              className="flex items-center justify-center w-14 bg-[#141814] border border-white/5 rounded-2xl text-gray-700 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-xl"
+                              title="Sửa chương này"
+                          >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                          </Link>
+                          )}
+                      </div>
+                  );
+                  })}
+              </div>
+
+              {/* NÚT XEM THÊM 🍀 */}
+              {hasMore && (
+                  <div className="flex justify-center pt-8">
+                      <button 
+                          onClick={() => setVisibleCount(prev => prev + 24)}
+                          className="px-10 py-4 bg-[#141814] border-2 border-[#2a332a] text-[#4caf50] rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:border-[#4caf50] hover:shadow-[0_0_30px_rgba(76,175,80,0.2)] transition-all active:scale-95"
+                      >
+                          XEM THÊM CHƯƠNG 🚀
+                      </button>
+                  </div>
+              )}
+            </div>
+          )}
+        </div>
         </div>
 
         <div className="mt-12 pt-8 border-t border-white/5">
