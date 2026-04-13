@@ -147,6 +147,7 @@ export default function Navbar() {
             <Link href="/leaderboard" className="text-[#4caf50] hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-1.5 group">
                <span className="group-hover:rotate-12 transition-transform drop-shadow-[0_0_8px_rgba(76,175,80,0.4)]">🏆</span> BXH
             </Link>
+            <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Tủ Truyện</Link>
             <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Lịch sử</Link>
             
             {/* ADMIN LINK */}
@@ -263,6 +264,13 @@ export default function Navbar() {
                 <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#141814] to-transparent hover:from-[#4caf50]/10 rounded-2xl text-[#4caf50] font-black transition-all border border-[#4caf50]/10">
                   <div className="w-10 h-10 bg-[#4caf50]/10 rounded-xl flex items-center justify-center text-xl">🏆</div> 
                   BẢNG XẾP HẠNG
+                </Link>
+
+                <Link href="/bookmarks" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all text-xl">
+                    ❤️
+                  </div>
+                  Tủ Truyện (Theo dõi)
                 </Link>
 
                 <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
