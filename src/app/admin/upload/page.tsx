@@ -174,9 +174,13 @@ export default function AdminUploadPage() {
   }, [preSelectedChapterId]);
 
   const fetchStorageUsage = async () => {
-    const res = await getStorageUsageAction();
-    if (res.success) {
-      setStorageInfo({ totalGB: res.totalGB || 0, limitGB: res.limitGB || 10 });
+    try {
+      const res = await getStorageUsageAction();
+      if (res.success) {
+        setStorageInfo({ totalGB: res.totalGB || 0, limitGB: res.limitGB || 10 });
+      }
+    } catch (err) {
+      console.warn("⚠️ Lỗi fetchStorageUsage (bỏ qua):", err);
     }
   };
 

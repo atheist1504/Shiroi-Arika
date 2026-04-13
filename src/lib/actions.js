@@ -71,12 +71,22 @@ export async function getStorageUsageAction() {
     // Chỉ Admin mới được xem thông số Storage
     if (!(await checkAdminAuth())) throw new Error("Bạn không có quyền truy cập thông tin này! 🛡️");
     
-    const { data: pagesData, error: pagesError } = await supabase.from('pages').select('size_kb');
-    if (pagesError) throw pagesError;
+    const { data: pagesData, error: pagesError } = await supabaseAdmin.from('pages').select('size_kb');
+    
+    // 🛡️ FAIL-SAFE: Nếu bảng chưa có cột size_kb hoặc DB lỗi, trả về 0 thay vì làm chết trang Admin 🍀
+    if (pagesError) {
+      console.warn("⚠️ Không thể tính toán Pages Storage (có thể thiếu cột size_kb):", pagesError.message);
+      return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, warning: "Thiếu cột dữ liệu pages" };
+    }
+    
     const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
 
-    const { data: mangasData, error: mangasError } = await supabase.from('mangas').select('size_kb');
-    if (mangasError) throw mangasError;
+    const { data: mangasData, error: mangasError } = await supabaseAdmin.from('mangas').select('size_kb');
+    if (mangasError) {
+        console.warn("⚠️ Không thể tính toán Mangas Storage:", mangasError.message);
+        return { success: true, totalGB: parseFloat((pagesTotal / (1024*1024)).toFixed(3)), totalKB: pagesTotal, limitGB: 10 };
+    }
+    
     const mangasTotal = (mangasData || []).reduce((sum, m) => sum + (m.size_kb || 300), 0);
 
     const totalKB = pagesTotal + mangasTotal;
@@ -84,7 +94,8 @@ export async function getStorageUsageAction() {
 
     return { success: true, totalGB: parseFloat(totalGB.toFixed(3)), totalKB, limitGB: 10 };
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error("❌ Lỗi nghiêm trọng getStorageUsageAction:", error);
+    return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, error: error.message };
   }
 }
 
