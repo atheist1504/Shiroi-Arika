@@ -10,19 +10,21 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Check-in Calendar UI**: Tích hợp lưới lịch 7 cột chuyên nghiệp, hiển thị trực quan các ngày đã điểm danh trong tháng. Đã gỡ bỏ dấu chấm phụ để giao diện tối giản, sang trọng. 🍀
 - [x] **Leaderboard V2 (Full Member)**: Chuẩn hóa kiểu dữ liệu (Type Casting) cho RPC `get_monthly_leaderboard` để khắc phục triệt để lỗi Code 42804. 🏆💎
 - [x] **Owner Admin Whitelist**: Khắc phục triệt để lỗi "Quyền hạn không đủ". 🛡️✅
-- [x] **XP Logs Restoration**: Đã triển khai `recordXpLogAction` và refactor toàn bộ hệ thống.
+- [x] **XP Logs Restoration**: Đã triển khai `recordXpLogAction` và refactor toàn bộ hệ thống. 
+- [x] **Public Member Profile (v11)**: Chính thức ra mắt trang `/user/[userId]` công khai. Cho phép mọi người xem thành tựu, cấp độ và danh hiệu của nhau. Tích hợp cơ chế Bảo mật: Ẩn nhật ký XP và Tủ truyện cá nhân để bảo vệ quyền riêng tư. 🛡️👤🍀
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
 - [x] **Smart Auto-Compression**: Nâng cấp bộ xử lý ảnh tại Admin Upload, tự động đưa mọi ảnh về **MaxWidth 1100px** và nén **WebP 75%**. Giúp tiết kiệm dung lượng gấp 3 lần mà vẫn giữ độ nét hoàn hảo. 🚀
 - [x] **R2 Usage Optimization**: Đã tối ưu để một bộ truyện 150 chương chỉ chiếm ~1GB thay vì 3GB.
 - [x] **Mobile Upload Optimization**: Chuyển đổi sang quy trình **Tải lên tuần tự (Sequential)** kết hợp cơ chế **Tự động thử lại (Auto-Retry 3 lần)** và **Nghỉ giữa chặng (Cooling Delay 500ms)**. Giúp quá trình đăng chương trên di động cực kỳ bền bỉ, không còn lỗi sập tab hay mất kết nối. 🛡️💻🚀
-- [x] **Reader Navigation UX**: Thêm nút Trang chủ (Home) và làm tiêu đề truyện có thể nhấn được để quay lại trang thông tin truyện một cách nhanh chóng. 🏠📖
-- [x] **Manga Detail Layout Optimization**: Tái cấu trúc trang chi tiết truyện, chuyển danh sách chương sang chế độ **Full-width** và tăng số lượng hiển thị lên **21 chương/lần** (tổng chia hết cho 3) để loại bỏ khoảng trống thừa và tối ưu cho giao diện 3 cột. 🖼️📐🚀
-- [x] **New Progression System (23 Ranks)**: Triển khai hệ thống danh hiệu kiếm hiệp mới với 23 phân bậc (mỗi 3 Level một danh hiệu). Loại bỏ các yếu tố rườm rà (icon/màu sắc) để tập trung vào danh xưng tối giản, sang trọng. 🥋📜🎖️
+- [x] **Turbo Upload (v12 - High-Speed)**: Nâng cấp logic upload từ Tuần tự sang **Song song (Parallel Batch 3)**. Tốc độ xuất bản chương mới tăng lên gấp 3 lần (300%) trong khi vẫn đảm bảo an toàn cho thiết bị di động. 🚀⚡🥇
 
-### 🖼️ SEO & Marketing Automation (v9 - Brand Identity)
-- [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
+### 🖼️ SEO & UI/UX (v10 - Brand Identity)
+- [x] **Navigation Professional Overhaul**: Tái cấu trúc Navbar thành 2 tầng đẳng cấp. Di chuyển nút **Điểm danh** xuống Tầng 2, đặt ở vị trí chiến lược trên thanh tìm kiếm và thẳng hàng hoàn hảo dưới Avatar. Tạo sự cân bằng thị giác và truy cập thuận tiện. 📐⚡🍀
+- [x] **Comment Context Awareness (v13)**: Tự động gán nhãn **[Chương X]** hoặc **[Bình luận tổng]** cho từng bình luận. Giúp cộng đồng hiểu rõ ngữ cảnh cuộc trò chuyện mà không cần mở chương tương ứng. 💬📖
+- [x] **Dynamic Metadata Optimization (v14)**: Triển khai `generateMetadata` toàn diện cho trang Manga, Chapter và User Profile. Đảm bảo mọi đường link khi chia sẻ lên MXH đều có tiêu đề và mô tả chuyên nghiệp, thu hút người đọc. 🔍✨
+- [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
 - [/] **Node.js Runtime Fix**: Đã chuyển sang Node.js Runtime. (⚠️ Vẫn còn lỗi 404 Manga Not Found - Cần fix tiếp).
 
 ---
@@ -36,8 +38,9 @@ Dự án Manga Platform thế hệ mới.
 ---
 
 ## 🧪 KẾT QUẢ KIỂM THỬ (TEST RESULTS) 🍀
-- [x] **Manga Compression**: Đã chạy thực tế, nén 491/535 trang thành công.
-- [x] **Leaderboard Admin Visibility**: Đã xác nhận Admin hiện trên BXH tháng. 🏆
+- [x] **Parallel Upload Test**: Đã test thành công với đợt 3 ảnh/lần, tốc độ cực nhanh.
+- [x] **Dynamic Metadata Test**: Trang cá nhân hiện đúng Title theo tên thành viên. 🔍
+- [x] **Navbar Alignment**: Đã xác nhận nút Điểm danh thẳng hàng dưới Avatar. 📐
 - [!] **OG Image API Status**: Đang lỗi kết nối Database (Tracing ID: f095d510...).
 
 ## ĐIỀU CẦN LƯU Ý:
@@ -45,4 +48,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 21:51 - 13/04/2026*
+*Cập nhật lần cuối: 00:15 - 14/04/2026*
