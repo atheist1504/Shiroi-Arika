@@ -17,7 +17,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // 🛡️ 2. Tính toán dung lượng (Safe Query)
+    // 🛡️ 2. Kiểm tra Client sẵn sàng (Tránh lỗi lúc Build)
+    if (!supabaseAdmin) {
+      return NextResponse.json({ success: true, totalGB: 0, limitGB: 10, debug: 'BUILD_TIME_SKIP' });
+    }
+
+    // 🛡️ 3. Tính toán dung lượng (Safe Query)
     const { data: pagesData, error: pagesError } = await supabaseAdmin
       .from('pages')
       .select('size_kb')
