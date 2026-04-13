@@ -227,11 +227,16 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
       <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
         <div className="flex items-center gap-3 flex-1 overflow-hidden">
-            <Link href={`/manga/${chapter?.manga_id}`} className={`${theme === 'light' ? 'text-gray-900' : 'text-gray-500'} hover:text-[#4caf50] transition-colors`}>
+            <Link href="/" className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            </Link>
+            <Link href={`/manga/${chapter?.manga_id}`} className={`${theme === 'light' ? 'text-gray-900' : 'text-gray-500'} hover:text-[#4caf50] transition-colors`} title="Quay lại trang truyện">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
             </Link>
             <div className="flex flex-col truncate">
-                <h1 className="text-[10px] font-black uppercase tracking-tight truncate" style={{ color: 'var(--text-reader, white)' }}>{manga?.title}</h1>
+                <Link href={`/manga/${chapter?.manga_id}`} className="hover:text-[#4caf50] transition-colors truncate">
+                  <h1 className="text-[10px] font-black uppercase tracking-tight truncate" style={{ color: 'inherit' }}>{manga?.title}</h1>
+                </Link>
                 <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted-reader, #6b7280)' }}>Chương {chapter?.chapter_number}</span>
             </div>
         </div>
