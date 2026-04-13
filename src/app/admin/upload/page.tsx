@@ -29,47 +29,44 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// 🍀 TIỆN ÍCH NÉN ẢNH (Bản Siêu Tối Ưu 10GB 🚀)
-const compressImageToWebP = async (file: File): Promise<Blob> => {
+// 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
+export const compressImageToWebP = (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.src = url;
+    // 🛡️ SỬ DỤNG FILEREADER thay vì createObjectURL để ổn định hơn trên di động
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxWidth = 1100;
+        const scale = Math.min(1, maxWidth / img.width);
 
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      // 📏 Chiều ngang 1100px là "điểm vàng" cho Web & Mobile
-      const maxWidth = 1100; 
-      const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
 
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
+        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for non-transparent
+        if (!ctx) return reject(new Error("Lỗi khởi tạo Canvas"));
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        URL.revokeObjectURL(url);
-        return reject(new Error("Lỗi khởi tạo Canvas"));
-      }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const quality = 0.75;
+        canvas.toBlob((blob) => {
+          if (!blob) return reject(new Error("Nén ảnh thất bại"));
+          resolve(blob);
+          
+          // 🧹 Dọn dẹp bộ nhớ triệt để
+          canvas.width = 0;
+          canvas.height = 0;
+          img.src = ""; // Clear Image memory
+        }, 'image/webp', quality);
+      };
 
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // 🧠 QUALITY 0.75: Giúp 150 chương chỉ chiếm ~1GB thay vì 3GB 🍀
-      const quality = 0.75; 
-
-      canvas.toBlob((blob) => {
-        URL.revokeObjectURL(url); 
-        if (!blob) return reject(new Error("Nén ảnh thất bại"));
-        resolve(blob);
-        // 🧹 Dọn dẹp canvas để giải phóng RAM trên mobile
-        canvas.width = 0;
-        canvas.height = 0;
-      }, 'image/webp', quality);
+      img.onerror = () => reject(new Error("Trình duyệt không thể giải mã định dạng ảnh này."));
+      img.src = e.target?.result as string;
     };
 
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Không thể tải ảnh"));
-    };
+    reader.onerror = () => reject(new Error("Không thể đọc tệp tin từ thiết bị."));
+    reader.readAsDataURL(file);
   });
 };
 
@@ -350,12 +347,12 @@ export default function AdminUploadPage() {
             console.error(`❌ Lỗi tại trang ${i+1} (Lần ${retryCount}):`, err);
             
             if (retryCount > maxRetries) {
-               const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Lỗi không xác định');
-               throw new Error(`Thất bại tại trang ${i+1} sau ${maxRetries} lần thử: ${errorMsg}`);
+              const errMsg = err?.message || "Lỗi không xác định";
+              throw new Error(`THẤT BẠI TẠI TRANG ${i+1} SAU ${maxRetries} LẦN THỬ: ${errMsg}`);
             }
             
-            // Đợi 1s trước khi thử lại trang bị lỗi
-            await sleep(1000);
+            // Đợi lâu hơn một chút sau mỗi lần thất bại để trình duyệt phục hồi
+            await sleep(1000 * retryCount); 
           }
         }
       }
