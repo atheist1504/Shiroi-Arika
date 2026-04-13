@@ -157,11 +157,11 @@ export async function uploadImageAction(formData) {
     // Sử dụng helper uploadToR2 có sẵn
     const { uploadToR2 } = await import('./r2');
     const fileName = `covers/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
-    const result: any = await uploadToR2(file, fileName);
+    const result = await uploadToR2(file, fileName);
     
     if (!result.success) throw new Error(result.error);
     return { success: true, url: result.url };
-  } catch (error: any) {
+  } catch (error) {
     console.error('Lỗi uploadImageAction:', error);
     return { success: false, error: error.message };
   }
@@ -176,7 +176,7 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
     const title = `${mangaName} vừa có chương ${chapterNumber}! 📚`;
     await sendMangaNotification(title, mangaName, mangaId, coverImage);
     return { success: true };
-  } catch (error: any) {
+  } catch (error) {
     console.warn('Lỗi gửi thông báo (không chặn luồng):', error);
     return { success: true }; // Trả về true để không làm hỏng trải nghiệm người dùng
   }
