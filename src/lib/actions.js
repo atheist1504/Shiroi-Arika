@@ -331,8 +331,12 @@ export async function performCheckInAction() {
  */
 export async function saveMangaAction(mangaData, mangaId = null) {
   try {
-    // 1. Kiểm tra quyền Admin
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    // 1. Kiểm tra Admin Auth
+    const isAdmin = await checkAdminAuth().catch(() => false);
+    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
+    
+    // 🛡️ Kiểm tra Client sẵn sàng
+    if (!supabaseAdmin) throw new Error("Hệ thống quản trị chưa được cấu hình. Hãy kiểm tra biến SUPABASE_SERVICE_ROLE_KEY trên Vercel! 🛡️");
 
     if (mangaId) {
       console.log(`[Admin] Cập nhật truyện ID: ${mangaId}, Status: ${mangaData.status}`);
@@ -427,7 +431,11 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
 export async function saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId = null) {
   console.log(`🚀 [Server] Bắt đầu lưu chương - Editing: ${isEditing}, ChapID: ${existingChapterId}`);
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const isAdmin = await checkAdminAuth().catch(() => false);
+    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    // 🛡️ Kiểm tra Client sẵn sàng
+    if (!supabaseAdmin) throw new Error("Dịch vụ Admin tạm thời không khả dụng. 🛡️");
 
     let chapId = existingChapterId;
 
