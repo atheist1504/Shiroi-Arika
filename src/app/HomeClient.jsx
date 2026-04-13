@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -11,6 +11,13 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
   const [activeSlide, setActiveSlide] = useState(0);
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  // 🕵️‍♂️ SEARCH STATES 🍀
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
   // Tự động chuyển slide sau mỗi 5 giây
   useEffect(() => {
     if (featured.length === 0) return;
@@ -19,6 +26,51 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
     }, 5000);
     return () => clearInterval(timer);
   }, [featured.length]);
+
+  // Xử lý đóng search khi click ra ngoài 🍀
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🚀 LOGIC TÌM KIẾM THÔNG MINH 🍀
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchTerm.trim().length >= 2) {
+        performSearch();
+      } else {
+        setSearchResults([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  const performSearch = async () => {
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from("mangas")
+        .select("id, title, cover_image, status, genres")
+        .ilike("title", `%${searchTerm}%`)
+        .limit(6);
+
+      if (!error && data) {
+        setSearchResults(data);
+        setShowSuggestions(true);
+      }
+    } catch (err) {
+      console.error("Lỗi tìm kiếm:", err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   return (
     <main className="relative overflow-x-hidden min-h-screen">
@@ -113,6 +165,73 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
             </div>
         </section>
       )}
+
+      {/* 🔍 THANH TÌM KIẾM CỐ ĐỊNH (PERFORMANCE MODE) 🍀 */}
+      <section className="max-w-4xl mx-auto px-4 mb-12 relative" ref={searchRef}>
+          <div className="relative group">
+              <input 
+                type="text" 
+                placeholder="TÌM KIẾM TRUYỆN BẠN MUỐN ĐỌC..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => searchResults.length > 0 && setShowSuggestions(true)}
+                className="w-full bg-[#141814] border-2 border-[#2a332a] focus:border-[#4caf50] rounded-2xl py-4 pl-14 pr-6 text-xs font-black uppercase tracking-widest text-white outline-none transition-all shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+              />
+              <div className="absolute left-5 top-1/2 -translate-y-1/2">
+                {isSearching ? (
+                   <div className="w-5 h-5 border-2 border-[#4caf50] border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                   <svg className="w-6 h-6 text-gray-700 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                )}
+              </div>
+          </div>
+
+          {/* DANH SÁCH GỢI Ý 🧧 */}
+          <AnimatePresence>
+            {showSuggestions && searchResults.length > 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute left-4 right-4 mt-2 bg-[#141814] border border-[#2a332a] rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-[100] backdrop-blur-xl"
+                >
+                    <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                        {searchResults.map((manga) => (
+                            <Link 
+                                key={manga.id} 
+                                href={`/manga/${manga.id}`}
+                                onClick={() => {
+                                    setShowSuggestions(false);
+                                    setSearchTerm("");
+                                }}
+                                className="flex items-center gap-4 p-3 hover:bg-[#4caf50]/10 rounded-2xl transition-all group/item"
+                            >
+                                <div className="w-12 h-16 shrink-0 rounded-lg overflow-hidden border border-white/5">
+                                    <img src={optimizeImage(manga.cover_image, 100)} className="w-full h-full object-cover group-hover/item:scale-110 transition-transform" alt="" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-black text-gray-200 truncate group-hover/item:text-[#4caf50] transition-colors">{manga.title}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[9px] font-black text-gray-600 bg-black/40 px-2 py-0.5 rounded uppercase tracking-widest">{manga.status === 'completed' ? 'Xong' : 'Đang ra'}</span>
+                                        <span className="text-[9px] font-black text-[#4caf50]/60 truncate">{(manga.genres || []).slice(0, 1).join("")}</span>
+                                    </div>
+                                </div>
+                                <div className="p-2 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                    <svg className="w-5 h-5 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                    <Link 
+                        href={`/search?q=${encodeURIComponent(searchTerm)}`}
+                        className="block w-full text-center py-4 bg-black/20 text-[10px] font-black uppercase tracking-widest text-[#4caf50] hover:bg-[#4caf50] hover:text-black transition-all"
+                    >
+                        XEM TẤT CẢ KẾT QUẢ 🚀
+                    </Link>
+                </motion.div>
+            )}
+          </AnimatePresence>
+      </section>
 
       <div className="max-w-6xl mx-auto px-4 pb-8 mt-4">
         <div className="flex items-center space-x-3 mb-8">

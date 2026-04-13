@@ -20,6 +20,10 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   const [lastReadChapterId, setLastReadChapterId] = useState(null);
   const [viewCover, setViewCover] = useState(false);
 
+  // 🔎 TÌM KIẾM & PHÂN TRANG 🍀
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleCount, setVisibleCount] = useState(20);
+
   useEffect(() => {
     // ĐỒNG BỘ SESSION CHO QUẢN TRỊ VIÊN 🍀
     const checkSession = () => {
@@ -87,8 +91,14 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   };
 
   const toggleFollow = async () => {
+    if (!user) {
+        alert("Vui lòng đăng nhập để theo dõi truyện! 🛡️");
+        router.push('/login');
+        return;
+    }
+
     let followed = JSON.parse(localStorage.getItem('shiroi_followed') || '[]');
-    const currentlyFollowed = followed.includes(mangaId);
+    const currentlyFollowed = isFollowed;
     let nextState = !currentlyFollowed;
 
     // A. Cập nhật LOCAL trước để tạo cảm giác phản hồi tức thì 🚀
@@ -100,17 +110,16 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     localStorage.setItem('shiroi_followed', JSON.stringify(followed));
     setIsFollowed(nextState);
 
-    // B. Nếu có ĐĂNG NHẬP -> Đồng bộ lên CLOUD ☁️
-    if (user && user.id) {
-       try {
-         if (nextState) {
-           await supabase.from('shiroi_follows').insert({ user_id: user.id, manga_id: mangaId });
-         } else {
-           await supabase.from('shiroi_follows').delete().eq('user_id', user.id).eq('manga_id', mangaId);
-         }
-       } catch (err) {
-         console.error("Lỗi đồng bộ Database:", err);
-       }
+    // B. GỌI SERVER ACTION ĐỂ ĐỒNG BỘ BẢO MẬT 🛡️
+    try {
+        const { toggleFollowAction } = await import('@/lib/actions');
+        const res = await toggleFollowAction(mangaId, currentlyFollowed);
+        if (!res.success) throw new Error(res.error);
+    } catch (err) {
+        console.error("Lỗi đồng bộ Database:", err);
+        // Rollback nếu lỗi
+        setIsFollowed(currentlyFollowed);
+        localStorage.setItem('shiroi_followed', JSON.stringify(followed.filter(id => id !== mangaId)));
     }
   };
 
@@ -162,17 +171,22 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   }
 
   // Cấu hình JSON-LD cho Google (Manga Series)
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BookSeries",
-    "name": manga.title,
-    "description": manga.description || "Website này đánh giá cao sự bí ẩn. Rất tiếc hiện chưa có mô tả nào cho tựa truyện này cả.",
-    "image": manga.cover_image,
-    "url": `https://shiroiarika.vercel.app/manga/${mangaId}`,
-    "genre": (manga.genres || []).join(", "),
-    "author": manga.author || "Khuyết danh",
-    "numberOfEpisodes": chapters.length,
+    author: manga.author || "Khuyết danh",
+    numberOfEpisodes: chapters.length,
   };
+
+  // 🕵️‍♂️ XỬ LÝ LỌC VÀ PHÂN TRANG CHƯƠNG 🏗️
+  const filteredChapters = chapters.filter(chap => {
+    if (!searchTerm) return true;
+    const searchLow = searchTerm.toLowerCase();
+    return (
+        chap.chapter_number.toString().includes(searchLow) || 
+        (chap.title && chap.title.toLowerCase().includes(searchLow))
+    );
+  });
+
+  const displayedChapters = filteredChapters.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredChapters.length;
 
   return (
     <div className="bg-[#0a0c0a] text-gray-200 font-sans pb-10 selection:bg-[#4caf50] selection:text-white">
@@ -319,53 +333,81 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
               </button>
             </div>
 
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-white tracking-wide flex items-center gap-3">
-                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4caf50] to-[#2e7d32] rounded-full"></div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
+              <h2 className="text-2xl font-black text-white tracking-wide flex items-center gap-3 shrink-0">
+                <div className="w-1.5 h-6 bg-gradient-to-b from-[#4caf50] to-[#2e7d32] rounded-full shadow-[0_0_15px_rgba(76,175,80,0.5)]"></div>
                 Kho Chương ({chapters.length})
               </h2>
+
+              {/* Ô TÌM KIẾM THÔNG MINH 🔍 */}
+              <div className="relative w-full sm:w-64 group">
+                <input 
+                  type="text" 
+                  placeholder="TÌM CHƯƠNG NHANH..." 
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setVisibleCount(20); // Reset phân trang khi tìm kiếm
+                  }}
+                  className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
             </div>
 
-            {chapters.length === 0 ? (
-              <div className="bg-[#141814] text-center p-10 rounded-2xl text-gray-500 border-dashed border-2 border-gray-800">
-                Chưa có chapter nào cho bộ truyện này.
+            {filteredChapters.length === 0 ? (
+              <div className="bg-[#141814] text-center p-12 rounded-[32px] text-gray-600 border-dashed border-2 border-gray-800 animate-pulse">
+                {searchTerm ? `KHÔNG TÌM THẤY CHƯƠNG NÀO KHỚP VỚI "${searchTerm.toUpperCase()}"` : "KHO TRUYỆN HIỆN ĐANG TRỐNG."}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {chapters.map((chap) => {
-                  const isRead = readChapters.includes(chap.id);
-                  return (
-                     <div key={chap.id} className="flex gap-2 group">
-                        <Link 
-                          href={`/read/${chap.id}`} 
-                          className={`flex-1 flex justify-between items-center p-4 bg-[rgba(20,24,20,0.6)] backdrop-blur-sm border border-[#2a332a] group-hover:border-[#4caf50] rounded-xl transition-all ${isRead ? 'opacity-50' : 'opacity-100'}`}
-                        >
-                          <div className="flex flex-col truncate">
-                            <span className={`font-bold transition-colors truncate ${isRead ? 'text-gray-500 group-hover:text-gray-400' : 'text-gray-200 group-hover:text-[#4caf50]'}`}>
-                              Chương {chap.chapter_number}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {displayedChapters.map((chap) => {
+                    const isRead = readChapters.includes(chap.id);
+                    return (
+                        <div key={chap.id} className="flex gap-2 group">
+                            <Link 
+                            href={`/read/${chap.id}`} 
+                            className={`flex-1 flex justify-between items-center p-4 bg-[#141814]/40 backdrop-blur-sm border border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80 rounded-2xl transition-all duration-300 ${isRead ? 'opacity-50' : 'opacity-100'}`}
+                            >
+                            <div className="flex flex-col truncate">
+                                <span className={`font-black uppercase tracking-tight transition-colors truncate text-xs ${isRead ? 'text-gray-500' : 'text-gray-100 group-hover:text-[#4caf50]'}`}>
+                                Chương {chap.chapter_number}
+                                </span>
+                                {chap.title && (
+                                <span className="text-[9px] font-bold text-gray-500 mt-1 line-clamp-1 group-hover:text-gray-400">{chap.title}</span>
+                                )}
+                            </div>
+                            <span className="shrink-0 text-[10px] font-black text-gray-700 bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
+                                {new Date(chap.created_at).toLocaleDateString('vi-VN')}
                             </span>
-                            {chap.title && (
-                              <span className="text-xs text-gray-400 mt-1 line-clamp-1">{chap.title}</span>
+                            </Link>
+                            
+                            {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                            <Link 
+                                href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
+                                className="flex items-center justify-center w-14 bg-[#141814] border border-white/5 rounded-2xl text-gray-700 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-xl"
+                                title="Sửa chương này"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                            </Link>
                             )}
-                          </div>
-                          <span className="shrink-0 text-xs text-gray-500 bg-black/50 px-2 py-1 rounded">
-                            {new Date(chap.created_at).toLocaleDateString('vi-VN')}
-                          </span>
-                        </Link>
-                        
-                        {/* NÚT SỬA NHANH CHO ADMIN 🛠️ */}
-                        {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                           <Link 
-                             href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
-                             className="flex items-center justify-center w-14 bg-[#1a1f1a] border border-white/5 rounded-xl text-gray-600 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-lg"
-                             title="Sửa chương này"
-                           >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                           </Link>
-                        )}
-                     </div>
-                  );
-                })}
+                        </div>
+                    );
+                    })}
+                </div>
+
+                {/* NÚT XEM THÊM 🍀 */}
+                {hasMore && (
+                    <div className="flex justify-center pt-4">
+                        <button 
+                            onClick={() => setVisibleCount(prev => prev + 20)}
+                            className="px-10 py-4 bg-[#141814] border-2 border-[#2a332a] text-[#4caf50] rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:border-[#4caf50] hover:shadow-[0_0_30px_rgba(76,175,80,0.2)] transition-all active:scale-95"
+                        >
+                            XEM THÊM CHƯƠNG 🚀
+                        </button>
+                    </div>
+                )}
               </div>
             )}
           </div>

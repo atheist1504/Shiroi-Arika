@@ -114,17 +114,15 @@ export default function CreateMangaPage() {
         is_featured: isFeatured
       };
 
-      if (!isEditing) {
-        const { data, error } = await supabase.from("mangas").insert(mangaData).select().single();
-        if (error) throw error;
-        router.push(`/manga/${data.id}`);
-      } else {
-        const { error } = await supabase.from("mangas").update(mangaData).eq("id", id);
-        if (error) throw error;
-        router.push(`/manga/${id}`);
-      }
+      const { saveMangaAction } = await import("../../../lib/actions");
+      const res = await saveMangaAction(mangaData, id);
 
-      setMessage({ type: 'success', text: 'THÀNH CÔNG! ĐANG CHUYỂN TRANG... 👋' });
+      if (res.success) {
+        setMessage({ type: 'success', text: 'THÀNH CÔNG! ĐANG CHUYỂN TRANG... 👋' });
+        router.push(`/manga/${res.data.id}`);
+      } else {
+        throw new Error(res.error);
+      }
     } catch (err: any) {
       setMessage({ type: 'error', text: `THẤT BẠI: ${err.message}` });
     } finally {

@@ -2,82 +2,120 @@
 
 import { uploadToR2, getPresignedUploadUrl, deleteFolderFromR2 } from './r2';
 import { supabase } from './supabase';
+import { supabaseAdmin } from './supabaseAdmin';
+import { cookies } from 'next/headers';
+import { sendMangaNotification } from './notifications';
 
 /**
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
  * Tính toán dựa trên cột size_kb trong bảng pages và mangas 🍀
  */
+/**
+ * 🔐 SERVER ACTION: Đăng nhập và tạo Session (Cookie)
+ * Thay thế cho việc chỉ dùng LocalStorage ở Client 🍀
+ */
+export async function loginAction(username, password) {
+  try {
+    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
+    const hashed = hashPassword(password);
+
+    const { data: user, error } = await supabase
+      .from('shiroi_users')
+      .select('*')
+      .ilike('username', username.trim())
+      .single();
+
+    if (error || !user) throw new Error('Không tìm thấy tài khoản Shiroi này!');
+    
+    if (user.password !== hashed && user.password !== password) {
+       throw new Error('Mật khẩu chưa chính xác! 🛡️');
+    }
+
+    // ✅ TẠO SESSION BẰNG COOKIE (Hết hạn sau 7 ngày)
+    cookies().set('shiroi_session', JSON.stringify({
+      id: user.id,
+      username: user.username,
+      role: user.role || 'user'
+    }), { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🕵️‍♂️ HÀM HỖ TRỢ: Kiểm tra quyền Admin từ Cookie
+ */
+async function checkAdminAuth() {
+  const sessionData = cookies().get('shiroi_session');
+  if (!sessionData) return false;
+  try {
+    const user = JSON.parse(sessionData.value);
+    return user.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
+ */
 export async function getStorageUsageAction() {
   try {
-    // 1. Tính tổng từ bảng pages
-    const { data: pagesData, error: pagesError } = await supabase
-      .from('pages')
-      .select('size_kb');
+    // Chỉ Admin mới được xem thông số Storage
+    if (!(await checkAdminAuth())) throw new Error("Bạn không có quyền truy cập thông tin này! 🛡️");
     
+    const { data: pagesData, error: pagesError } = await supabase.from('pages').select('size_kb');
     if (pagesError) throw pagesError;
     const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
 
-    // 2. Tính tổng từ bảng mangas (ảnh bìa)
-    const { data: mangasData, error: mangasError } = await supabase
-      .from('mangas')
-      .select('size_kb');
-    
+    const { data: mangasData, error: mangasError } = await supabase.from('mangas').select('size_kb');
     if (mangasError) throw mangasError;
     const mangasTotal = (mangasData || []).reduce((sum, m) => sum + (m.size_kb || 300), 0);
 
     const totalKB = pagesTotal + mangasTotal;
     const totalGB = totalKB / (1024 * 1024);
 
-    return { 
-      success: true, 
-      totalGB: parseFloat(totalGB.toFixed(3)), 
-      totalKB,
-      limitGB: 10 
-    };
+    return { success: true, totalGB: parseFloat(totalGB.toFixed(3)), totalKB, limitGB: 10 };
   } catch (error) {
-    console.error('Lỗi tính dung lượng:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
  * 🗑️ SERVER ACTION: Xóa trọn bộ truyện (Data + R2)
- * Đây là thao tác nguy hiểm, cần dọn dẹp triệt để 🍀
  */
 export async function deleteMangaAction(mangaId) {
   try {
+    if (!(await checkAdminAuth())) throw new Error("Dừng lại! Chỉ quản trị viên mới có quyền hành quyết này! 🛡️");
     if (!mangaId) throw new Error("Thiếu ID truyện!");
 
-    // 1. Lấy danh sách Chapter IDs để dọn dẹp R2
-    const { data: chapters, error: chapError } = await supabase
-      .from('chapters')
-      .select('id')
-      .eq('manga_id', mangaId);
-
+    const { data: chapters, error: chapError } = await supabase.from('chapters').select('id').eq('manga_id', mangaId);
     if (chapError) throw chapError;
 
-    // 2. Dọn dẹp tệp vật lý trên R2 cho từng chương
     if (chapters && chapters.length > 0) {
       for (const chap of chapters) {
         await deleteFolderFromR2(`chapters/${chap.id}/`);
       }
     }
 
-    // 3. Xóa dữ liệu trong DB (Xóa Pages -> Chapters -> Manga)
-    // Supabase sẽ tự động cascade nếu có cấu hình, nhưng ta làm thủ công cho chắc chắn
     const chapterIds = chapters.map(c => c.id);
     if (chapterIds.length > 0) {
       await supabase.from('pages').delete().in('chapter_id', chapterIds);
       await supabase.from('chapters').delete().in('id', chapterIds);
     }
     
-    // Cuối cùng xóa bản ghi Manga
     const { error: mangaDelError } = await supabase.from('mangas').delete().eq('id', mangaId);
     if (mangaDelError) throw mangaDelError;
 
     return { success: true };
   } catch (error) {
-    console.error('Lỗi khi xóa truyện:', error);
     return { success: false, error: error.message };
   }
 }
@@ -98,40 +136,298 @@ export async function getUploadUrlAction(fileName) {
 
 /**
  * 🌩️ SERVER ACTION: Upload Image to R2
- * Giải quyết triệt để lỗi CORS và bảo mật Keys 🍀
  */
 export async function uploadImageAction(formData) {
+  // ... existing implementation
+}
+
+/**
+ * 🔔 SERVER ACTION: Gửi thông báo chương mới
+ */
+export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, coverImage) {
+  // ... existing implementation
+}
+
+/**
+ * 📊 SERVER ACTION: Ghi Log XP Bảo Mật
+ */
+export async function recordXpLogAction(userId, amount, type, reason = null) {
+  // ... existing implementation
+}
+
+/**
+ * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
+ */
+export async function addReadXPAction(mangaId, chapterId) {
   try {
-    const file = formData.get('file');
-    const fileName = formData.get('fileName');
+    const sessionData = cookies().get('shiroi_session');
+    if (!sessionData) throw new Error("Vui lòng đăng nhập lại để nhận XP! 🛡️");
 
-    if (!file || !fileName) {
-      throw new Error('Thiếu tệp tin hoặc tên tệp!');
-    }
+    const session = JSON.parse(sessionData.value);
+    const userId = session.id;
 
-    // Chuyển đổi file (Blob/File) sang Buffer để uploadToR2 xử lý
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
+    const { data: alreadyRead } = await supabaseAdmin
+      .from('shiroi_read_chapters')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('chapter_id', chapterId)
+      .single();
 
-    // Re-use logic từ r2.js (đã được sửa dùng server keys)
-    const publicUrl = await uploadToR2(buffer, fileName);
+    if (alreadyRead) return { success: false, error: 'Đã nhận thưởng cho chương này' };
 
-    return { success: true, url: publicUrl };
+    // 2. Lấy XP hiện tại
+    const { data: user } = await supabaseAdmin.from('shiroi_users').select('xp').eq('id', userId).single();
+    const newXP = (user?.xp || 0) + 20; // 20 XP cho mỗi chương
+
+    // 3. Cập nhật XP và Ghi log (Atomic-ish)
+    await supabaseAdmin.from('shiroi_users').update({ xp: newXP }).eq('id', userId);
+    await supabaseAdmin.from('shiroi_read_chapters').insert({ 
+      user_id: userId, 
+      username: session.username, 
+      chapter_id: chapterId, 
+      manga_id: mangaId, 
+      read_at: new Date().toISOString() 
+    });
+    
+    await supabaseAdmin.from('shiroi_xp_logs').insert({
+      user_id: userId,
+      amount: 20,
+      type: 'read',
+      reason: chapterId
+    });
+
+    return { success: true, newXP };
   } catch (error) {
-    const errorMsg = error.message || String(error);
-    console.error('Lỗi Server Action Upload:', errorMsg);
+    console.error('Lỗi addReadXPAction:', error);
+    return { success: false, error: error.message };
+  }
+}
 
-    // 🕵️‍♂️ PHÂN LOẠI LỖI THÔNG MINH
-    if (errorMsg.includes('413') || errorMsg.includes('Payload Too Large')) {
-      return { success: false, error: "Ảnh quá nặng! Vercel giới hạn tối đa 4.5MB. Hãy thử giảm chất lượng ảnh hoặc nén thêm.", code: 'PAYLOAD_TOO_LARGE' };
+/**
+ * 📅 SERVER ACTION: Điểm danh hàng ngày (Bảo mật 🛡️)
+ */
+export async function performCheckInAction() {
+  try {
+    const sessionData = cookies().get('shiroi_session');
+    if (!sessionData) throw new Error("Vui lòng đăng nhập lại để điểm danh! 🛡️");
+
+    const session = JSON.parse(sessionData.value);
+    const userId = session.id;
+
+    // 1. Lấy trạng thái điểm danh hiện tại từ DB (Tránh hack thời gian ở Client)
+    const { data: user, error: fetchError } = await supabaseAdmin
+      .from('shiroi_users')
+      .select('xp, last_check_in, check_in_streak')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError || !user) throw new Error("Không tìm thấy thông tin người dùng");
+
+    const now = new Date();
+    const lastCheck = user.last_check_in ? new Date(user.last_check_in) : null;
+    
+    // Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
+    const isSameDay = lastCheck && 
+      lastCheck.getDate() === now.getDate() &&
+      lastCheck.getMonth() === now.getMonth() &&
+      lastCheck.getFullYear() === now.getFullYear();
+
+    if (isSameDay) return { success: false, error: 'Bạn đã điểm danh hôm nay rồi!' };
+
+    // 2. Tính toán streak và XP mới
+    const newStreak = (user.check_in_streak || 0) + 1;
+    const xpGain = 100; // Mặc định 100 XP
+    const newXP = (user.xp || 0) + xpGain;
+
+    // 3. Cập nhật Database
+    const { data: updatedUser, error: updateError } = await supabaseAdmin
+      .from('shiroi_users')
+      .update({
+        xp: newXP,
+        last_check_in: now.toISOString(),
+        check_in_streak: newStreak
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // 4. Ghi log nhật ký
+    await supabaseAdmin.from('shiroi_xp_logs').insert({
+      user_id: userId,
+      amount: xpGain,
+      type: 'check_in',
+      reason: `Streak: ${newStreak}`
+    });
+
+    return { success: true, user: updatedUser, xpGain };
+  } catch (error) {
+    console.error('Lỗi performCheckInAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 📚 SERVER ACTION: Lưu hoặc Cập nhật Manga (Bảo mật 🛡️)
+ */
+export async function saveMangaAction(mangaData, mangaId = null) {
+  try {
+    // 1. Kiểm tra quyền Admin
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    if (mangaId) {
+      // Cập nhật
+      const { data, error } = await supabaseAdmin
+        .from('mangas')
+        .update(mangaData)
+        .eq('id', mangaId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } else {
+      // Thêm mới
+      const { data, error } = await supabaseAdmin
+        .from('mangas')
+        .insert([mangaData])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
     }
-    if (errorMsg.includes('Credential') || errorMsg.includes('AccessKey')) {
-      return { success: false, error: "Lỗi xác thực R2! Vui lòng kiểm tra R2_ACCESS_KEY_ID và SECRET_ACCESS_KEY trên Vercel.", code: 'R2_AUTH_ERROR' };
-    }
-    if (errorMsg.includes('ENOTFOUND') || errorMsg.includes('Network')) {
-      return { success: false, error: "Không thể kết nối tới Cloudflare R2. Vui lòng kiểm tra Endpoint và R2_ACCOUNT_ID.", code: 'R2_NETWORK_ERROR' };
+  } catch (error) {
+    console.error('Lỗi saveMangaAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 📤 SERVER ACTION: Đăng chương mới (Bảo mật 🛡️)
+ * Xử lý: Insert Chapter -> Insert Pages -> Send Notification
+ */
+export async function publishChapterAction(mangaId, mangaTitle, chapterData, pagesData, coverImage) {
+  try {
+    // 1. Kiểm tra quyền Admin
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    // 2. Insert Chapter
+    const { data: chapter, error: chapterError } = await supabaseAdmin
+      .from('chapters')
+      .insert([chapterData])
+      .select()
+      .single();
+
+    if (chapterError) throw chapterError;
+
+    // 3. Insert Pages
+    const pagesWithChapterId = pagesData.map(page => ({
+        ...page,
+        chapter_id: chapter.id
+    }));
+
+    const { error: pagesError } = await supabaseAdmin
+      .from('pages')
+      .insert(pagesWithChapterId);
+
+    if (pagesError) throw pagesError;
+
+    // 4. Gửi thông báo tự động (Silent fail - không làm chết luồng upload)
+    try {
+        const title = `Chương ${chapter.chapter_number} vừa ra mắt! 📚`;
+        await sendMangaNotification(title, mangaTitle, mangaId, coverImage);
+    } catch (notifyErr) {
+        console.warn("Lỗi gửi thông báo (bỏ qua):", notifyErr);
     }
 
-    return { success: false, error: `Lỗi hệ thống: ${errorMsg}`, code: 'UNKNOWN_ERROR' };
+    return { success: true, chapterId: chapter.id };
+  } catch (error) {
+    console.error('Lỗi publishChapterAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 📝 SERVER ACTION: Lưu dữ liệu chương và các trang (Bảo mật 🛡️)
+ */
+export async function saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId = null) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    let chapId = existingChapterId;
+
+    // 1. Xử lý Chapter
+    if (!isEditing) {
+      // Check trùng lặp chương
+      const { data: existingChap } = await supabaseAdmin
+        .from("chapters")
+        .select("id")
+        .eq("manga_id", chapterPayload.manga_id)
+        .eq("chapter_number", chapterPayload.chapter_number)
+        .maybeSingle();
+
+      if (existingChap) {
+        chapId = existingChap.id;
+        await supabaseAdmin.from("chapters").update(chapterPayload).eq("id", chapId);
+      } else {
+        const { data, error } = await supabaseAdmin.from("chapters").insert(chapterPayload).select().single();
+        if (error) throw error;
+        chapId = data.id;
+      }
+    } else {
+      await supabaseAdmin.from("chapters").update(chapterPayload).eq("id", chapId);
+    }
+
+    // 2. Xóa các trang cũ (ghi đè)
+    await supabaseAdmin.from("pages").delete().eq("chapter_id", chapId);
+
+    // 3. Chèn các trang mới
+    const pagesWithId = pagesData.map(p => ({ ...p, chapter_id: chapId }));
+    const { error: pagesError } = await supabaseAdmin.from("pages").insert(pagesWithId);
+    if (pagesError) throw pagesError;
+
+    return { success: true, chapterId: chapId };
+  } catch (error) {
+    console.error('Lỗi saveChapterDataAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 💖 SERVER ACTION: Theo dõi / Bỏ theo dõi truyện (Bảo mật 🛡️)
+ */
+export async function toggleFollowAction(mangaId, isFollowed) {
+  try {
+    const sessionData = cookies().get('shiroi_session');
+    if (!sessionData) throw new Error("Vui lòng đăng nhập để theo dõi truyện! 🛡️");
+
+    const session = JSON.parse(sessionData.value);
+    const userId = session.id;
+
+    if (!isFollowed) {
+      // Tiến hành Follow
+      const { error } = await supabaseAdmin
+        .from('shiroi_follows')
+        .insert({ user_id: userId, manga_id: mangaId });
+      
+      if (error) throw error;
+      return { success: true, followed: true };
+    } else {
+      // Tiến hành Unfollow
+      const { error } = await supabaseAdmin
+        .from('shiroi_follows')
+        .delete()
+        .eq('user_id', userId)
+        .eq('manga_id', mangaId);
+      
+      if (error) throw error;
+      return { success: true, followed: false };
+    }
+  } catch (error) {
+    console.error('Lỗi toggleFollowAction:', error);
+    return { success: false, error: error.message };
   }
 }

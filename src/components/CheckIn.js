@@ -49,76 +49,36 @@ export default function CheckIn() {
 
     const handleCheckIn = async () => {
       try {
-        const raw = localStorage.getItem("shiroi_user");
-        if (!raw) return;
-        
-        let currentUser;
-        try {
-           currentUser = JSON.parse(raw);
-        } catch (e) { return; }
-
         if (!canCheckIn || checking) {
-           // NÊU QUÀ ĐÃ NHẬN -> HIỆN BẢNG THẾ GIỚI! 💎
            setModalMessage("BẠN ĐÃ NHẬN QUÀ HÔM NAY RỒI! HẸN GẶP LẠI VÀO NGÀY MAI NHÉ! 🍀");
            setShowModal(true);
            setCanCheckIn(false);
-           setChecking(false);
            return;
         }
         
         setChecking(true);
-        const { data: latestUser, error: fetchError } = await supabase
-          .from("shiroi_users")
-          .select("*")
-          .eq("id", currentUser.id)
-          .single();
+        const { performCheckInAction } = await import('@/lib/actions');
+        const res = await performCheckInAction();
 
-        if (fetchError) throw fetchError;
-
-        // 🕵️‍♂️ THIẾT LẬP KỶ LUẬT THỜI GIAN THỰC ⏳
-        const now = new Date();
-        const lastCheck = latestUser?.last_check_in ? new Date(latestUser.last_check_in) : null;
-        
-        const isSameDay = lastCheck && 
-          lastCheck.getDate() === now.getDate() &&
-          lastCheck.getMonth() === now.getMonth() &&
-          lastCheck.getFullYear() === now.getFullYear();
-
-        if (isSameDay) {
-           setModalMessage("BẠN ĐÃ NHẬN QUÀ HÔM NAY RỒI! HẸN GẶP LẠI VÀO NGÀY MAI NHÉ! 🍀");
+        if (res.success) {
+           localStorage.setItem("shiroi_user", JSON.stringify(res.user));
+           setUser(res.user);
+           setCanCheckIn(false);
+           setModalMessage(`CHÚC MỪNG! BẠN ĐÃ NHẬN ĐƯỢC +${res.xpGain} XP VÀNG VÀO TÀI KHOẢN! ✨💎`);
            setShowModal(true);
-           setCanCheckIn(false); // KHÓA CỨNG GIAO DIỆN 🔒
-           return;
+           window.dispatchEvent(new Event("storage"));
+        } else {
+           setModalMessage(res.error || "Có lỗi xảy ra, vui lòng thử lại sau! 🙏");
+           setShowModal(true);
+           if (res.error?.includes('đã điểm danh')) setCanCheckIn(false);
         }
-
-        const xpGain = XP_REWARDS.DAILY_CHECKIN;
-        const newXP = (latestUser?.xp || 0) + xpGain;
-        const nowIso = now.toISOString();
-
-        const updatePayload = { 
-          xp: newXP,
-          last_check_in: nowIso,
-          check_in_streak: (latestUser?.check_in_streak || 0) + 1
-        };
-
-        const { data, error } = await supabase
-          .from("shiroi_users")
-          .update(updatePayload)
-          .eq("id", currentUser.id)
-          .select()
-          .single();
-
-       if (error) throw error;
-
-      if (data) {
-        localStorage.setItem("shiroi_user", JSON.stringify(data));
-        setUser(data);
-        setCanCheckIn(false);
-        setModalMessage(`CHÚC MỪNG! BẠN ĐÃ NHẬN ĐƯỢC +${xpGain} XP VÀNG VÀO TÀI KHOẢN! ✨💎`);
-        setShowModal(true);
-        // Kích hoạt đồng bộ Navbar
-        window.dispatchEvent(new Event("storage"));
-      }
+    } catch (error) {
+      console.error("Lỗi điểm danh:", error);
+      setMessage("Hệ thống bận, hãy thử lại sau! 🙏");
+    } finally {
+      setChecking(false);
+    }
+  };
     } catch (error) {
       console.error("Lỗi điểm danh:", error);
       setMessage("Hệ thống bận, hãy thử lại sau! 🙏");

@@ -73,3 +73,21 @@ export const fixR2Url = (url) => {
 
     return finalData;
 };
+
+/**
+ * 🎨 GENERATE OG IMAGE (ZALO/FB Optimization) 🍀
+ * Biến ảnh dọc thành ngang 1200x630 chuẩn SEO, thêm hiệu ứng Blur cạnh
+ */
+export const getOgImageUrl = (url) => {
+    if (!url) return 'https://shiroi-arika.vercel.app/logo.png';
+    
+    // Fix link R2 trước khi gửi cho Cloudinary
+    const cleanUrl = fixR2Url(url);
+    
+    // Sử dụng Cloudinary Fetch với bộ lọc "Thần thánh":
+    // c_pad: Thêm khoảng trắng để đủ kích thước
+    // b_auto:blur_2000: Lấy chính ảnh đó làm mờ để lấp đầy khoảng trắng (Trông rất Pro)
+    const transformations = 'w_1200,h_630,c_pad,b_auto:blur_2000,q_auto,f_jpg';
+    
+    return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
+};

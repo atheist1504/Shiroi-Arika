@@ -26,7 +26,10 @@ export async function generateMetadata({ params }) {
     : `Đọc truyện ${manga.title} online miễn phí bản đẹp, cập nhật sớm nhất tại Shiroi Arika. Trải nghiệm đọc truyện premium không quảng cáo.`;
 
   const baseUrl = 'https://shiroi-arika.vercel.app';
-  const ogImageUrl = `${baseUrl}/api/og/manga?mangaId=${mangaId}`;
+  
+  // 🚀 CHIÊU CUỐI: Dùng Cloudinary để tạo ảnh ngang từ ảnh dọc 🍀
+  const { getOgImageUrl } = await import('@/lib/cloudinary');
+  const ogImageUrl = getOgImageUrl(manga.cover_image);
 
   return {
     title,
@@ -35,6 +38,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       images: [{ url: ogImageUrl, width: 1200, height: 630 }],
+      url: `${baseUrl}/manga/${mangaId}`,
       type: "book",
     },
     twitter: {
@@ -44,7 +48,7 @@ export async function generateMetadata({ params }) {
       images: [ogImageUrl],
     },
     alternates: {
-      canonical: `https://shiroiarika.vercel.app/manga/${mangaId}`,
+      canonical: `${baseUrl}/manga/${mangaId}`,
     },
   };
 }

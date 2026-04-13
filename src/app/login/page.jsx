@@ -33,23 +33,10 @@ export default function Login() {
     setMessage('');
 
     try {
-      const hashed = hashPassword(password);
+      const { loginAction } = await import('@/lib/actions');
+      const res = await loginAction(username, password);
 
-      const { data, error } = await supabase
-        .from('shiroi_users')
-        .select('*')
-        .ilike('username', username.trim())
-        .single();
-
-      if (error || !data) {
-        setMessage('Lỗi: Không tìm thấy tài khoản Shiroi này! 🔐');
-        setLoading(false);
-        return;
-      }
-
-      // Kiểm tra mật khẩu (Hỗ trợ cả bản cũ chưa mã hóa để bạn không bị khóa)
-      if (data.password === hashed || data.password === password) {
-        
+      if (res.success) {
         // ✅ XỬ LÝ GHI NHỚ TÀI KHOẢN
         if (rememberMe) {
           localStorage.setItem('shiroi_remembered_user', username.trim());
@@ -57,15 +44,16 @@ export default function Login() {
           localStorage.removeItem('shiroi_remembered_user');
         }
 
-        localStorage.setItem('shiroi_user', JSON.stringify(data));
+        // Vẫn lưu LocalStorage để UI Client đồng bộ nhanh 🍀
+        localStorage.setItem('shiroi_user', JSON.stringify(res.user));
         router.push('/');
         setTimeout(() => window.dispatchEvent(new Event('storage')), 100);
       } else {
-        setMessage('Lỗi: Mật khẩu chưa chính xác! 🛡️');
+        setMessage(`Lỗi: ${res.error} 🛡️`);
       }
 
     } catch (err) {
-      setMessage(`Lỗi: ${err.message}`);
+      setMessage(`Lỗi hệ thống: ${err.message}`);
     } finally {
       setLoading(false);
     }

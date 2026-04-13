@@ -59,18 +59,17 @@ export const getStreakBonus = (newStreak) => {
 
 /**
  * 📝 Ghi lại nhật ký XP để phục vụ BXH Tháng 🍀
- * Hàm này chỉ insert log, việc cộng XP tổng vẫn thực hiện ở bảng shiroi_users.
+ * Chuyển sang sử dụng Server Action để đảm bảo bảo mật RLS 🛡️
  */
 export const recordXpLog = async (supabase, userId, amount, type, reason = null) => {
     if (!userId || !amount) return;
     try {
-        await supabase.from('shiroi_xp_logs').insert([{
-            user_id: userId,
-            amount: amount,
-            type: type,
-            reason: reason
-        }]);
+        const { recordXpLogAction } = await import('./actions');
+        const res = await recordXpLogAction(userId, amount, type, reason);
+        if (!res.success) {
+            console.warn("Ghi log XP thất bại (Server):", res.error);
+        }
     } catch (err) {
-        console.error("Lỗi ghi log XP:", err);
+        console.error("Lỗi gọi Server Action Log XP:", err);
     }
 };

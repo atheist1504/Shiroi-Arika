@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { getUploadUrlAction, getStorageUsageAction } from '@/lib/actions';
+import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { StorageMeter } from '@/components/admin/AdminCommon';
 
@@ -273,69 +273,39 @@ export default function AdminUploadPage() {
     setMessage({ type: "info", text: "🚀 ĐANG KHỞI TẠO QUY TRÌNH UPLOAD SIÊU TỐC..." });
     
     try {
-      let chapId = existingChapterId;
       const chapterPayload = { 
         manga_id: selectedMangaId, 
         chapter_number: parseFloat(chapterNumber), 
         title: chapterTitle 
       };
 
-      if (!isEditing) {
-        const { data: existingChap } = await supabase
-          .from("chapters")
-          .select("id")
-          .eq("manga_id", selectedMangaId)
-          .eq("chapter_number", parseFloat(chapterNumber))
-          .single();
-
-        if (existingChap) {
-          chapId = existingChap.id;
-          await supabase.from("chapters").update(chapterPayload).eq("id", chapId);
-        } else {
-          const { data, error } = await supabase.from("chapters").insert(chapterPayload).select().single();
-          if (error) throw error; 
-          chapId = data.id;
-        }
-      } else { 
-        await supabase.from("chapters").update(chapterPayload).eq("id", chapId); 
-      }
-
-      await supabase.from("pages").delete().eq("chapter_id", chapId);
+      // 1. Xin vé upload (Signed URL) và chuẩn bị dữ liệu trang
+      // (Chúng ta sẽ dùng một định danh tạm thời cho chapter_id nếu là tạo mới)
+      const tempChapId = existingChapterId || `temp_${Date.now()}`;
       
       const total = items.length;
       let completed = 0;
 
-      // 🌪️ QUY TRÌNH UPLOAD SONG SONG (Parallel Upload) 🚀
       const uploadPromises = items.map(async (item, i) => {
         let finalUrl = "";
         let fileSizeKb = 0;
 
         if (item.type === 'new') {
-          // 1. Nén ảnh
           const compressed = await compressImageToWebP(item.file);
-          const fileName = `chapters/${chapId}/${Date.now()}-${i}.webp`;
+          const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
 
-          // 2. Lấy Signed URL (Vé thông hành) từ Server
           const ticket: any = await getUploadUrlAction(fileName);
-          if (!ticket.success) {
-              throw new Error(ticket.error || `Không thể xin vé upload cho trang ${i+1}`);
-          }
-          const signedUrl = ticket.signedUrl;
-          const finalPublicUrl = ticket.finalPublicUrl;
-          fileSizeKb = Math.round(compressed.size / 1024);
+          if (!ticket.success) throw new Error(ticket.error);
 
-          // 3. Upload TRỰC TIẾP từ Client lên R2 (Bỏ qua giới hạn Vercel) 🍀
-          const uploadResponse = await fetch(signedUrl, {
+          const uploadResponse = await fetch(ticket.signedUrl, {
               method: 'PUT',
               body: compressed,
               headers: { 'Content-Type': 'image/webp' }
           });
 
-          if (!uploadResponse.ok) {
-              throw new Error(`Cloudflare từ chối tải ảnh trang ${i+1}. Vui lòng kiểm tra CORS.`);
-          }
-
+          if (!uploadResponse.ok) throw new Error(`Lỗi upload ảnh trang ${i+1}`);
           finalUrl = ticket.finalPublicUrl;
+          fileSizeKb = Math.round(compressed.size / 1024);
         } else {
           finalUrl = item.data;
         }
@@ -344,20 +314,34 @@ export default function AdminUploadPage() {
         setProgress(Math.round((completed / total) * 100));
 
         return {
-          chapter_id: chapId,
           image_url: finalUrl,
           page_number: i + 1,
           size_kb: fileSizeKb || 150
         };
       });
 
-      // Chờ tất cả upload xong
-      const pagesToInsert = await Promise.all(uploadPromises);
+      const pagesData = await Promise.all(uploadPromises);
+      if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
 
-      if (pagesToInsert.length === 0) throw new Error("Không có ảnh để lưu.");
+      // 2. GỌI SERVER ACTION ĐỂ LƯU TẤT CẢ DỮ LIỆU DB CÙNG LÚC 🛡️
+      const { saveChapterDataAction } = await import("../../../lib/actions");
+      const res = await saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId);
 
-      const { error: insertError } = await supabase.from("pages").insert(pagesToInsert);
-      if (insertError) throw insertError;
+      if (!res.success) throw new Error(res.error);
+
+      // 3. 🔔 GỬI THÔNG BÁO CHƯƠNG MỚI 🍀
+      const selectedManga = mangas.find(m => m.id === selectedMangaId);
+      if (selectedManga && !isEditing) {
+         try {
+            const { notifyNewChapterAction } = await import("../../../lib/actions");
+            await notifyNewChapterAction(
+              selectedMangaId, 
+              selectedManga.title, 
+              chapterNumber, 
+              selectedManga.cover_image
+            );
+         } catch (e) { console.warn("Lỗi gửi thông báo:", e); }
+      }
 
       setMessage({ type: "success", text: "🚀 XUẤT BẢN THÀNH CÔNG!" });
       setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);

@@ -138,40 +138,28 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     if (sessionStorage.getItem(sessionKey)) return;
 
     try {
-      // 🛡️ KIỂM TRA TỪ DATABASE: Chặn cộng dồn XP ảo trên nhiều thiết bị 🍀
-      const { data: alreadyRead } = await supabase
-        .from('shiroi_read_chapters')
-        .select('id')
-        .eq('user_id', userData.id)
-        .eq('chapter_id', chapterId)
-        .single();
-
-      if (alreadyRead) {
-        // Nếu đã đọc rồi thì đánh dấu session để khỏi check lại lần sau trong cùng phiên
-        sessionStorage.setItem(sessionKey, 'true');
-        return;
-      }
-
-      const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', userData.id).single();
-      const newXP = (latestUser?.xp || 0) + XP_REWARDS.READ_CHAPTER;
+      const { addReadXPAction } = await import('@/lib/actions');
+      const res = await addReadXPAction(chapter.manga_id, chapterId);
       
-      const { error } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', userData.id);
-      
-      if (!error) {
-        // ✅ GHI NHẬN ĐÃ NHẬN THƯỞNG: Chỉ ghi vào database sau khi cộng XP thành công 🍀
-        await supabase.from('shiroi_read_chapters').upsert({ user_id: userData.id, username: userData.username, chapter_id: chapterId, manga_id: chapter.manga_id, read_at: new Date().toISOString() }, { onConflict: 'user_id, chapter_id' });
+      if (res.success) {
+        // Cập nhật lại UI thông qua localStorage 🍀
+        const updatedUser = { ...userData, xp: res.newXP };
+        localStorage.setItem('shiroi_user', JSON.stringify(updatedUser));
         
-        // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
-        await recordXpLog(supabase, userData.id, XP_REWARDS.READ_CHAPTER, 'read', chapterId);
-
-        const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', userData.id).single();
-        if (updated) localStorage.setItem('shiroi_user', JSON.stringify(updated));
         sessionStorage.setItem(sessionKey, 'true');
         setXpToast(true);
         setTimeout(() => setXpToast(false), 4000);
         window.dispatchEvent(new Event('storage'));
+      } else {
+        // Nếu lỗi là do đã đọc rồi thì vẫn đánh dấu session
+        if (res.error?.includes('Đã nhận thưởng')) {
+           sessionStorage.setItem(sessionKey, 'true');
+        }
+        console.warn("XP Reward Note:", res.error);
       }
-    } catch (err) { console.error("Lỗi xác thực XP:", err); }
+    } catch (err) { 
+      console.error("Lỗi gọi Server Action XP:", err); 
+    }
   };
 
   const lastScrollYRef = useRef(0);
