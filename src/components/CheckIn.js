@@ -78,12 +78,6 @@ export default function CheckIn() {
     } finally {
       setChecking(false);
     }
-  };
-    } catch (error) {
-      console.error("Lỗi điểm danh:", error);
-      setMessage("Hệ thống bận, hãy thử lại sau! 🙏");
-    } finally {
-      setChecking(false);
     }
   };
 
