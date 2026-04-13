@@ -90,59 +90,43 @@ export default function Navbar() {
   };
 
   return (
-  return (
     <>
       <nav className="glass sticky-nav z-[1000] border-b border-white/5 py-3 lg:py-0">
         <div className="container mx-auto px-4 flex flex-col w-full relative">
           
-          {/* TẦNG 1: LOGO - SEARCH - USER AREA 🚀 */}
+          {/* TẦNG 1: LOGO - NAV LINKS - USER AREA 🚀 */}
           <div className="flex h-[70px] items-center justify-between w-full">
-            {/* LEFT: HAMBURGER (MOBILE ONLY) */}
-            <button 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 text-[#4caf50] hover:bg-[#4caf50]/10 rounded-xl transition-all"
-            >
-              {isMobileMenuOpen ? (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-              ) : (
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
-              )}
-            </button>
+            {/* LEFT: Logo & Hamburger */}
+            <div className="flex items-center gap-6">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden p-2 text-[#4caf50] hover:bg-[#4caf50]/10 rounded-xl transition-all"
+              >
+                {isMobileMenuOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                )}
+              </button>
 
-            <Link href="/" className="logo shrink-0 flex items-center gap-2 group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-              <span className="clover-icon text-2xl group-hover:rotate-12 transition-transform drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">🍀</span>
-              <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
-            </Link>
-            
-            {/* SEARCH TẦNG 1 */}
-            <div className="hidden lg:flex flex-1 max-w-sm xl:max-w-md mx-10 relative" ref={searchRef}>
-               <form onSubmit={handleSearchSubmit} className="relative group w-full">
-                  <input 
-                    type="text" 
-                    placeholder="Tìm truyện Shiroi..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => results.length > 0 && setShowSearch(true)}
-                    className="w-full bg-[#141814]/50 border border-white/5 rounded-2xl py-2.5 px-5 pl-11 text-xs focus:border-[#4caf50] focus:ring-1 focus:ring-[#4caf50]/20 outline-none transition-all placeholder:text-gray-700 font-bold"
-                  />
-                  <svg className="w-4 h-4 absolute left-4 top-3 text-gray-700 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-               </form>
+              <Link href="/" className="logo shrink-0 flex items-center gap-2 group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
+                <span className="clover-icon text-2xl group-hover:rotate-12 transition-transform drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">🍀</span>
+                <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
+              </Link>
 
-               {showSearch && results.length > 0 && (
-                 <div className="absolute mt-2 w-full bg-[#1c221c] border border-white/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl animate-fade-in z-[50]">
-                    {results.map(manga => (
-                        <Link 
-                          key={manga.id} 
-                          href={`/manga/${manga.id}`}
-                          onClick={() => setShowSearch(false)}
-                          className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                        >
-                            <img src={manga.cover_image || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0 bg-black/40" alt="" />
-                            <span className="text-[12px] font-bold text-gray-400 truncate">{manga.title}</span>
-                        </Link>
-                    ))}
-                 </div>
-               )}
+              {/* NAV LINKS (TẦNG 1) */}
+              <div className="hidden lg:flex items-center gap-7 ml-10">
+                <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em]">Kho Truyện</Link>
+                <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
+                   <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-12 transition-all">🏆</span> BXH
+                </Link>
+                <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
+                   <span className="opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all">❤️</span> Tủ Truyện
+                </Link>
+                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
+                   <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-[-12deg] transition-all">🕰️</span> Lịch sử
+                </Link>
+              </div>
             </div>
 
             {/* USER AREA TẦNG 1 */}
@@ -198,18 +182,37 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* TẦNG 2: NAVIGATION LINKS 🌊 */}
-          <div className="hidden lg:flex h-12 items-center justify-center gap-12 border-t border-white/[0.03] animate-fade-in">
-            <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.3em]">Kho Truyện</Link>
-            <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2 group">
-               <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-12 transition-all">🏆</span> BXH
-            </Link>
-            <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2 group">
-               <span className="opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all">❤️</span> Tủ Truyện
-            </Link>
-            <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2 group">
-               <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-[-12deg] transition-all">🕰️</span> Lịch sử
-            </Link>
+          {/* TẦNG 2: SEARCH BAR 🔍 */}
+          <div className="hidden lg:flex h-14 items-center justify-center border-t border-white/[0.03] animate-fade-in py-2">
+            <div className="w-full max-w-2xl relative" ref={searchRef}>
+               <form onSubmit={handleSearchSubmit} className="relative group w-full">
+                  <input 
+                    type="text" 
+                    placeholder="Tìm kiếm truyện trong kho tàng Shiroi..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => results.length > 0 && setShowSearch(true)}
+                    className="w-full bg-[#141814]/40 border border-white/[0.05] group-focus-within:border-[#4caf50]/30 rounded-2xl py-2.5 px-6 pl-12 text-xs outline-none transition-all placeholder:text-gray-700 font-bold"
+                  />
+                  <svg className="w-4 h-4 absolute left-4 top-3 text-gray-700 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+               </form>
+
+               {showSearch && results.length > 0 && (
+                 <div className="absolute mt-2 w-full bg-[#1c221c] border border-white/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl animate-fade-in z-[50]">
+                    {results.map(manga => (
+                        <Link 
+                          key={manga.id} 
+                          href={`/manga/${manga.id}`}
+                          onClick={() => setShowSearch(false)}
+                          className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                        >
+                            <img src={manga.cover_image || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0 bg-black/40" alt="" />
+                            <span className="text-[12px] font-bold text-gray-400 truncate">{manga.title}</span>
+                        </Link>
+                    ))}
+                 </div>
+               )}
+            </div>
           </div>
 
         </div>
