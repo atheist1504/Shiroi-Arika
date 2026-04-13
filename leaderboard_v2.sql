@@ -50,12 +50,12 @@ BEGIN
         GROUP BY user_id
     )
     SELECT 
-        u.id, 
-        u.username, 
-        u.display_name, 
-        u.avatar_url, 
-        u.selected_badge,
-        u.xp as total_xp,
+        u.id::UUID, 
+        u.username::TEXT, 
+        u.display_name::TEXT, 
+        u.avatar_url::TEXT, 
+        u.selected_badge::TEXT,
+        u.xp::BIGINT as total_xp,
         COALESCE(ms.m_xp, 0)::BIGINT as monthly_xp
     FROM shiroi_users u
     LEFT JOIN monthly_stats ms ON u.id = ms.user_id
