@@ -292,50 +292,70 @@ export default function AdminUploadPage() {
 
       // 1. CHUẨN BỊ VÀ TẢI LÊN TUẦN TỰ (SEQUENTIAL) 🚀
       // Thay vì Promise.all, chúng ta chạy từng ảnh để bảo vệ RAM và băng thông di động 🛡️
-      const pagesData = [];
       const total = items.length;
       let completed = 0;
+
+      // 🛠️ HELPER: Hàm nghỉ giữa chặng để trình duyệt dọn dẹp RAM 🍀
+      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         let finalUrl = "";
         let fileSizeKb = 0;
+        let retryCount = 0;
+        const maxRetries = 3; 
 
-        try {
-          if (item.type === 'new') {
-            setMessage({ type: "info", text: `ĐANG NÉN & TẢI TRANG ${i + 1}/${total}... ⏳` });
-            const compressed = await compressImageToWebP(item.file);
-            const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
+        while (retryCount <= maxRetries) {
+          try {
+            if (item.type === 'new') {
+              const retryText = retryCount > 0 ? ` (THỬ LẠI LẦN ${retryCount})` : "";
+              setMessage({ type: "info", text: `ĐANG XỬ LÝ TRANG ${i + 1}/${total}${retryText}... ⏳` });
+              
+              const compressed = await compressImageToWebP(item.file);
+              const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
 
-            const ticket: any = await getUploadUrlAction(fileName);
-            if (!ticket.success) throw new Error(`Lỗi lấy vé trang ${i+1}: ${ticket.error}`);
+              const ticket: any = await getUploadUrlAction(fileName);
+              if (!ticket.success) throw new Error(`Lỗi lấy vé: ${ticket.error}`);
 
-            const uploadResponse = await fetch(ticket.signedUrl, {
-                method: 'PUT',
-                body: compressed,
-                headers: { 'Content-Type': 'image/webp' }
+              const uploadResponse = await fetch(ticket.signedUrl, {
+                  method: 'PUT',
+                  body: compressed,
+                  headers: { 'Content-Type': 'image/webp' }
+              });
+
+              if (!uploadResponse.ok) throw new Error(`Lỗi mạng (${uploadResponse.status})`);
+              
+              finalUrl = ticket.finalPublicUrl;
+              fileSizeKb = Math.round(compressed.size / 1024);
+            } else {
+              finalUrl = item.data;
+            }
+
+            pagesData.push({
+              image_url: finalUrl,
+              page_number: i + 1,
+              size_kb: fileSizeKb || 150
             });
 
-            if (!uploadResponse.ok) throw new Error(`Lỗi mạng khi tải trang ${i+1} (${uploadResponse.status})`);
+            completed++;
+            setProgress(Math.round((completed / total) * 100));
             
-            finalUrl = ticket.finalPublicUrl;
-            fileSizeKb = Math.round(compressed.size / 1024);
-          } else {
-            finalUrl = item.data;
+            // 🛑 NGHỈ GIỮA CHẶNG: Giúp mobile có thời gian Garbage Collection 🍀
+            if (i < items.length - 1) await sleep(500);
+            
+            break; // Thành công thì thoát khỏi vòng lặp while retry
+          } catch (err: any) {
+            retryCount++;
+            console.error(`❌ Lỗi tại trang ${i+1} (Lần ${retryCount}):`, err);
+            
+            if (retryCount > maxRetries) {
+               const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Lỗi không xác định');
+               throw new Error(`Thất bại tại trang ${i+1} sau ${maxRetries} lần thử: ${errorMsg}`);
+            }
+            
+            // Đợi 1s trước khi thử lại trang bị lỗi
+            await sleep(1000);
           }
-
-          pagesData.push({
-            image_url: finalUrl,
-            page_number: i + 1,
-            size_kb: fileSizeKb || 150
-          });
-
-          completed++;
-          setProgress(Math.round((completed / total) * 100));
-        } catch (err: any) {
-          console.error(`❌ Lỗi tại trang ${i+1}:`, err);
-          const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Lỗi không xác định');
-          throw new Error(`Thất bại tại trang ${i+1}: ${errorMsg}`);
         }
       }
       if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
