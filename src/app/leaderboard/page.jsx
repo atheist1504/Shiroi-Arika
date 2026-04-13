@@ -23,6 +23,7 @@ function LeaderboardContent() {
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(query);
   const [activeTab, setActiveTab] = useState('total'); // 'total', 'this_month', 'last_month'
+  const [dbError, setDbError] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('shiroi_user');
@@ -67,10 +68,17 @@ function LeaderboardContent() {
           }
       } else {
           // 📅 BXH THÁNG (RPC Logic mới)
+          setDbError(null);
           const monthOffset = activeTab === 'this_month' ? 0 : 1;
           const { data, error } = await supabase.rpc('get_monthly_leaderboard', { month_offset: monthOffset });
           
-          if (!error && data) {
+          if (error) {
+              console.error("Lỗi RPC:", error);
+              setDbError(`Lỗi Database: ${error.message} (Code: ${error.code})`);
+              return;
+          }
+
+          if (data) {
             // Lọc theo search query nếu có
             let filtered = data;
             if (query) {
@@ -160,6 +168,16 @@ function LeaderboardContent() {
                 <div className="flex flex-col items-center justify-center py-20 opacity-30 animate-pulse">
                     <div className="w-16 h-16 border-t-4 border-[#4caf50] rounded-full animate-spin mb-4"></div>
                     <span className="text-xs font-black uppercase tracking-[0.5em] text-[#4caf50]">Đang giải mã thứ hạng...</span>
+                </div>
+            ) : dbError ? (
+                <div className="max-w-xl mx-auto mb-12 p-8 bg-red-500/10 border border-red-500/20 rounded-[40px] text-center animate-shake">
+                    <div className="text-4xl mb-4">🆘</div>
+                    <h3 className="text-red-500 font-black uppercase tracking-widest text-sm mb-2">Lỗi truy xuất dữ liệu</h3>
+                    <p className="text-gray-400 text-[10px] font-bold mb-6 leading-relaxed">
+                        {dbError}<br/>
+                        <span className="text-red-500/50">Gợi ý: Đảm bảo bạn đã chạy đúng Script SQL trong Supabase.</span>
+                    </p>
+                    <button onClick={() => fetchLeaderboard()} className="px-8 py-3 bg-red-500 text-white font-black text-[10px] uppercase rounded-2xl hover:scale-105 transition-all">Thử lại ngay</button>
                 </div>
             ) : (
                 <>
@@ -295,7 +313,14 @@ function LeaderboardContent() {
                                     );
                                 }) : (
                                     <tr>
-                                        <td colSpan="4" className="py-20 text-center text-gray-700 font-black uppercase tracking-widest text-[10px] italic">Chưa có cao thủ nào xuất hiện... ✨</td>
+                                        <td colSpan="4" className="py-20 text-center space-y-4">
+                                            <div className="text-gray-700 font-black uppercase tracking-widest text-[10px] italic">Chưa có cao thủ nào xuất hiện... ✨</div>
+                                            {activeTab !== 'total' && (
+                                                <div className="text-[#4caf50]/40 text-[8px] font-bold uppercase tracking-widest">
+                                                    Mẹo: Nếu đã có điểm nhưng trang này vẫn trống, <br/>hãy chạy Script "Backfill XP" trong Supabase Editor.
+                                                </div>
+                                            )}
+                                        </td>
                                     </tr>
                                 )}
                             </tbody>

@@ -45,8 +45,8 @@ BEGIN
             SUM(amount) as m_xp
         FROM shiroi_xp_logs
         WHERE 
-            created_at >= date_trunc('month', now() - (month_offset || ' month')::interval)
-            AND created_at < date_trunc('month', now() - (month_offset || ' month')::interval) + interval '1 month'
+            created_at >= date_trunc('month', now() - (month_offset * interval '1 month'))
+            AND created_at < date_trunc('month', now() - (month_offset * interval '1 month')) + interval '1 month'
         GROUP BY user_id
     )
     SELECT 
