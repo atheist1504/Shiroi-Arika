@@ -9,7 +9,8 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Lifetime Check-in Flame**: Chuyển đổi thông số "Ngọn lửa" từ chuỗi liên tiếp sang **"Tổng số ngày đã điểm danh trọn đời"**, giúp người dùng theo dõi hành trình dài hạn bền vững hơn. 🔥✨
 - [x] **Check-in Calendar UI**: Tích hợp lưới lịch 7 cột chuyên nghiệp, hiển thị trực quan các ngày đã điểm danh trong tháng. Đã gỡ bỏ dấu chấm phụ để giao diện tối giản, sang trọng. 🍀
 - [x] **Leaderboard V2 (Full Member)**: Cập nhật RPC `get_monthly_leaderboard` để gỡ bỏ bộ lọc Admin. 🏆
-- [x] **XP Logs Restoration**: Đã triển khai `recordXpLogAction` và refactor toàn bộ hệ thống (Đọc truyện, Điểm danh, Bình luận) để ghi log tập trung. BXH tháng hiện đã hoạt động ổn định. 📉🚀
+- [x] **Owner Admin Whitelist**: Khắc phục triệt để lỗi "Quyền hạn không đủ" bằng cách thêm cơ chế đặc cách cho tài khoản chủ sở hữu (`atheist1504`). 🛡️✅
+- [x] **XP Logs Restoration**: Đã triển khai `recordXpLogAction` và refactor toàn bộ hệ thống.
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -37,8 +38,8 @@ Dự án Manga Platform thế hệ mới.
 - [!] **OG Image API Status**: Đang lỗi kết nối Database (Tracing ID: f095d510...).
 
 ## ĐIỀU CẦN LƯU Ý:
--SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GIT NGAY LẬP TỨC LUÔN NHÉ!!!
+-SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 19:10 - 13/04/2026*
+*Cập nhật lần cuối: 19:15 - 13/04/2026*
