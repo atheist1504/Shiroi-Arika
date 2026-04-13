@@ -204,26 +204,26 @@ function LeaderboardContent() {
                         <div className="flex flex-col md:flex-row items-end justify-center gap-6 mb-24 px-4">
                             {top3[1] && (
                                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="order-2 md:order-1 w-full md:w-1/4">
-                                    <div className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl">
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-gray-400 bg-[#141814]">
-                                            <img src={optimizeImage(top3[1].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover" />
+                                    <Link href={`/user/${top3[1].id}`} className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl block group/top">
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-gray-400 bg-[#141814] group-hover/top:border-[#4caf50]/50 transition-all">
+                                            <img src={optimizeImage(top3[1].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover group-hover/top:scale-110 transition-transform duration-500" />
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-gray-400 text-black text-[10px] font-black rounded-full uppercase">Á QUÂN 🥈</div>
-                                        <h3 className="text-xl font-black text-white mb-1 truncate">{top3[1].display_name || top3[1].username}</h3>
+                                        <h3 className="text-xl font-black text-white mb-1 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[1].display_name || top3[1].username}</h3>
                                         <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[1].total_xp || top3[1].xp)} - {calculateTitle(top3[1].total_xp || top3[1].xp, top3[1].selected_badge).name}</p>
                                         <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[1].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
-                                    </div>
+                                    </Link>
                                 </motion.div>
                             )}
 
                             {top3[0] && (
                                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="order-1 md:order-2 w-full md:w-1/3 mb-12">
-                                    <div className="bg-[#1a221a] backdrop-blur-3xl border-2 border-[#4caf50]/30 p-10 rounded-[50px] text-center relative shadow-[0_40px_80px_rgba(76,175,80,0.15)] animate-float">
-                                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-28 h-28 rounded-[35px] overflow-hidden border-4 border-[#4caf50] shadow-[0_0_40px_rgba(76,175,80,0.4)] bg-[#141814]">
-                                            <img src={optimizeImage(top3[0].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 300)} alt="" className="w-full h-full object-cover" />
+                                    <Link href={`/user/${top3[0].id}`} className="bg-[#1a221a] backdrop-blur-3xl border-2 border-[#4caf50]/30 p-10 rounded-[50px] text-center relative shadow-[0_40px_80px_rgba(76,175,80,0.15)] animate-float block group/top">
+                                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-28 h-28 rounded-[35px] overflow-hidden border-4 border-[#4caf50] shadow-[0_0_40px_rgba(76,175,80,0.4)] bg-[#141814] group-hover/top:shadow-[0_0_60px_rgba(76,175,80,0.6)] transition-all">
+                                            <img src={optimizeImage(top3[0].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 300)} alt="" className="w-full h-full object-cover group-hover/top:scale-110 transition-transform duration-500" />
                                         </div>
                                         <div className="mt-14 mb-5 inline-block px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-xs font-black rounded-full uppercase shadow-lg animate-pulse">QUÁN QUÂN 🥇</div>
-                                        <h3 className="text-3xl font-black text-white mb-2 truncate">{top3[0].display_name || top3[0].username}</h3>
+                                        <h3 className="text-3xl font-black text-white mb-2 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[0].display_name || top3[0].username}</h3>
                                         <p className="text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em]">CẤP {calculateLevel(top3[0].total_xp || top3[0].xp)} - {calculateTitle(top3[0].total_xp || top3[0].xp, top3[0].selected_badge).name}</p>
                                         <div className="mt-8">
                                             <div className="inline-block px-5 py-2 bg-black/40 rounded-2xl border border-white/5">
@@ -231,21 +231,21 @@ function LeaderboardContent() {
                                                 <span className="text-[10px] text-[#4caf50] ml-1 font-black">XP</span>
                                             </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 </motion.div>
                             )}
 
                             {top3[2] && (
                                 <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="order-3 w-full md:w-1/4">
-                                    <div className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl">
-                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-orange-700 bg-[#141814]">
-                                            <img src={optimizeImage(top3[2].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover" />
+                                    <Link href={`/user/${top3[2].id}`} className="bg-[#141814]/60 backdrop-blur-3xl border border-white/5 p-8 rounded-[40px] text-center relative shadow-2xl block group/top">
+                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-3xl overflow-hidden border-4 border-orange-700 bg-[#141814] group-hover/top:border-[#4caf50]/50 transition-all">
+                                            <img src={optimizeImage(top3[2].avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 200)} alt="" className="w-full h-full object-cover group-hover/top:scale-110 transition-transform duration-500" />
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-orange-700 text-white text-[10px] font-black rounded-full uppercase">HẠNG 3 🥉</div>
-                                        <h3 className="text-xl font-black text-white mb-1 truncate">{top3[2].display_name || top3[2].username}</h3>
+                                        <h3 className="text-xl font-black text-white mb-1 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[2].display_name || top3[2].username}</h3>
                                         <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[2].total_xp || top3[2].xp)} - {calculateTitle(top3[2].total_xp || top3[2].xp, top3[2].selected_badge).name}</p>
                                         <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[2].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
-                                    </div>
+                                    </Link>
                                 </motion.div>
                             )}
                         </div>
@@ -292,15 +292,15 @@ function LeaderboardContent() {
                                         >
                                             <td className="py-6 px-8 font-black text-gray-600 group-hover:text-[#4caf50] text-sm">{rank.toString().padStart(2, '0')}</td>
                                             <td className="py-6 px-4">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-[#141814]">
-                                                        <img src={optimizeImage(u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 100)} alt="" className="w-full h-full object-cover" />
+                                                <Link href={`/user/${u.id}`} className="flex items-center gap-4 group/user">
+                                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shrink-0 bg-[#141814] group-hover/user:border-[#4caf50]/50 transition-all">
+                                                        <img src={optimizeImage(u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 100)} alt="" className="w-full h-full object-cover group-hover/user:scale-110 transition-transform duration-500" />
                                                     </div>
                                                     <div>
-                                                        <div className="text-white font-black text-sm">{u.display_name || u.username}</div>
+                                                        <div className="text-white font-black text-sm group-hover/user:text-[#4caf50] transition-colors">{u.display_name || u.username}</div>
                                                         <div className="text-[9px] font-black uppercase text-[#4caf50]/80">{calculateTitle(txp, u.selected_badge).name}</div>
                                                     </div>
-                                                </div>
+                                                </Link>
                                             </td>
                                             <td className="py-6 px-4 text-center">
                                                 <span className="px-3 py-1 bg-black/40 rounded-lg text-xs font-black text-[#4caf50] border border-white/5">LV.{calculateLevel(txp)}</span>

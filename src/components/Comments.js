@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { calculateLevel, calculateTitle, XP_REWARDS, recordXpLog } from '@/lib/xp';
 import { fixR2Url } from '@/lib/cloudinary';
+import Link from 'next/link';
 
 // 🛠️ COMPONENT CON: FORM TRẢ LỜI (Đưa ra ngoài để tránh nháy 🚀)
 const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSuccess, fetchComments }) => {
@@ -56,12 +57,14 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
     return (
       <div className={`${isReply ? 'ml-10 border-l border-white/5 pl-6' : ''} group animate-fade-in`}>
         <div className="flex gap-4">
-          <div className={`${isReply ? 'w-8 h-8 rounded-lg' : 'w-12 h-12 rounded-2xl'} overflow-hidden bg-[#141814] border border-white/10 shrink-0 shadow-xl`}>
-             <img src={fixR2Url(comment.display_avatar)} className="w-full h-full object-cover" alt="" crossOrigin="anonymous" referrerPolicy="no-referrer" />
-          </div>
+          <Link href={`/user/${comment.user_id}`} className="block shrink-0 group/avt">
+            <div className={`${isReply ? 'w-8 h-8 rounded-lg' : 'w-12 h-12 rounded-2xl'} overflow-hidden bg-[#141814] border border-white/10 shadow-xl group-hover/avt:border-[#4caf50]/50 transition-all`}>
+               <img src={fixR2Url(comment.display_avatar)} className="w-full h-full object-cover group-hover/avt:scale-110 transition-transform duration-500" alt="" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+            </div>
+          </Link>
           <div className="flex-1 space-y-2">
              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black uppercase tracking-tight" style={{ color: 'var(--text-heading, var(--text-reader, white))' }}>{comment.user_name}</span>
+                <Link href={`/user/${comment.user_id}`} className="text-[10px] font-black uppercase tracking-tight hover:text-[#4caf50] transition-colors" style={{ color: 'var(--text-heading, var(--text-reader, white))' }}>{comment.user_name}</Link>
                 {isAdmin ? (
                   <span className="text-[10px] text-[#4caf50] font-black uppercase tracking-widest bg-[#4caf50]/5 px-3 py-1 rounded-lg border border-[#4caf50]/20 shadow-[0_0_10px_rgba(76,175,80,0.1)] shrink-0">BAN QUẢN TRỊ 🍀</span>
                 ) : (
