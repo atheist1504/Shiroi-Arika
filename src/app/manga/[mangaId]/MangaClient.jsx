@@ -427,7 +427,6 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
             </div>
           )}
         </div>
-        </div>
 
         <div className="mt-12 pt-8 border-t border-white/5">
             <Comments mangaId={mangaId} />

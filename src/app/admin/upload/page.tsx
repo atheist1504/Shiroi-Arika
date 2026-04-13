@@ -292,6 +292,7 @@ export default function AdminUploadPage() {
 
       // 1. CHUẨN BỊ VÀ TẢI LÊN TUẦN TỰ (SEQUENTIAL) 🚀
       // Thay vì Promise.all, chúng ta chạy từng ảnh để bảo vệ RAM và băng thông di động 🛡️
+      const pagesData = [];
       const total = items.length;
       let completed = 0;
 
