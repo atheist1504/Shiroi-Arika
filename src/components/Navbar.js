@@ -143,12 +143,10 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3 lg:gap-7 shrink-0 ml-auto lg:ml-0">
           <div className="hidden lg:flex items-center gap-7">
-            <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Kho Truyện</Link>
-            <Link href="/leaderboard" className="text-[#4caf50] hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-1.5 group">
+            <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest px-2">Kho Truyện</Link>
+            <Link href="/leaderboard" className="text-[#4caf50] hover:scale-105 transition-all font-black text-[10px] uppercase tracking-widest flex items-center gap-1.5 group px-2">
                <span className="group-hover:rotate-12 transition-transform drop-shadow-[0_0_8px_rgba(76,175,80,0.4)]">🏆</span> BXH
             </Link>
-            <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Tủ Truyện</Link>
-            <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-widest">Lịch sử</Link>
             
             {/* ADMIN LINK */}
             {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
@@ -162,8 +160,14 @@ export default function Navbar() {
           {user ? (
              <div className="flex items-center gap-5 border-l border-white/5 pl-8 animate-fade-in group/user">
                 
-                {/* ĐIỂM DANH COMPONENT - Ẩn trên Mobile Header (Đã có trong Menu) 🍀 */}
-                <div className="hidden lg:block">
+                <div className="hidden lg:flex items-center gap-5 mr-2">
+                  <Link href="/bookmarks" title="Tủ truyện theo dõi" className="text-gray-500 hover:text-[#4caf50] transition-all hover:scale-110">
+                    <span className="text-xl">❤️</span>
+                  </Link>
+                  <Link href="/history" title="Lịch sử đọc truyện" className="text-gray-500 hover:text-[#4caf50] transition-all hover:scale-110">
+                    <span className="text-xl">🕰️</span>
+                  </Link>
+                  <div className="w-px h-4 bg-white/10 mx-1"></div>
                   <CheckIn />
                 </div>
 
