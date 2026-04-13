@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const GENRES = [
   "All", "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
   "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
-  "Horror", "Mystery", "Psychological", "Romance", 
+  "Magic", "Mystery", "18+", "Romance", 
   "Sci-Fi", "Slice of Life", "Supernatural", "Tragedy", "Historical",
   "Isekai", "School Life"
 ];
