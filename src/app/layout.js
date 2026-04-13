@@ -29,6 +29,9 @@ export const metadata = {
     description: "Đọc truyện tranh miễn phí chất lượng cao, không quảng cáo tại Shiroi Arika.",
     images: ['/og-banner-v8.png?v=8'],
   },
+  verification: {
+    google: 'qpMR8fpx4r4n5PDQb4d8F84eHJFS6ioMPnwhlt9gya8',
+  },
 };
 
 export default function RootLayout({ children }) {
