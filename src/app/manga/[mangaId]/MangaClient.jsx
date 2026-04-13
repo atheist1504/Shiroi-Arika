@@ -262,9 +262,29 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
           </div>
 
           <div className="w-full md:flex-1 flex flex-col mt-4 md:mt-2">
-            <h1 className="text-3xl md:text-6xl font-black text-white mb-8 leading-tight drop-shadow-2xl tracking-tighter text-center md:text-left">
+            <h1 className="text-3xl md:text-6xl font-black text-white mb-4 leading-tight drop-shadow-2xl tracking-tighter text-center md:text-left">
               {manga.title}
             </h1>
+
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-8">
+               <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${manga.status === 'completed' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-[#4caf50]/10 border-[#4caf50]/30 text-[#4caf50]'}`}>
+                  {manga.status === 'completed' ? 'Hoàn thành' : 'Đang tiến hành'}
+               </span>
+               <span className="w-1 h-1 rounded-full bg-white/20"></span>
+               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{chapters.length} chương</span>
+               {manga.genres && manga.genres.length > 0 && (
+                 <>
+                  <span className="w-1 h-1 rounded-full bg-white/20"></span>
+                  <div className="flex flex-wrap gap-2">
+                      {manga.genres.map((genre, idx) => (
+                        <span key={idx} className="text-[9px] font-bold text-gray-400 border border-white/5 bg-white/5 px-2 py-0.5 rounded-md uppercase">
+                          {genre}
+                        </span>
+                      ))}
+                  </div>
+                 </>
+               )}
+            </div>
             
             <div className="bg-[rgba(255,255,255,0.02)] backdrop-blur-xl border border-[rgba(255,255,255,0.05)] p-6 rounded-2xl mb-10 shadow-lg">
               <h2 className="text-lg font-bold text-[#4caf50] mb-3 flex items-center gap-2">

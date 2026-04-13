@@ -312,29 +312,43 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
 
     if (mangaId) {
+      console.log(`[Admin] Cập nhật truyện ID: ${mangaId}, Status: ${mangaData.status}`);
       // Cập nhật
       const { data, error } = await supabaseAdmin
         .from('mangas')
-        .update(mangaData)
+        .update({
+          ...mangaData,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', mangaId)
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Lỗi Update Manga:", error);
+        throw error;
+      }
       return { success: true, data };
     } else {
+      console.log(`[Admin] Tạo truyện mới: ${mangaData.title}`);
       // Thêm mới
       const { data, error } = await supabaseAdmin
         .from('mangas')
-        .insert([mangaData])
+        .insert([{
+          ...mangaData,
+          created_at: new Date().toISOString()
+        }])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Lỗi Insert Manga:", error);
+        throw error;
+      }
       return { success: true, data };
     }
   } catch (error) {
-    console.error('Lỗi saveMangaAction:', error);
+    console.error('❌ Lỗi saveMangaAction:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -388,45 +402,68 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
  * 📝 SERVER ACTION: Lưu dữ liệu chương và các trang (Bảo mật 🛡️)
  */
 export async function saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId = null) {
+  console.log(`🚀 [Server] Bắt đầu lưu chương - Editing: ${isEditing}, ChapID: ${existingChapterId}`);
   try {
     if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
 
     let chapId = existingChapterId;
 
-    // 1. Xử lý Chapter
-    if (!isEditing) {
-      // Check trùng lặp chương
-      const { data: existingChap } = await supabaseAdmin
-        .from("chapters")
-        .select("id")
-        .eq("manga_id", chapterPayload.manga_id)
-        .eq("chapter_number", chapterPayload.chapter_number)
-        .maybeSingle();
+    // 1. Xử lý Chapter (Dùng UPSERT để an toàn tuyệt đối) 🛡️
+    const chapterToSave = {
+      ...chapterPayload,
+      updated_at: new Date().toISOString()
+    };
 
-      if (existingChap) {
-        chapId = existingChap.id;
-        await supabaseAdmin.from("chapters").update(chapterPayload).eq("id", chapId);
-      } else {
-        const { data, error } = await supabaseAdmin.from("chapters").insert(chapterPayload).select().single();
-        if (error) throw error;
-        chapId = data.id;
-      }
-    } else {
-      await supabaseAdmin.from("chapters").update(chapterPayload).eq("id", chapId);
+    if (!isEditing) {
+       // Nếu là tạo mới, kiểm tra trùng lặp theo số chương
+       const { data: existing } = await supabaseAdmin
+         .from("chapters")
+         .select("id")
+         .eq("manga_id", chapterPayload.manga_id)
+         .eq("chapter_number", chapterPayload.chapter_number)
+         .maybeSingle();
+       
+       if (existing) {
+         console.log("♻️ [Server] Đã tìm thấy chương tương ứng, thực hiện cập nhật ghi đè.");
+         chapId = existing.id;
+       }
     }
 
-    // 2. Xóa các trang cũ (ghi đè)
+    if (chapId) {
+        const { error: upError } = await supabaseAdmin
+          .from("chapters")
+          .update(chapterToSave)
+          .eq("id", chapId);
+        if (upError) throw new Error(`Lỗi cập nhật Chapter: ${upError.message}`);
+    } else {
+        const { data: newChap, error: inError } = await supabaseAdmin
+          .from("chapters")
+          .insert([chapterToSave])
+          .select()
+          .single();
+        if (inError) throw new Error(`Lỗi tạo mới Chapter: ${inError.message}`);
+        chapId = newChap.id;
+    }
+
+    console.log(`✅ [Server] Chapter ${chapId} OK. Đang lưu ${pagesData.length} trang truyện...`);
+
+    // 2. Xóa các trang cũ (ghi đè) 🧹
     await supabaseAdmin.from("pages").delete().eq("chapter_id", chapId);
 
-    // 3. Chèn các trang mới
-    const pagesWithId = pagesData.map(p => ({ ...p, chapter_id: chapId }));
+    // 3. Chèn các trang mới (Batch Insert) ⚡
+    const pagesWithId = pagesData.map(p => ({ 
+      ...p, 
+      chapter_id: chapId,
+      created_at: new Date().toISOString() 
+    }));
+
     const { error: pagesError } = await supabaseAdmin.from("pages").insert(pagesWithId);
-    if (pagesError) throw pagesError;
+    if (pagesError) throw new Error(`Lỗi lưu Pages: ${pagesError.message}`);
 
     return { success: true, chapterId: chapId };
   } catch (error) {
-    console.error('Lỗi saveChapterDataAction:', error);
-    return { success: false, error: error.message };
+    console.error('❌ [Server] LỖI saveChapterDataAction:', error.message);
+    return { success: false, error: error.message || "Lỗi Server Action" };
   }
 }
 

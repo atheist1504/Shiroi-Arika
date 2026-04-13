@@ -27,6 +27,7 @@ export default function CreateMangaPage() {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [defaultReadingMode, setDefaultReadingMode] = useState("scroll");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [status, setStatus] = useState("ongoing");
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,7 @@ export default function CreateMangaPage() {
         setCoverPreview(data.cover_image);
         setDefaultReadingMode(data.default_reading_mode || "scroll");
         setIsFeatured(data.is_featured || false);
+        setStatus(data.status || "ongoing");
         setIsEditing(true);
       }
     } catch (err) {
@@ -111,7 +113,8 @@ export default function CreateMangaPage() {
         genres: genres.length > 0 ? genres : null,
         cover_image: coverImageUrl,
         default_reading_mode: defaultReadingMode,
-        is_featured: isFeatured
+        is_featured: isFeatured,
+        status: status
       };
 
       const { saveMangaAction } = await import("../../../lib/actions");
@@ -238,6 +241,26 @@ export default function CreateMangaPage() {
                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${isFeatured ? 'right-1' : 'left-1'}`}></div>
                        </div>
                     </button>
+                 </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#4caf50]/70 uppercase tracking-widest block pl-1">Trạng thái phát hành</label>
+                    <div className="flex bg-black/50 p-1 rounded-xl border border-[#2a332a] shadow-inner">
+                       <button 
+                         type="button" 
+                         onClick={() => setStatus("ongoing")}
+                         className={`flex-1 py-3 text-[10px] font-black rounded-lg transition-all ${status === "ongoing" ? "bg-[#4caf50] text-[#0a0c0a] shadow-lg" : "text-gray-500 hover:text-gray-300"}`}
+                       >
+                         ĐANG TIẾN HÀNH
+                       </button>
+                       <button 
+                         type="button" 
+                         onClick={() => setStatus("completed")}
+                         className={`flex-1 py-3 text-[10px] font-black rounded-lg transition-all ${status === "completed" ? "bg-[#4caf50] text-[#0a0c0a] shadow-lg" : "text-gray-500 hover:text-gray-300"}`}
+                       >
+                         HOÀN THÀNH
+                       </button>
+                    </div>
                  </div>
 
                  <div className="space-y-4">
