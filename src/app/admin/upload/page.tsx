@@ -30,7 +30,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
-export const compressImageToWebP = (file: File): Promise<Blob> => {
+const compressImageToWebP = (file: File): Promise<Blob> => {
   return new Promise((resolve, reject) => {
     // 🛡️ SỬ DỤNG FILEREADER thay vì createObjectURL để ổn định hơn trên di động
     const reader = new FileReader();
