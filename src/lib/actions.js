@@ -217,7 +217,24 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
  * 📊 SERVER ACTION: Ghi Log XP Bảo Mật
  */
 export async function recordXpLogAction(userId, amount, type, reason = null) {
-  // ... existing implementation
+  try {
+    if (!userId || !amount) return { success: false, error: 'Thiếu thông tin User ID hoặc XP' };
+    
+    const { error } = await supabaseAdmin
+      .from('shiroi_xp_logs')
+      .insert({
+        user_id: userId,
+        amount: amount,
+        type: type,
+        reason: reason
+      });
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Lỗi recordXpLogAction:', error.message);
+    return { success: false, error: error.message };
+  }
 }
 
 /**
@@ -254,13 +271,8 @@ export async function addReadXPAction(mangaId, chapterId) {
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
     });
-    
-    await supabaseAdmin.from('shiroi_xp_logs').insert({
-      user_id: userId,
-      amount: 20,
-      type: 'read',
-      reason: chapterId
-    });
+    // 4. Ghi log nhật ký
+    await recordXpLogAction(userId, 20, 'read', chapterId);
 
     return { success: true, newXP };
   } catch (error) {
@@ -318,14 +330,8 @@ export async function performCheckInAction() {
       .single();
 
     if (updateError) throw updateError;
-
     // 4. Ghi log nhật ký
-    await supabaseAdmin.from('shiroi_xp_logs').insert({
-      user_id: userId,
-      amount: xpGain,
-      type: 'check_in',
-      reason: `Streak: ${newStreak}`
-    });
+    await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);
 
     return { success: true, user: updatedUser, xpGain };
   } catch (error) {

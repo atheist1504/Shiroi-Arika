@@ -8,7 +8,8 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Streak Reset Mỗi Tháng**: Đã triển khai cơ chế tự động Reset chuỗi điểm danh về 1 khi sang tháng mới để đảm bảo tính công bằng hàng tháng. 🔄
 - [x] **Lifetime Check-in Flame**: Chuyển đổi thông số "Ngọn lửa" từ chuỗi liên tiếp sang **"Tổng số ngày đã điểm danh trọn đời"**, giúp người dùng theo dõi hành trình dài hạn bền vững hơn. 🔥✨
 - [x] **Check-in Calendar UI**: Tích hợp lưới lịch 7 cột chuyên nghiệp, hiển thị trực quan các ngày đã điểm danh trong tháng. Đã gỡ bỏ dấu chấm phụ để giao diện tối giản, sang trọng. 🍀
-- [x] **Leaderboard V2 (Full Member)**: Cập nhật RPC `get_monthly_leaderboard` để gỡ bỏ bộ lọc Admin, cho phép người quản trị xuất hiện trên BXH để kiểm tra dữ liệu và thi đua cùng thành viên. 🏆
+- [x] **Leaderboard V2 (Full Member)**: Cập nhật RPC `get_monthly_leaderboard` để gỡ bỏ bộ lọc Admin. 🏆
+- [x] **XP Logs Restoration**: Đã triển khai `recordXpLogAction` và refactor toàn bộ hệ thống (Đọc truyện, Điểm danh, Bình luận) để ghi log tập trung. BXH tháng hiện đã hoạt động ổn định. 📉🚀
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -39,4 +40,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 04:10 - 13/04/2026*
+*Cập nhật lần cuối: 18:28 - 13/04/2026*
