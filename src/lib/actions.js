@@ -222,7 +222,8 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
   try {
     if (!userId || !amount) return { success: false, error: 'Thiếu thông tin User ID hoặc XP' };
     
-    const { error } = await supabaseAdmin
+    const client = getDbClient();
+    const { error } = await client
       .from('shiroi_xp_logs')
       .insert({
         user_id: userId,
@@ -248,10 +249,9 @@ export async function addReadXPAction(mangaId, chapterId) {
     if (!sessionData) throw new Error("Vui lòng đăng nhập lại để nhận XP! 🛡️");
 
     const session = JSON.parse(sessionData.value);
-    const userId = session.id;
-
+    const client = getDbClient();
     // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
-    const { data: alreadyRead } = await supabaseAdmin
+    const { data: alreadyRead } = await client
       .from('shiroi_read_chapters')
       .select('id')
       .eq('user_id', userId)
@@ -261,12 +261,12 @@ export async function addReadXPAction(mangaId, chapterId) {
     if (alreadyRead) return { success: false, error: 'Đã nhận thưởng cho chương này' };
 
     // 2. Lấy XP hiện tại
-    const { data: user } = await supabaseAdmin.from('shiroi_users').select('xp').eq('id', userId).single();
+    const { data: user } = await client.from('shiroi_users').select('xp').eq('id', userId).single();
     const newXP = (user?.xp || 0) + 20; // 20 XP cho mỗi chương
 
     // 3. Cập nhật XP và Ghi log (Atomic-ish)
-    await supabaseAdmin.from('shiroi_users').update({ xp: newXP }).eq('id', userId);
-    await supabaseAdmin.from('shiroi_read_chapters').insert({ 
+    await client.from('shiroi_users').update({ xp: newXP }).eq('id', userId);
+    await client.from('shiroi_read_chapters').insert({ 
       user_id: userId, 
       username: session.username, 
       chapter_id: chapterId, 
@@ -292,10 +292,9 @@ export async function performCheckInAction() {
     if (!sessionData) throw new Error("Vui lòng đăng nhập lại để điểm danh! 🛡️");
 
     const session = JSON.parse(sessionData.value);
-    const userId = session.id;
-
+    const client = getDbClient();
     // 1. Lấy trạng thái điểm danh hiện tại từ DB (Tránh hack thời gian ở Client)
-    const { data: user, error: fetchError } = await supabaseAdmin
+    const { data: user, error: fetchError } = await client
       .from('shiroi_users')
       .select('xp, last_check_in, check_in_streak')
       .eq('id', userId)
@@ -320,7 +319,7 @@ export async function performCheckInAction() {
     const newXP = (user.xp || 0) + xpGain;
 
     // 3. Cập nhật Database
-    const { data: updatedUser, error: updateError } = await supabaseAdmin
+    const { data: updatedUser, error: updateError } = await client
       .from('shiroi_users')
       .update({
         xp: newXP,
@@ -402,8 +401,9 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
     // 1. Kiểm tra quyền Admin
     if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
 
+    const client = getDbClient();
     // 2. Insert Chapter
-    const { data: chapter, error: chapterError } = await supabaseAdmin
+    const { data: chapter, error: chapterError } = await client
       .from('chapters')
       .insert([chapterData])
       .select()
@@ -417,7 +417,7 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
         chapter_id: chapter.id
     }));
 
-    const { error: pagesError } = await supabaseAdmin
+    const { error: pagesError } = await client
       .from('pages')
       .insert(pagesWithChapterId);
 
@@ -518,17 +518,17 @@ export async function toggleFollowAction(mangaId, isFollowed) {
     const session = JSON.parse(sessionData.value);
     const userId = session.id;
 
-    if (!isFollowed) {
+      const client = getDbClient();
       // Tiến hành Follow
-      const { error } = await supabaseAdmin
+      const { error } = await client
         .from('shiroi_follows')
         .insert({ user_id: userId, manga_id: mangaId });
       
       if (error) throw error;
       return { success: true, followed: true };
-    } else {
+      const client = getDbClient();
       // Tiến hành Unfollow
-      const { error } = await supabaseAdmin
+      const { error } = await client
         .from('shiroi_follows')
         .delete()
         .eq('user_id', userId)
