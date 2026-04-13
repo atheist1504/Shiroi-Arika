@@ -46,8 +46,11 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   
   const [prevChapterId, setPrevChapterId] = useState(null);
   const [nextChapterId, setNextChapterId] = useState(null);
+  const [nextChapterPages, setNextChapterPages] = useState([]); // 🚀 LƯU TRANG CHƯƠNG SAU
+  const [hasPreloaded, setHasPreloaded] = useState(false); // 🚀 ĐÁNH DẤU ĐÃ TẢI XONG
   const [allChapters] = useState(initialSiblings || []); 
   
+  const endOfChapterRef = useRef(null); // Ref để theo dõi cuối chương
   const [showNav, setShowNav] = useState(true);
   const [lastScrollYState, setLastScrollYState] = useState(0); // Dùng cho UI (Back to Top)
   const [xpToast, setXpToast] = useState(false); 
@@ -61,6 +64,42 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     if (savedMode) setReadingModeState(savedMode);
     if (savedTheme) setThemeState(savedTheme);
   }, []);
+
+  // 🌩️ FETCH DỮ LIỆU CHƯƠNG SAU NGAY KHI VÀO TRANG 🍀
+  useEffect(() => {
+    if (!nextChapterId) return;
+    
+    const fetchNextPages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pages')
+          .select('image_url')
+          .eq('chapter_id', nextChapterId)
+          .order('page_number', { ascending: true });
+        
+        if (!error && data) {
+           setNextChapterPages(data);
+           console.log(`🚀 [Preload] Đã lấy được ${data.length} trang chương sau.`);
+        }
+      } catch (err) {
+        console.warn("Lỗi fetch preload:", err);
+      }
+    };
+    fetchNextPages();
+    setHasPreloaded(false); // Reset trạng thái preload cho chương mới
+  }, [nextChapterId]);
+
+  // 🎯 HÀM TẢI ẢNH VÀO CACHE TRÌNH DUYỆT 🚀
+  const preloadNextChapterImages = () => {
+    if (hasPreloaded || nextChapterPages.length === 0) return;
+    
+    console.log("🌩️ [Preload] Bắt đầu tải ảnh chương sau vào Cache...");
+    nextChapterPages.forEach((page) => {
+      const img = new Image();
+      img.src = optimizeImage(fixR2Url(page.image_url), 1200);
+    });
+    setHasPreloaded(true);
+  };
 
   // 💾 LƯU TRẠNG THÁI VĨNH VIỄN 🍀
   useEffect(() => {
@@ -161,6 +200,26 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       console.error("Lỗi gọi Server Action XP:", err); 
     }
   };
+
+  useEffect(() => {
+    if (readingMode !== 'scroll' || !endOfChapterRef.current || nextChapterPages.length === 0 || hasPreloaded) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        preloadNextChapterImages();
+      }
+    }, { threshold: 0.1, rootMargin: '500px' }); // Kích hoạt sớm 500px trước khi chạm đáy
+
+    observer.observe(endOfChapterRef.current);
+    return () => observer.disconnect();
+  }, [readingMode, nextChapterPages, hasPreloaded]);
+
+  // 📖 TRIGGER PRELOAD CHO CHẾ ĐỘ LẬT TRANG
+  useEffect(() => {
+    if (readingMode === 'page' && currentPageIndex >= pages.length - 3 && pages.length > 0) {
+      preloadNextChapterImages();
+    }
+  }, [readingMode, currentPageIndex, pages.length]);
 
   const lastScrollYRef = useRef(0);
 
@@ -301,7 +360,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
             <div className="space-y-10 mt-10">
-               <div className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
+               <div ref={endOfChapterRef} className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
                    <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === 'light' ? 'text-gray-400' : 'text-gray-700'}`}>ĐÃ HẾT CHƯƠNG {chapter?.chapter_number}</span>
                    <button onClick={goToNextChapter} className="px-16 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95" >
                        ĐỌC TIẾP CHƯƠNG SAU 🚀
