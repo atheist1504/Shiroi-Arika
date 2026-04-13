@@ -7,11 +7,17 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { optimizeImage } from '@/lib/cloudinary';
 
 const GENRES = [
-  "All", "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
+  "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
   "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
   "Magic", "Mystery", "18+", "Romance", 
   "Sci-Fi", "Slice of Life", "Supernatural", "Tragedy", "Historical",
   "Isekai", "School Life"
+];
+
+const STATUS_OPTIONS = [
+  { id: 'All', label: 'TẤT CẢ' },
+  { id: 'ongoing', label: 'ĐANG TIẾN HÀNH' },
+  { id: 'completed', label: 'HOÀN THÀNH' }
 ];
 
 function MangaListContent() {
@@ -19,9 +25,11 @@ function MangaListContent() {
   const router = useRouter();
   
   const currentPage = parseInt(searchParams.get('page') || '1') || 1;
-  const selectedGenre = searchParams.get('genre') || 'All';
+  // Chuyển đổi string 'Action,Comedy' từ URL thành mảng ['Action', 'Comedy']
+  const selectedGenres = searchParams.get('genres') ? searchParams.get('genres').split(',') : [];
+  const selectedStatus = searchParams.get('status') || 'All';
   const searchQuery = searchParams.get('q') || '';
-  const pageSize = 20;
+  const pageSize = 24; 
 
   const [mangas, setMangas] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -30,7 +38,7 @@ function MangaListContent() {
 
   useEffect(() => {
     fetchMangas();
-  }, [currentPage, selectedGenre, searchQuery]);
+  }, [currentPage, searchParams.get('genres'), selectedStatus, searchQuery]);
 
   const fetchMangas = async () => {
     try {
@@ -43,8 +51,14 @@ function MangaListContent() {
         chapters(chapter_number)
       `, { count: 'exact' });
 
-      if (selectedGenre !== 'All') {
-        query = query.contains('genres', [selectedGenre]);
+      // Lọc theo nhiều thể loại (Match ALL selected) 🍀
+      if (selectedGenres.length > 0) {
+        query = query.contains('genres', selectedGenres);
+      }
+
+      // Lọc theo trạng thái 🍀
+      if (selectedStatus !== 'All') {
+        query = query.eq('status', selectedStatus);
       }
 
       if (searchQuery) {
@@ -78,11 +92,40 @@ function MangaListContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGenreChange = (genre) => {
+  const toggleGenre = (genre) => {
     const params = new URLSearchParams(searchParams);
-    params.set('genre', genre);
-    params.set('page', '1'); // Reset to page 1
+    let newGenres = [...selectedGenres];
+    
+    if (newGenres.includes(genre)) {
+      newGenres = newGenres.filter(g => g !== genre);
+    } else {
+      newGenres.push(genre);
+    }
+
+    if (newGenres.length > 0) {
+      params.set('genres', newGenres.join(','));
+    } else {
+      params.delete('genres');
+    }
+    
+    params.set('page', '1');
     router.push(`/manga?${params.toString()}`);
+  };
+
+  const handleStatusChange = (status) => {
+    const params = new URLSearchParams(searchParams);
+    if (status !== 'All') {
+      params.set('status', status);
+    } else {
+      params.delete('status');
+    }
+    params.set('page', '1');
+    router.push(`/manga?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    router.push('/manga');
+    setLocalSearch('');
   };
 
   const handleSearchSubmit = (e) => {
@@ -95,94 +138,188 @@ function MangaListContent() {
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
+  const hasActiveFilters = selectedGenres.length > 0 || selectedStatus !== 'All' || searchQuery;
 
   return (
-    <div className="min-h-screen bg-[#0a0c0a] text-white p-6 md:p-12">
+    <div className="min-h-screen bg-[#0a0c0a] text-white p-6 md:p-12 pb-24">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-          <div className="flex items-center gap-3">
-             <div className="w-1.5 h-8 bg-[#4caf50] rounded-full shadow-[0_0_15px_rgba(76,175,80,0.5)]"></div>
-             <h1 className="text-3xl font-black uppercase tracking-tight">Kho Truyện 🍀</h1>
+        
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-12 gap-8">
+          <div className="space-y-2">
+             <div className="flex items-center gap-3">
+                <div className="w-1.5 h-8 bg-[#4caf50] rounded-full shadow-[0_0_15px_rgba(76,175,80,0.5)]"></div>
+                <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight">Kho Truyện 🍀</h1>
+             </div>
+             <p className="text-gray-500 text-[10px] font-black uppercase tracking-[0.3em] pl-4">Thư viện vĩnh cửu của Shiroi Arika</p>
           </div>
           
-          <form onSubmit={handleSearchSubmit} className="relative group w-full md:w-96">
-             <input 
-               type="text" 
-               placeholder="Tìm tên truyện..." 
-               value={localSearch}
-               onChange={(e) => setLocalSearch(e.target.value)}
-               className="w-full bg-[#141814] border border-[#2a332a] rounded-xl px-5 py-3 outline-none focus:border-[#4caf50] transition-all group-hover:bg-[#1a211a]"
-             />
-             <button type="submit" className="absolute right-4 top-3.5 text-gray-500 hover:text-[#4caf50]">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-             </button>
-          </form>
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+              <form onSubmit={handleSearchSubmit} className="relative group w-full sm:w-80">
+                <input 
+                  type="text" 
+                  placeholder="Tìm tên truyện..." 
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  className="w-full bg-[#141814] border border-[#2a332a] rounded-2xl px-5 py-3.5 outline-none focus:border-[#4caf50] transition-all group-hover:bg-[#1a211a] text-sm shadow-inner"
+                />
+                <button type="submit" className="absolute right-4 top-4 text-gray-500 hover:text-[#4caf50] transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+              </form>
+              
+              {hasActiveFilters && (
+                <button 
+                  onClick={clearFilters}
+                  className="px-6 py-3.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all whitespace-nowrap"
+                >
+                  XÓA BỘ LỌC
+                </button>
+              )}
+          </div>
         </div>
 
-        {/* Danh sách Thể loại */}
-        <div className="flex flex-wrap gap-2 mb-10 overflow-x-auto pb-4 custom-scrollbar">
-          {GENRES.map(genre => (
-            <button
-              key={genre}
-              onClick={() => handleGenreChange(genre)}
-              className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
-                selectedGenre === genre 
-                  ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-lg shadow-[#4caf50]/20' 
-                  : 'bg-[#141814] border-[#2a332a] text-gray-500 hover:border-[#4caf50] hover:text-[#4caf50]'
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
+        {/* BỘ LỌC NÂNG CAO 🏗️ */}
+        <div className="bg-[#141814]/40 border border-[#2a332a] rounded-[40px] p-8 mb-16 space-y-10 backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+          
+          {/* Trạng thái */}
+          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-4">
+            <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2 pt-3">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              TRẠNG THÁI
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              {STATUS_OPTIONS.map(opt => (
+                <button
+                  key={opt.id}
+                  onClick={() => handleStatusChange(opt.id)}
+                  className={`px-7 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 ${
+                    selectedStatus === opt.id 
+                      ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
+                      : 'bg-[#0a0c0a] border-[#2a332a] text-gray-500 hover:border-[#4caf50]/30 hover:text-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="h-px bg-white/5 w-full"></div>
+
+          {/* Thể loại (Multi-select) */}
+          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-4">
+            <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2 pt-3">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+              THỂ LOẠI
+            </h3>
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  params.delete('genres');
+                  params.set('page', '1');
+                  router.push(`/manga?${params.toString()}`);
+                }}
+                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 ${
+                  selectedGenres.length === 0 
+                    ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
+                    : 'bg-[#0a0c0a] border-[#2a332a] text-gray-400 hover:border-[#4caf50]/30 hover:text-gray-200'
+                }`}
+              >
+                TẤT CẢ
+              </button>
+              {GENRES.map(genre => (
+                <button
+                  key={genre}
+                  onClick={() => toggleGenre(genre)}
+                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 flex items-center gap-2.5 ${
+                    selectedGenres.includes(genre)
+                      ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
+                      : 'bg-[#0a0c0a] border-[#2a332a] text-gray-500 hover:border-[#4caf50]/30 hover:text-gray-300'
+                  }`}
+                >
+                  {genre}
+                  {selectedGenres.includes(genre) && (
+                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Kết quả đếm */}
+        <div className="flex items-center gap-4 mb-8">
+           <span className="h-0.5 flex-1 bg-gradient-to-r from-transparent to-white/5"></span>
+           <p className="text-[10px] font-black text-gray-600 uppercase tracking-[0.4em]">Tìm thấy {totalCount} kết quả</p>
+           <span className="h-0.5 flex-1 bg-gradient-to-l from-transparent to-white/5"></span>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 animate-pulse">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-10 animate-pulse">
             {[...Array(12)].map((_, i) => (
-              <div key={i} className="aspect-[2/3] bg-[#141814] rounded-xl border border-[#2a332a]"></div>
+              <div key={i} className="aspect-[2/3] bg-[#141814] rounded-[32px] border border-[#2a332a]"></div>
             ))}
           </div>
         ) : mangas.length === 0 ? (
-          <div className="text-center py-32 bg-[#141814]/40 rounded-3xl border-2 border-dashed border-[#2a332a] flex flex-col items-center gap-4">
-             <span className="text-6xl opacity-20 grayscale">🌵</span>
-             <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Không tìm thấy truyện nào phù hợp</p>
-             <button onClick={() => router.push('/manga')} className="text-[#4caf50] text-[10px] font-black uppercase underline">Quay lại tất cả</button>
+          <div className="text-center py-40 bg-[#141814]/40 rounded-[50px] border-2 border-dashed border-[#2a332a] flex flex-col items-center gap-8 mx-auto max-w-2xl">
+             <div className="relative">
+                <span className="text-9xl grayscale opacity-10">💮</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <svg className="w-16 h-16 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+             </div>
+             <div className="space-y-3">
+                <p className="text-[#4caf50] font-black uppercase tracking-[0.5em] text-sm">Không có dữ liệu</p>
+                <p className="text-gray-600 text-[10px] font-bold uppercase tracking-widest leading-relaxed">Bộ lọc hiện tại quá khắt khe, bạn hãy thử nới lỏng hoặc xóa bớt tiêu chí nhé!</p>
+             </div>
+             <button onClick={clearFilters} className="px-10 py-4 bg-[#1a221a] text-[#4caf50] text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl border-2 border-[#4caf50]/20 hover:bg-[#4caf50] hover:text-black hover:border-[#4caf50] transition-all shadow-xl active:scale-95">XÓA TẤT CẢ BỘ LỌC 💮</button>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6 md:gap-10">
               {mangas.map((manga) => (
                 <Link 
                   key={manga.id} 
                   href={`/manga/${manga.id}`}
-                  className="group flex flex-col bg-[#141814]/60 border border-[#2a332a] hover:border-[#4caf50]/50 rounded-xl overflow-hidden shadow-2xl transition-all hover:-translate-y-2"
+                  className="group flex flex-col bg-[#141814]/60 border border-[#2a332a] hover:border-[#4caf50]/50 rounded-[32px] overflow-hidden shadow-2xl transition-all duration-700 hover:-translate-y-3"
                 >
                   <div className="aspect-[2/3] relative overflow-hidden">
                     <img 
                       src={optimizeImage(manga.cover_image, 400)} 
                       alt={manga.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
                     
+                    {/* Badge Trạng thái */}
+                    <div className="absolute top-4 right-4">
+                       <span className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-[0.1em] shadow-2xl border backdrop-blur-md ${manga.status === 'completed' ? 'bg-blue-500/80 border-blue-400 text-white' : 'bg-[#4caf50]/80 border-[#66bb6a] text-[#0a0c0a]'}`}>
+                         {manga.status === 'completed' ? 'Final' : 'Live'}
+                       </span>
+                    </div>
+
                     {manga.latestChapter && (
-                      <div className="absolute bottom-3 left-3">
-                         <span className="bg-[#4caf50] text-[#141814] text-[10px] font-black px-2.5 py-1 rounded shadow-xl">
-                           CHAP {manga.latestChapter.chapter_number}
+                      <div className="absolute bottom-4 left-4">
+                         <span className="bg-white text-black text-[10px] font-black px-3 py-1.5 rounded-lg shadow-2xl tracking-tighter">
+                           Chap {manga.latestChapter.chapter_number}
                          </span>
                       </div>
                     )}
 
-                    <div className="absolute top-3 left-3 flex flex-wrap gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                       {manga.genres?.slice(0, 2).map((g, i) => (
-                         <span key={i} className="bg-black/60 text-[8px] text-[#4caf50] px-1.5 py-0.5 rounded border border-[#4caf50]/20 uppercase font-black">{g}</span>
-                       ))}
+                    <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0 duration-500 bg-gradient-to-t from-black to-transparent">
+                       <div className="flex flex-wrap gap-1.5">
+                          {manga.genres?.slice(0, 3).map((g, i) => (
+                            <span key={i} className="bg-[#4caf50]/20 text-[7px] text-[#4caf50] px-2 py-0.5 rounded-md font-black uppercase border border-[#4caf50]/30">{g}</span>
+                          ))}
+                       </div>
                     </div>
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="font-bold text-sm line-clamp-2 group-hover:text-[#4caf50] transition-colors leading-tight">{manga.title}</h3>
+                  <div className="p-5 bg-gradient-to-b from-transparent to-black/20">
+                    <h3 className="font-bold text-xs md:text-sm line-clamp-2 group-hover:text-[#4caf50] transition-colors leading-tight h-8 md:h-10 text-center md:text-left">{manga.title}</h3>
                   </div>
                 </Link>
               ))}
@@ -190,13 +327,13 @@ function MangaListContent() {
 
             {/* Phân trang */}
             {totalPages > 1 && (
-              <div className="mt-16 flex flex-wrap justify-center items-center gap-2">
+              <div className="mt-24 flex flex-wrap justify-center items-center gap-3">
                 <button
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                  className={`px-8 py-4 rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em] transition-all border-2 ${
                     currentPage === 1 
-                    ? 'opacity-30 cursor-not-allowed border-white/5' 
-                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
+                    ? 'opacity-20 cursor-not-allowed border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50] hover:bg-[#4caf50]/5'
                   }`}
                 >
                   TRƯỚC
@@ -209,9 +346,9 @@ function MangaListContent() {
                       <button
                         key={p}
                         onClick={() => handlePageChange(p)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-black text-xs transition-all border ${
+                        className={`w-14 h-14 flex items-center justify-center rounded-[20px] font-black text-sm transition-all border-2 ${
                           currentPage === p
-                          ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] scale-110 shadow-lg shadow-[#4caf50]/20'
+                          ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] scale-110 shadow-2xl shadow-[#4caf50]/30'
                           : 'bg-[#141814] border-white/5 text-gray-500 hover:border-[#4caf50] hover:text-[#4caf50]'
                         }`}
                       >
@@ -219,16 +356,16 @@ function MangaListContent() {
                       </button>
                     );
                   }
-                  if (p === currentPage - 3 || p === currentPage + 3) return <span key={p} className="text-gray-700">...</span>;
+                  if (p === currentPage - 3 || p === currentPage + 3) return <span key={p} className="text-gray-700 px-2">...</span>;
                   return null;
                 })}
 
                 <button
                   onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={`px-4 py-2 rounded-xl font-bold text-[10px] uppercase transition-all border ${
+                  className={`px-8 py-4 rounded-[20px] font-black text-[10px] uppercase tracking-[0.2em] transition-all border-2 ${
                     currentPage === totalPages 
-                    ? 'opacity-30 cursor-not-allowed border-white/5' 
-                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50]'
+                    ? 'opacity-20 cursor-not-allowed border-white/5' 
+                    : 'bg-[#141814] border-white/5 text-gray-400 hover:border-[#4caf50] hover:text-[#4caf50] hover:bg-[#4caf50]/5'
                   }`}
                 >
                   SAU
@@ -236,19 +373,25 @@ function MangaListContent() {
               </div>
             )}
             
-            <div className="text-center mt-6">
-               <span className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Trang {currentPage} / {totalPages} (Tổng {totalCount} truyện)</span>
+            <div className="text-center mt-12">
+               <span className="text-[10px] font-black text-gray-700 bg-black/40 px-8 py-2.5 rounded-full border border-white/5 uppercase tracking-[0.4em]">Trang {currentPage} / {totalPages} • Lọc được {totalCount} truyện</span>
             </div>
           </>
         )}
       </div>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #2a332a; border-radius: 10px; }
+      `}} />
     </div>
   );
 }
 
 export default function MangaListPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0c0a] flex items-center justify-center"><div className="w-10 h-10 border-4 border-[#4caf50]/20 border-t-[#4caf50] rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#0a0c0a] flex items-center justify-center"><div className="w-14 h-14 border-4 border-[#4caf50]/10 border-t-[#4caf50] rounded-full animate-spin"></div></div>}>
       <MangaListContent />
     </Suspense>
   );
