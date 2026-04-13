@@ -67,35 +67,58 @@ async function checkAdminAuth() {
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
  */
 export async function getStorageUsageAction() {
+  console.log("📊 [Storage] Bắt đầu lấy thông số...");
   try {
-    // Chỉ Admin mới được xem thông số Storage
-    if (!(await checkAdminAuth())) throw new Error("Bạn không có quyền truy cập thông tin này! 🛡️");
+    // 🛡️ Kiểm tra quyền (Silent check)
+    const isAdmin = await checkAdminAuth().catch(err => {
+      console.warn("⚠️ checkAdminAuth sập:", err.message);
+      return false;
+    });
+
+    if (!isAdmin) {
+      return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: "NOT_ADMIN" };
+    }
     
-    const { data: pagesData, error: pagesError } = await supabaseAdmin.from('pages').select('size_kb');
+    // 🛡️ Kiểm tra Client
+    if (!supabaseAdmin) {
+       return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: "NO_ADMIN_CLIENT" };
+    }
+
+    const { data: pagesData, error: pagesError } = await supabaseAdmin.from('pages').select('size_kb').limit(1000);
     
-    // 🛡️ FAIL-SAFE: Nếu bảng chưa có cột size_kb hoặc DB lỗi, trả về 0 thay vì làm chết trang Admin 🍀
     if (pagesError) {
-      console.warn("⚠️ Không thể tính toán Pages Storage (có thể thiếu cột size_kb):", pagesError.message);
-      return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, warning: "Thiếu cột dữ liệu pages" };
+      console.warn("⚠️ Pages Query Error:", pagesError.message);
+      return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: `PAGES_ERR_${pagesError.code}` };
     }
     
     const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
 
     const { data: mangasData, error: mangasError } = await supabaseAdmin.from('mangas').select('size_kb');
-    if (mangasError) {
-        console.warn("⚠️ Không thể tính toán Mangas Storage:", mangasError.message);
-        return { success: true, totalGB: parseFloat((pagesTotal / (1024*1024)).toFixed(3)), totalKB: pagesTotal, limitGB: 10 };
+    
+    let mangasTotal = 0;
+    if (!mangasError && mangasData) {
+        mangasTotal = mangasData.reduce((sum, m) => sum + (m.size_kb || 300), 0);
     }
     
-    const mangasTotal = (mangasData || []).reduce((sum, m) => sum + (m.size_kb || 300), 0);
-
     const totalKB = pagesTotal + mangasTotal;
     const totalGB = totalKB / (1024 * 1024);
 
-    return { success: true, totalGB: parseFloat(totalGB.toFixed(3)), totalKB, limitGB: 10 };
+    return { 
+      success: true, 
+      totalGB: parseFloat(totalGB.toFixed(3)), 
+      totalKB, 
+      limitGB: 10,
+      debug: "OK"
+    };
   } catch (error) {
-    console.error("❌ Lỗi nghiêm trọng getStorageUsageAction:", error);
-    return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, error: error.message };
+    console.error("❌ Lỗi nặng getStorageUsageAction:", error.message);
+    return { 
+      success: true, 
+      totalGB: 0, 
+      totalKB: 0, 
+      limitGB: 10, 
+      debug: `CRASH_${error.message.substring(0, 20)}` 
+    };
   }
 }
 
