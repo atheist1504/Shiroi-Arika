@@ -78,7 +78,6 @@ export default function CheckIn() {
     } finally {
       setChecking(false);
     }
-    }
   };
 
   if (!user) return null;
