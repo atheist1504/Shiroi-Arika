@@ -126,7 +126,7 @@ export default function Navbar() {
             {/* USER AREA TẦNG 1 - POINT ĐIỂM DANH DƯỚI AVATAR 🛡️ */}
             <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
               {user ? (
-                 <div className="flex items-center gap-6 animate-fade-in py-2">
+                 <div className="flex items-center gap-4 animate-fade-in py-2">
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
@@ -135,37 +135,30 @@ export default function Navbar() {
                        </Link>
                     )}
 
-                    <div className="flex flex-col items-center gap-1.5 translate-y-1">
-                      <div className="flex items-center gap-4 border-l border-white/5 pl-6">
-                        <div className="hidden sm:flex flex-col items-end gap-1">
-                          <div className="flex items-center gap-2">
-                              <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
-                                 LVL {calculateLevel(user.xp)}
-                              </span>
-                              <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
-                           </div>
-                           <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
-                              <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
-                           </div>
-                        </div>
-
-                        <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
-                            <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                        </Link>
-
-                        <button 
-                          onClick={handleLogout}
-                          className="p-2 text-gray-700 hover:text-red-500 transition-colors"
-                          title="Đăng xuất"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        </button>
+                    <div className="flex items-center gap-4 border-l border-white/5 pl-6">
+                      <div className="hidden sm:flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                            <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
+                               LVL {calculateLevel(user.xp)}
+                            </span>
+                            <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
+                         </div>
+                         <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
+                         </div>
                       </div>
-                      
-                      {/* ĐIỂM DANH THẲNG HÀNG BÊN DƯỚI AVATAR ⚡ */}
-                      <div className="hidden lg:block scale-[0.85] origin-right">
-                        <CheckIn />
-                      </div>
+
+                      <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                          <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
+                      </Link>
+
+                      <button 
+                        onClick={handleLogout}
+                        className="p-2 text-gray-700 hover:text-red-500 transition-colors"
+                        title="Đăng xuất"
+                      >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                      </button>
                     </div>
                  </div>
               ) : (
@@ -179,9 +172,45 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* TẦNG 2: SEARCH BAR 🔍 */}
-          <div className="hidden lg:flex h-14 items-center justify-center border-t border-white/[0.03] animate-fade-in py-2">
-            <div className="w-full max-w-2xl relative" ref={searchRef}>
+          {/* TẦNG 2: SEARCH BAR & CHECK-IN 🔍⚡ */}
+          <div className="hidden lg:flex h-14 items-center justify-center border-t border-white/[0.03] animate-fade-in py-2 relative px-6">
+            
+            {/* SEARCH BAR (CHÍNH GIỮA) */}
+            <div className="w-full max-w-xl relative" ref={searchRef}>
+               <form onSubmit={handleSearchSubmit} className="relative group w-full">
+                  <input 
+                    type="text" 
+                    placeholder="Tìm kiếm truyện trong kho tàng Shiroi..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => results.length > 0 && setShowSearch(true)}
+                    className="w-full bg-[#141814]/40 border border-white/[0.05] group-focus-within:border-[#4caf50]/30 rounded-2xl py-2.5 px-6 pl-12 text-xs outline-none transition-all placeholder:text-gray-700 font-bold"
+                  />
+                  <svg className="w-4 h-4 absolute left-4 top-3 text-gray-700 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+               </form>
+
+               {showSearch && results.length > 0 && (
+                 <div className="absolute mt-2 w-full bg-[#1c221c] border border-white/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl animate-fade-in z-[50]">
+                    {results.map(manga => (
+                        <Link 
+                          key={manga.id} 
+                          href={`/manga/${manga.id}`}
+                          onClick={() => setShowSearch(false)}
+                          className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                        >
+                            <img src={manga.cover_image || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0 bg-black/40" alt="" />
+                            <span className="text-[12px] font-bold text-gray-400 truncate">{manga.title}</span>
+                        </Link>
+                    ))}
+                 </div>
+               )}
+            </div>
+
+            {/* ĐIỂM DANH (LỆCH PHẢI - THẲNG HÀNG DƯỚI AVATAR) ⚡ */}
+            <div className="absolute right-6 scale-90">
+              <CheckIn />
+            </div>
+          </div>
                <form onSubmit={handleSearchSubmit} className="relative group w-full">
                   <input 
                     type="text" 
