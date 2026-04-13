@@ -48,7 +48,7 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
       const ctx = canvas.getContext('2d');
       if (!ctx) {
         URL.revokeObjectURL(url);
-        return reject("Lỗi khởi tạo Canvas");
+        return reject(new Error("Lỗi khởi tạo Canvas"));
       }
 
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -58,7 +58,7 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(url); 
-        if (!blob) return reject("Nén ảnh thất bại");
+        if (!blob) return reject(new Error("Nén ảnh thất bại"));
         resolve(blob);
         // 🧹 Dọn dẹp canvas để giải phóng RAM trên mobile
         canvas.width = 0;
@@ -68,7 +68,7 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
 
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject("Không thể tải ảnh");
+      reject(new Error("Không thể tải ảnh"));
     };
   });
 };
@@ -334,7 +334,8 @@ export default function AdminUploadPage() {
           setProgress(Math.round((completed / total) * 100));
         } catch (err: any) {
           console.error(`❌ Lỗi tại trang ${i+1}:`, err);
-          throw new Error(`Thất bại tại trang ${i+1}: ${err.message}`);
+          const errorMsg = err instanceof Error ? err.message : (typeof err === 'string' ? err : 'Lỗi không xác định');
+          throw new Error(`Thất bại tại trang ${i+1}: ${errorMsg}`);
         }
       }
       if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
