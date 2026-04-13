@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseAdmin';
+import { supabase } from '@/lib/supabase';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * 🛠️ HÀM HỖ TRỢ: Lấy Client DB phù hợp (Admin hoặc Anon dự phòng) 🛡️
+ */
+function getDbClient() {
+  return supabaseAdmin || supabase;
+}
 
 export async function GET() {
   try {
@@ -17,13 +25,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // 🛡️ 2. Kiểm tra Client sẵn sàng (Tránh lỗi lúc Build)
-    if (!supabaseAdmin) {
-      return NextResponse.json({ success: true, totalGB: 0, limitGB: 10, debug: 'BUILD_TIME_SKIP' });
-    }
+    // 🛡️ 2. Lấy Client DB (Ưu tiên Admin, Fallback về Anon)
+    const client = getDbClient();
 
     // 🛡️ 3. Tính toán dung lượng (Safe Query)
-    const { data: pagesData, error: pagesError } = await supabaseAdmin
+    const { data: pagesData, error: pagesError } = await client
       .from('pages')
       .select('size_kb')
       .limit(2000);
@@ -32,7 +38,7 @@ export async function GET() {
     
     const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
 
-    const { data: mangasData, error: mangasError } = await supabaseAdmin
+    const { data: mangasData, error: mangasError } = await client
       .from('mangas')
       .select('size_kb');
     
@@ -45,13 +51,14 @@ export async function GET() {
       success: true,
       totalGB: parseFloat(totalGB.toFixed(3)),
       limitGB: 10,
-      totalKB
+      totalKB,
+      debug: supabaseAdmin ? 'ADMIN_MODE' : 'ANON_FALLBACK'
     });
 
   } catch (error) {
     console.error('❌ Lỗi API Storage:', error);
     return NextResponse.json({
-      success: true, // Trả về success true nhưng giá trị 0 để không làm hỏng UI
+      success: true, 
       totalGB: 0,
       limitGB: 10,
       error: error.message

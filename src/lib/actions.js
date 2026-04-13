@@ -64,6 +64,15 @@ async function checkAdminAuth() {
 }
 
 /**
+ * 🛠️ HÀM HỖ TRỢ: Lấy Client DB phù hợp (Admin hoặc Anon dự phòng) 🛡️
+ */
+function getDbClient() {
+  if (supabaseAdmin) return supabaseAdmin;
+  console.warn("⚠️ [Auth] Không tìm thấy Admin Client, sử dụng Anon Client làm dự phòng.");
+  return supabase;
+}
+
+/**
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
  */
 export async function getStorageUsageAction() {
@@ -128,9 +137,8 @@ export async function getStorageUsageAction() {
 export async function deleteMangaAction(mangaId) {
   try {
     if (!(await checkAdminAuth())) throw new Error("Dừng lại! Chỉ quản trị viên mới có quyền hành quyết này! 🛡️");
-    if (!mangaId) throw new Error("Thiếu ID truyện!");
-
-    const { data: chapters, error: chapError } = await supabase.from('chapters').select('id').eq('manga_id', mangaId);
+    const client = getDbClient();
+    const { data: chapters, error: chapError } = await client.from('chapters').select('id').eq('manga_id', mangaId);
     if (chapError) throw chapError;
 
     if (chapters && chapters.length > 0) {
@@ -141,11 +149,11 @@ export async function deleteMangaAction(mangaId) {
 
     const chapterIds = chapters.map(c => c.id);
     if (chapterIds.length > 0) {
-      await supabase.from('pages').delete().in('chapter_id', chapterIds);
-      await supabase.from('chapters').delete().in('id', chapterIds);
+      await client.from('pages').delete().in('chapter_id', chapterIds);
+      await client.from('chapters').delete().in('id', chapterIds);
     }
     
-    const { error: mangaDelError } = await supabase.from('mangas').delete().eq('id', mangaId);
+    const { error: mangaDelError } = await client.from('mangas').delete().eq('id', mangaId);
     if (mangaDelError) throw mangaDelError;
 
     return { success: true };
@@ -335,13 +343,12 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     const isAdmin = await checkAdminAuth().catch(() => false);
     if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
     
-    // 🛡️ Kiểm tra Client sẵn sàng
-    if (!supabaseAdmin) throw new Error("Hệ thống quản trị chưa được cấu hình. Hãy kiểm tra biến SUPABASE_SERVICE_ROLE_KEY trên Vercel! 🛡️");
+    const client = getDbClient();
 
     if (mangaId) {
-      console.log(`[Admin] Cập nhật truyện ID: ${mangaId}, Status: ${mangaData.status}`);
+      console.log(`[Admin] Cập nhật truyện ID: ${mangaId}`);
       // Cập nhật
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await client
         .from('mangas')
         .update({
           ...mangaData,
@@ -359,7 +366,7 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     } else {
       console.log(`[Admin] Tạo truyện mới: ${mangaData.title}`);
       // Thêm mới
-      const { data, error } = await supabaseAdmin
+      const { data, error } = await client
         .from('mangas')
         .insert([{
           ...mangaData,
@@ -434,9 +441,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     const isAdmin = await checkAdminAuth().catch(() => false);
     if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
 
-    // 🛡️ Kiểm tra Client sẵn sàng
-    if (!supabaseAdmin) throw new Error("Dịch vụ Admin tạm thời không khả dụng. 🛡️");
-
+    const client = getDbClient();
     let chapId = existingChapterId;
 
     // 1. Xử lý Chapter (Dùng UPSERT để an toàn tuyệt đối) 🛡️
@@ -447,7 +452,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
 
     if (!isEditing) {
        // Nếu là tạo mới, kiểm tra trùng lặp theo số chương
-       const { data: existing } = await supabaseAdmin
+       const { data: existing } = await client
          .from("chapters")
          .select("id")
          .eq("manga_id", chapterPayload.manga_id)
@@ -461,13 +466,13 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     }
 
     if (chapId) {
-        const { error: upError } = await supabaseAdmin
+        const { error: upError } = await client
           .from("chapters")
           .update(chapterToSave)
           .eq("id", chapId);
         if (upError) throw new Error(`Lỗi cập nhật Chapter: ${upError.message}`);
     } else {
-        const { data: newChap, error: inError } = await supabaseAdmin
+        const { data: newChap, error: inError } = await client
           .from("chapters")
           .insert([chapterToSave])
           .select()
@@ -479,7 +484,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     console.log(`✅ [Server] Chapter ${chapId} OK. Đang lưu ${pagesData.length} trang truyện...`);
 
     // 2. Xóa các trang cũ (ghi đè) 🧹
-    await supabaseAdmin.from("pages").delete().eq("chapter_id", chapId);
+    await client.from("pages").delete().eq("chapter_id", chapId);
 
     // 3. Chèn các trang mới (Batch Insert) ⚡
     const pagesWithId = pagesData.map(p => ({ 
@@ -488,7 +493,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
       created_at: new Date().toISOString() 
     }));
 
-    const { error: pagesError } = await supabaseAdmin.from("pages").insert(pagesWithId);
+    const { error: pagesError } = await client.from("pages").insert(pagesWithId);
     if (pagesError) throw new Error(`Lỗi lưu Pages: ${pagesError.message}`);
 
     return { success: true, chapterId: chapId };
