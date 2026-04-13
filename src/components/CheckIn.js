@@ -135,32 +135,33 @@ export default function CheckIn() {
               className="absolute inset-0 bg-black/90 backdrop-blur-md"
             />
 
-            {/* Hộp thư quà tặng rực rỡ 🚀 */}
+            {/* Hộp thư quà tặng nhỏ gọn 🚀 */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
               style={{ 
                 position: 'fixed',
                 top: '50%',
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
+                x: '-50%',
+                y: '-50%',
               }}
-              className="w-[92%] max-w-[420px] bg-gradient-to-br from-[#1c221c] to-[#0a0c0a] border border-[#4caf50]/40 p-12 rounded-[48px] shadow-[0_40px_120px_rgba(0,0,0,1)] text-center overflow-hidden"
+              className="w-[320px] bg-[#141814] border border-[#4caf50]/30 p-8 rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] text-center overflow-hidden"
             >
-              {/* Hiệu ứng hào quang rực rỡ 🍀 */}
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-[#4caf50]/5 to-transparent pointer-events-none" />
+              {/* Hiệu ứng hào quang nhẹ 🍀 */}
+              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#4caf50]/5 to-transparent pointer-events-none" />
               
-              <div className="w-28 h-28 bg-[#4caf50]/20 rounded-full flex items-center justify-center mx-auto mb-10 border-2 border-[#4caf50]/30 shadow-[0_0_40px_rgba(76,175,80,0.2)] animate-spin-slow">
-                <span className="text-6xl">🎁</span>
+              <div className="w-16 h-16 bg-[#4caf50]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#4caf50]/20 shadow-inner">
+                <span className="text-3xl">🎁</span>
               </div>
 
-              <h3 className="text-[#4caf50] font-black text-3xl uppercase tracking-[0.2em] mb-6 drop-shadow-lg">VINH DANH</h3>
-              <p className="text-gray-200 font-bold leading-relaxed mb-12 text-xl px-4 drop-shadow-sm">{modalMessage}</p>
+              <h3 className="text-[#4caf50] font-black text-xl uppercase tracking-[0.2em] mb-4">VINH DANH</h3>
+              <p className="text-gray-300 font-bold leading-relaxed mb-8 text-sm px-2 uppercase tracking-wide">{modalMessage}</p>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full py-6 bg-[#4caf50] text-[#0a0c0a] rounded-3xl font-black uppercase tracking-[0.4em] text-sm hover:scale-[1.05] active:scale-95 transition-all shadow-[0_0_60px_rgba(76,175,80,0.6)]"
+                className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#4caf50]/20"
               >
                 XÁC NHẬN ✨
               </button>
