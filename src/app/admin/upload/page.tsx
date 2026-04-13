@@ -287,74 +287,81 @@ export default function AdminUploadPage() {
         title: chapterTitle 
       };
 
-      // 1. CHUẨN BỊ VÀ TẢI LÊN TUẦN TỰ (SEQUENTIAL) 🚀
-      // Thay vì Promise.all, chúng ta chạy từng ảnh để bảo vệ RAM và băng thông di động 🛡️
-      const pagesData = [];
+      // 1. CHUẨN BỊ VÀ TẢI LÊN SONG SONG THEO ĐỢT (BATCH PARALLEL) 🚀
+      // Tải 3 ảnh cùng lúc để tăng tốc độ lên gấp 3 lần mà vẫn an toàn cho Mobile 🛡️
+      const pagesData: any[] = [];
       const total = items.length;
-      let completed = 0;
+      let completedCount = 0;
+      const BATCH_SIZE = 3;
 
-      // 🛠️ HELPER: Hàm nghỉ giữa chặng để trình duyệt dọn dẹp RAM 🍀
       const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        let finalUrl = "";
-        let fileSizeKb = 0;
-        let retryCount = 0;
-        const maxRetries = 3; 
+      // Chia danh sách trang thành các đợt (chunks)
+      for (let i = 0; i < items.length; i += BATCH_SIZE) {
+        const batch = items.slice(i, i + BATCH_SIZE);
+        const batchIndex = Math.floor(i / BATCH_SIZE) + 1;
+        const totalBatches = Math.ceil(total / BATCH_SIZE);
 
-        while (retryCount <= maxRetries) {
-          try {
-            if (item.type === 'new') {
-              const retryText = retryCount > 0 ? ` (THỬ LẠI LẦN ${retryCount})` : "";
-              setMessage({ type: "info", text: `ĐANG XỬ LÝ TRANG ${i + 1}/${total}${retryText}... ⏳` });
-              
-              const compressed = await compressImageToWebP(item.file);
-              const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
+        setMessage({ 
+          type: "info", 
+          text: `🚀 ĐANG TĂNG TỐC... XỬ LÝ ĐỢT ${batchIndex}/${totalBatches} (${batch.length} TRANG SONG SONG) ⏳` 
+        });
 
-              const ticket: any = await getUploadUrlAction(fileName);
-              if (!ticket.success) throw new Error(`Lỗi lấy vé: ${ticket.error}`);
+        // Xử lý song song các trang trong đợt hiện tại
+        const batchResults = await Promise.all(batch.map(async (item, localIndex) => {
+          const globalIndex = i + localIndex;
+          let finalUrl = "";
+          let fileSizeKb = 0;
+          let retryCount = 0;
+          const maxRetries = 3;
 
-              const uploadResponse = await fetch(ticket.signedUrl, {
-                  method: 'PUT',
-                  body: compressed,
-                  headers: { 'Content-Type': 'image/webp' }
-              });
+          while (retryCount <= maxRetries) {
+            try {
+              if (item.type === 'new') {
+                const compressed = await compressImageToWebP(item.file);
+                const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
 
-              if (!uploadResponse.ok) throw new Error(`Lỗi mạng (${uploadResponse.status})`);
-              
-              finalUrl = ticket.finalPublicUrl;
-              fileSizeKb = Math.round(compressed.size / 1024);
-            } else {
-              finalUrl = item.data;
+                const ticket: any = await getUploadUrlAction(fileName);
+                if (!ticket.success) throw new Error(`Lỗi lấy vé: ${ticket.error}`);
+
+                const uploadResponse = await fetch(ticket.signedUrl, {
+                    method: 'PUT',
+                    body: compressed,
+                    headers: { 'Content-Type': 'image/webp' }
+                });
+
+                if (!uploadResponse.ok) throw new Error(`Lỗi mạng (${uploadResponse.status})`);
+                
+                finalUrl = ticket.finalPublicUrl;
+                fileSizeKb = Math.round(compressed.size / 1024);
+              } else {
+                finalUrl = item.data;
+              }
+
+              // Cập nhật tiến độ tổng thể ngay khi một trang hoàn thành
+              completedCount++;
+              setProgress(Math.round((completedCount / total) * 100));
+
+              return {
+                image_url: finalUrl,
+                page_number: globalIndex + 1,
+                size_kb: fileSizeKb || 150
+              };
+            } catch (err: any) {
+              retryCount++;
+              console.error(`❌ Lỗi tại trang ${globalIndex + 1} (Lần ${retryCount}):`, err);
+              if (retryCount > maxRetries) throw err;
+              await sleep(1000 * retryCount);
             }
-
-            pagesData.push({
-              image_url: finalUrl,
-              page_number: i + 1,
-              size_kb: fileSizeKb || 150
-            });
-
-            completed++;
-            setProgress(Math.round((completed / total) * 100));
-            
-            // 🛑 NGHỈ GIỮA CHẶNG: Giúp mobile có thời gian Garbage Collection 🍀
-            if (i < items.length - 1) await sleep(500);
-            
-            break; // Thành công thì thoát khỏi vòng lặp while retry
-          } catch (err: any) {
-            retryCount++;
-            console.error(`❌ Lỗi tại trang ${i+1} (Lần ${retryCount}):`, err);
-            
-            if (retryCount > maxRetries) {
-              const errMsg = err?.message || "Lỗi không xác định";
-              throw new Error(`THẤT BẠI TẠI TRANG ${i+1} SAU ${maxRetries} LẦN THỬ: ${errMsg}`);
-            }
-            
-            // Đợi lâu hơn một chút sau mỗi lần thất bại để trình duyệt phục hồi
-            await sleep(1000 * retryCount); 
           }
-        }
+          return null;
+        }));
+
+        // Đẩy kết quả của đợt vào danh sách tổng
+        pagesData.push(...batchResults.filter(r => r !== null));
+        
+        // Nghỉ một chút giữa các đợt để trình duyệt dọn dẹp RAM (đặc biệt quan trọng cho Mobile) 🍀
+        if (i + BATCH_SIZE < total) await sleep(300);
       }
       if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
 
