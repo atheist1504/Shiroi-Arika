@@ -174,17 +174,15 @@ export default function AdminUploadPage() {
   }, [preSelectedChapterId]);
 
   const fetchStorageUsage = async () => {
-    // 🛡️ TẠM THỜI VÔ HIỆU HÓA ĐỂ CỨU HỘ TRANG ADMIN (TRÁNH LỖI RENDER) 🍀
-    /*
     try {
-      const res = await getStorageUsageAction();
+      const response = await fetch('/api/admin/storage');
+      const res = await response.json();
       if (res.success) {
         setStorageInfo({ totalGB: res.totalGB || 0, limitGB: res.limitGB || 10 });
       }
     } catch (err) {
       console.warn("⚠️ Lỗi fetchStorageUsage (bỏ qua):", err);
     }
-    */
   };
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
