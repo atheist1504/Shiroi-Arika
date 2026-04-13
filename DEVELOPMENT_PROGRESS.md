@@ -14,7 +14,8 @@ Dự án Manga Platform thế hệ mới.
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
 - [x] **Smart Auto-Compression**: Nâng cấp bộ xử lý ảnh tại Admin Upload, tự động đưa mọi ảnh về **MaxWidth 1100px** và nén **WebP 75%**. Giúp tiết kiệm dung lượng gấp 3 lần mà vẫn giữ độ nét hoàn hảo. 🚀
-- [x] **R2 Usage Optimization**: Đã tối ưu để một bộ truyện 150 chương chỉ chiếm ~1GB thay vì 3GB, sẵn sàng cho quy mô thư viện lớn với giới hạn 10GB Free Tier.
+- [x] **R2 Usage Optimization**: Đã tối ưu để một bộ truyện 150 chương chỉ chiếm ~1GB thay vì 3GB.
+- [x] **Mobile Upload Fix**: Chuyển đổi sang quy trình **Tải lên tuần tự (Sequential Upload)** giúp di động không bị treo RAM và mạng. Tối ưu bộ nhớ Canvas để tránh lỗi sập tab trên trình duyệt mobile. 📱🚀
 
 ### 🖼️ SEO & Marketing Automation (v9 - Brand Identity)
 - [x] **Dynamic OG Image API**: Xây dựng API `/api/og/manga` tự động thiết kế Banner chia sẻ cực đẹp, tái hiện 100% phong cách của tệp `og-banner-v8.png`. 🎨🚀
@@ -40,4 +41,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 18:28 - 13/04/2026*
+*Cập nhật lần cuối: 19:10 - 13/04/2026*

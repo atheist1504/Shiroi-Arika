@@ -60,6 +60,9 @@ const compressImageToWebP = async (file: File): Promise<Blob> => {
         URL.revokeObjectURL(url); 
         if (!blob) return reject("Nén ảnh thất bại");
         resolve(blob);
+        // 🧹 Dọn dẹp canvas để giải phóng RAM trên mobile
+        canvas.width = 0;
+        canvas.height = 0;
       }, 'image/webp', quality);
     };
 
@@ -232,6 +235,9 @@ export default function AdminUploadPage() {
     });
 
     setItems(prev => [...prev, ...newItems]);
+    
+    // 🛡️ Reset input để có thể chọn lại cùng một file nếu cần 🍀
+    e.target.value = '';
     setMessage(null);
   };
 
@@ -284,48 +290,53 @@ export default function AdminUploadPage() {
         title: chapterTitle 
       };
 
-      // 1. Xin vé upload (Signed URL) và chuẩn bị dữ liệu trang
-      // (Chúng ta sẽ dùng một định danh tạm thời cho chapter_id nếu là tạo mới)
-      const tempChapId = existingChapterId || `temp_${Date.now()}`;
-      
+      // 1. CHUẨN BỊ VÀ TẢI LÊN TUẦN TỰ (SEQUENTIAL) 🚀
+      // Thay vì Promise.all, chúng ta chạy từng ảnh để bảo vệ RAM và băng thông di động 🛡️
+      const pagesData = [];
       const total = items.length;
       let completed = 0;
 
-      const uploadPromises = items.map(async (item, i) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         let finalUrl = "";
         let fileSizeKb = 0;
 
-        if (item.type === 'new') {
-          const compressed = await compressImageToWebP(item.file);
-          const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
+        try {
+          if (item.type === 'new') {
+            setMessage({ type: "info", text: `ĐANG NÉN & TẢI TRANG ${i + 1}/${total}... ⏳` });
+            const compressed = await compressImageToWebP(item.file);
+            const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${i}.webp`;
 
-          const ticket: any = await getUploadUrlAction(fileName);
-          if (!ticket.success) throw new Error(ticket.error);
+            const ticket: any = await getUploadUrlAction(fileName);
+            if (!ticket.success) throw new Error(`Lỗi lấy vé trang ${i+1}: ${ticket.error}`);
 
-          const uploadResponse = await fetch(ticket.signedUrl, {
-              method: 'PUT',
-              body: compressed,
-              headers: { 'Content-Type': 'image/webp' }
+            const uploadResponse = await fetch(ticket.signedUrl, {
+                method: 'PUT',
+                body: compressed,
+                headers: { 'Content-Type': 'image/webp' }
+            });
+
+            if (!uploadResponse.ok) throw new Error(`Lỗi mạng khi tải trang ${i+1} (${uploadResponse.status})`);
+            
+            finalUrl = ticket.finalPublicUrl;
+            fileSizeKb = Math.round(compressed.size / 1024);
+          } else {
+            finalUrl = item.data;
+          }
+
+          pagesData.push({
+            image_url: finalUrl,
+            page_number: i + 1,
+            size_kb: fileSizeKb || 150
           });
 
-          if (!uploadResponse.ok) throw new Error(`Lỗi upload ảnh trang ${i+1}`);
-          finalUrl = ticket.finalPublicUrl;
-          fileSizeKb = Math.round(compressed.size / 1024);
-        } else {
-          finalUrl = item.data;
+          completed++;
+          setProgress(Math.round((completed / total) * 100));
+        } catch (err: any) {
+          console.error(`❌ Lỗi tại trang ${i+1}:`, err);
+          throw new Error(`Thất bại tại trang ${i+1}: ${err.message}`);
         }
-
-        completed++;
-        setProgress(Math.round((completed / total) * 100));
-
-        return {
-          image_url: finalUrl,
-          page_number: i + 1,
-          size_kb: fileSizeKb || 150
-        };
-      });
-
-      const pagesData = await Promise.all(uploadPromises);
+      }
       if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
 
       // 2. GỌI SERVER ACTION ĐỂ LƯU TẤT CẢ DỮ LIỆU DB CÙNG LÚC 🛡️
@@ -353,9 +364,9 @@ export default function AdminUploadPage() {
     } catch (err: any) { 
       setMessage({ 
         type: "error", 
-        text: err.name === 'Error' ? err.message : "UPLOAD THẤT BẠI!",
+        text: err.message || "UPLOAD THẤT BẠI!",
         details: err.stack || String(err),
-        suggestion: "Hãy kiểm tra lại quyền truy cập Cloudflare R2 hoặc nén ảnh nhỏ lại."
+        suggestion: "Hãy kiểm tra lại mạng di động, đảm bảo ổn định và thử lại từng trang một."
       });
       console.error("DEBUG UPLOAD:", err);
     } finally { 
