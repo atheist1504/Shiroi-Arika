@@ -114,61 +114,58 @@ export default function Navbar() {
                 <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
               </Link>
 
-              {/* NAV LINKS (TẦNG 1) */}
-              <div className="hidden lg:flex items-center gap-7 ml-10">
-                <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em]">Kho Truyện</Link>
-                <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
-                   <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-12 transition-all">🏆</span> BXH
-                </Link>
-                <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
-                   <span className="opacity-60 group-hover:opacity-100 group-hover:scale-125 transition-all">❤️</span> Tủ Truyện
-                </Link>
-                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] flex items-center gap-2 group">
-                   <span className="opacity-60 group-hover:opacity-100 group-hover:rotate-[-12deg] transition-all">🕰️</span> Lịch sử
-                </Link>
+              {/* NAV LINKS (TẦNG 1) - CHỐNG XUỐNG DÒNG & BỎ ICON 🍀 */}
+              <div className="hidden lg:flex items-center gap-6 ml-8">
+                <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Kho Truyện</Link>
+                <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
+                <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
+                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch sử</Link>
               </div>
             </div>
 
-            {/* USER AREA TẦNG 1 */}
+            {/* USER AREA TẦNG 1 - POINT ĐIỂM DANH DƯỚI AVATAR 🛡️ */}
             <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
               {user ? (
-                 <div className="flex items-center gap-4 animate-fade-in">
+                 <div className="flex items-center gap-6 animate-fade-in py-2">
                     
-                    {/* ADMIN ĐĂNG TRUYỆN (TEXT ONLY) 🛡️ */}
+                    {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                       <Link href="/admin/create-manga" className="hidden xl:flex items-center px-5 py-2.5 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
+                       <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
                           ĐĂNG TRUYỆN
                        </Link>
                     )}
 
-                    <div className="hidden lg:block">
-                      <CheckIn />
-                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex items-center gap-4 border-l border-white/5 pl-6 translate-y-1">
+                        <div className="hidden sm:flex flex-col items-end gap-1">
+                          <div className="flex items-center gap-2">
+                              <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
+                                 LVL {calculateLevel(user.xp)}
+                              </span>
+                              <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
+                           </div>
+                           <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
+                           </div>
+                        </div>
 
-                    <div className="flex items-center gap-4 border-l border-white/5 pl-6">
-                      <div className="hidden sm:flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2">
-                            <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
-                               LVL {calculateLevel(user.xp)}
-                            </span>
-                            <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
-                         </div>
-                         <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
-                         </div>
+                        <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                            <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
+                        </Link>
+
+                        <button 
+                          onClick={handleLogout}
+                          className="p-2 text-gray-700 hover:text-red-500 transition-colors"
+                          title="Đăng xuất"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                        </button>
                       </div>
-
-                      <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814]">
-                          <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                      </Link>
-
-                      <button 
-                        onClick={handleLogout}
-                        className="p-2.5 text-gray-600 hover:text-red-500 transition-colors"
-                        title="Đăng xuất"
-                      >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                      </button>
+                      
+                      {/* ĐIỂM DANH ĐẨY XUỐNG DƯỚI ⚡ */}
+                      <div className="hidden lg:block scale-90 -translate-y-1">
+                        <CheckIn />
+                      </div>
                     </div>
                  </div>
               ) : (
