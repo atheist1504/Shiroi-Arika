@@ -211,35 +211,6 @@ export default function Navbar() {
               <CheckIn />
             </div>
           </div>
-               <form onSubmit={handleSearchSubmit} className="relative group w-full">
-                  <input 
-                    type="text" 
-                    placeholder="Tìm kiếm truyện trong kho tàng Shiroi..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onFocus={() => results.length > 0 && setShowSearch(true)}
-                    className="w-full bg-[#141814]/40 border border-white/[0.05] group-focus-within:border-[#4caf50]/30 rounded-2xl py-2.5 px-6 pl-12 text-xs outline-none transition-all placeholder:text-gray-700 font-bold"
-                  />
-                  <svg className="w-4 h-4 absolute left-4 top-3 text-gray-700 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-               </form>
-
-               {showSearch && results.length > 0 && (
-                 <div className="absolute mt-2 w-full bg-[#1c221c] border border-white/5 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-3xl animate-fade-in z-[50]">
-                    {results.map(manga => (
-                        <Link 
-                          key={manga.id} 
-                          href={`/manga/${manga.id}`}
-                          onClick={() => setShowSearch(false)}
-                          className="flex items-center gap-3 p-3 hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
-                        >
-                            <img src={manga.cover_image || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-8 h-12 object-cover rounded shadow-md flex-shrink-0 bg-black/40" alt="" />
-                            <span className="text-[12px] font-bold text-gray-400 truncate">{manga.title}</span>
-                        </Link>
-                    ))}
-                 </div>
-               )}
-            </div>
-          </div>
 
         </div>
       </nav>
