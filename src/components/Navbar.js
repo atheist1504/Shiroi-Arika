@@ -135,6 +135,10 @@ export default function Navbar() {
                        </Link>
                     )}
 
+                    <div className="hidden lg:block">
+                      <CheckIn />
+                    </div>
+
                     <div className="flex items-center gap-4 border-l border-white/5 pl-6">
                       <div className="hidden sm:flex flex-col items-end gap-1">
                         <div className="flex items-center gap-2">
@@ -172,9 +176,9 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* TẦNG 2: SEARCH BAR & CHECK-IN 🔍⚡ */}
-          <div className="hidden lg:flex h-14 items-center justify-center gap-8 border-t border-white/[0.03] animate-fade-in py-2">
-            <div className="w-full max-w-xl relative ml-[-50px]" ref={searchRef}>
+          {/* TẦNG 2: SEARCH BAR 🔍 */}
+          <div className="hidden lg:flex h-14 items-center justify-center border-t border-white/[0.03] animate-fade-in py-2">
+            <div className="w-full max-w-2xl relative" ref={searchRef}>
                <form onSubmit={handleSearchSubmit} className="relative group w-full">
                   <input 
                     type="text" 
@@ -202,11 +206,6 @@ export default function Navbar() {
                     ))}
                  </div>
                )}
-            </div>
-
-            {/* ĐIỂM DANH Ở TẦNG 2 ⚡ */}
-            <div className="shrink-0 scale-95">
-              <CheckIn />
             </div>
           </div>
 
