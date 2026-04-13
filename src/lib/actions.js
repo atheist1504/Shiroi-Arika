@@ -518,7 +518,9 @@ export async function toggleFollowAction(mangaId, isFollowed) {
     const session = JSON.parse(sessionData.value);
     const userId = session.id;
 
-      const client = getDbClient();
+    const client = getDbClient();
+
+    if (!isFollowed) {
       // Tiến hành Follow
       const { error } = await client
         .from('shiroi_follows')
@@ -526,7 +528,7 @@ export async function toggleFollowAction(mangaId, isFollowed) {
       
       if (error) throw error;
       return { success: true, followed: true };
-      const client = getDbClient();
+    } else {
       // Tiến hành Unfollow
       const { error } = await client
         .from('shiroi_follows')
