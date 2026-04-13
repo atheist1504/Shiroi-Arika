@@ -243,7 +243,7 @@ export default function Comments({ mangaId, chapterId }) {
       const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
 
       uData?.forEach(u => {
-         const info = {  avatar: u.avatar_url, badge: u.selected_badge || 'Lữ Khách', level: calculateLevel(u.xp) };
+         const info = {  avatar: u.avatar_url, badge: u.selected_badge || 'Vô danh tiểu tốt', level: calculateLevel(u.xp) };
          if (u.id) uMap[u.id] = info;
          const nameKey = cK(u.username);
          if (!uMap[nameKey]) uMap[nameKey] = info;
@@ -257,7 +257,7 @@ export default function Comments({ mangaId, chapterId }) {
           return {
              ...c,
              display_avatar: info?.avatar || (isAd ? "https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/Admin-1775229030334.jpg" : "https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png"),
-             display_badge: info?.badge || (isAd ? 'BAN QUẢN TRỊ' : 'Lữ Khách'),
+             display_badge: info?.badge || (isAd ? 'BAN QUẢN TRỊ' : 'Vô danh tiểu tốt'),
              display_level: info?.level || 1
           };
       });

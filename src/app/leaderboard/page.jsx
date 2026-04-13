@@ -298,7 +298,7 @@ function LeaderboardContent() {
                                                     </div>
                                                     <div>
                                                         <div className="text-white font-black text-sm">{u.display_name || u.username}</div>
-                                                        <div className="text-[9px] font-black uppercase" style={{ color: calculateTitle(txp, u.selected_badge).color }}>{calculateTitle(txp, u.selected_badge).name}</div>
+                                                        <div className="text-[9px] font-black uppercase text-[#4caf50]/80">{calculateTitle(txp, u.selected_badge).name}</div>
                                                     </div>
                                                 </div>
                                             </td>

@@ -26,11 +26,29 @@ export const calculateProgress = (xp) => {
 };
 
 export const TITLES = [
-    { name: 'HIỀN GIẢ', color: '#4caf50', icon: '🧙‍♂️', lv: 50 },
-    { name: 'ĐẠI SƯ', color: '#4caf50', icon: '🎨', lv: 35 },
-    { name: 'HỘ VỆ', color: '#4caf50', icon: '🛡️', lv: 20 },
-    { name: 'CHIẾN BINH', color: '#4caf50', icon: '🗡️', lv: 10 },
-    { name: 'LỮ KHÁCH', color: '#4caf50', icon: '🚶', lv: 1 },
+    { name: 'Vạn cổ như đêm dài', lv: 67 },
+    { name: 'Đệ nhị thiên hạ', lv: 64 },
+    { name: 'Độc cô cầu bại', lv: 61 },
+    { name: 'Ẩn sĩ sơn lâm', lv: 58 },
+    { name: 'Tàn ảnh phong vân', lv: 55 },
+    { name: 'Túy quyền tửu khách', lv: 52 },
+    { name: 'Hành giả độc hành', lv: 49 },
+    { name: 'Cao nhân ở ẩn', lv: 46 },
+    { name: 'Lãng khách', lv: 43 },
+    { name: 'Đại sư tỷ', lv: 40 },
+    { name: 'Đại sư huynh', lv: 37 },
+    { name: 'Tiểu sư muội', lv: 34 },
+    { name: 'Kỳ môn độn giả', lv: 31 },
+    { name: 'Tàng thư các chủ', lv: 28 },
+    { name: 'Sĩ phu', lv: 25 },
+    { name: 'Nho sinh', lv: 22 },
+    { name: 'Hồ ly tinh', lv: 19 },
+    { name: 'Giang hồ tiểu bạch', lv: 16 },
+    { name: 'Hàn môn tử đệ', lv: 13 },
+    { name: 'Kẻ vô danh', lv: 10 },
+    { name: 'Tiểu quy đầu', lv: 7 },
+    { name: 'Đệ tử tạp dịch', lv: 4 },
+    { name: 'Vô danh tiểu tốt', lv: 1 },
 ];
 
 // Hàm tính danh xưng (Title) chuẩn Shiroi ✨

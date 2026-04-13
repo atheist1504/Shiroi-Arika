@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { calculateLevel, calculateProgress, calculateTitle, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
+import { calculateLevel, calculateProgress, calculateTitle, TITLES, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -572,17 +572,11 @@ export default function ProfilePage() {
                </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              {[
-                { name: 'Lữ Khách', lv: 1, icon: '🚶' },
-                { name: 'Chiến Binh', lv: 10, icon: '🗡️' },
-                { name: 'Hộ Vệ', lv: 20, icon: '🛡️' },
-                { name: 'Đại Sư', lv: 35, icon: '🎨' },
-                { name: 'Hiền Giả', lv: 50, icon: '🧙‍♂️' }
-              ].map(badge => {
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {TITLES.slice().reverse().map(badge => {
                 const userLv = calculateLevel(user.xp);
                 const isUnlocked = userLv >= badge.lv;
-                const isSelected = user.selected_badge === badge.name;
+                const isSelected = user.selected_badge === badge.name || (!user.selected_badge && badge.name === 'Vô danh tiểu tốt');
 
                 return (
                   <button
@@ -606,23 +600,22 @@ export default function ProfilePage() {
                         setUpdating(false);
                       }
                     }}
-                    className={`p-5 rounded-[28px] flex flex-col items-center gap-3 text-center transition-all duration-500 relative border ${isSelected
-                        ? 'bg-[#4caf50]/10 border-[#4caf50] shadow-[0_0_25px_rgba(76,175,80,0.3)] scale-105'
+                    className={`p-4 rounded-[24px] flex flex-col items-center justify-center gap-2 text-center transition-all duration-500 relative border ${isSelected
+                        ? 'bg-[#4caf50]/10 border-[#4caf50] shadow-[0_0_20px_rgba(76,175,80,0.2)] scale-105'
                         : isUnlocked
                           ? 'bg-[#141814] border-white/5 hover:border-[#4caf50]/30 hover:-translate-y-1'
                           : 'bg-black/40 border-white/5 opacity-40 grayscale pointer-events-none'
                       }`}
                   >
-                    <div className={`text-3xl transition-transform ${isSelected ? 'scale-110' : ''}`}>{badge.icon}</div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[9px] font-black uppercase text-white truncate w-full">{badge.name}</span>
-                      <span className={`text-[7px] font-black uppercase ${isUnlocked ? 'text-[#4caf50]' : 'text-gray-600'}`}>
+                    <div className="flex flex-col gap-1 items-center">
+                      <span className={`text-[9px] font-black uppercase truncate w-full ${isSelected ? 'text-[#4caf50]' : 'text-white'}`}>{badge.name}</span>
+                      <span className={`text-[7px] font-black uppercase ${isUnlocked ? (isSelected ? 'text-[#4caf50]/80' : 'text-[#4caf50]/60') : 'text-gray-700'}`}>
                         {isUnlocked ? (isSelected ? 'ĐANG DÙNG' : 'CHỌN') : `CẤP ${badge.lv}`}
                       </span>
                     </div>
                     {isSelected && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-[#4caf50] rounded-full flex items-center justify-center border-2 border-[#0a0c0a] shadow-xl">
-                        <svg className="w-3 h-3 text-[#0a0c0a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>
+                      <div className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-[#4caf50] rounded-full flex items-center justify-center border-2 border-[#0a0c0a] shadow-lg">
+                        <svg className="w-2.5 h-2.5 text-[#0a0c0a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>
                       </div>
                     )}
                   </button>
