@@ -22,7 +22,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
 
   // 🔎 TÌM KIẾM & PHÂN TRANG 🍀
   const [searchTerm, setSearchTerm] = useState("");
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(21);
 
   useEffect(() => {
     // ĐỒNG BỘ SESSION CHO QUẢN TRỊ VIÊN 🍀
@@ -363,7 +363,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  setVisibleCount(20); // Reset phân trang khi tìm kiếm
+                  setVisibleCount(21); // Reset phân trang khi tìm kiếm
                 }}
                 className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
               />
@@ -417,7 +417,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
               {hasMore && (
                   <div className="flex justify-center pt-8">
                       <button 
-                          onClick={() => setVisibleCount(prev => prev + 24)}
+                          onClick={() => setVisibleCount(prev => prev + 21)}
                           className="px-10 py-4 bg-[#141814] border-2 border-[#2a332a] text-[#4caf50] rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:border-[#4caf50] hover:shadow-[0_0_30px_rgba(76,175,80,0.2)] transition-all active:scale-95"
                       >
                           XEM THÊM CHƯƠNG 🚀
