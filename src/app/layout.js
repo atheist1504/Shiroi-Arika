@@ -79,13 +79,10 @@ export default function RootLayout({ children }) {
             top: 0;
             z-index: 10000;
             width: 100%;
-            height: 70px;
             background: rgba(10, 12, 10, 0.85);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            align-items: center;
           }
 
           .footer {
