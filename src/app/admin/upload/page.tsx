@@ -174,6 +174,8 @@ export default function AdminUploadPage() {
   }, [preSelectedChapterId]);
 
   const fetchStorageUsage = async () => {
+    // 🛡️ TẠM THỜI VÔ HIỆU HÓA ĐỂ CỨU HỘ TRANG ADMIN (TRÁNH LỖI RENDER) 🍀
+    /*
     try {
       const res = await getStorageUsageAction();
       if (res.success) {
@@ -182,6 +184,7 @@ export default function AdminUploadPage() {
     } catch (err) {
       console.warn("⚠️ Lỗi fetchStorageUsage (bỏ qua):", err);
     }
+    */
   };
 
   useEffect(() => { if (preSelectedMangaId) setSelectedMangaId(preSelectedMangaId); }, [preSelectedMangaId]);
