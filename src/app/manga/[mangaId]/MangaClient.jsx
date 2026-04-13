@@ -170,11 +170,6 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     );
   }
 
-  // Cấu hình JSON-LD cho Google (Manga Series)
-    author: manga.author || "Khuyết danh",
-    numberOfEpisodes: chapters.length,
-  };
-
   // 🕵️‍♂️ XỬ LÝ LỌC VÀ PHÂN TRANG CHƯƠNG 🏗️
   const filteredChapters = chapters.filter(chap => {
     if (!searchTerm) return true;
