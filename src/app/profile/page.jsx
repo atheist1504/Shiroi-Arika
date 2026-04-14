@@ -414,6 +414,8 @@ export default function ProfilePage() {
                         const firstDay = new Date(year, month, 1).getDay();
                         
                         const calendar = [];
+                        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+
                         // Padding cho ngày trống đầu tuần
                         for (let i = 0; i < firstDay; i++) {
                             calendar.push(<div key={`empty-${i}`} className="aspect-square opacity-0"></div>);
@@ -422,7 +424,8 @@ export default function ProfilePage() {
                         for (let d = 1; d <= daysInMonth; d++) {
                             const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                             const isChecked = checkInDates.includes(dayStr);
-                            const isToday = dayStr === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+                            const isToday = dayStr === todayStr;
+                            const isPast = dayStr < todayStr;
                             
                             calendar.push(
                                 <div 
