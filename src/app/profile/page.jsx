@@ -557,10 +557,11 @@ export default function ProfilePage() {
 
                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   {xpLogs && xpLogs.length > 0 ? xpLogs.map((log) => {
-                     const typeInfo = {
+                      const typeInfo = {
                         'read': { label: 'Đọc truyện', icon: '📖', color: 'text-blue-400' },
                         'checkin': { label: 'Điểm danh', icon: '🗓️', color: 'text-amber-400' },
-                        'comment': { label: 'Bình luận', icon: '💬', color: 'text-purple-400' }
+                        'comment': { label: 'Bình luận', icon: '💬', color: 'text-purple-400' },
+                        'lucky_draw': { label: 'Bốc quà', icon: '🧧', color: 'text-[#4caf50]' }
                      }[log.type] || { label: 'Khác', icon: '✨', color: 'text-gray-400' };
 
                      return (
