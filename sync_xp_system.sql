@@ -10,12 +10,17 @@ SET xp = COALESCE((
 ), 0);
 
 -- 2. TẠO CHỈ MỤC CHỐNG HACK (UNIQUE INDEX)
--- Chỉ cho phép mỗi User có đúng 1 dòng log 'check_in' mỗi ngày (theo giờ Việt Nam).
--- Ngăn chặn tuyệt đối việc nhấn nhanh (Race Condition) hoặc dùng Tool.
-DROP INDEX IF EXISTS idx_unique_checkin_per_day;
-CREATE UNIQUE INDEX idx_unique_checkin_per_day 
-ON shiroi_xp_logs (user_id, (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)
+-- Chỉ cho phép mỗi User có đúng 1 dòng log 'check_in' và 'lucky_draw' mỗi ngày (theo trình tự VN).
+-- Ngăn chặn tuyệt đối việc nhấn nhanh hoặc dùng Tool để cày điểm.
+DROP INDEX IF EXISTS idx_unique_check_in_per_day;
+CREATE UNIQUE INDEX idx_unique_check_in_per_day 
+ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date))
 WHERE type = 'check_in';
+
+DROP INDEX IF EXISTS idx_unique_lucky_draw_per_day;
+CREATE UNIQUE INDEX idx_unique_lucky_draw_per_day 
+ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date))
+WHERE type = 'lucky_draw';
 
 -- 3. HÀM TRIGGER TỰ ĐỘNG ĐỒNG BỘ TỔNG ĐIỂM
 CREATE OR REPLACE FUNCTION fn_sync_user_xp_on_log()

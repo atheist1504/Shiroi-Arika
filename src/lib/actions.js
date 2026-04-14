@@ -669,3 +669,51 @@ export async function toggleFollowAction(mangaId, isFollowed) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 🎁 SERVER ACTION: Bốc quà may mắn hàng ngày (Bảo mật 🛡️)
+ */
+export async function performLuckyDrawAction() {
+  try {
+    const sessionData = cookies().get('shiroi_session');
+    if (!sessionData) throw new Error("Vui lòng đăng nhập để nhận quà! 🛡️");
+
+    const session = JSON.parse(sessionData.value);
+    const userId = session?.id;
+    if (!userId) throw new Error("Phiên làm việc lỗi. Vui lòng đăng nhập lại!");
+
+    const client = getDbClient();
+
+    // 1. Tính toán phần thưởng ngẫu nhiên (Gacha logic)
+    const tiers = [10, 20, 30, 40, 50, 100, 500];
+    const weights = [40, 30, 15, 8, 4, 2.5, 0.5]; // Tổng = 100%
+    
+    let randomValue = Math.random() * 100;
+    let sum = 0;
+    let xpGain = 10; // Mặc định
+
+    for (let i = 0; i < tiers.length; i++) {
+      sum += weights[i];
+      if (randomValue <= sum) {
+        xpGain = tiers[i];
+        break;
+      }
+    }
+
+    // 2. Ghi vào Nhật ký (Database Unique Index sẽ chặn nếu bốc lần 2)
+    const resLog = await recordXpLogAction(userId, xpGain, 'lucky_draw', `May mắn hàng ngày: +${xpGain} XP`);
+    
+    if (!resLog.success) {
+      if (resLog.error?.includes('duplicate key') || resLog.error?.includes('23505')) {
+         return { success: false, error: 'Hôm nay vận may đã cạn, hãy quay lại vào ngày mai! 💮' };
+      }
+      return { success: false, error: resLog.error || 'Lỗi bốc quà!' };
+    }
+
+    // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
+    return { success: true, xpGain };
+  } catch (error) {
+    console.error('Lỗi performLuckyDrawAction:', error);
+    return { success: false, error: error.message };
+  }
+}

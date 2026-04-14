@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { calculateLevel, calculateProgress, calculateTitle } from '@/lib/xp';
 import Link from 'next/link';
 import { optimizeImage } from '@/lib/cloudinary';
+import { performLuckyDrawAction } from '@/lib/actions';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ProfileClient({ userId, initialUser, initialStats, initialXpLogs }) {
   const router = useRouter();
@@ -15,6 +17,25 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
   const [xpLogs, setXpLogs] = useState(initialXpLogs || []);
   const [loading, setLoading] = useState(!initialUser);
   const [error, setError] = useState(null);
+  
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawResult, setDrawResult] = useState(null);
+  const [sessionUser, setSessionUser] = useState(null);
+
+  useEffect(() => {
+    // Lấy thông tin session từ Cookie (Client-side)
+    const sessionCookie = document.cookie.split('; ').find(row => row.startsWith('shiroi_session='))?.split('=')[1];
+    if (sessionCookie) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(sessionCookie));
+        setSessionUser(decoded);
+      } catch (err) {
+        console.error("Lỗi giải mã session cookie:", err);
+      }
+    }
+  }, []);
+
+  const isOwner = sessionUser?.id === userId;
 
   useEffect(() => {
     if (!initialUser && userId) fetchUserData();
@@ -68,6 +89,41 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       setError('Lỗi kết nối hệ thống. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLuckyDraw = async () => {
+    if (isDrawing) return;
+    try {
+      setIsDrawing(true);
+      const res = await performLuckyDrawAction();
+      
+      if (res.success) {
+        setDrawResult(res.xpGain);
+        // Tự động cập nhật XP trên UI để người dùng thấy ngay thành quả 🍀
+        setTargetUser(prev => ({
+          ...prev,
+          xp: (prev.xp || 0) + res.xpGain
+        }));
+        
+        // Thêm log tạm thời vào UI
+        const newLog = {
+           id: Date.now(),
+           amount: res.xpGain,
+           type: 'lucky_draw',
+           reason: `May mắn hàng ngày: +${res.xpGain} XP`,
+           created_at: new Date().toISOString()
+        };
+        setXpLogs(prev => [newLog, ...prev.slice(0, 9)]);
+
+        setTimeout(() => setDrawResult(null), 4000);
+      } else {
+        alert(res.error || 'Có lỗi xảy ra khi bốc quà!');
+      }
+    } catch (err) {
+      console.error("Lỗi bốc quà:", err);
+    } finally {
+      setIsDrawing(false);
     }
   };
 
@@ -168,6 +224,54 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                   </div>
                 </div>
             </div>
+
+            {/* 🎁 DAILY LUCKY DRAW (CHỈ HIỆN VỚI CHỦ SỞ HỮU HỒ SƠ) */}
+            <AnimatePresence>
+               {isOwner && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="relative p-8 bg-gradient-to-br from-[#1c221c] to-[#0a0c0a] border border-[#4caf50]/20 rounded-[40px] shadow-2xl overflow-hidden group"
+                  >
+                     {/* Background Glow */}
+                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#4caf50]/10 rounded-full blur-[60px] group-hover:bg-[#4caf50]/20 transition-all"></div>
+                     
+                     <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
+                        <div className="w-20 h-20 bg-black/40 rounded-3xl flex items-center justify-center text-4xl border border-white/5 shadow-inner transform group-hover:rotate-12 transition-transform duration-500">
+                           {isDrawing ? "⏳" : "🎁"}
+                        </div>
+                        <div className="flex-1 text-center md:text-left space-y-1">
+                           <h3 className="text-sm font-black text-white uppercase tracking-widest">Hộp Quà May Mắn Shiroi</h3>
+                           <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Mở quà mỗi ngày để nhận ngẫu nhiên tối đa 500 XP!</p>
+                        </div>
+                        <button 
+                          onClick={handleLuckyDraw}
+                          disabled={isDrawing}
+                          className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 whitespace-nowrap ${isDrawing ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-[#4caf50] text-[#0a0c0a] hover:shadow-[0_10px_30px_rgba(76,175,80,0.3)] hover:scale-105'}`}
+                        >
+                           {isDrawing ? "ĐANG TRIỆU HỒI..." : "MỞ QUÀ NGAY 💮"}
+                        </button>
+                     </div>
+
+                     {/* Result Toast Overlay */}
+                     <AnimatePresence>
+                        {drawResult && (
+                           <motion.div 
+                             initial={{ scale: 0.8, opacity: 0 }}
+                             animate={{ scale: 1, opacity: 1 }}
+                             exit={{ scale: 1.2, opacity: 0 }}
+                             className="absolute inset-0 bg-[#4caf50] flex flex-col items-center justify-center space-y-2 z-50 text-[#0a0c0a]"
+                           >
+                              <span className="text-4xl animate-bounce">🧧</span>
+                              <div className="text-2xl font-black tracking-tighter">BẠN NHẬN ĐƯỢC +{drawResult} XP!</div>
+                              <div className="text-[9px] font-black uppercase tracking-widest opacity-60 italic">Đã đồng bộ vào Thánh tích Shiroi</div>
+                           </motion.div>
+                        )}
+                     </AnimatePresence>
+                  </motion.div>
+               )}
+            </AnimatePresence>
 
             {/* ACTION BUTTONS */}
             <div className="flex items-center gap-4 pt-6">
