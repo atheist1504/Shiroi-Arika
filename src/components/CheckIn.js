@@ -35,7 +35,7 @@ export default function CheckIn() {
         .from('shiroi_xp_logs')
         .select('created_at')
         .eq('user_id', userData.id)
-        .eq('type', 'checkin')
+        .eq('type', 'check_in') // 🔍 Sửa lỗi: Phải là check_in 🛡️
         .gte('created_at', `${today}T00:00:00.000Z`)
         .lte('created_at', `${today}T23:59:59.999Z`)
         .limit(1);

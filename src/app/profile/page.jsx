@@ -104,7 +104,7 @@ export default function ProfilePage() {
           .from('shiroi_xp_logs')
           .select('created_at')
           .eq('user_id', userId)
-          .eq('type', 'checkin')
+          .eq('type', 'check_in') // 🔍 Sửa lỗi: Phải là check_in 🛡️
           .gte('created_at', startOfMonth);
         
         if (!checkInError && checkInData) {
@@ -123,7 +123,7 @@ export default function ProfilePage() {
           .from('shiroi_xp_logs')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
-          .eq('type', 'checkin');
+          .eq('type', 'check_in'); // 🔍 Sửa lỗi: Phải là check_in 🛡️
         
         if (!countErr) setTotalCheckIns(count || 0);
       }
@@ -195,7 +195,7 @@ export default function ProfilePage() {
         localStorage.setItem('shiroi_user', JSON.stringify(data));
         
         // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
-        await recordXpLog(supabase, user.id, totalReward, 'checkin', `Streak: ${newStreak}`);
+        await recordXpLog(supabase, user.id, totalReward, 'check_in', `Streak: ${newStreak}`);
         
         // ✨ CẬP NHẬT LỊCH NGAY LẬP TỨC 🍀
         const todayDate = parseInt(new Date().toLocaleDateString('en-CA', { 
