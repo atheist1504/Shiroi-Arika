@@ -411,25 +411,45 @@ export async function performCheckInAction() {
     const now = getVietnamTime();
     const lastCheck = user.last_check_in ? new Date(new Date(user.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
     
-    // Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
+    // 1. Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
     const isSameDay = lastCheck && 
       lastCheck.getUTCDate() === now.getUTCDate() &&
       lastCheck.getUTCMonth() === now.getUTCMonth() &&
       lastCheck.getUTCFullYear() === now.getUTCFullYear();
-
+ 
     if (isSameDay) return { success: false, error: 'Bạn đã điểm danh hôm nay rồi!' };
-
-    // 2. Tính toán streak và XP mới
-    let newStreak = (user.check_in_streak || 0) + 1;
+ 
+    // 2. TÍNH TOÁN CHUỖI (STREAK) CHUẨN 🛡️
+    let newStreak = 1;
     
-    // 🔄 TỰ ĐỘNG RESET CHUỖI KHI SANG THÁNG MỚI (Đảm bảo công bằng tháng) 🍀
+    if (lastCheck) {
+        // Tính khoảng cách ngày (dựa trên mốc 00:00:00 giờ VN)
+        const lastCheckDate = new Date(lastCheck.getUTCFullYear(), lastCheck.getUTCMonth(), lastCheck.getUTCDate());
+        const nowDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const diffTime = Math.abs(nowDate - lastCheckDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+ 
+        if (diffDays === 1) {
+            // Điểm danh liên tiếp -> Tăng chuỗi 🍀
+            newStreak = (user.check_in_streak || 0) + 1;
+        } else if (diffDays > 1) {
+            // Nghỉ quá 1 ngày -> Reset chuỗi về 1 🌵
+            newStreak = 1;
+        } else {
+            // Trường hợp hy hữu (lệch giờ) -> Giữ nguyên hoặc tăng 1
+            newStreak = (user.check_in_streak || 0) + 1;
+        }
+    }
+ 
+    // 🔄 RESET CHUỖI KHI SANG THÁNG MỚI (Nếu bạn muốn chuỗi reset theo tháng Leaderboard)
+    // Nếu bạn muốn chuỗi là xuyên suốt đời người thì có thể bỏ qua bước này.
+    /*
     if (lastCheck && (lastCheck.getUTCMonth() !== now.getUTCMonth() || lastCheck.getUTCFullYear() !== now.getUTCFullYear())) {
-        console.log("📅 [Check-in] Phát hiện tháng mới, Reset chuỗi về 1.");
         newStreak = 1;
     }
+    */
 
-    // 3. Ghi log nhật ký ĐIỂM DANH 📅
-    // Database Trigger và UNIQUE Index sẽ đảm bảo tính bảo mật và cộng điểm tự động.
+    // 3. Ghi log nhật ký ĐIỂM DANH (Sử dụng 'check_in' có gạch dưới chuẩn hóa) 📅
     const resLog = await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);
     
     if (!resLog.success) {
