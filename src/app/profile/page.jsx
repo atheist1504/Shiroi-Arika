@@ -364,12 +364,19 @@ export default function ProfilePage() {
                 <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Chuỗi điểm danh</h3>
               </div>
 
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center gap-4">
                 <div className="text-5xl mb-2 group-hover:scale-125 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(255,165,0,0.5)]">🔥</div>
-                <div className="px-5 py-2 bg-black/60 rounded-2xl border border-white/10 backdrop-blur-md">
-                   <span className="text-[11px] font-black text-white uppercase tracking-widest whitespace-nowrap">
-                      Đã điểm danh: <span className="text-[#4caf50] text-xl">{totalCheckIns}</span> ngày ⚡
-                   </span>
+                <div className="flex flex-col gap-2">
+                   <div className="px-5 py-2 bg-[#4caf50]/10 rounded-2xl border border-[#4caf50]/20 backdrop-blur-md text-center">
+                      <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest whitespace-nowrap">
+                         Chuỗi hiện tại: <span className="text-xl">{user?.check_in_streak || 0}</span> ngày
+                      </span>
+                   </div>
+                   <div className="px-5 py-2 bg-black/60 rounded-2xl border border-white/10 backdrop-blur-md text-center">
+                      <span className="text-[9px] font-black text-white/60 uppercase tracking-widest whitespace-nowrap">
+                         Tổng tích lũy: <span className="text-white text-lg">{totalCheckIns}</span> ngày ⚡
+                      </span>
+                   </div>
                 </div>
               </div>
 
