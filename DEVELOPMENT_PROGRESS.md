@@ -33,14 +33,15 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Robust Session Validation**: Nâng cấp kiểm tra ID người dùng trong toàn bộ Server Actions (Check-in, Read XP, Follow) với thông báo lỗi Tiếng Việt thân thiện. 🛡️🍀
 - [x] **Dynamic OG Image API (Fixed)**: Đã chuyển sang sử dụng Service Role để bypass RLS, đảm bảo Banner chia sẻ luôn hiển thị đầy đủ thông tin truyện. Tích hợp trực tiếp vào trang chi tiết Manga. 🎨🚀✨
 - [x] **Reader Empty Chapter Fix (Enhanced)**: Chuyển ReaderPage sang dùng `supabaseAdmin` + `force-dynamic`. Thêm `revalidatePath` vào Server Action để xóa cache ngay khi lưu, đảm bảo ảnh hiện ngay lập tức. 🖼️⚡🛡️
-- [x] **RLS Disabling**: Quyết định tắt hoàn toàn RLS cho các bảng `mangas`, `chapters`, `pages` để tối ưu truy cập công khai. 🔓🟢
+- [x] **RLS Fully Disabled**: Quyết định tắt hoàn toàn RLS cho các bảng `mangas`, `chapters`, `pages` để loại bỏ triệt để lỗi 403 khi tải ảnh cho độc giả vãng lai. Đã tạo script [fix_permissions_v2.sql](file:///c:/Shiroi%20Arika/fix_permissions_v2.sql). 🔓🟢🍀
+- [x] **Reader Resilience Upgrade**: Nâng cấp `ReaderClient` với cơ chế tự động thử lại (Retry) nguồn ảnh gốc R2 nếu CDN lỗi. Tích hợp Error Logging chi tiết để dễ dàng gỡ lỗi trên Production. 🖼️🛡️🚀
 
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
 1. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP (đang thực hiện).
 2. **Hệ Thống Thông Báo**: Triển khai Notification khi có chương mới (Firebase Cloud Messaging).
-3. **Bảo Mật SQL RLS**: Chạy lệnh SQL khóa chặt quyền cập nhật XP và Ghim Banner (Chỉ Admin).
+3. **Bảo Mật Hệ Thống**: Tiếp tục rà soát các bảng dữ liệu nhạy cảm khác để áp dụng RLS chuẩn xác.
 
 ---
 
@@ -56,4 +57,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 03:30 - 14/04/2026*
+*Cập nhật lần cuối: 18:52 - 14/04/2026*

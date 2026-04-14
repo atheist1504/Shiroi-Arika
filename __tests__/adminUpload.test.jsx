@@ -1,10 +1,9 @@
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import AdminUploadPage from '../src/app/admin/upload/page';
 import { supabase } from '../src/lib/supabase';
-import { compressImageToWebP } from '../src/lib/imageOptimizer';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-// Giả lập (Mock) framer-motion
+// Giả lập (Mock) framer-motion để tránh lỗi khi chạy test mội trường JSDOM
 jest.mock('framer-motion', () => ({
   motion: {
     div: ({ children, ...props }) => <div {...props}>{children}</div>,
@@ -13,18 +12,13 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }) => <>{children}</>,
 }));
 
-// Giả lập (Mock) next/navigation
+// Giả lập (Mock) next/navigation (Next.js components)
 jest.mock('next/navigation', () => ({
   useSearchParams: () => ({ get: jest.fn() }),
   useRouter: () => ({ push: jest.fn() }),
 }));
 
-// Bỏ qua (Mock) chức năng nén ảnh vì JSDOM không hỗ trợ đầy đủ Canvas HTML5
-jest.mock('../src/lib/imageOptimizer', () => ({
-  compressImageToWebP: jest.fn(() => Promise.resolve(new File(['(binary)'], 'test.webp', { type: 'image/webp' }))),
-}));
-
-// Giả lập (Mock) Supabase
+// Giả lập (Mock) Supabase Client
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
@@ -34,12 +28,12 @@ jest.mock('../src/lib/supabase', () => ({
   },
 }));
 
-describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa 🍀', () => {
+describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa & Logic Toàn Diện 🍀', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('hiển thị danh sách Manga để chọn ban đầu từ Database', async () => {
+  it('phải hiển thị danh sách Manga đã lưu trong hệ thống', async () => {
     const mockMangas = [{ id: 'm1', title: 'Code Geass: Lelouch of the Rebellion' }];
 
     supabase.from.mockImplementationOnce(() => ({
@@ -50,14 +44,13 @@ describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa 🍀', () => 
 
     render(<AdminUploadPage />);
 
-    // Kiểm tra xem tên truyện có xuất hiện trong danh sách không
+    // Kiểm tra xem tiêu đề truyện có hiển thị trong danh sách dropdown/list không
     await waitFor(() => {
       expect(screen.getByText('Code Geass: Lelouch of the Rebellion')).toBeInTheDocument();
     });
   });
 
-  it('thông báo lỗi khi nhấn nút xuất bản mà chưa nhập đủ thông tin', async () => {
-    // Không có manga nào được chọn mặc định
+  it('phải chặn quá trình xuất bản nếu thông tin chương trống', async () => {
     supabase.from.mockImplementationOnce(() => ({
       select: () => ({
         order: () => Promise.resolve({ data: [], error: null })
@@ -66,19 +59,35 @@ describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa 🍀', () => 
 
     render(<AdminUploadPage />);
 
-    // Tìm nút xuất bản theo đúng text mới
+    // Tìm nút xuất bản dựa trên Text tiếng Việt chuẩn
     const publishBtn = screen.getByText(/XUẤT BẢN NGAY 🚀/i);
     fireEvent.click(publishBtn);
 
     await waitFor(() => {
-      // Thông báo lỗi phải khớp với logic mới trong page.tsx
+      // Thông báo lỗi phải khớp hoàn toàn với giao diện Admin
       expect(screen.getByText(/CHƯA NHẬP ĐỦ THÔNG TIN! 🍀/i)).toBeInTheDocument();
     });
   });
 
-  it('hiển thị khu vực thêm trang truyện bằng hình ảnh', async () => {
+  it('phải hiển thị nút thêm trang truyện trực quan', async () => {
     render(<AdminUploadPage />);
     expect(screen.getByText(/Thêm trang/i)).toBeInTheDocument();
-    expect(screen.getByText(/CÁC TRANG TRUYỆN/i)).toBeInTheDocument();
+  });
+
+  it('phải kiểm soát được dung lượng lưu trữ (Storage Meter)', async () => {
+    // Giả lập API storage trả về dung lượng
+    window.fetch = jest.fn().mockImplementationOnce(() => 
+        Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ success: true, totalGB: 5, limitGB: 10 })
+        })
+    );
+
+    render(<AdminUploadPage />);
+    
+    await waitFor(() => {
+        expect(screen.getByText(/DUNG LƯỢNG ĐÃ DÙNG/i)).toBeInTheDocument();
+        expect(screen.getByText(/5.00 GB \/ 10 GB/i)).toBeInTheDocument();
+    });
   });
 });

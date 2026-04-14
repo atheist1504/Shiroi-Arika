@@ -13,19 +13,31 @@ import { XP_REWARDS, recordXpLog } from '@/lib/xp';
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
   return (
     <div className={`flex flex-col items-center w-full bg-[var(--bg-reader)] ${theme === 'light' ? '' : 'shadow-2xl'}`}>
-      {pages.map((page) => (
+      {pages.map((page, index) => (
         <img 
           key={page.id} 
           src={optimizeImage(fixR2Url(page.image_url), 1200)} 
-          alt="" 
+          alt={`Trang ${index + 1}`} 
           className="w-full h-auto block m-[-0.5px] p-0 will-change-transform" 
           loading="lazy" 
           decoding="async"
           crossOrigin="anonymous"
           referrerPolicy="no-referrer"
           onError={(e) => {
+            const currentSrc = e.currentTarget.src;
             const raw = fixR2Url(page.image_url);
-            if (e.target.src !== raw) e.target.src = raw;
+            
+            console.error(`❌ [Reader] Lỗi tải trang ${index + 1}:`, {
+                pageId: page.id,
+                attemptedUrl: currentSrc,
+                rawUrl: raw
+            });
+
+            // 🛡️ RECOVERY: Nếu Cloudinary lỗi, thử quay về ảnh R2 gốc
+            if (currentSrc !== raw) {
+                console.log(`🔄 [Reader] Đang thử tải lại trang ${index + 1} từ nguồn gốc R2...`);
+                e.currentTarget.src = raw;
+            }
           }}
         />
       ))}
@@ -379,7 +391,27 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         {readingMode === 'page' && (
           <div className="relative w-full h-full flex flex-col items-center justify-center p-0 md:p-2 pt-14">
             <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)] w-full">
-                <img src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} alt="" className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} crossOrigin="anonymous" referrerPolicy="no-referrer" onError={(e) => { const raw = fixR2Url(pages[currentPageIndex]?.image_url); if (e.target.src !== raw) e.target.src = raw; }} />
+                <img 
+                  src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} 
+                  alt={`Trang ${currentPageIndex + 1}`} 
+                  className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} 
+                  crossOrigin="anonymous" 
+                  referrerPolicy="no-referrer" 
+                  onError={(e) => { 
+                    const currentSrc = e.currentTarget.src;
+                    const raw = fixR2Url(pages[currentPageIndex]?.image_url); 
+                    
+                    console.error(`❌ [Reader-Page] Lỗi trang ${currentPageIndex + 1}:`, {
+                        url: currentSrc,
+                        raw: raw
+                    });
+
+                    if (currentSrc !== raw) {
+                        console.log("🔄 [Reader-Page] Thử lại nguồn gốc R2...");
+                        e.currentTarget.src = raw; 
+                    }
+                  }} 
+                />
             </div>
             <div onClick={() => currentPageIndex > 0 && setCurrentPageIndex(c => c - 1)} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
             <div onClick={() => currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter()} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>

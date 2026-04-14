@@ -7,6 +7,13 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { sendMangaNotification } from './notifications';
 
+/**
+ * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
+ */
+const getVietnamTime = () => {
+  const now = new Date();
+  return new Date(now.getTime() + (7 * 60 * 60 * 1000));
+};
 
 /**
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
@@ -286,6 +293,31 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
     }
     
     const client = getDbClient();
+
+    // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
+    if (type === 'comment' || type === 'first_comment') {
+        const now = getVietnamTime();
+        const startOfDay = new Date(now.setUTCHours(0, 0, 0, 0)).toISOString();
+        const endOfDay = new Date(now.setUTCHours(23, 59, 59, 999)).toISOString();
+
+        const { data: todayLogs, error: logError } = await client
+            .from('shiroi_xp_logs')
+            .select('amount')
+            .eq('user_id', userId)
+            .in('type', ['comment', 'first_comment'])
+            .gte('created_at', startOfDay)
+            .lte('created_at', endOfDay);
+
+        if (!logError && todayLogs) {
+            const totalToday = todayLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
+            const MAX_COMMENT_XP = 100; // Khớp với xp.js
+            
+            if (totalToday + amount > MAX_COMMENT_XP) {
+                return { success: false, error: 'Đã đạt giới hạn XP bình luận trong ngày (100 XP)! 🛡️' };
+            }
+        }
+    }
+    
     const { error } = await client
       .from('shiroi_xp_logs')
       .insert({
@@ -377,19 +409,26 @@ export async function performCheckInAction() {
 
     if (fetchError || !user) throw new Error("Không tìm thấy thông tin người dùng");
 
-    const now = new Date();
-    const lastCheck = user.last_check_in ? new Date(user.last_check_in) : null;
+    const now = getVietnamTime();
+    const lastCheck = user.last_check_in ? new Date(new Date(user.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
     
     // Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
     const isSameDay = lastCheck && 
-      lastCheck.getDate() === now.getDate() &&
-      lastCheck.getMonth() === now.getMonth() &&
-      lastCheck.getFullYear() === now.getFullYear();
+      lastCheck.getUTCDate() === now.getUTCDate() &&
+      lastCheck.getUTCMonth() === now.getUTCMonth() &&
+      lastCheck.getUTCFullYear() === now.getUTCFullYear();
 
     if (isSameDay) return { success: false, error: 'Bạn đã điểm danh hôm nay rồi!' };
 
     // 2. Tính toán streak và XP mới
-    const newStreak = (user.check_in_streak || 0) + 1;
+    let newStreak = (user.check_in_streak || 0) + 1;
+    
+    // 🔄 TỰ ĐỘNG RESET CHUỖI KHI SANG THÁNG MỚI (Đảm bảo công bằng tháng) 🍀
+    if (lastCheck && (lastCheck.getUTCMonth() !== now.getUTCMonth() || lastCheck.getUTCFullYear() !== now.getUTCFullYear())) {
+        console.log("📅 [Check-in] Phát hiện tháng mới, Reset chuỗi về 1.");
+        newStreak = 1;
+    }
+
     const xpGain = 100; // Mặc định 100 XP
     const newXP = (user.xp || 0) + xpGain;
 

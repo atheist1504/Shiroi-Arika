@@ -350,11 +350,11 @@ export default function AdminUploadPage() {
             } catch (err: any) {
               retryCount++;
               console.error(`❌ Lỗi tại trang ${globalIndex + 1} (Lần ${retryCount}):`, err);
-              if (retryCount > maxRetries) throw err;
+              if (retryCount > maxRetries) throw new Error(`Trang số ${globalIndex + 1} không thể tải lên sau ${maxRetries} lần thử. Vui lòng kiểm tra mạng và thử lại!`);
               await sleep(1000 * retryCount);
             }
           }
-          return null;
+          throw new Error(`Lỗi không xác định tại trang ${globalIndex + 1}`);
         }));
 
         // Đẩy kết quả của đợt vào danh sách tổng

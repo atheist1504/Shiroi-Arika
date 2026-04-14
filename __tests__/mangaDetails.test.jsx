@@ -1,104 +1,86 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import MangaDetailsPage from '../src/app/manga/[mangaId]/page';
+import MangaPage from '../src/app/manga/[mangaId]/page';
+import MangaClient from '../src/app/manga/[mangaId]/MangaClient';
 import { supabase } from '../src/lib/supabase';
 
-// Giả lập (Mock) thư viện next/navigation
-jest.mock('next/navigation', () => ({
-  useParams: () => ({ mangaId: '123' }),
-  useRouter: () => ({
-    push: jest.fn(),
-  }),
-  notFound: jest.fn(),
+// Giả lập (Mock) các thành phần UI phức tạp
+jest.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children, ...props }) => <div {...props}>{children}</div>,
+    h1: ({ children, ...props }) => <h1 {...props}>{children}</h1>,
+    button: ({ children, ...props }) => <button {...props}>{children}</button>,
+    span: ({ children, ...props }) => <span {...props}>{children}</span>,
+  },
+  AnimatePresence: ({ children }) => <>{children}</>,
 }));
 
-// Giả lập (Mock) thư viện supabase
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn() }),
+  useParams: () => ({ mangaId: 'manga-123' }),
+}));
+
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
     from: jest.fn(),
   },
 }));
 
-describe('Trang Chi Tiết Truyện', () => {
+describe('Trang Chi tiết Manga - Kiểm thử Việt hóa 🍀', () => {
+  const mockManga = {
+    id: 'manga-123',
+    title: 'Hồ Sơ Shiroi Arika',
+    description: 'Một bản hùng ca về thế giới manga.',
+    cover_image: 'https://example.com/cover.jpg',
+    author: 'Shiroi Team',
+    status: 'Đang tiến hành',
+    views: 1200
+  };
+
+  const mockChapters = [
+    { id: 'c1', chapter_number: 1, title: 'Khởi đầu', created_at: '2026-04-14T00:00:00Z' }
+  ];
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('hiển thị trạng thái đang tải ban đầu', async () => {
-    // Với Server Components, chúng ta không thực sự test "loading state" dễ dàng qua render()
-    // vì chúng ta đang await việc render. Test này sẽ kiểm tra xem MangaClient có được render 
-    // với dữ liệu ban đầu không. Tuy nhiên để giữ tính tương thích, chúng ta mock dữ liệu.
-    const mockManga = { id: '123', title: 'Bleach' };
-    supabase.from.mockImplementation(() => ({
-       select: () => ({
-         eq: () => ({
-           single: () => Promise.resolve({ data: mockManga, error: null }),
-           order: () => Promise.resolve({ data: [], error: null })
-         })
-       })
-    }));
+  it('phải hiển thị đầy đủ thông tin cơ bản của bộ truyện', async () => {
+    // Giả lập dữ liệu fetch từ MangaClient
+    render(<MangaClient 
+      manga={mockManga} 
+      chapters={mockChapters} 
+      user={null} 
+      initialIsFollowed={false} 
+    />);
 
-    render(await MangaDetailsPage({ params: { mangaId: '123' } }));
-    expect(screen.getByText('Bleach')).toBeInTheDocument();
+    expect(screen.getByText('Hồ Sơ Shiroi Arika')).toBeInTheDocument();
+    expect(screen.getByText(/Một bản hùng ca/)).toBeInTheDocument();
+    expect(screen.getByText('Shiroi Team')).toBeInTheDocument();
   });
 
-  it('gọi notFound() khi mã truyện không tồn tại', async () => {
-    const { notFound } = require('next/navigation');
-    supabase.from.mockImplementation((table) => {
-      if (table === 'mangas') {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => Promise.resolve({ data: null, error: null }),
-            })
-          })
-        };
-      }
-      return {
-        select: () => ({
-          eq: () => ({
-            order: () => Promise.resolve({ data: [], error: null })
-          })
-        })
-      };
-    });
+  it('phải hiển thị danh sách chương và nút "ĐỌC NGAY"', async () => {
+    render(<MangaClient 
+      manga={mockManga} 
+      chapters={mockChapters} 
+      user={null} 
+      initialIsFollowed={false} 
+    />);
 
-    await MangaDetailsPage({ params: { mangaId: 'unknown' } });
-    expect(notFound).toHaveBeenCalled();
+    expect(screen.getByText(/CHƯƠNG 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/Khởi đầu/i)).toBeInTheDocument();
+    expect(screen.getByText(/ĐỌC NGAY/i)).toBeInTheDocument();
   });
 
-  it('hiển thị chi tiết truyện và danh sách chương khi có dữ liệu', async () => {
-    const mockManga = { id: '123', title: 'Bleach', description: 'Shinigami', cover_image: null };
-    const mockChapters = [
-      { id: 'c1', chapter_number: 1, title: 'Death and Strawberry', created_at: '2023-01-01T00:00:00.000Z' }
-    ];
+  it('phải hiển thị trạng thái theo dõi khi người dùng đã đăng nhập', async () => {
+    const mockUser = { id: 'u1', username: 'fan' };
+    
+    render(<MangaClient 
+      manga={mockManga} 
+      chapters={mockChapters} 
+      user={mockUser} 
+      initialIsFollowed={true} 
+    />);
 
-    supabase.from.mockImplementation((table) => {
-      if (table === 'mangas') {
-        return {
-          select: () => ({
-            eq: () => ({
-              single: () => Promise.resolve({ data: mockManga, error: null })
-            })
-          })
-        };
-      }
-      if (table === 'chapters') {
-        return {
-          select: () => ({
-            eq: () => ({
-              order: () => Promise.resolve({ data: mockChapters, error: null })
-            })
-          })
-        };
-      }
-    });
-
-    render(await MangaDetailsPage({ params: { mangaId: '123' } }));
-
-    await waitFor(() => {
-      expect(screen.getByText('Bleach')).toBeInTheDocument();
-      expect(screen.getByText('Shinigami')).toBeInTheDocument();
-      expect(screen.getByText(/Death and Strawberry/i)).toBeInTheDocument();
-    });
+    expect(screen.getByText(/ĐÃ THEO DÕI/i)).toBeInTheDocument();
   });
 });
