@@ -27,29 +27,30 @@ export default function LuckyDraw() {
     
     try {
       const userData = JSON.parse(storedUser);
-      const { data, error } = await supabase
-        .from('shiroi_users')
-        .select('last_lucky_draw, xp')
-        .eq('id', userData.id)
-        .single();
       
-      if (!error && data) {
-         // Cập nhật lại LocalStorage và State nếu dữ liệu DB mới hơn
-         const updatedUser = { ...userData, last_lucky_draw: data.last_lucky_draw, xp: data.xp };
+      // 🕵️‍♂️ TRUY VẤN NHẬT KÝ THỰC TẾ: Kiểm tra xem hôm nay có dòng 'lucky_draw' nào chưa
+      // Sử dụng giờ Việt Nam để khớp với Index của Database
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      
+      const { data: logs, error: logError } = await supabase
+        .from('shiroi_xp_logs')
+        .select('created_at')
+        .eq('user_id', userData.id)
+        .eq('type', 'lucky_draw')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .limit(1);
+      
+      if (!logError && logs && logs.length > 0) {
+         setCanDraw(false);
+         // Tiện tay cập nhật luôn LocalStorage để các lần load sau nhanh hơn
+         const updatedUser = { ...userData, last_lucky_draw: logs[0].created_at };
          localStorage.setItem("shiroi_user", JSON.stringify(updatedUser));
-         setUser(updatedUser);
-         
-         const lastDraw = data.last_lucky_draw ? new Date(data.last_lucky_draw) : null;
-         const today = new Date();
-         const isSameDay = lastDraw && 
-            lastDraw.getDate() === today.getDate() &&
-            lastDraw.getMonth() === today.getMonth() &&
-            lastDraw.getFullYear() === today.getFullYear();
-         
-         setCanDraw(!isSameDay);
+      } else {
+         setCanDraw(true);
       }
     } catch (err) {
-      console.warn("Lỗi đồng bộ LuckyDraw từ DB:", err);
+      console.warn("Lỗi đồng bộ LuckyDraw từ Nhật ký:", err);
     }
   };
 
