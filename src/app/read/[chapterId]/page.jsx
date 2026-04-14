@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ReaderClient from "./ReaderClient";
 import { notFound } from "next/navigation";
 
+export const dynamic = 'force-dynamic'; // ⚡ Bắt buộc Next.js không được cache trang này
 export const revalidate = 0; // Luôn lấy dữ liệu mới nhất để cập nhật ảnh ngay lập tức 🍀
 
 // 🕵️‍♂️ HÀM HỖ TRỢ CHỌN CLIENT (Server-side)
@@ -54,6 +55,9 @@ export default async function ReaderPage({ params }) {
   const { data: manga } = await client.from("mangas").select("*").eq("id", chapter.manga_id).single();
   const { data: pages, error: pagesError } = await client.from("pages").select("*").eq("chapter_id", chapterId).order("page_number", { ascending: true });
   
+  // 🔍 LOG DEBUG CHO VERCEL
+  console.log(`[Reader] Chapter: ${chapter.chapter_number} | Manga: ${manga?.title} | ID: ${chapterId} | Pages found: ${pages?.length || 0}`);
+
   if (pagesError) {
      console.error(`❌ [ReaderPage] Lỗi lấy danh sách trang cho chương ${chapterId}:`, pagesError.message);
   }

@@ -4,7 +4,10 @@ import { uploadToR2, getPresignedUploadUrl, deleteFolderFromR2 } from './r2';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabaseAdmin';
 import { cookies } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { sendMangaNotification } from './notifications';
+
+const getDbClient = () => supabaseAdmin || supabase;
 
 /**
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
@@ -572,6 +575,11 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
 
     const { error: pagesError } = await client.from("pages").insert(pagesWithId);
     if (pagesError) throw new Error(`Lỗi lưu Pages: ${pagesError.message}`);
+
+    // ⚡ XÓA CACHE ĐỂ ĐƯA DATA MỚI LÊN READER NGAY LẬP TỨC 🍀
+    revalidatePath(`/read/${chapId}`);
+    revalidatePath(`/manga/${chapterPayload.manga_id}`);
+    revalidatePath('/');
 
     return { success: true, chapterId: chapId };
   } catch (error) {

@@ -32,8 +32,8 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Sync Signup Session**: Đồng bộ hóa Cookie Session ngay khi Đăng ký mới, khắc phục triệt để lỗi "USERID IS NOT DEFINED" khi điểm danh ngay sau khi tạo tài khoản. 🍪🚀
 - [x] **Robust Session Validation**: Nâng cấp kiểm tra ID người dùng trong toàn bộ Server Actions (Check-in, Read XP, Follow) với thông báo lỗi Tiếng Việt thân thiện. 🛡️🍀
 - [x] **Dynamic OG Image API (Fixed)**: Đã chuyển sang sử dụng Service Role để bypass RLS, đảm bảo Banner chia sẻ luôn hiển thị đầy đủ thông tin truyện. Tích hợp trực tiếp vào trang chi tiết Manga. 🎨🚀✨
-- [x] **Reader Empty Chapter Fix**: Chuyển ReaderPage sang dùng `supabaseAdmin` để đảm bảo 100% hình ảnh được tải lên từ Server, khắc phục triệt để lỗi mất trang truyện. 🖼️🛡️
-- [x] **RLS Disabling**: Quyết định tắt hoàn toàn RLS cho các bảng `mangas`, `chapters`, `pages` để tối ưu truy cập công khai mà không vướng phân quyền. 🔓🟢
+- [x] **Reader Empty Chapter Fix (Enhanced)**: Chuyển ReaderPage sang dùng `supabaseAdmin` + `force-dynamic`. Thêm `revalidatePath` vào Server Action để xóa cache ngay khi lưu, đảm bảo ảnh hiện ngay lập tức. 🖼️⚡🛡️
+- [x] **RLS Disabling**: Quyết định tắt hoàn toàn RLS cho các bảng `mangas`, `chapters`, `pages` để tối ưu truy cập công khai. 🔓🟢
 
 ---
 
