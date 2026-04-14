@@ -4,7 +4,12 @@ Dự án Manga Platform thế hệ mới.
 
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
-### 🎮 Gamification & Hệ Thống User (v3 - Hoàn Thiện) 🍀
+### 🎮 Gamification & Hệ Thống User (v4 - Đồng Bộ & Bảo Mật) 🍀
+- [x] **Real-time DB Sync (Refresh-Safe)**: Nâng cấp nút **Điểm danh** và **Bốc quà** tự động truy vấn Database mỗi khi tải trang. Khắc phục triệt để lỗi "Refresh mất trạng thái", đảm bảo nút luôn hiện đúng "HẸN MAI NHÉ" ngay cả khi F5. 🛡️⚡
+- [x] **Vietnam Timezone Standardization**: Chuẩn hóa toàn bộ logic thời gian sang múi giờ `Asia/Ho_Chi_Minh` (GMT+7). Sử dụng phương pháp so sánh chuỗi ngày `YYYY-MM-DD` để loại bỏ hoàn toàn sai số giữa Server (UTC) và Client (VN). 🇻🇳📅
+- [x] **SQL Nuclear Repair & Calibration**: Triển khai script đại tu Database: Hợp nhất `checkin` và `check_in`, xóa bỏ mọi dòng trùng lặp (Deduplication), và tính toán lại Chuỗi (Streak) dựa trên nhật ký thực tế. Đảm bảo tính công bằng tuyệt đối cho BXH. 🧪🛡️💎
+- [x] **Ghost Day Recovery**: Tự động bù đắp nhật ký cho những trường hợp bị lệch múi giờ trong ngày 14/04, giúp khôi phục đầy đủ số ngày "Lửa" cho người dùng. 🔥✨
+- [x] **Navbar Integration**: Di chuyển tính năng Bốc quà (Lucky Draw) lên thanh Menu chính cạnh nút Điểm danh, giúp tăng tính tương tác và tiện dụng. 🧧🚀
 - [x] **Streak Reset Mỗi Tháng**: Đã triển khai cơ chế tự động Reset chuỗi điểm danh về 1 khi sang tháng mới để đảm bảo tính công bằng hàng tháng. 🔄
 - [x] **Lifetime Check-in Flame**: Chuyển đổi thông số "Ngọn lửa" từ chuỗi liên tiếp sang **"Tổng số ngày đã điểm danh trọn đời"**, giúp người dùng theo dõi hành trình dài hạn bền vững hơn. 🔥✨
 - [x] **Check-in Calendar UI**: Tích hợp lưới lịch 7 cột chuyên nghiệp, hiển thị trực quan các ngày đã điểm danh trong tháng. Đã gỡ bỏ dấu chấm phụ để giao diện tối giản, sang trọng. 🍀
@@ -17,6 +22,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Compact Filter System**: Thiết kế lại bộ lọc tại Kho Truyện và Tìm Kiếm theo phong cách "ô nhỏ" gọn gàng. Hợp nhất thanh tìm kiếm và trạng thái, tối ưu không gian hiển thị trên cả Mobile và Desktop. 🔍✨
 - [x] **Build Error Fixes**: Khắc phục lỗi `ReferenceError` trong `actions.js` và đồng bộ hóa `styled-jsx` sang `dangerouslySetInnerHTML` để tương thích hoàn toàn với Next.js App Router, giúp hệ thống hoạt động ổn định trên Vercel. 🛠️✅
 - [x] **RLS Permissions Fix**: Phát hiện và xử lý lỗi thiếu chính sách SELECT trên bảng `pages` và `chapters`. Đã tạo script [fix_permissions.sql](file:///c:/Shiroi%20Arika/fix_permissions.sql) để mở khóa hình ảnh cho tất cả người đọc. 🖼️🛡️🔓
+- [x] **Profile Crash Hotfix (v16)**: Khắc phục triệt để lỗi "Client-side exception" tại trang `/profile` do biến `isPast` bị undefined. Đồng thời tối ưu hóa cơ chế Hydration bằng cách lấy ngày hiện tại đồng nhất giữa Server và Client. 🛠️✅🔥
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -57,4 +63,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 18:52 - 14/04/2026*
+*Cập nhật lần cuối: 22:52 - 14/04/2026 (Đồng bộ Múi giờ & Sửa lỗi Profile)*
