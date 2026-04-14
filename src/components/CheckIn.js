@@ -16,10 +16,39 @@ export default function CheckIn() {
 
   useEffect(() => {
     checkUserAndStatus();
-    // Listen for storage changes (login/logout/profile update)
+    // 🚀 ĐỒNG BỘ THỰC TẾ: Tránh lỗi Refresh vẫn hiện nút điểm danh
+    fetchStatusFromDb();
+
     window.addEventListener("storage", checkUserAndStatus);
     return () => window.removeEventListener("storage", checkUserAndStatus);
   }, []);
+
+  const fetchStatusFromDb = async () => {
+    const storedUser = localStorage.getItem("shiroi_user");
+    if (!storedUser) return;
+    
+    try {
+      const userData = JSON.parse(storedUser);
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      
+      const { data: logs, error: logError } = await supabase
+        .from('shiroi_xp_logs')
+        .select('created_at')
+        .eq('user_id', userData.id)
+        .eq('type', 'checkin')
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lte('created_at', `${today}T23:59:59.999Z`)
+        .limit(1);
+      
+      if (!logError && logs && logs.length > 0) {
+         setCanCheckIn(false);
+      } else {
+         setCanCheckIn(true);
+      }
+    } catch (err) {
+      console.warn("Lỗi đồng bộ CheckIn từ Nhật ký:", err);
+    }
+  };
 
   const checkUserAndStatus = async () => {
     const storedUser = localStorage.getItem("shiroi_user");
