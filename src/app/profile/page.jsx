@@ -522,12 +522,23 @@ export default function ProfilePage() {
 
                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🧧</span>
+                        <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Thử thách vận khí</span>
+                     </div>
+                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                        Mỗi ngày bốc quà nhận ngẫu nhiên: <br/>
+                        Quà: <span className="text-[#4caf50]">10-50</span>, Lớn: <span className="text-[#4caf50]">100</span>, Nổ hũ: <span className="text-[#4caf50]">500 XP</span>!
+                     </p>
+                  </div>
+
+                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                     <div className="flex items-center gap-2">
                         <span className="text-lg">⚡</span>
                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Thăng cấp</span>
                      </div>
                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
                         Cứ mỗi <span className="text-[#4caf50]">100 XP</span> bạn sẽ thăng 1 cấp. <br/>
-                        Cấp càng cao, danh hiệu và quyền hạn càng lớn trên Shiroi Arika!
+                        Cấp càng cao, danh hiệu và quyền hạn càng lớn!
                      </p>
                   </div>
                </div>

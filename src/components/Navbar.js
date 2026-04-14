@@ -6,6 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 import CheckIn from "./CheckIn";
+import LuckyDraw from "./LuckyDraw";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -173,8 +174,11 @@ export default function Navbar() {
           </div>
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
-          <div className="hidden lg:flex h-10 items-center justify-end animate-fade-in relative px-6 mb-2">
-            <div className="absolute right-6 scale-90">
+          <div className="hidden lg:flex h-10 items-center justify-end animate-fade-in relative px-6 mb-2 gap-4">
+            <div className="scale-90">
+              <LuckyDraw />
+            </div>
+            <div className="scale-90">
               <CheckIn />
             </div>
           </div>
@@ -224,7 +228,9 @@ export default function Navbar() {
               </form>
 
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
-                <div className="bg-[#141814] p-4 rounded-3xl mb-2 border border-white/5 shadow-inner">
+                <div className="bg-[#141814] p-4 rounded-3xl mb-2 border border-white/5 shadow-inner flex flex-col gap-3">
+                   <LuckyDraw />
+                   <div className="h-px bg-white/5 w-full"></div>
                    <CheckIn />
                 </div>
                 

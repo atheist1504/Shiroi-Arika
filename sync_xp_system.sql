@@ -1,5 +1,5 @@
--- 🏆 HỆ THỐNG ĐỒNG BỘ & BẢO MẬT XP SHIROI (BẢN CAO CẤP) 🍀
--- Chạy script này để sửa lỗi và kích hoạt chống hack tuyệt đối.
+-- 0. CẬP NHẬT CẤU TRÚC (DATABASE SCHEMA)
+ALTER TABLE shiroi_users ADD COLUMN IF NOT EXISTS last_lucky_draw TIMESTAMPTZ;
 
 -- 1. ĐỒNG BỘ LẠI ĐIỂM (REPAIR)
 UPDATE shiroi_users u

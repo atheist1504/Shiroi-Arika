@@ -710,6 +710,16 @@ export async function performLuckyDrawAction() {
       return { success: false, error: resLog.error || 'Lỗi bốc quà!' };
     }
 
+    // 3. Cập nhật thời gian bốc quà cuối cùng vào bảng Users 🛡️
+    const { error: upError } = await client
+      .from('shiroi_users')
+      .update({ last_lucky_draw: new Date().toISOString() })
+      .eq('id', userId);
+
+    if (upError) {
+       console.warn("⚠️ [Server] Không thể cập nhật last_lucky_draw (vẫn cộng điểm xong):", upError.message);
+    }
+
     // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
     return { success: true, xpGain };
   } catch (error) {
