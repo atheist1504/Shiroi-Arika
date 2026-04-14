@@ -6,6 +6,7 @@ import { supabaseAdmin } from './supabaseAdmin';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { sendMangaNotification } from './notifications';
+import { XP_REWARDS, getStreakBonus } from './xp';
 
 /**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
@@ -441,8 +442,6 @@ export async function performCheckInAction() {
       .single();
 
     if (fetchError || !userData) throw new Error("Không tìm thấy thông tin người dùng");
-
-    const xpGain = 30; // 💎 Thưởng điểm danh cố định
     const now = getVietnamTime();
     const lastCheck = userData.last_check_in ? new Date(new Date(userData.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
     
@@ -483,6 +482,9 @@ export async function performCheckInAction() {
         newStreak = 1;
     }
     */
+
+    // 🏆 TÍNH TOÁN XP THƯỞNG (100 XP MẶC ĐỊNH + BONUS CHUỖI) 💎
+    const xpGain = (XP_REWARDS.DAILY_CHECKIN || 100) + getStreakBonus(newStreak);
 
     // 3. Ghi log nhật ký ĐIỂM DANH (Sử dụng 'check_in' có gạch dưới chuẩn hóa) 📅
     const resLog = await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);

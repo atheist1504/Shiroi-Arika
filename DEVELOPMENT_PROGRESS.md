@@ -42,6 +42,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **RLS Fully Disabled**: Quyết định tắt hoàn toàn RLS cho các bảng `mangas`, `chapters`, `pages` để loại bỏ triệt để lỗi 403 khi tải ảnh cho độc giả vãng lai. Đã tạo script [fix_permissions_v2.sql](file:///c:/Shiroi%20Arika/fix_permissions_v2.sql). 🔓🟢🍀
 - [x] **Reader Resilience Upgrade**: Nâng cấp `ReaderClient` với cơ chế tự động thử lại (Retry) nguồn ảnh gốc R2 nếu CDN lỗi. Tích hợp Error Logging chi tiết để dễ dàng gỡ lỗi trên Production. 🖼️🛡️🚀
 - [x] **Auth Session Auto-Healing (v5)**: Triển khai cơ chế "Tự khôi phục phiên" cho Quản trị viên (`atheist1504`). Nếu Cookie bị thiếu ID, hệ thống tự động truy vấn lại DB dựa trên Username để duy trì trạng thái đăng nhập, khắc phục triệt để lỗi "Phiên làm việc lỗi" (Session Error) khi điểm danh hoặc bốc quà. 🛡️🚑🍀
+- [x] **XP Rules Calibration**: Đồng bộ hóa quy tắc điểm danh chuẩn Shiroi: +100 XP cơ bản + Thưởng chuỗi (Streak Bonus lên đến 1000 XP). Sửa lỗi hiển thị "KHÁC" trong Nhật ký tu luyện bằng cách chuẩn hóa nhãn `check_in`. 💎📈🗓️
 
 ---
 
