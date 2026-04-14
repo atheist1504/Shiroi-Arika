@@ -95,19 +95,28 @@ export default function ProfilePage() {
       if (!error && data) {
         setXpLogs(data);
         
-        // 📅 Lọc các ngày điểm danh CHỈ TRONG THÁNG NÀY 🍀
+        // 📅 Lọc các ngày điểm danh CHỈ TRONG THÁNG NÀY (BẢN NÂNG CẤP 🛡️)
         const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        const datesInMonth = data
-          .filter(log => {
-              const d = new Date(log.created_at);
-              return log.type === 'checkin' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-          })
-          .map(log => new Date(log.created_at).getDate());
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
         
-        setCheckInDates([...new Set(datesInMonth)]);
+        // Truy vấn riêng biệt để không bị trôi log khi đọc quá nhiều truyện 🍀
+        const { data: checkInData, error: checkInError } = await supabase
+          .from('shiroi_xp_logs')
+          .select('created_at')
+          .eq('user_id', userId)
+          .eq('type', 'checkin')
+          .gte('created_at', startOfMonth);
+        
+        if (!checkInError && checkInData) {
+           const datesInMonth = checkInData.map(log => {
+              // Ép múi giờ VN để lấy ngày chính xác 🇻🇳
+              return parseInt(new Date(log.created_at).toLocaleDateString('en-CA', { 
+                 timeZone: 'Asia/Ho_Chi_Minh',
+                 day: 'numeric'
+              }));
+           });
+           setCheckInDates([...new Set(datesInMonth)]);
+        }
 
         // 🔥 Lấy TỔNG SỐ NGÀY điểm danh trọn đời 🛡️
         const { count, error: countErr } = await supabase
@@ -187,10 +196,18 @@ export default function ProfilePage() {
         
         // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
         await recordXpLog(supabase, user.id, totalReward, 'checkin', `Streak: ${newStreak}`);
-        await fetchXpLogs(user.id); // 🔄 Cập nhật lịch ngay lập tức 🍀
+        
+        // ✨ CẬP NHẬT LỊCH NGAY LẬP TỨC 🍀
+        const todayDate = parseInt(new Date().toLocaleDateString('en-CA', { 
+            timeZone: 'Asia/Ho_Chi_Minh',
+            day: 'numeric'
+        }));
+        setCheckInDates(prev => [...new Set([...prev, todayDate])]);
+        setTotalCheckIns(prev => prev + 1);
 
         setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
         window.dispatchEvent(new Event('storage'));
+        await fetchXpLogs(user.id);
       }
     } catch (err) {
       setMessage(`Lỗi hệ thống: ${err.message}`);
