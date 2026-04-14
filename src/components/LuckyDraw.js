@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 import { performLuckyDrawAction } from "@/lib/actions";
 
 export default function LuckyDraw() {
