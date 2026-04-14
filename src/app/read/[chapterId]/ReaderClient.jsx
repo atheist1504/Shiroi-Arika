@@ -370,7 +370,32 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       </AnimatePresence>
 
       <div className={`max-w-5xl mx-auto flex flex-col items-center pt-[70px] md:pt-[80px] transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
-        {readingMode === 'scroll' && (
+        
+        {/* 💮 TRƯỜNG HỢP TRỐNG TRANG (Dành cho Guest/Lỗi Cache) */}
+        {pages.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-40 px-6 text-center space-y-6 animate-fade-in">
+             <div className="relative">
+                <span className="text-8xl opacity-10 grayscale">💮</span>
+                <div className="absolute inset-0 flex items-center justify-center">
+                   <svg className="w-12 h-12 text-gray-700 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+             </div>
+             <div className="space-y-2">
+                <h3 className="text-[#4caf50] font-black uppercase tracking-[0.3em] text-sm">Chưa có dữ liệu hình ảnh</h3>
+                <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest max-w-sm leading-relaxed">
+                   Có thể chương này đang được xử lý hoặc bị lỗi Cache. <br/>Hãy thử nhấn nút bên dưới để làm mới dữ liệu từ Server.
+                </p>
+             </div>
+             <button 
+               onClick={() => window.location.reload()}
+               className="px-8 py-3 bg-[#1a221a] border border-[#4caf50]/30 text-[#4caf50] rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all shadow-xl active:scale-95"
+             >
+               Tải lại chương truyện 🚀
+             </button>
+          </div>
+        )}
+
+        {readingMode === 'scroll' && pages.length > 0 && (
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
             <div className="space-y-10 mt-10">

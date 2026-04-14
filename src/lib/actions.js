@@ -361,12 +361,7 @@ export async function addReadXPAction(mangaId, chapterId) {
 
     if (alreadyRead) return { success: false, error: 'Đã nhận thưởng cho chương này' };
 
-    // 2. Lấy XP hiện tại
-    const { data: user } = await client.from('shiroi_users').select('xp').eq('id', userId).single();
-    const newXP = (user?.xp || 0) + 20; // 20 XP cho mỗi chương
-
-    // 3. Cập nhật XP và Ghi log (Atomic-ish)
-    await client.from('shiroi_users').update({ xp: newXP }).eq('id', userId);
+    // 3. Ghi log nhật ký (Database Trigger sẽ tự động cộng XP vào bảng Users) 🛡️
     await client.from('shiroi_read_chapters').insert({ 
       user_id: userId, 
       username: session.username, 
@@ -374,8 +369,12 @@ export async function addReadXPAction(mangaId, chapterId) {
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
     });
-    // 4. Ghi log nhật ký
-    await recordXpLogAction(userId, 20, 'read', chapterId);
+    
+    // 4. Ghi log và nhận XP 💎
+    const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
+    if (!resLog.success) return resLog;
+
+    return { success: true, xpGain: 20 };
 
     return { success: true, newXP };
   } catch (error) {
@@ -429,14 +428,18 @@ export async function performCheckInAction() {
         newStreak = 1;
     }
 
-    const xpGain = 100; // Mặc định 100 XP
-    const newXP = (user.xp || 0) + xpGain;
+    // 3. Ghi log nhật ký ĐIỂM DANH 📅
+    // Database Trigger và UNIQUE Index sẽ đảm bảo tính bảo mật và cộng điểm tự động.
+    const resLog = await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);
+    
+    if (!resLog.success) {
+        return { success: false, error: resLog.error || 'Lỗi điểm danh!' };
+    }
 
-    // 3. Cập nhật Database
+    // Cập nhật các thông tin khác (streak, ngày điểm danh) - XP sẽ do Trigger lo 🛡️
     const { data: updatedUser, error: updateError } = await client
       .from('shiroi_users')
       .update({
-        xp: newXP,
         last_check_in: now.toISOString(),
         check_in_streak: newStreak
       })
@@ -445,8 +448,6 @@ export async function performCheckInAction() {
       .single();
 
     if (updateError) throw updateError;
-    // 4. Ghi log nhật ký
-    await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);
 
     return { success: true, user: updatedUser, xpGain };
   } catch (error) {
