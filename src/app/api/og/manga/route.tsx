@@ -13,16 +13,21 @@ export async function GET(request: Request) {
       return new Response('Missing mangaId', { status: 400 });
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    // 🛡️ SỬ DỤNG SERVICE ROLE ĐỂ BYPASS RLS (Đảm bảo luôn lấy được data cho Crawler) 🍀
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: manga, error } = await supabase
       .from('mangas')
       .select('*')
       .eq('id', mangaId)
       .single();
+
+    if (error) {
+      console.error(`❌ [OG API] Lỗi fetch manga ${mangaId}:`, error.message);
+    }
 
     // 🍎 FALLBACK NẾU LỖI DATABASE
     if (error || !manga) {

@@ -31,42 +31,27 @@ export default function Signup() {
     }
 
     try {
-      // 2. Kiểm tra username đã tồn tại chưa
-      const { data: existingUser } = await supabase
-        .from('shiroi_users')
-        .select('username')
-        .ilike('username', username.trim())
-        .single();
+      const { signupAction } = await import('@/lib/actions');
+      const res = await signupAction({
+         username: username.trim(),
+         password: password,
+         display_name: username.trim(),
+         bio: 'Chào mừng tôi gia nhập Shiroi Arika! 🍀'
+      });
       
-      if (existingUser) {
-        setMessage('Lỗi: Tên này đã có chủ nhân sở hữu rồi! 🏰');
-        setLoading(false);
-        return;
-      }
-
-      // 3. Mã hóa và tạo tài khoản
-      const hashedPassword = hashPassword(password);
-      
-      const { data, error } = await supabase
-        .from('shiroi_users')
-        .insert([{ 
-           username: username.trim(), 
-           password: hashedPassword,
-           display_name: username.trim(),
-           bio: 'Chào mừng tôi gia nhập Shiroi Arika! 🍀'
-        }])
-        .select();
-
-      if (error) throw error;
-
-      if (data) {
+      if (res.success) {
         setMessage('Chúc mừng! Bạn đã trở thành cư dân Shiroi! 🍀🚀');
-        localStorage.setItem('shiroi_user', JSON.stringify(data[0]));
-        setTimeout(() => router.push('/'), 1500);
+        localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+        setTimeout(() => {
+           window.dispatchEvent(new Event('storage'));
+           router.push('/');
+        }, 1500);
+      } else {
+        setMessage(`Lỗi: ${res.error} 🛡️`);
       }
       
     } catch (err) {
-      setMessage(`Lỗi: ${err.message}`);
+      setMessage(`Lỗi hệ thống: ${err.message}`);
     } finally {
       setLoading(false);
     }

@@ -40,11 +40,70 @@ export async function loginAction(username, password) {
       httpOnly: true, 
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7,
-      path: '/'
+      path: '/',
+      sameSite: 'lax'
     });
 
     return { success: true, user };
   } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🔐 SERVER ACTION: Đăng ký tài khoản mới và cấp Session
+ * Đồng bộ hóa LocalStorage và Cookie ngay lập tức 🍀
+ */
+export async function signupAction(userData) {
+  try {
+    const { username, password } = userData;
+    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
+    const hashed = hashPassword(password);
+
+    const client = getDbClient();
+
+    // 1. Kiểm tra trùng lặp
+    const { data: existing } = await client
+      .from('shiroi_users')
+      .select('username')
+      .ilike('username', username.trim())
+      .single();
+    
+    if (existing) throw new Error('Tên này đã có chủ nhân sở hữu rồi! 🏰');
+
+    // 2. Tạo tài khoản
+    const { data: newUser, error: signupError } = await client
+      .from('shiroi_users')
+      .insert([{
+        ...userData,
+        username: username.trim(),
+        password: hashed,
+        display_name: userData.display_name || username.trim(),
+        xp: 0,
+        level: 1,
+        check_in_streak: 0
+      }])
+      .select()
+      .single();
+
+    if (signupError) throw signupError;
+
+    // 3. TỰ ĐỘNG ĐĂNG NHẬP: Tạo Session bằng Cookie 🍪
+    cookies().set('shiroi_session', JSON.stringify({
+      id: newUser.id,
+      username: newUser.username,
+      role: newUser.role || 'user'
+    }), { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+      sameSite: 'lax'
+    });
+
+    return { success: true, user: newUser };
+  } catch (error) {
+    console.error('❌ Lỗi signupAction:', error.message);
     return { success: false, error: error.message };
   }
 }
@@ -220,7 +279,9 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
  */
 export async function recordXpLogAction(userId, amount, type, reason = null) {
   try {
-    if (!userId || !amount) return { success: false, error: 'Thiếu thông tin User ID hoặc XP' };
+    if (!userId || userId === 'undefined' || !amount) {
+      return { success: false, error: 'Thiếu định danh người dùng (User ID) hoặc thông số XP' };
+    }
     
     const client = getDbClient();
     const { error } = await client
@@ -249,6 +310,12 @@ export async function addReadXPAction(mangaId, chapterId) {
     if (!sessionData) throw new Error("Vui lòng đăng nhập lại để nhận XP! 🛡️");
 
     const session = JSON.parse(sessionData.value);
+    const userId = session?.id;
+
+    if (!userId) {
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
+    }
+
     const client = getDbClient();
     // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
     const { data: alreadyRead } = await client
@@ -292,6 +359,12 @@ export async function performCheckInAction() {
     if (!sessionData) throw new Error("Vui lòng đăng nhập lại để điểm danh! 🛡️");
 
     const session = JSON.parse(sessionData.value);
+    const userId = session?.id;
+
+    if (!userId) {
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
+    }
+
     const client = getDbClient();
     // 1. Lấy trạng thái điểm danh hiện tại từ DB (Tránh hack thời gian ở Client)
     const { data: user, error: fetchError } = await client
@@ -516,7 +589,12 @@ export async function toggleFollowAction(mangaId, isFollowed) {
     if (!sessionData) throw new Error("Vui lòng đăng nhập để theo dõi truyện! 🛡️");
 
     const session = JSON.parse(sessionData.value);
-    const userId = session.id;
+    const userId = session?.id;
+
+    if (!userId) {
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
+    }
+
 
     const client = getDbClient();
 

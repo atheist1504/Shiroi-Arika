@@ -179,41 +179,55 @@ function MangaListContent() {
           </div>
         </div>
 
-        {/* BỘ LỌC NÂNG CAO 🏗️ */}
-        <div className="bg-[#141814]/40 border border-[#2a332a] rounded-[40px] p-8 mb-16 space-y-10 backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.5)]">
+        <div className="bg-[#141814]/40 border border-[#2a332a] rounded-[32px] p-6 mb-12 space-y-8 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
           
-          {/* Trạng thái */}
-          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-4">
-            <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2 pt-3">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              TRẠNG THÁI
-            </h3>
-            <div className="flex flex-wrap gap-2.5">
-              {STATUS_OPTIONS.map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => handleStatusChange(opt.id)}
-                  className={`px-7 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 ${
-                    selectedStatus === opt.id 
-                      ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
-                      : 'bg-[#0a0c0a] border-[#2a332a] text-gray-500 hover:border-[#4caf50]/30 hover:text-gray-300'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+          {/* Trạng thái & Tìm kiếm hợp nhất 🍀 */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-3">
+              <h3 className="text-[9px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                TRẠNG THÁI
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {STATUS_OPTIONS.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleStatusChange(opt.id)}
+                    className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.05em] transition-all border ${
+                      selectedStatus === opt.id 
+                        ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-lg' 
+                        : 'bg-[#0a0c0a] border-[#2a332a] text-gray-500 hover:border-[#4caf50]/30 hover:text-gray-300'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            <form onSubmit={handleSearchSubmit} className="relative group w-full md:w-80">
+                <input 
+                  type="text" 
+                  placeholder="Tìm tên truyện..." 
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  className="w-full bg-[#0a0c0a] border border-[#2a332a] rounded-xl px-4 py-2.5 outline-none focus:border-[#4caf50] transition-all text-xs"
+                />
+                <button type="submit" className="absolute right-3 top-2.5 text-gray-500 hover:text-[#4caf50]">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+            </form>
           </div>
 
           <div className="h-px bg-white/5 w-full"></div>
 
-          {/* Thể loại (Multi-select) */}
-          <div className="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-4">
-            <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2 pt-3">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-              THỂ LOẠI
+          {/* Thể loại (Gọn gàng hơn) 🍀 */}
+          <div className="space-y-4">
+            <h3 className="text-[9px] font-black text-[#4caf50] uppercase tracking-[0.2em] flex items-center gap-2">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+              THỂ LOẠI (VỀ Ô NHỎ)
             </h3>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
               <button
                 onClick={() => {
                   const params = new URLSearchParams(searchParams);
@@ -221,9 +235,9 @@ function MangaListContent() {
                   params.set('page', '1');
                   router.push(`/manga?${params.toString()}`);
                 }}
-                className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 ${
+                className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.05em] transition-all border ${
                   selectedGenres.length === 0 
-                    ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
+                    ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-lg' 
                     : 'bg-[#0a0c0a] border-[#2a332a] text-gray-400 hover:border-[#4caf50]/30 hover:text-gray-200'
                 }`}
               >
@@ -233,15 +247,15 @@ function MangaListContent() {
                 <button
                   key={genre}
                   onClick={() => toggleGenre(genre)}
-                  className={`px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.1em] transition-all border-2 flex items-center gap-2.5 ${
+                  className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.05em] transition-all border flex items-center gap-2 ${
                     selectedGenres.includes(genre)
-                      ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-[0_10px_25px_rgba(76,175,80,0.2)]' 
+                      ? 'bg-[#4caf50] border-[#4caf50] text-[#141814] shadow-lg' 
                       : 'bg-[#0a0c0a] border-[#2a332a] text-gray-500 hover:border-[#4caf50]/30 hover:text-gray-300'
                   }`}
                 >
                   {genre}
                   {selectedGenres.includes(genre) && (
-                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>
                   )}
                 </button>
               ))}

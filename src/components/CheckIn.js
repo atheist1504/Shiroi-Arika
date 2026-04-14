@@ -68,7 +68,12 @@ export default function CheckIn() {
            setShowModal(true);
            window.dispatchEvent(new Event("storage"));
         } else {
-           setModalMessage(res.error || "Có lỗi xảy ra, vui lòng thử lại sau! 🙏");
+           // 🛡️ XỬ LÝ LỖI THÂN THIỆN: Đảm bảo không hiển thị "USERID IS NOT DEFINED" 🍀
+           let errorMsg = res.error || "Hệ thống bận, vui lòng thử lại sau! 🙏";
+           if (errorMsg.includes("session") || errorMsg.includes("ID") || errorMsg.includes("defined")) {
+              errorMsg = "PHIÊN LÀM VIỆC LỖI! VUI LÒNG ĐĂNG XUẤT VÀ ĐĂNG NHẬP LẠI ĐỂ TIẾP TỤC NHÉ! 🛡️🍀";
+           }
+           setModalMessage(errorMsg);
            setShowModal(true);
            if (res.error?.includes('đã điểm danh')) setCanCheckIn(false);
         }
