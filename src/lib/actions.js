@@ -401,7 +401,7 @@ export async function addReadXPAction(mangaId, chapterId) {
     // 3. Ghi log nhật ký (Database Trigger sẽ tự động cộng XP vào bảng Users) 🛡️
     await client.from('shiroi_read_chapters').insert({ 
       user_id: userId, 
-      username: session.username, 
+      username: user.username, 
       chapter_id: chapterId, 
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
@@ -434,16 +434,17 @@ export async function performCheckInAction() {
     const userId = user.id;
     const client = getDbClient();
     // 1. Lấy trạng thái điểm danh hiện tại từ DB (Tránh hack thời gian ở Client)
-    const { data: user, error: fetchError } = await client
+    const { data: userData, error: fetchError } = await client
       .from('shiroi_users')
       .select('xp, last_check_in, check_in_streak')
       .eq('id', userId)
       .single();
 
-    if (fetchError || !user) throw new Error("Không tìm thấy thông tin người dùng");
+    if (fetchError || !userData) throw new Error("Không tìm thấy thông tin người dùng");
 
+    const xpGain = 30; // 💎 Thưởng điểm danh cố định
     const now = getVietnamTime();
-    const lastCheck = user.last_check_in ? new Date(new Date(user.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
+    const lastCheck = userData.last_check_in ? new Date(new Date(userData.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
     
     // 1. Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
     const isSameDay = lastCheck && 
@@ -465,13 +466,13 @@ export async function performCheckInAction() {
  
         if (diffDays === 1) {
             // Điểm danh liên tiếp -> Tăng chuỗi 🍀
-            newStreak = (user.check_in_streak || 0) + 1;
+            newStreak = (userData.check_in_streak || 0) + 1;
         } else if (diffDays > 1) {
             // Nghỉ quá 1 ngày -> Reset chuỗi về 1 🌵
             newStreak = 1;
         } else {
             // Trường hợp hy hữu (lệch giờ) -> Giữ nguyên hoặc tăng 1
-            newStreak = (user.check_in_streak || 0) + 1;
+            newStreak = (userData.check_in_streak || 0) + 1;
         }
     }
  
