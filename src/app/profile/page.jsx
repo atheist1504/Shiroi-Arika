@@ -134,76 +134,28 @@ export default function ProfilePage() {
 
     try {
       setCheckInLoading(true);
-      setMessage('Đang kết nối server để xác thực... ✨');
+      setMessage('Đang kết nối Thánh địa để xác thực... ✨');
 
-      // 🛡️ BẢO MẬT: Phải lấy dữ liệu MỚI NHẤT từ DB để chặn điểm danh kép 🍀
-      const { data: latestUser, error: fetchErr } = await supabase
-        .from('shiroi_users')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { performCheckInAction } = await import('@/lib/actions');
+      const res = await performCheckInAction();
 
-      if (fetchErr || !latestUser) throw new Error("Không thể xác thực danh tính!");
-
-      const now = new Date();
-      const lastCheckIn = latestUser.last_check_in ? new Date(latestUser.last_check_in) : null;
-      
-      // Kiểm tra xem đã check-in hôm nay chưa (theo ngày cục bộ server-safe)
-      if (lastCheckIn && lastCheckIn.toDateString() === now.toDateString()) {
-        setMessage('Hệ thống xác nhận: Bạn đã điểm danh hôm nay rồi! 🍀');
-        setUser(latestUser);
-        localStorage.setItem('shiroi_user', JSON.stringify(latestUser));
-        setCheckInLoading(false);
-        return;
-      }
-
-      // Tính toán Streak dựa trên dữ liệu thật từ DB (Reset mỗi tháng 🍀)
-      let newStreak = 1;
-      const isNewMonth = lastCheckIn && (now.getMonth() !== lastCheckIn.getMonth() || now.getFullYear() !== lastCheckIn.getFullYear());
-
-      if (lastCheckIn && !isNewMonth) {
-        const diffTime = Math.abs(now - lastCheckIn);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (res.success) {
+        setUser(res.user);
+        localStorage.setItem('shiroi_user', JSON.stringify(res.user));
         
-        if (diffDays === 1) {
-          newStreak = (latestUser.check_in_streak || 0) + 1;
-        } else if (diffDays > 1) {
-          newStreak = 1; 
-        }
-      }
-
-      const streakBonus = getStreakBonus(newStreak);
-      const totalReward = XP_REWARDS.DAILY_CHECKIN + streakBonus;
-      const newXP = (latestUser.xp || 0) + totalReward;
-
-      const { data, error } = await supabase
-        .from('shiroi_users')
-        .update({
-          xp: newXP,
-          last_check_in: now.toISOString(),
-          check_in_streak: newStreak
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
-
-      if (!error && data) {
-        setUser(data);
-        localStorage.setItem('shiroi_user', JSON.stringify(data));
-        
-        // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
-        await recordXpLog(supabase, user.id, totalReward, 'check_in', `Streak: ${newStreak}`);
-        
-        // ✨ CẬP NHẬT LỊCH NGAY LẬP TỨC 🍀
+        // ✨ CẬP NHẬT UI NGAY LẬP TỨC 🍀
         const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         setCheckInDates(prev => [...new Set([...prev, todayDateStr])]);
         setTotalCheckIns(prev => prev + 1);
 
-        setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
+        setMessage(`ĐIỂM DANH THÀNH CÔNG! +${res.xpGain} XP 💎`);
         window.dispatchEvent(new Event('storage'));
         await fetchXpLogs(user.id);
+      } else {
+        setMessage(res.error || 'Hệ thống bận, vui lòng thử lại sau! 🙏');
       }
     } catch (err) {
+      console.error("Lỗi điểm danh:", err);
       setMessage(`Lỗi hệ thống: ${err.message}`);
     } finally {
       setCheckInLoading(false);

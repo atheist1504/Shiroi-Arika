@@ -43,6 +43,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Reader Resilience Upgrade**: Nâng cấp `ReaderClient` với cơ chế tự động thử lại (Retry) nguồn ảnh gốc R2 nếu CDN lỗi. Tích hợp Error Logging chi tiết để dễ dàng gỡ lỗi trên Production. 🖼️🛡️🚀
 - [x] **Auth Session Auto-Healing (v5)**: Triển khai cơ chế "Tự khôi phục phiên" cho Quản trị viên (`atheist1504`). Nếu Cookie bị thiếu ID, hệ thống tự động truy vấn lại DB dựa trên Username để duy trì trạng thái đăng nhập, khắc phục triệt để lỗi "Phiên làm việc lỗi" (Session Error) khi điểm danh hoặc bốc quà. 🛡️🚑🍀
 - [x] **XP Rules Calibration**: Đồng bộ hóa quy tắc điểm danh chuẩn Shiroi: +100 XP cơ bản + Thưởng chuỗi (Streak Bonus lên đến 1000 XP). Sửa lỗi hiển thị "KHÁC" trong Nhật ký tu luyện bằng cách chuẩn hóa nhãn `check_in`. 💎📈🗓️
+- [x] **Check-in Logic Consolidation**: Hợp nhất toàn bộ logic điểm danh từ các component (`CheckIn.js`, `ProfilePage`) về một nguồn duy nhất là Server Action `performCheckInAction`. Loại bỏ logic dư thừa và đảm bảo tính nhất quán của hệ thống XP toàn trang. 🛡️⚙️🍀
 
 ---
 
