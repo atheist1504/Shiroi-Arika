@@ -118,19 +118,59 @@ export async function signupAction(userData) {
 }
 
 /**
+ * 🕵️‍♂️ HÀM HỖ TRỢ: Lấy thông tin người dùng đang đăng nhập với khả năng tự khôi phục (Auto-healing) 🛡️
+ */
+export async function getAuthenticatedUser() {
+  const sessionData = cookies().get('shiroi_session');
+  if (!sessionData) return null;
+
+  try {
+    let user = JSON.parse(sessionData.value);
+    
+    // 🚑 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING): 
+    // Nếu thiếu ID nhưng là Admin whitelist (atheist1504), hãy truy vấn lại Database 🍀
+    if (!user.id && user.username?.toLowerCase() === 'atheist1504') {
+      console.log(`🚑 [Auth] Phát hiện session lỗi cho Admin ${user.username}, đang khôi phục ID...`);
+      const client = getDbClient();
+      const { data, error } = await client
+        .from('shiroi_users')
+        .select('id, username, role')
+        .eq('username', user.username)
+        .single();
+      
+      if (!error && data) {
+        user.id = data.id;
+        user.role = data.role || 'admin';
+        console.log(`✅ [Auth] Khôi phục ID thành công: ${user.id}`);
+        
+        // Cập nhật lại Cookie để lần sau không phải query nữa 🍪
+        cookies().set('shiroi_session', JSON.stringify(user), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    return user.id ? user : null;
+  } catch (err) {
+    console.error("❌ Lỗi giải mã Session:", err.message);
+    return null;
+  }
+}
+
+/**
  * 🕵️‍♂️ HÀM HỖ TRỢ: Kiểm tra quyền Admin từ Cookie
  */
 async function checkAdminAuth() {
-  const sessionData = cookies().get('shiroi_session');
-  if (!sessionData) return false;
-  try {
-    const user = JSON.parse(sessionData.value);
-    // 🛡️ BẢO VỆ CHỦ SỞ HỮU: Whitelist tài khoản atheist1504 luôn có quyền admin 🍀
-    if (user.username?.toLowerCase() === 'atheist1504') return true;
-    return user.role === 'admin';
-  } catch {
-    return false;
-  }
+  const user = await getAuthenticatedUser();
+  if (!user) return false;
+  
+  // 🛡️ BẢO VỆ CHỦ SỞ HỮU: Whitelist tài khoản atheist1504 luôn có quyền admin 🍀
+  if (user.username?.toLowerCase() === 'atheist1504') return true;
+  return user.role === 'admin';
 }
 
 /**
@@ -340,16 +380,13 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
  */
 export async function addReadXPAction(mangaId, chapterId) {
   try {
-    const sessionData = cookies().get('shiroi_session');
-    if (!sessionData) throw new Error("Vui lòng đăng nhập lại để nhận XP! 🛡️");
-
-    const session = JSON.parse(sessionData.value);
-    const userId = session?.id;
-
-    if (!userId) {
+    const user = await getAuthenticatedUser();
+    
+    if (!user || !user.id) {
        throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
+    const userId = user.id;
     const client = getDbClient();
     // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
     const { data: alreadyRead } = await client
@@ -388,16 +425,13 @@ export async function addReadXPAction(mangaId, chapterId) {
  */
 export async function performCheckInAction() {
   try {
-    const sessionData = cookies().get('shiroi_session');
-    if (!sessionData) throw new Error("Vui lòng đăng nhập lại để điểm danh! 🛡️");
-
-    const session = JSON.parse(sessionData.value);
-    const userId = session?.id;
-
-    if (!userId) {
+    const user = await getAuthenticatedUser();
+    
+    if (!user || !user.id) {
        throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
+    const userId = user.id;
     const client = getDbClient();
     // 1. Lấy trạng thái điểm danh hiện tại từ DB (Tránh hack thời gian ở Client)
     const { data: user, error: fetchError } = await client
@@ -652,17 +686,13 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
  */
 export async function toggleFollowAction(mangaId, isFollowed) {
   try {
-    const sessionData = cookies().get('shiroi_session');
-    if (!sessionData) throw new Error("Vui lòng đăng nhập để theo dõi truyện! 🛡️");
-
-    const session = JSON.parse(sessionData.value);
-    const userId = session?.id;
-
-    if (!userId) {
+    const user = await getAuthenticatedUser();
+    
+    if (!user || !user.id) {
        throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
-
+    const userId = user.id;
     const client = getDbClient();
 
     if (!isFollowed) {
@@ -695,13 +725,13 @@ export async function toggleFollowAction(mangaId, isFollowed) {
  */
 export async function performLuckyDrawAction() {
   try {
-    const sessionData = cookies().get('shiroi_session');
-    if (!sessionData) throw new Error("Vui lòng đăng nhập để nhận quà! 🛡️");
+    const user = await getAuthenticatedUser();
+    
+    if (!user || !user.id) {
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
+    }
 
-    const session = JSON.parse(sessionData.value);
-    const userId = session?.id;
-    if (!userId) throw new Error("Phiên làm việc lỗi. Vui lòng đăng nhập lại!");
-
+    const userId = user.id;
     const client = getDbClient();
 
     // 1. Tính toán phần thưởng ngẫu nhiên (Gacha logic)

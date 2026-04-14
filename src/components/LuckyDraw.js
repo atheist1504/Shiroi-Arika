@@ -107,7 +107,13 @@ export default function LuckyDraw() {
         setUser(updatedUser);
         window.dispatchEvent(new Event("storage"));
       } else {
-        setErrorMessage(res.error || "Hệ thống bận, hãy thử lại sau! 🙏");
+        let errorMsg = res.error || "Hệ thống bận, hãy thử lại sau! 🙏";
+        
+        if (errorMsg.includes("session") || errorMsg.includes("ID") || errorMsg.includes("defined") || errorMsg.includes("Vui lòng đăng nhập")) {
+           errorMsg = "PHIÊN LÀM VIỆC ĐÃ HẾT HẠN HOẶC BỊ LỖI. VUI LÒNG TẢI LẠI TRANG HOẶC ĐĂNG XUẤT VÀ ĐĂNG NHẬP LẠI ĐỂ TIẾP TỤC NHÉ! 🛡️🍀";
+        }
+        
+        setErrorMessage(errorMsg);
         setShowModal(true);
         if (res.error?.includes('đã cạn')) setCanDraw(false);
       }

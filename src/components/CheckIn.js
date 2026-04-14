@@ -100,14 +100,16 @@ export default function CheckIn() {
            setShowModal(true);
            window.dispatchEvent(new Event("storage"));
         } else {
-           // 🛡️ XỬ LÝ LỖI THÂN THIỆN: Đảm bảo không hiển thị "USERID IS NOT DEFINED" 🍀
-           let errorMsg = res.error || "Hệ thống bận, vui lòng thử lại sau! 🙏";
-           if (errorMsg.includes("session") || errorMsg.includes("ID") || errorMsg.includes("defined")) {
-              errorMsg = "PHIÊN LÀM VIỆC LỖI! VUI LÒNG ĐĂNG XUẤT VÀ ĐĂNG NHẬP LẠI ĐỂ TIẾP TỤC NHÉ! 🛡️🍀";
-           }
-           setModalMessage(errorMsg);
-           setShowModal(true);
-           if (res.error?.includes('đã điểm danh')) setCanCheckIn(false);
+            // 🛡️ XỬ LÝ LỖI THÂN THIỆN: Đảm bảo không hiển thị "USERID IS NOT DEFINED" 🍀
+            let errorMsg = res.error || "Hệ thống bận, vui lòng thử lại sau! 🙏";
+            
+            if (errorMsg.includes("session") || errorMsg.includes("ID") || errorMsg.includes("defined") || errorMsg.includes("Vui lòng đăng nhập")) {
+               errorMsg = "PHIÊN LÀM VIỆC ĐÃ HẾT HẠN HOẶC BỊ LỖI. VUI LÒNG TẢI LẠI TRANG HOẶC ĐĂNG XUẤT VÀ ĐĂNG NHẬP LẠI ĐỂ TIẾP TỤC NHÉ! 🛡️🍀";
+            }
+            
+            setModalMessage(errorMsg);
+            setShowModal(true);
+            if (res.error?.includes('đã điểm danh')) setCanCheckIn(false);
         }
     } catch (error) {
       console.error("Lỗi điểm danh:", error);
