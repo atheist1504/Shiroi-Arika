@@ -1,13 +1,18 @@
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ReaderClient from "./ReaderClient";
 import { notFound } from "next/navigation";
 
 export const revalidate = 0; // Luôn lấy dữ liệu mới nhất để cập nhật ảnh ngay lập tức 🍀
 
+// 🕵️‍♂️ HÀM HỖ TRỢ CHỌN CLIENT (Server-side)
+const getDbClient = () => supabaseAdmin || supabase;
+
 export async function generateMetadata({ params }) {
   const { chapterId } = params;
+  const client = getDbClient();
 
-  const { data: chapter } = await supabase
+  const { data: chapter } = await client
     .from("chapters")
     .select("chapter_number, manga_id")
     .eq("id", chapterId)
@@ -15,7 +20,7 @@ export async function generateMetadata({ params }) {
 
   if (!chapter) return { title: "Chương không tồn tại - Shiroi Arika" };
 
-  const { data: manga } = await supabase
+  const { data: manga } = await client
     .from("mangas")
     .select("title")
     .eq("id", chapter.manga_id)
@@ -40,14 +45,20 @@ export async function generateMetadata({ params }) {
 
 export default async function ReaderPage({ params }) {
   const { chapterId } = params;
+  const client = getDbClient();
 
   // Initial fetch for server-side rendering
-  const { data: chapter } = await supabase.from("chapters").select("*").eq("id", chapterId).single();
+  const { data: chapter } = await client.from("chapters").select("*").eq("id", chapterId).single();
   if (!chapter) notFound();
 
-  const { data: manga } = await supabase.from("mangas").select("*").eq("id", chapter.manga_id).single();
-  const { data: pages } = await supabase.from("pages").select("*").eq("chapter_id", chapterId).order("page_number", { ascending: true });
-  const { data: siblings } = await supabase.from("chapters").select("id, chapter_number").eq("manga_id", chapter.manga_id).order("chapter_number", { ascending: true });
+  const { data: manga } = await client.from("mangas").select("*").eq("id", chapter.manga_id).single();
+  const { data: pages, error: pagesError } = await client.from("pages").select("*").eq("chapter_id", chapterId).order("page_number", { ascending: true });
+  
+  if (pagesError) {
+     console.error(`❌ [ReaderPage] Lỗi lấy danh sách trang cho chương ${chapterId}:`, pagesError.message);
+  }
+
+  const { data: siblings } = await client.from("chapters").select("id, chapter_number").eq("manga_id", chapter.manga_id).order("chapter_number", { ascending: true });
 
   return (
     <ReaderClient 

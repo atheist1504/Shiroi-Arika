@@ -77,9 +77,11 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           .eq('chapter_id', nextChapterId)
           .order('page_number', { ascending: true });
         
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
            setNextChapterPages(data);
            console.log(`🚀 [Preload] Đã lấy được ${data.length} trang chương sau.`);
+        } else if (error) {
+           console.warn(`⚠️ [Preload] Không thể tải trước trang chương ${nextChapterId}:`, error.message);
         }
       } catch (err) {
         console.warn("Lỗi fetch preload:", err);
