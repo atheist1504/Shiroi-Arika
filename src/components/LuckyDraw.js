@@ -24,31 +24,37 @@ export default function LuckyDraw() {
 
   const fetchStatusFromDb = async () => {
     const storedUser = localStorage.getItem("shiroi_user");
-    if (!storedUser) return;
+    const userStr = localStorage.getItem("shiroi_user");
+    if (!userStr) return;
     
     try {
-      const userData = JSON.parse(storedUser);
-      
-      // 🕵️‍♂️ TRUY VẤN NHẬT KÝ THỰC TẾ: Kiểm tra xem hôm nay có dòng 'lucky_draw' nào chưa
-      // Sử dụng giờ Việt Nam để khớp với Index của Database
+      const userData = JSON.parse(userStr);
+      // 🕵️‍♂️ LẤY NGÀY HIỆN TẠI (VIỆT NAM) 🇻🇳
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       
+      // Lấy nhật ký bốc quà MỚI NHẤT của User 🍀
       const { data: logs, error: logError } = await supabase
         .from('shiroi_xp_logs')
         .select('created_at')
         .eq('user_id', userData.id)
         .eq('type', 'lucky_draw')
-        .gte('created_at', `${today}T00:00:00.000Z`)
-        .lte('created_at', `${today}T23:59:59.999Z`)
+        .order('created_at', { ascending: false })
         .limit(1);
       
       if (!logError && logs && logs.length > 0) {
-         setCanDraw(false);
-         // Tiện tay cập nhật luôn LocalStorage để các lần load sau nhanh hơn
-         const updatedUser = { ...userData, last_lucky_draw: logs[0].created_at };
-         localStorage.setItem("shiroi_user", JSON.stringify(updatedUser));
+        // So sánh ngày của log mới nhất với ngày hôm nay (VN) 🛡️
+        const lastLogDate = new Date(logs[0].created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        
+        if (lastLogDate === today) {
+           setCanDraw(false);
+           setButtonText("HẸN MAI NHÉ");
+        } else {
+           setCanDraw(true);
+           setButtonText("NHẬN QUÀ");
+        }
       } else {
-         setCanDraw(true);
+        setCanDraw(true);
+        setButtonText("NHẬN QUÀ");
       }
     } catch (err) {
       console.warn("Lỗi đồng bộ LuckyDraw từ Nhật ký:", err);

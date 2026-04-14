@@ -29,19 +29,22 @@ export default function CheckIn() {
     
     try {
       const userData = JSON.parse(storedUser);
+      // 🕵️‍♂️ LẤY NGÀY HIỆN TẠI (VIỆT NAM) 🇻🇳
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       
+      // Lấy nhật ký điểm danh MỚI NHẤT của User 🍀
       const { data: logs, error: logError } = await supabase
         .from('shiroi_xp_logs')
         .select('created_at')
         .eq('user_id', userData.id)
-        .eq('type', 'check_in') // 🔍 Sửa lỗi: Phải là check_in 🛡️
-        .gte('created_at', `${today}T00:00:00.000Z`)
-        .lte('created_at', `${today}T23:59:59.999Z`)
+        .eq('type', 'check_in')
+        .order('created_at', { ascending: false })
         .limit(1);
       
       if (!logError && logs && logs.length > 0) {
-         setCanCheckIn(false);
+         // So sánh ngày của log mới nhất với ngày hôm nay (VN) 🛡️
+         const lastLogDate = new Date(logs[0].created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+         setCanCheckIn(lastLogDate !== today);
       } else {
          setCanCheckIn(true);
       }

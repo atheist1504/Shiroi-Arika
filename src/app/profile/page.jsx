@@ -108,14 +108,11 @@ export default function ProfilePage() {
           .gte('created_at', startOfMonth);
         
         if (!checkInError && checkInData) {
-           const datesInMonth = checkInData.map(log => {
-              // Ép múi giờ VN để lấy ngày chính xác 🇻🇳
-              return parseInt(new Date(log.created_at).toLocaleDateString('en-CA', { 
-                 timeZone: 'Asia/Ho_Chi_Minh',
-                 day: 'numeric'
-              }));
-           });
-           setCheckInDates([...new Set(datesInMonth)]);
+          // 🇻🇳 CHUYỂN ĐỔI NGÀY SANG DẠNG CHUỖI 'YYYY-MM-DD' (VN) ĐỂ SO SÁNH CHUẨN XÁC 🛡️
+          const dates = checkInData.map(log => 
+            new Date(log.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
+          );
+          setCheckInDates(dates);
         }
 
         // 🔥 Lấy TỔNG SỐ NGÀY điểm danh trọn đời 🛡️
@@ -198,11 +195,8 @@ export default function ProfilePage() {
         await recordXpLog(supabase, user.id, totalReward, 'check_in', `Streak: ${newStreak}`);
         
         // ✨ CẬP NHẬT LỊCH NGAY LẬP TỨC 🍀
-        const todayDate = parseInt(new Date().toLocaleDateString('en-CA', { 
-            timeZone: 'Asia/Ho_Chi_Minh',
-            day: 'numeric'
-        }));
-        setCheckInDates(prev => [...new Set([...prev, todayDate])]);
+        const todayDateStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        setCheckInDates(prev => [...new Set([...prev, todayDateStr])]);
         setTotalCheckIns(prev => prev + 1);
 
         setMessage(`ĐIỂM DANH THÀNH CÔNG! +${totalReward} XP 💎`);
@@ -418,7 +412,6 @@ export default function ProfilePage() {
                         const month = now.getMonth();
                         const daysInMonth = new Date(year, month + 1, 0).getDate();
                         const firstDay = new Date(year, month, 1).getDay();
-                        const today = now.getDate();
                         
                         const calendar = [];
                         // Padding cho ngày trống đầu tuần
@@ -427,9 +420,9 @@ export default function ProfilePage() {
                         }
                         // Các ngày trong tháng
                         for (let d = 1; d <= daysInMonth; d++) {
-                            const isChecked = checkInDates.includes(d);
-                            const isToday = d === today;
-                            const isPast = d < today;
+                            const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                            const isChecked = checkInDates.includes(dayStr);
+                            const isToday = dayStr === new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
                             
                             calendar.push(
                                 <div 
