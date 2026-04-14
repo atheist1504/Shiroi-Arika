@@ -14,9 +14,44 @@ export default function LuckyDraw() {
 
   useEffect(() => {
     checkStatus();
+    // 🚀 ĐỒNG BỘ THỰC TẾ: Kiểm tra thêm từ DB để tránh dữ liệu LocalStorage bị cũ (Stale)
+    fetchStatusFromDb();
+
     window.addEventListener("storage", checkStatus);
     return () => window.removeEventListener("storage", checkStatus);
   }, []);
+
+  const fetchStatusFromDb = async () => {
+    const storedUser = localStorage.getItem("shiroi_user");
+    if (!storedUser) return;
+    
+    try {
+      const userData = JSON.parse(storedUser);
+      const { data, error } = await supabase
+        .from('shiroi_users')
+        .select('last_lucky_draw, xp')
+        .eq('id', userData.id)
+        .single();
+      
+      if (!error && data) {
+         // Cập nhật lại LocalStorage và State nếu dữ liệu DB mới hơn
+         const updatedUser = { ...userData, last_lucky_draw: data.last_lucky_draw, xp: data.xp };
+         localStorage.setItem("shiroi_user", JSON.stringify(updatedUser));
+         setUser(updatedUser);
+         
+         const lastDraw = data.last_lucky_draw ? new Date(data.last_lucky_draw) : null;
+         const today = new Date();
+         const isSameDay = lastDraw && 
+            lastDraw.getDate() === today.getDate() &&
+            lastDraw.getMonth() === today.getMonth() &&
+            lastDraw.getFullYear() === today.getFullYear();
+         
+         setCanDraw(!isSameDay);
+      }
+    } catch (err) {
+      console.warn("Lỗi đồng bộ LuckyDraw từ DB:", err);
+    }
+  };
 
   const checkStatus = () => {
     const storedUser = localStorage.getItem("shiroi_user");
