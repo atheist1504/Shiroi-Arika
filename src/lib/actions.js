@@ -7,7 +7,6 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { sendMangaNotification } from './notifications';
 
-const getDbClient = () => supabaseAdmin || supabase;
 
 /**
  * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
