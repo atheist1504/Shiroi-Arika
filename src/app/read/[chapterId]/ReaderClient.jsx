@@ -248,6 +248,13 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const touchStartY = useRef(0);
 
   useEffect(() => {
+    // 🏛️ REVERT: Ở chế độ lật trang, menu luôn cố định theo yêu cầu của User 🚀
+    if (readingMode === 'page') {
+      setShowNav(true);
+      showNavRef.current = true;
+      return;
+    }
+
     const handleGesture = (delta, currentY) => {
       // 1. Logic ẩn Nav: Lướt xuống (delta > 8)
       // Nếu ở chế độ cuộn, chỉ ẩn khi đã qua đỉnh trang (> 60px)
