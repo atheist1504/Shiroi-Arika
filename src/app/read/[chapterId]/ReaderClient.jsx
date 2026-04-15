@@ -327,7 +327,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
       <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
-        <div className="flex items-center gap-2 sm:gap-3 flex-1 overflow-hidden min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
             <Link href="/" className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             </Link>
@@ -351,7 +351,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             </button>
         </div>
 
-        <div className="flex-1 flex justify-end items-center gap-1.5 sm:gap-3">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-3 flex-shrink-0">
             <button onClick={() => { setShowReportModal(true); setShowSettings(false); }} className={`px-2 py-1.5 sm:px-2.5 rounded border transition-all flex items-center gap-1 sm:gap-1.5 ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/20 shadow-lg'}`} title="Báo lỗi chương">
                <svg className="w-3.5 h-3.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap hidden xs:inline-block">Báo lỗi</span>
