@@ -249,15 +249,18 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   useEffect(() => {
     const handleGesture = (delta, currentY) => {
-      // 1. Logic ẩn Nav: Lướt xuống mạnh (> 10px) và không ở đỉnh trang (> 80px)
-      if (delta > 10 && currentY > 80) {
+      // 1. Logic ẩn Nav: Lướt xuống (delta > 8)
+      // Nếu ở chế độ cuộn, chỉ ẩn khi đã qua đỉnh trang (> 60px)
+      // Nếu ở chế độ lật trang, ẩn bất cứ lúc nào lướt xuống
+      const thresholdY = readingMode === 'page' ? -1 : 60;
+      if (delta > 8 && currentY > thresholdY) {
         if (showNavRef.current) {
           showNavRef.current = false;
           setShowNav(false);
         }
       } 
-      // 2. Logic hiện Nav: Lướt lên (> 8px) hoặc chạm đỉnh
-      else if (delta < -8 || currentY <= 30) {
+      // 2. Logic hiện Nav: Lướt lên NHẸ (delta < -4) hoặc chạm đỉnh
+      else if (delta < -4 || currentY <= 30) {
         if (!showNavRef.current) {
           showNavRef.current = true;
           setShowNav(true);
@@ -270,7 +273,6 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       const delta = curY - lastScrollYRef.current;
       handleGesture(delta, curY);
       
-      // Cập nhật Back to Top button (vẫn dùng state để re-render UI này)
       if (Math.abs(curY - lastScrollYState) > 300 || curY < 100) {
         setLastScrollYState(curY);
       }
@@ -287,23 +289,34 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
     const onTouchMove = (e) => {
       const touchY = e.touches[0].clientY;
-      const delta = touchStartY.current - touchY; // Positive = Scroll Down
+      const delta = touchStartY.current - touchY;
       handleGesture(delta, window.scrollY);
       touchStartY.current = touchY;
+    };
+
+    // 🎯 CLICK TO TOGGLE: Cho phép bấm vào vùng đọc để hiện/ẩn Menu nhanh
+    const onTap = (e) => {
+      // Không toggle nếu bấm vào các nút hoặc modal
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.fixed')) return;
+      
+      showNavRef.current = !showNavRef.current;
+      setShowNav(showNavRef.current);
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("click", onTap);
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("wheel", onWheel);
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("click", onTap);
     };
-  }, [readingMode]); // Chỉ phụ thuộc vào chế độ đọc để reset nếu cần
+  }, [readingMode, lastScrollYState]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
