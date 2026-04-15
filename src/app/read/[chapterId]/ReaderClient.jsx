@@ -244,46 +244,66 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   const lastScrollYRef = useRef(0);
 
+  const showNavRef = useRef(true);
+  const touchStartY = useRef(0);
+
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const lastScrollY = lastScrollYRef.current;
-      const delta = currentScrollY - lastScrollY;
-
-      // 1. Logic ẩn Nav: Khi đang cuộn xuống mạnh (> 10px) và đã qua khỏi vùng đỉnh trang (> 60px)
-      if (delta > 10 && currentScrollY > 60) {
-        if (showNav) setShowNav(false);
+    const handleGesture = (delta, currentY) => {
+      // 1. Logic ẩn Nav: Lướt xuống mạnh (> 10px) và không ở đỉnh trang (> 80px)
+      if (delta > 10 && currentY > 80) {
+        if (showNavRef.current) {
+          showNavRef.current = false;
+          setShowNav(false);
+        }
       } 
-      // 2. Logic hiện Nav: Khi cuộn lên hoặc khi lùi về sát đỉnh trang
-      else if (delta < -10 || currentScrollY <= 40) {
-        if (!showNav) setShowNav(true);
-      }
-
-      // 3. Cập nhật vị trí cuộn cho các thành phần UI khác
-      if (Math.abs(currentScrollY - lastScrollYState) > 300 || currentScrollY < 100) {
-        setLastScrollYState(currentScrollY);
-      }
-
-      lastScrollYRef.current = currentScrollY;
-    };
-
-    // Lắng nghe cả sự kiện cuộn chuột để hỗ trợ chế độ Lật Trang (Page Mode) hiệu quả hơn 🚀
-    const handleWheel = (e) => {
-      if (e.deltaY > 50) { // Lướt xuống
-        if (showNav) setShowNav(false);
-      } else if (e.deltaY < -50) { // Lướt lên
-        if (!showNav) setShowNav(true);
+      // 2. Logic hiện Nav: Lướt lên (> 8px) hoặc chạm đỉnh
+      else if (delta < -8 || currentY <= 30) {
+        if (!showNavRef.current) {
+          showNavRef.current = true;
+          setShowNav(true);
+        }
       }
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    window.addEventListener("wheel", handleWheel, { passive: true });
-    
+    const onScroll = () => {
+      const curY = window.scrollY;
+      const delta = curY - lastScrollYRef.current;
+      handleGesture(delta, curY);
+      
+      // Cập nhật Back to Top button (vẫn dùng state để re-render UI này)
+      if (Math.abs(curY - lastScrollYState) > 300 || curY < 100) {
+        setLastScrollYState(curY);
+      }
+      lastScrollYRef.current = curY;
+    };
+
+    const onWheel = (e) => {
+      handleGesture(e.deltaY, window.scrollY);
+    };
+
+    const onTouchStart = (e) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e) => {
+      const touchY = e.touches[0].clientY;
+      const delta = touchStartY.current - touchY; // Positive = Scroll Down
+      handleGesture(delta, window.scrollY);
+      touchStartY.current = touchY;
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [showNav, readingMode, lastScrollYState]);
+  }, [readingMode]); // Chỉ phụ thuộc vào chế độ đọc để reset nếu cần
 
   useEffect(() => {
     const handleKeyDown = (e) => {
