@@ -183,30 +183,24 @@ body:has(#shiroi-reader-mode) .layout-root {
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track, 
+[data-theme='deep'] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: var(--accent);
   border-radius: 20px;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   background-clip: content-box;
-  transition: background 0.3s ease;
 }
 
-/* Hiện thanh cuộn khi di chuột vào trang */
-body:hover ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.3);
-}
-
-[data-theme='dark'] body:hover ::-webkit-scrollbar-thumb, 
-[data-theme='deep'] body:hover ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Đổi màu xanh Shiroi khi chỉ thẳng vào thanh cuộn */
+/* Thêm hiệu ứng sáng lên khi di chuột trực tiếp vào thanh cuộn */
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent) !important;
+  background: var(--accent-hover) !important;
 }
 
 /* 🌿 Riêng cho Reader List */
