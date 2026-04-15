@@ -30,7 +30,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
-export const compressImageToWebP = async (file: File, quality = 0.8): Promise<File> => {
+const compressImageToWebP = async (file: File, quality = 0.8): Promise<File> => {
   return new Promise((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
     const img = new Image();
