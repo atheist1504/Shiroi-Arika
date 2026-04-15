@@ -372,23 +372,11 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                  </>
                )}
             </div>
-            <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-1.5 sm:p-2 rounded-lg border transition-all flex-shrink-0 ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724         </div>
+            <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-2 rounded-xl border transition-all flex-shrink-0 group ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
+               <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
       </div>
-der-white/5 text-gray-300 focus:border-red-500/50'}`}
-                     />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg active:scale-95"
-                  >
-                    GỬI BÁO CÁO 🚀
-                  </button>
-               </form>
-             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
 
@@ -397,66 +385,6 @@ der-white/5 text-gray-300 focus:border-red-500/50'}`}
              <span className="text-xl animate-bounce">💎</span> KHO THÀNH TỰU +20 XP !
           </motion.div>
         )}
-
-        {showChapterModal && (
-          <div className="fixed inset-0 z-[20002] flex items-center justify-center px-4">
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-             <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
-                <div className="p-4 border-b border-current/5 flex items-center justify-between">
-                   <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-widest">Chọn chương truyện</h3>
-                   <button onClick={() => setShowChapterModal(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
-                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                   </button>
-                </div>
-                
-                <div className="p-4">
-                   <div className="relative group">
-                      <input 
-                        type="text" 
-                        placeholder="Tìm chương (VD: 24)..." 
-                        value={chapterSearchTerm}
-                        onChange={(e) => setChapterSearchTerm(e.target.value)}
-                        className={`w-full px-10 py-3 rounded-xl text-sm font-bold outline-none border transition-all ${theme === 'light' ? 'bg-gray-50 border-black/5 focus:border-[#4caf50]' : 'bg-black/40 border-white/5 focus:border-[#4caf50]'}`}
-                      />
-                      <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#4caf50] transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                      {chapterSearchTerm && (
-                        <button onClick={() => setChapterSearchTerm('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full">
-                           <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        </button>
-                      )}
-                   </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-2 min-h-0 reader-chapter-list">
-                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {allChapters
-                        .filter(c => c.chapter_number.toString().includes(chapterSearchTerm) || c.title?.toLowerCase().includes(chapterSearchTerm.toLowerCase()))
-                        .map(c => (
-                        <button 
-                           key={c.id} 
-                           onClick={() => { router.push(`/read/${c.id}`); setShowChapterModal(false); }}
-                           className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${c.id === chapterId ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' : (theme === 'light' ? 'bg-gray-50 border-black/5 hover:border-[#4caf50]/50' : 'bg-black/20 border-white/5 hover:border-[#4caf50]/30 hover:bg-[#4caf50]/5')}`}
-                        >
-                           <span className={`text-[8px] font-black uppercase tracking-tighter mb-1 ${c.id === chapterId ? 'text-[#0a0c0a]/60' : 'opacity-40'}`}>Chương</span>
-                           <span className="text-lg font-black">{c.chapter_number}</span>
-                           {c.id === chapterId && (
-                             <div className="absolute top-2 right-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-[#0a0c0a] animate-pulse" />
-                             </div>
-                           )}
-                        </button>
-                      ))}
-                   </div>
-                   {allChapters.filter(c => c.chapter_number.toString().includes(chapterSearchTerm)).length === 0 && (
-                     <div className="py-20 text-center opacity-30">
-                        <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p className="text-xs font-black uppercase tracking-widest">Không tìm thấy chương nào</p>
-                     </div>
-                   )}
-                </div>
-                
-                <div className={`p-4 border-t text-center ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-black/20 border-white/5'}`}>
-                   <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Shiroi Arika Premium Selector</p>
                 </div>
              </motion.div>
           </div>
