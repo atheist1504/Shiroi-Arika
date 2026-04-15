@@ -68,6 +68,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [xpToast, setXpToast] = useState(false); 
   const [showSettings, setShowSettings] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showChapterModal, setShowChapterModal] = useState(false);
+  const [chapterSearchTerm, setChapterSearchTerm] = useState('');
   const [reportType, setReportType] = useState('image_broken');
   const [reportDescription, setReportDescription] = useState('');
   const [reportStatus, setReportStatus] = useState(null); // { type: 'success' | 'error', text: string }
@@ -326,7 +328,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       `}} />
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
-      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
+      <div className={`fixed top-0 left-0 right-0 z-[20000] border-b pl-4 pr-8 sm:pr-10 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
             <Link href="/" className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
                 <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -343,9 +345,10 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             <button onClick={goToPrevChapter} disabled={!prevChapterId} className={`p-1.5 sm:p-2 ${prevChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <select value={chapterId} onChange={(e) => router.push(`/read/${e.target.value}`)} className="bg-transparent text-[9px] sm:text-[10px] font-black text-[#4caf50] uppercase tracking-widest outline-none appearance-none cursor-pointer px-0.5 sm:px-1">
-              {allChapters.map(c => <option key={c.id} value={c.id} className={theme === 'light' ? 'bg-white text-black' : 'bg-[#141814]'}>C {c.chapter_number}</option>)}
-            </select>
+            <button onClick={() => setShowChapterModal(true)} className="px-2 py-1 mx-0.5 sm:mx-1 rounded bg-[#4caf50]/10 text-[#4caf50] text-[9px] sm:text-[10px] font-black uppercase tracking-widest border border-[#4caf50]/20 hover:bg-[#4caf50]/20 transition-all flex items-center gap-1">
+               <span>C {chapter?.chapter_number}</span>
+               <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"/></svg>
+            </button>
             <button onClick={goToNextChapter} disabled={!nextChapterId} className={`p-1.5 sm:p-2 ${nextChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
                 <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
             </button>
@@ -454,10 +457,75 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       </AnimatePresence>
 
       <AnimatePresence>
+
         {xpToast && (
           <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[30000] bg-[#4caf50] text-[#0a0c0a] px-8 py-4 rounded-3xl font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(76,175,80,0.4)] flex items-center gap-3 border-2 border-white/20" >
              <span className="text-xl animate-bounce">💎</span> KHO THÀNH TỰU +20 XP !
           </motion.div>
+        )}
+
+        {showChapterModal && (
+          <div className="fixed inset-0 z-[20002] flex items-start justify-center pt-20 px-4">
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+             <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
+                <div className="p-4 border-b border-current/5 flex items-center justify-between">
+                   <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-widest">Chọn chương truyện</h3>
+                   <button onClick={() => setShowChapterModal(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                   </button>
+                </div>
+                
+                <div className="p-4">
+                   <div className="relative group">
+                      <input 
+                        type="text" 
+                        placeholder="Tìm chương (VD: 24)..." 
+                        value={chapterSearchTerm}
+                        onChange={(e) => setChapterSearchTerm(e.target.value)}
+                        className={`w-full px-10 py-3 rounded-xl text-sm font-bold outline-none border transition-all ${theme === 'light' ? 'bg-gray-50 border-black/5 focus:border-[#4caf50]' : 'bg-black/40 border-white/5 focus:border-[#4caf50]'}`}
+                      />
+                      <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#4caf50] transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                      {chapterSearchTerm && (
+                        <button onClick={() => setChapterSearchTerm('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full">
+                           <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                      )}
+                   </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-2 min-h-0 reader-chapter-list">
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {allChapters
+                        .filter(c => c.chapter_number.toString().includes(chapterSearchTerm) || c.title?.toLowerCase().includes(chapterSearchTerm.toLowerCase()))
+                        .map(c => (
+                        <button 
+                           key={c.id} 
+                           onClick={() => { router.push(`/read/${c.id}`); setShowChapterModal(false); }}
+                           className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${c.id === chapterId ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' : (theme === 'light' ? 'bg-gray-50 border-black/5 hover:border-[#4caf50]/50' : 'bg-black/20 border-white/5 hover:border-[#4caf50]/30 hover:bg-[#4caf50]/5')}`}
+                        >
+                           <span className={`text-[8px] font-black uppercase tracking-tighter mb-1 ${c.id === chapterId ? 'text-[#0a0c0a]/60' : 'opacity-40'}`}>Chương</span>
+                           <span className="text-lg font-black">{c.chapter_number}</span>
+                           {c.id === chapterId && (
+                             <div className="absolute top-2 right-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#0a0c0a] animate-pulse" />
+                             </div>
+                           )}
+                        </button>
+                      ))}
+                   </div>
+                   {allChapters.filter(c => c.chapter_number.toString().includes(chapterSearchTerm)).length === 0 && (
+                     <div className="py-20 text-center opacity-30">
+                        <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p className="text-xs font-black uppercase tracking-widest">Không tìm thấy chương nào</p>
+                     </div>
+                   )}
+                </div>
+                
+                <div className={`p-4 border-t text-center ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-black/20 border-white/5'}`}>
+                   <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Shiroi Arika Premium Selector</p>
+                </div>
+             </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

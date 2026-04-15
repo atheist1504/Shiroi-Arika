@@ -175,3 +175,43 @@ body:has(#shiroi-reader-mode) .layout-root {
 .animate-fade-in {
   animation: fade-in 0.6s ease-out forwards;
 }
+
+/* 🎢 CUSTOM PREMIUM SCROLLBAR 🍀 */
+/* Toàn bộ trình duyệt */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track, [data-theme='deep'] ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb, [data-theme='deep'] ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+  background-clip: content-box;
+}
+
+/* 🌿 Riêng cho Reader List */
+.reader-chapter-list::-webkit-scrollbar {
+  width: 4px;
+}
+.reader-chapter-list::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  opacity: 0.5;
+}
