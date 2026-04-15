@@ -344,7 +344,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           background: ${theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'};
         }
         ::-webkit-scrollbar-thumb {
-          background: #4caf50;
+          background: #4caf50 !important;
           border-radius: 20px;
           border: 2px solid transparent;
           background-clip: content-box;

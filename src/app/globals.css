@@ -176,6 +176,34 @@ body:has(#shiroi-reader-mode) .layout-root {
   animation: fade-in 0.6s ease-out forwards;
 }
 
+/* 🎢 GLOBAL AUTO-HIDE PREMIUM SCROLLBAR 🚀 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 20px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  transition: all 0.3s ease;
+}
+
+/* Hiện màu xanh nhạt khi di chuột vào trang */
+body:hover ::-webkit-scrollbar-thumb {
+  background: rgba(76, 175, 80, 0.4);
+}
+
+/* Hiện màu xanh đậm khi chỉ thẳng vào thanh cuộn */
+::-webkit-scrollbar-thumb:hover {
+  background: #4caf50 !important;
+}
+
 /* 🌿 Riêng cho Reader List */
 .reader-chapter-list::-webkit-scrollbar {
   width: 5px;
@@ -184,5 +212,5 @@ body:has(#shiroi-reader-mode) .layout-root {
   background: transparent;
 }
 .reader-chapter-list:hover::-webkit-scrollbar-thumb {
-  background: var(--accent);
+  background: #4caf50;
 }
