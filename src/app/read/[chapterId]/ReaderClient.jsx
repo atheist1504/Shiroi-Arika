@@ -385,10 +385,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
              <span className="text-xl animate-bounce">💎</span> KHO THÀNH TỰU +20 XP !
           </motion.div>
         )}
-                </div>
-             </motion.div>
-          </div>
-        )}
+
       </AnimatePresence>
 
       <div className={`max-w-5xl mx-auto flex flex-col items-center pt-[70px] md:pt-[80px] transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
