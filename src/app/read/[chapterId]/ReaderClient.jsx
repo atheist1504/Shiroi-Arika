@@ -359,7 +359,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">Báo lỗi</span>
             </button>
-            <div className={`px-2 py-1.5 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[9px] font-black uppercase tracking-tighter hidden xs:block`}>
+            <div className={`px-2 py-1.5 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[9px] font-black uppercase tracking-tighter`}>
                {readingMode === 'scroll' ? 'CUỘN ĐỌC' : `TRANG ${currentPageIndex + 1}/${pages.length}`}
             </div>
             <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
