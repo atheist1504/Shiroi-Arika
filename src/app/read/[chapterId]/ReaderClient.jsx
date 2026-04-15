@@ -21,8 +21,6 @@ const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
           className="w-full h-auto block m-[-0.5px] p-0 will-change-transform" 
           loading="lazy" 
           decoding="async"
-          crossOrigin="anonymous"
-          referrerPolicy="no-referrer"
           onError={(e) => {
             const currentSrc = e.currentTarget.src;
             const raw = fixR2Url(page.image_url);
@@ -33,9 +31,10 @@ const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
                 rawUrl: raw
             });
 
-            // 🛡️ RECOVERY: Nếu Cloudinary lỗi, thử quay về ảnh R2 gốc
+            // 🛡️ RECOVERY: Nếu Cloudinary lỗi hoặc gặp lỗi CORS, thử quay về ảnh R2 gốc và gỡ bỏ crossorigin
             if (currentSrc !== raw) {
                 console.log(`🔄 [Reader] Đang thử tải lại trang ${index + 1} từ nguồn gốc R2...`);
+                e.currentTarget.removeAttribute('crossOrigin');
                 e.currentTarget.src = raw;
             }
           }}
@@ -420,8 +419,6 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                   src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} 
                   alt={`Trang ${currentPageIndex + 1}`} 
                   className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} 
-                  crossOrigin="anonymous" 
-                  referrerPolicy="no-referrer" 
                   onError={(e) => { 
                     const currentSrc = e.currentTarget.src;
                     const raw = fixR2Url(pages[currentPageIndex]?.image_url); 
@@ -433,6 +430,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
                     if (currentSrc !== raw) {
                         console.log("🔄 [Reader-Page] Thử lại nguồn gốc R2...");
+                        e.currentTarget.removeAttribute('crossOrigin');
                         e.currentTarget.src = raw; 
                     }
                   }} 
