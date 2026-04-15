@@ -334,6 +334,24 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         nav.sticky-nav, footer.footer { display: none !important; }
         .main-content { padding: 0 !important; margin: 0 !important; }
         #shiroi-reader-mode { width: 100%; min-height: 100vh; position: relative; z-index: 1; }
+        
+        /* 🎢 SCOPED PREMIUM SCROLLBAR - CHỈ DÀNH CHO TRANG ĐỌC 🚀 */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+          background: ${theme === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'};
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #4caf50;
+          border-radius: 20px;
+          border: 2px solid transparent;
+          background-clip: content-box;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #66bb6a !important;
+        }
       `}} />
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}

@@ -176,33 +176,6 @@ body:has(#shiroi-reader-mode) .layout-root {
   animation: fade-in 0.6s ease-out forwards;
 }
 
-/* 🎢 CUSTOM PREMIUM SCROLLBAR 🚀 */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-[data-theme='dark'] ::-webkit-scrollbar-track, 
-[data-theme='deep'] ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--accent);
-  border-radius: 20px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-
-/* Thêm hiệu ứng sáng lên khi di chuột trực tiếp vào thanh cuộn */
-::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover) !important;
-}
-
 /* 🌿 Riêng cho Reader List */
 .reader-chapter-list::-webkit-scrollbar {
   width: 5px;
