@@ -59,7 +59,7 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
         <div className="flex gap-4">
           <Link href={`/user/${comment.user_id}`} className="block shrink-0 group/avt">
             <div className={`${isReply ? 'w-8 h-8 rounded-lg' : 'w-12 h-12 rounded-2xl'} overflow-hidden bg-[#141814] border border-white/10 shadow-xl group-hover/avt:border-[#4caf50]/50 transition-all`}>
-               <img src={fixR2Url(comment.display_avatar)} className="w-full h-full object-cover group-hover/avt:scale-110 transition-transform duration-500" alt="" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+               <img src={fixR2Url(comment.display_avatar)} className="w-full h-full object-cover group-hover/avt:scale-110 transition-transform duration-500" alt="" onError={(e) => { e.currentTarget.removeAttribute('crossOrigin'); }} />
             </div>
           </Link>
           <div className="flex-1 space-y-2">
@@ -218,16 +218,14 @@ export default function Comments({ mangaId, chapterId }) {
             }
         });
 
-        // 🚀 Thực hiện cộng XP nếu thỏa mãn điều kiện
+        // 🚀 THỰC HIỆN GHI LOG XP (Database Trigger sẽ tự động cộng điểm cho User) 🛡️
         if (currentCommentShouldReward && rewardAmount > 0) {
-            const { data: latestUser } = await supabase.from('shiroi_users').select('xp').eq('id', user.id).single();
-            const newXP = (latestUser?.xp || 0) + rewardAmount;
-            const { error: updateErr } = await supabase.from('shiroi_users').update({ xp: newXP }).eq('id', user.id);
-            
-            if (!updateErr) {
-                // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
-                await recordXpLog(supabase, user.id, rewardAmount, 'comment', mangaId || chapterId || 'General');
+            // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
+            // Chúng ta không cộng XP trực tiếp ở đây nữa để tránh lỗi "Nhân đôi XP" do Trigger 🍀
+            await recordXpLog(supabase, user.id, rewardAmount, 'comment', mangaId || chapterId || 'General');
 
+            // Cập nhật lại User state từ Database sau khi Trigger đã chạy xong ⚡
+            setTimeout(async () => {
                 const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', user.id).single();
                 if (updated) {
                     localStorage.setItem('shiroi_user', JSON.stringify(updated));
@@ -237,7 +235,7 @@ export default function Comments({ mangaId, chapterId }) {
                     setTimeout(() => setXpToast(false), 4000);
                     window.dispatchEvent(new Event('storage'));
                 }
-            }
+            }, 500); // Đợi 500ms để trigger DB hoàn tất xử lý
         }
     } catch (err) { console.error("Lỗi xác thực XP bình luận:", err); }
   };

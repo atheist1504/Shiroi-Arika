@@ -24,6 +24,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **RLS Permissions Fix**: Phát hiện và xử lý lỗi thiếu chính sách SELECT trên bảng `pages` và `chapters`. Đã tạo script [fix_permissions.sql](file:///c:/Shiroi%20Arika/fix_permissions.sql) để mở khóa hình ảnh cho tất cả người đọc. 🖼️🛡️🔓
 - [x] **Profile Crash Hotfix (v16)**: Khắc phục triệt để lỗi "Client-side exception" tại trang `/profile` do biến `isPast` bị undefined. Đồng thời tối ưu hóa cơ chế Hydration bằng cách lấy ngày hiện tại đồng nhất giữa Server và Client. 🛠️✅🔥
 - [x] **Reader Mobile Image Fix (v17)**: Khắc phục lỗi ảnh vỡ trên trình duyệt di động do các thuộc tính `crossOrigin` và `referrerPolicy` gây xung đột với Cloudflare R2. Tối ưu hóa `onError` để tự động gỡ bỏ thuộc tính lỗi và fallback về ảnh gốc. 📱🖼️🛡️
+- [x] **System Calibration (v18 - XP & Images)**: Hiệu chuẩn toàn diện hệ thống: Loại bỏ hoàn toàn `crossOrigin` trong `Comments.js`, dọn dẹp mã thừa trong `actions.js`. Hợp nhất logic XP bình luận để tránh lỗi cộng trùng điểm (Double XP) do xung đột giữa Client và Database Trigger. 💎🛡️🍀
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉

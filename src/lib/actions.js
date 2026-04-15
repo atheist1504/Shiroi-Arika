@@ -413,8 +413,6 @@ export async function addReadXPAction(mangaId, chapterId) {
     if (!resLog.success) return resLog;
 
     return { success: true, xpGain: 20 };
-
-    return { success: true, newXP };
   } catch (error) {
     console.error('Lỗi addReadXPAction:', error);
     return { success: false, error: error.message };
