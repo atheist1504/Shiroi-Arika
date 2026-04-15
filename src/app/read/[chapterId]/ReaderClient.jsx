@@ -561,9 +561,17 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             <div className="space-y-10 mt-10">
                <div ref={endOfChapterRef} className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
                    <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === 'light' ? 'text-gray-400' : 'text-gray-700'}`}>ĐÃ HẾT CHƯƠNG {chapter?.chapter_number}</span>
-                   <button onClick={goToNextChapter} className="px-16 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95" >
-                       ĐỌC TIẾP CHƯƠNG SAU 🚀
-                   </button>
+                   <div className="flex flex-col sm:flex-row gap-4 items-center">
+                     <button onClick={() => setShowChapterModal(true)} className="px-12 py-5 bg-[#4caf50] text-[#0a0c0a] hover:bg-[#66bb6a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center gap-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        MỞ DANH SÁCH CHƯƠNG 📖
+                     </button>
+                     {nextChapterId && (
+                       <button onClick={goToNextChapter} className="px-12 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95">
+                          ĐỌC CHƯƠNG TIẾP THEO 🚀
+                       </button>
+                     )}
+                   </div>
                </div>
                <div className={`w-full pb-40 ${theme === 'light' ? 'bg-white text-black' : ''}`}>
                    <div className={`h-px mb-12 ${theme === 'light' ? 'bg-gray-200' : 'bg-gradient-to-r from-transparent via-white/5 to-transparent'}`}></div>
