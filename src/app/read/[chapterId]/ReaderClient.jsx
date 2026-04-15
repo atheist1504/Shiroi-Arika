@@ -327,42 +327,49 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
       <div className={`fixed top-0 left-0 right-0 z-[20000] border-b px-4 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
-        <div className="flex items-center gap-3 flex-1 overflow-hidden">
-            <Link href="/" className={`p-2 rounded-lg transition-colors ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 overflow-hidden min-w-0">
+            <Link href="/" className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
             </Link>
-            <Link href={`/manga/${chapter?.manga_id}`} className={`${theme === 'light' ? 'text-gray-900' : 'text-gray-500'} hover:text-[#4caf50] transition-colors`} title="Quay lại trang truyện">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
-            </Link>
-            <div className="flex flex-col truncate">
+            <div className="flex flex-col truncate min-w-0">
                 <Link href={`/manga/${chapter?.manga_id}`} className="hover:text-[#4caf50] transition-colors truncate">
-                  <h1 className="text-[10px] font-black uppercase tracking-tight truncate" style={{ color: 'inherit' }}>{manga?.title}</h1>
+                  <h1 className="text-[9px] sm:text-[10px] font-black uppercase tracking-tight truncate" style={{ color: 'inherit' }}>{manga?.title}</h1>
                 </Link>
-                <span className="text-[8px] font-bold" style={{ color: 'var(--text-muted-reader, #6b7280)' }}>Chương {chapter?.chapter_number}</span>
+                <span className="text-[7px] sm:text-[8px] font-bold opacity-70">Chương {chapter?.chapter_number}</span>
             </div>
         </div>
 
-        <div className={`flex items-center gap-1 p-1 rounded-lg border mx-2 transition-colors ${theme === 'light' ? 'bg-gray-100 border-black/5' : 'bg-black/40 border-white/5'}`}>
-            <button onClick={goToPrevChapter} disabled={!prevChapterId} className={`p-2 ${prevChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
+        <div className={`flex items-center gap-0.5 sm:gap-1 p-0.5 sm:p-1 rounded-lg border mx-1 sm:mx-2 transition-colors flex-shrink-0 ${theme === 'light' ? 'bg-gray-100 border-black/5' : 'bg-black/40 border-white/5'}`}>
+            <button onClick={goToPrevChapter} disabled={!prevChapterId} className={`p-1.5 sm:p-2 ${prevChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7"/></svg>
             </button>
-            <select value={chapterId} onChange={(e) => router.push(`/read/${e.target.value}`)} className="bg-transparent text-[10px] font-black text-[#4caf50] uppercase tracking-widest outline-none appearance-none cursor-pointer px-1">
-              {allChapters.map(c => <option key={c.id} value={c.id} className={theme === 'light' ? 'bg-white text-black' : 'bg-[#141814]'}>Chương {c.chapter_number}</option>)}
+            <select value={chapterId} onChange={(e) => router.push(`/read/${e.target.value}`)} className="bg-transparent text-[9px] sm:text-[10px] font-black text-[#4caf50] uppercase tracking-widest outline-none appearance-none cursor-pointer px-0.5 sm:px-1">
+              {allChapters.map(c => <option key={c.id} value={c.id} className={theme === 'light' ? 'bg-white text-black' : 'bg-[#141814]'}>C {c.chapter_number}</option>)}
             </select>
-            <button onClick={goToNextChapter} disabled={!nextChapterId} className={`p-2 ${nextChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
+            <button onClick={goToNextChapter} disabled={!nextChapterId} className={`p-1.5 sm:p-2 ${nextChapterId ? (theme === 'light' ? 'text-black hover:text-gray-600' : 'text-gray-300 hover:text-white') : (theme === 'light' ? 'text-gray-300' : 'text-gray-800')}`}>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"/></svg>
             </button>
         </div>
 
-        <div className="flex-1 flex justify-end items-center gap-2 sm:gap-3">
-            <button onClick={() => { setShowReportModal(true); setShowSettings(false); }} className={`px-2.5 py-1.5 rounded border transition-all flex items-center gap-1.5 ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/20 shadow-lg'}`} title="Báo lỗi chương">
-               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-               <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap">Báo lỗi</span>
+        <div className="flex-1 flex justify-end items-center gap-1.5 sm:gap-3">
+            <button onClick={() => { setShowReportModal(true); setShowSettings(false); }} className={`px-2 py-1.5 sm:px-2.5 rounded border transition-all flex items-center gap-1 sm:gap-1.5 ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/20 shadow-lg'}`} title="Báo lỗi chương">
+               <svg className="w-3.5 h-3.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+               <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap hidden xs:inline-block">Báo lỗi</span>
             </button>
-            <div className={`px-2 py-1.5 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[9px] font-black uppercase tracking-tighter`}>
-               {readingMode === 'scroll' ? 'CUỘN ĐỌC' : `TRANG ${currentPageIndex + 1}/${pages.length}`}
+            <div className={`px-1.5 py-1.5 sm:px-2 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[8px] sm:text-[9px] font-black uppercase tracking-tighter`}>
+               {readingMode === 'scroll' ? (
+                 <>
+                   <span className="xs:hidden">SCROLL</span>
+                   <span className="hidden xs:inline">CUỘN ĐỌC</span>
+                 </>
+               ) : (
+                 <>
+                   <span className="xs:hidden">{currentPageIndex + 1}/{pages.length}</span>
+                   <span className="hidden xs:inline">TRANG {currentPageIndex + 1}/{pages.length}</span>
+                 </>
+               )}
             </div>
-            <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
+            <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-1.5 sm:p-2 rounded-lg border transition-all flex-shrink-0 ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
         </div>

@@ -7,6 +7,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'xs': '450px',
+      },
       keyframes: {
         shimmer: {
           '100%': { transform: 'translateX(100%)' },
