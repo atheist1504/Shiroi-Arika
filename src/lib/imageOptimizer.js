@@ -4,21 +4,33 @@
  * @param {number} quality - Chất lượng ảnh WebP (0.0 đến 1.0)
  * @returns {Promise<File>} File định dạng WebP đã được nén
  */
-export const compressImageToWebP = async (file, quality = 0.8) => {
+export const compressImageToWebP = async (file, quality = 0.85) => {
   return new Promise((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
     const img = new Image();
     
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // 🚀 TĂNG ĐỘ PHÂN GIẢI LÊN 1600PX ĐẾ TRÁNH VỠ ẢNH TRÊN MÀN HÌNH LỚN
+      const maxWidth = 1600;
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
       
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: false });
       if (!ctx) {
         URL.revokeObjectURL(imageUrl);
         return reject(new Error("Không thể khởi tạo Canvas"));
       }
+
+      // ✨ CẤU HÌNH RENDERING CHẤT LƯỢNG CAO
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      
+      // ⚪️ ĐỔ NỀN TRẮNG (TRÁNH LỖI VÙNG ĐEN TRÊN ẢNH TRONG SUỐT)
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
       canvas.toBlob(

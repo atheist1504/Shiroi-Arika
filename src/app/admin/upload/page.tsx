@@ -30,27 +30,39 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
-const compressImageToWebP = async (file: File, quality = 0.8): Promise<File> => {
+const compressImageToWebP = async (file: File, isTikTok: boolean = false): Promise<File> => {
   return new Promise((resolve, reject) => {
     const imageUrl = URL.createObjectURL(file);
     const img = new Image();
     
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const maxWidth = 1200;
+      // 🚀 TĂNG ĐỘ PHÂN GIẢI LÊN 1600PX ĐẾ TRÁNH VỠ ẢNH TRÊN MÀN HÌNH LỚN 🍀
+      const maxWidth = 1600;
       const scale = Math.min(1, maxWidth / img.width);
       canvas.width = img.width * scale;
       canvas.height = img.height * scale;
       
+      // 🛡️ SỬ DỤNG CHẤT LƯỢNG CAO NHẤT ĐỂ TRÁNH ALIASING (RĂNG CƯA) 🍀
       const ctx = canvas.getContext("2d", { alpha: false });
       if (!ctx) {
         URL.revokeObjectURL(imageUrl);
         return reject(new Error("Canvas context failed"));
       }
+
+      // ✨ CẤU HÌNH RENDERING CHẤT LƯỢNG CAO
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      
+      // ⚪️ ĐỔ NỀN TRẮNG (TRÁNH LỖI VÙNG ĐEN TRÊN ẢNH TRONG SUỐT)
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       
+      // 📈 CHẤT LƯỢNG THÍCH ỨNG: TIKTOK CHƯA NÉN TỐT NÊN DÙNG 0.9, ẢNH KHÁC DÙNG 0.8
+      const quality = isTikTok ? 0.92 : 0.82;
+
       canvas.toBlob(
         (blob) => {
           URL.revokeObjectURL(imageUrl);
@@ -75,6 +87,7 @@ const compressImageToWebP = async (file: File, quality = 0.8): Promise<File> => 
     img.src = imageUrl;
   });
 };
+
 
 // 🖼️ COMPONENT TRANG TRUYỆN SORTABLE
 function SortableItem({ id, item, index, onRemove, onPreview, onBroken }: any) {
@@ -343,7 +356,7 @@ export default function AdminUploadPage() {
           while (retryCount <= maxRetries) {
             try {
               if (item.type === 'new') {
-                const compressed = await compressImageToWebP(item.file);
+                const compressed = await compressImageToWebP(item.file, item.isTikTok);
                 const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
 
                 const ticket: any = await getUploadUrlAction(fileName);
