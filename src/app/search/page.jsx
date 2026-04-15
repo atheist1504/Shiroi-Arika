@@ -8,19 +8,8 @@ import Link from 'next/link';
 import { MangaCardSkeleton } from '@/components/ui/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const GENRES = [
-  "Manga", "Manhua", "Manhwa", "Truyện màu", "One Shot",
-  "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
-  "Magic", "Mystery", "18+", "Romance", 
-  "Sci-Fi", "Slice of Life", "Supernatural", "Tragedy", "Historical",
-  "Isekai", "School Life"
-];
+import { GENRES, STATUS_OPTIONS } from '@/lib/constants';
 
-const STATUS_OPTIONS = [
-  { id: 'All', label: 'TẤT CẢ' },
-  { id: 'ongoing', label: 'ĐANG TIẾN HÀNH' },
-  { id: 'completed', label: 'HOÀN THÀNH' }
-];
 
 function SearchContent() {
   const searchParams = useSearchParams();

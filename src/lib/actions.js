@@ -778,3 +778,76 @@ export async function performLuckyDrawAction() {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 🚩 SERVER ACTION: Gửi báo cáo lỗi chương
+ */
+export async function submitReportAction(reportData) {
+  try {
+    const user = await getAuthenticatedUser();
+    const client = getDbClient();
+
+    const { error } = await client
+      .from('shiroi_reports')
+      .insert([{
+        ...reportData,
+        user_id: user?.id || null,
+        status: 'pending'
+      }]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi submitReportAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Chỉ Admin)
+ */
+export async function getReportsAction() {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+
+    const { data, error } = await client
+      .from('shiroi_reports')
+      .select(`
+        *,
+        mangas(title),
+        chapters(chapter_number),
+        shiroi_users(username)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, reports: data };
+  } catch (error) {
+    console.error('Lỗi getReportsAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🛠️ SERVER ACTION: Cập nhật trạng thái báo cáo (Chỉ Admin)
+ */
+export async function updateReportStatusAction(reportId, status) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+
+    const { error } = await client
+      .from('shiroi_reports')
+      .update({ status })
+      .eq('id', reportId);
+
+    if (error) throw error;
+    
+    revalidatePath('/admin/reports');
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi updateReportStatusAction:', error);
+    return { success: false, error: error.message };
+  }
+}

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Comments from '@/components/Comments';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { XP_REWARDS, recordXpLog } from '@/lib/xp';
+import { submitReportAction } from '@/lib/actions';
 
 // 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
@@ -66,6 +67,10 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [lastScrollYState, setLastScrollYState] = useState(0); // Dùng cho UI (Back to Top)
   const [xpToast, setXpToast] = useState(false); 
   const [showSettings, setShowSettings] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportType, setReportType] = useState('image_broken');
+  const [reportDescription, setReportDescription] = useState('');
+  const [reportStatus, setReportStatus] = useState(null); // { type: 'success' | 'error', text: string }
   const [theme, setThemeState] = useState('dark'); 
 
   // 🔄 ĐỒNG BỘ THEME & CHẾ ĐỘ ĐỌC VĨNH VIỄN (CHỈ TRONG READER) 🍀
@@ -285,6 +290,30 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const goToNextChapter = () => nextChapterId && router.push(`/read/${nextChapterId}`);
   const goToPrevChapter = () => prevChapterId && router.push(`/read/${prevChapterId}`);
 
+  const handleReportSubmit = async (e) => {
+    e.preventDefault();
+    if (!reportType) return;
+
+    setReportStatus({ type: 'info', text: 'ĐANG GỬI BÁO CÁO...' });
+    const res = await submitReportAction({
+      manga_id: manga.id,
+      chapter_id: chapter.id,
+      type: reportType,
+      description: reportDescription
+    });
+
+    if (res.success) {
+      setReportStatus({ type: 'success', text: 'CẢM ƠN ÔNG! BÁO CÁO ĐÃ ĐƯỢC GỬI TỚI ADMIN. 🍀' });
+      setReportDescription('');
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportStatus(null);
+      }, 2000);
+    } else {
+      setReportStatus({ type: 'error', text: 'GỬI THẤT BẠI: ' + res.error });
+    }
+  };
+
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
   return (
@@ -329,7 +358,10 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             <div className={`px-2 py-1 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[9px] font-black uppercase tracking-tighter`}>
                {readingMode === 'scroll' ? 'CUỘN ĐỌC' : `TRANG ${currentPageIndex + 1}/${pages.length}`}
             </div>
-            <button onClick={() => setShowSettings(!showSettings)} className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
+            <button onClick={() => { setShowReportModal(true); setShowSettings(false); }} className={`p-2 rounded-lg border transition-all ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-black/40 text-red-400 border-white/5 hover:border-red-500/30'}`} title="Báo lỗi chương">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </button>
+            <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-2 rounded-lg border transition-all ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
         </div>
@@ -356,6 +388,59 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                    </div>
                 </div>
              </div>
+          </motion.div>
+        )}
+
+        {showReportModal && (
+          <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[20001] w-72 backdrop-blur-2xl border rounded-2xl p-5 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
+             <div className="flex items-center justify-between mb-4">
+                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Báo lỗi chương truyện</h3>
+                <button onClick={() => { setShowReportModal(false); setReportStatus(null); }} className="text-gray-500 hover:text-white transition-colors">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+             </div>
+             
+             {reportStatus ? (
+               <div className={`py-8 text-center space-y-3 animate-fade-in`}>
+                  <div className={`text-2xl ${reportStatus.type === 'error' ? 'animate-shake' : 'animate-bounce'}`}>
+                    {reportStatus.type === 'success' ? '✅' : (reportStatus.type === 'error' ? '❌' : '⏳')}
+                  </div>
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${reportStatus.type === 'error' ? 'text-red-500' : (reportStatus.type === 'success' ? 'text-[#4caf50]' : 'text-amber-500')}`}>
+                    {reportStatus.text}
+                  </p>
+               </div>
+             ) : (
+               <form onSubmit={handleReportSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                     <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Loại lỗi</label>
+                     <select 
+                       value={reportType} 
+                       onChange={(e) => setReportType(e.target.value)}
+                       className={`w-full p-2.5 rounded-xl text-[10px] font-black uppercase tracking-tight outline-none border transition-all ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
+                     >
+                        <option value="image_broken">Ảnh bị hỏng / Không load được</option>
+                        <option value="wrong_translation">Dịch sai / Lỗi chính tả</option>
+                        <option value="wrong_order">Trình tự trang bị lộn xộn</option>
+                        <option value="other">Lỗi khác...</option>
+                     </select>
+                  </div>
+                  <div className="space-y-2">
+                     <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Mô tả chi tiết</label>
+                     <textarea 
+                        value={reportDescription}
+                        onChange={(e) => setReportDescription(e.target.value)}
+                        placeholder="VD: Trang số 5 bị trắng xóa..."
+                        className={`w-full p-3 rounded-xl text-[10px] font-medium h-20 outline-none border transition-all resize-none ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
+                     />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg active:scale-95"
+                  >
+                    GỬI BÁO CÁO 🚀
+                  </button>
+               </form>
+             )}
           </motion.div>
         )}
       </AnimatePresence>
