@@ -245,28 +245,29 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
-    if (readingMode !== 'scroll') {
-      setShowNav(true);
-      return;
-    }
-
     const handleScroll = () => {
+      // Chỉ áp dụng logic ẩn/hiện Nav khi ở chế độ cuộn dọc 🚀
+      if (readingMode !== 'scroll') {
+        setShowNav(true);
+        return;
+      }
+
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
       const delta = currentScrollY - lastScrollY;
-      
-      // 1. Lướt xuống đáng kể (> 5px) và đã qua vùng header (100px) -> Ẩn
-      if (delta > 5 && currentScrollY > 100) {
+
+      // 1. Ẩn Nav khi cuộn xuống (> 5px) và đã ra khỏi vùng đỉnh (> 120px)
+      if (delta > 5 && currentScrollY > 120) {
         setShowNav(false);
       } 
-      // 2. Lướt lên đáng kể (> 5px) HOẶC chạm đỉnh trang -> Hiện
-      else if (delta < -5 || currentScrollY <= 20) {
+      // 2. Hiện Nav khi cuộn lên (> 10px) hoặc về gần đỉnh trang
+      else if (delta < -10 || currentScrollY <= 30) {
         setShowNav(true);
       }
 
-      // 3. Cập nhật state UI (Back to top) ít thường xuyên hơn để giữ mượt
-      if (Math.abs(currentScrollY - lastScrollYState) > 200 || currentScrollY < 100) {
-          setLastScrollYState(currentScrollY);
+      // 3. Cập nhật vị trí cuộn cho UI (Nút Back to top) - Tách biệt logic để tránh re-render Nav liên tục
+      if (Math.abs(currentScrollY - lastScrollYState) > 300 || currentScrollY < 100) {
+        setLastScrollYState(currentScrollY);
       }
 
       lastScrollYRef.current = currentScrollY;
@@ -274,7 +275,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [readingMode, lastScrollYState]);
+  }, [readingMode, lastScrollYState]); // Vẫn giữ lastScrollYState để nút Back to top cập nhật chính xác
 
   useEffect(() => {
     const handleKeyDown = (e) => {
