@@ -246,26 +246,20 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   useEffect(() => {
     const handleScroll = () => {
-      // Chỉ áp dụng logic ẩn/hiện Nav khi ở chế độ cuộn dọc 🚀
-      if (readingMode !== 'scroll') {
-        setShowNav(true);
-        return;
-      }
-
       const currentScrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
       const delta = currentScrollY - lastScrollY;
 
-      // 1. Ẩn Nav khi cuộn xuống (> 5px) và đã ra khỏi vùng đỉnh (> 120px)
-      if (delta > 5 && currentScrollY > 120) {
-        setShowNav(false);
+      // 1. Logic ẩn Nav: Khi đang cuộn xuống mạnh (> 10px) và đã qua khỏi vùng đỉnh trang (> 60px)
+      if (delta > 10 && currentScrollY > 60) {
+        if (showNav) setShowNav(false);
       } 
-      // 2. Hiện Nav khi cuộn lên (> 10px) hoặc về gần đỉnh trang
-      else if (delta < -10 || currentScrollY <= 30) {
-        setShowNav(true);
+      // 2. Logic hiện Nav: Khi cuộn lên hoặc khi lùi về sát đỉnh trang
+      else if (delta < -10 || currentScrollY <= 40) {
+        if (!showNav) setShowNav(true);
       }
 
-      // 3. Cập nhật vị trí cuộn cho UI (Nút Back to top) - Tách biệt logic để tránh re-render Nav liên tục
+      // 3. Cập nhật vị trí cuộn cho các thành phần UI khác
       if (Math.abs(currentScrollY - lastScrollYState) > 300 || currentScrollY < 100) {
         setLastScrollYState(currentScrollY);
       }
@@ -273,9 +267,23 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       lastScrollYRef.current = currentScrollY;
     };
 
+    // Lắng nghe cả sự kiện cuộn chuột để hỗ trợ chế độ Lật Trang (Page Mode) hiệu quả hơn 🚀
+    const handleWheel = (e) => {
+      if (e.deltaY > 50) { // Lướt xuống
+        if (showNav) setShowNav(false);
+      } else if (e.deltaY < -50) { // Lướt lên
+        if (!showNav) setShowNav(true);
+      }
+    };
+
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [readingMode, lastScrollYState]); // Vẫn giữ lastScrollYState để nút Back to top cập nhật chính xác
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("wheel", handleWheel);
+    };
+  }, [showNav, readingMode, lastScrollYState]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
