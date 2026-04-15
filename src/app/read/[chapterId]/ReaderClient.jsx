@@ -245,33 +245,30 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const lastScrollYRef = useRef(0);
 
   const showNavRef = useRef(true);
+  const readingModeRef = useRef(readingMode);
   const touchStartY = useRef(0);
 
   useEffect(() => {
-    // 🏛️ REVERT: Ở chế độ lật trang, menu luôn cố định theo yêu cầu của User 🚀
-    if (readingMode === 'page') {
-      setShowNav(true);
-      showNavRef.current = true;
-      return;
-    }
+    readingModeRef.current = readingMode;
+  }, [readingMode]);
 
+  useEffect(() => {
     const handleGesture = (delta, currentY) => {
-      // 1. Logic ẩn Nav: Lướt xuống (delta > 8)
-      // Nếu ở chế độ cuộn, chỉ ẩn khi đã qua đỉnh trang (> 60px)
-      // Nếu ở chế độ lật trang, ẩn bất cứ lúc nào lướt xuống
-      const thresholdY = readingMode === 'page' ? -1 : 60;
-      if (delta > 8 && currentY > thresholdY) {
-        if (showNavRef.current) {
-          showNavRef.current = false;
-          setShowNav(false);
-        }
-      } 
-      // 2. Logic hiện Nav: Lướt lên NHẸ (delta < -4) hoặc chạm đỉnh
-      else if (delta < -4 || currentY <= 30) {
+      // 🏛️ REVERT: Ở chế độ lật trang, menu luôn cố định theo yêu cầu của User 🚀
+      if (readingModeRef.current === 'page') {
         if (!showNavRef.current) {
           showNavRef.current = true;
           setShowNav(true);
         }
+        return;
+      }
+
+      // 🎯 LOGIC NHẠY: Chỉ cần lướt lên cực nhẹ (delta < -2) hoặc lướt xuống (delta > 8)
+      if (delta > 8 && currentY > 80) {
+        if (showNavRef.current) { showNavRef.current = false; setShowNav(false); }
+      } 
+      else if (delta < -2 || currentY <= 30) {
+        if (!showNavRef.current) { showNavRef.current = true; setShowNav(true); }
       }
     };
 
@@ -280,6 +277,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       const delta = curY - lastScrollYRef.current;
       handleGesture(delta, curY);
       
+      // Cập nhật Back to Top button (vẫn dùng state để re-render UI này)
       if (Math.abs(curY - lastScrollYState) > 300 || curY < 100) {
         setLastScrollYState(curY);
       }
@@ -301,11 +299,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       touchStartY.current = touchY;
     };
 
-    // 🎯 CLICK TO TOGGLE: Cho phép bấm vào vùng đọc để hiện/ẩn Menu nhanh
     const onTap = (e) => {
-      // Không toggle nếu bấm vào các nút hoặc modal
-      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.fixed')) return;
-      
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.fixed') || e.target.closest('.modal')) return;
       showNavRef.current = !showNavRef.current;
       setShowNav(showNavRef.current);
     };
@@ -323,7 +318,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("click", onTap);
     };
-  }, [readingMode, lastScrollYState]);
+  }, [lastScrollYState]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
