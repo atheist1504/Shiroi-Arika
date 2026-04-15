@@ -304,6 +304,17 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       type: reportType,
       description: reportDescription
     });
+    if (res.success) {
+      setReportStatus({ type: 'success', text: 'CẢM ƠN ÔNG! BÁO CÁO ĐÃ ĐƯỢC GỬI TỚI ADMIN. 🍀' });
+      setReportDescription('');
+      setTimeout(() => {
+        setShowReportModal(false);
+        setReportStatus(null);
+      }, 2000);
+    } else {
+      setReportStatus({ type: 'error', text: 'GỬI THẤT BẠI: ' + res.error });
+    }
+  };
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
