@@ -247,6 +247,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const showNavRef = useRef(true);
   const readingModeRef = useRef(readingMode);
   const touchStartY = useRef(0);
+  const accumUpRef = useRef(0); // 🎢 Tích lũy khoảng cách lướt lên
 
   useEffect(() => {
     readingModeRef.current = readingMode;
@@ -254,7 +255,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   useEffect(() => {
     const handleGesture = (delta, currentY) => {
-      // 🏛️ REVERT: Ở chế độ lật trang, menu luôn cố định theo yêu cầu của User 🚀
+      // 🏛️ Ở chế độ lật trang, menu luôn cố định
       if (readingModeRef.current === 'page') {
         if (!showNavRef.current) {
           showNavRef.current = true;
@@ -263,12 +264,29 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         return;
       }
 
-      // 🎯 LOGIC NHẠY: Chỉ cần lướt lên cực nhẹ (delta < -2) hoặc lướt xuống (delta > 8)
+      // 1. Logic ẩn Nav: Lướt xuống (delta > 8)
       if (delta > 8 && currentY > 80) {
-        if (showNavRef.current) { showNavRef.current = false; setShowNav(false); }
+        accumUpRef.current = 0; // Reset tích lũy khi đổi hướng xuống
+        if (showNavRef.current) {
+          showNavRef.current = false;
+          setShowNav(false);
+        }
       } 
-      else if (delta < -2 || currentY <= 30) {
-        if (!showNavRef.current) { showNavRef.current = true; setShowNav(true); }
+      // 2. Logic hiện Nav: Tích lũy lướt lên (delta < 0)
+      else if (delta < 0) {
+        accumUpRef.current += Math.abs(delta);
+        // Chỉ cần lướt lên tổng cộng 10px (rất ngắn) hoặc về gần đỉnh trang
+        if (accumUpRef.current > 10 || currentY <= 30) {
+          if (!showNavRef.current) {
+            showNavRef.current = true;
+            setShowNav(true);
+          }
+          accumUpRef.current = 0;
+        }
+      }
+      // Reset khi dừng hoặc lướt nhẹ không đáng kể
+      else if (Math.abs(delta) < 1) {
+        // Giữ nguyên trạng thái
       }
     };
 
@@ -300,7 +318,14 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     };
 
     const onTap = (e) => {
-      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('.fixed') || e.target.closest('.modal')) return;
+      // Chỉ bỏ qua nếu bấm vào các nút điều khiển, link, hoặc các ô nhập liệu
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('.modal')) return;
+      
+      // Nếu bấm vào vùng Fixed mà KHÔNG PHẢI là menu chính thì vẫn cho toggle (để sửa lỗi Page Mode)
+      if (e.target.closest('.fixed') && !e.target.closest('nav') && !e.target.closest('.sticky-nav')) {
+          // Vẫn cho phép toggle nếu không phải bấm vào các nút chức năng
+      }
+
       showNavRef.current = !showNavRef.current;
       setShowNav(showNavRef.current);
     };
