@@ -25,6 +25,7 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Profile Crash Hotfix (v16)**: Khắc phục triệt để lỗi "Client-side exception" tại trang `/profile` do biến `isPast` bị undefined. Đồng thời tối ưu hóa cơ chế Hydration bằng cách lấy ngày hiện tại đồng nhất giữa Server và Client. 🛠️✅🔥
 - [x] **Reader Mobile Image Fix (v17)**: Khắc phục lỗi ảnh vỡ trên trình duyệt di động do các thuộc tính `crossOrigin` và `referrerPolicy` gây xung đột với Cloudflare R2. Tối ưu hóa `onError` để tự động gỡ bỏ thuộc tính lỗi và fallback về ảnh gốc. 📱🖼️🛡️
 - [x] **System Calibration (v18 - XP & Images)**: Hiệu chuẩn toàn diện hệ thống: Loại bỏ hoàn toàn `crossOrigin` trong `Comments.js`, dọn dẹp mã thừa trong `actions.js`. Hợp nhất logic XP bình luận để tránh lỗi cộng trùng điểm (Double XP) do xung đột giữa Client và Database Trigger. 💎🛡️🍀
+- [x] **TikTok & Mobile Image Hotfix (v19)**: Khắc phục lỗi vỡ ảnh khi tải từ TikTok hoặc mobile bằng cách chuyển đổi sang cơ chế Blob URL (tiết kiệm RAM). Thêm trình xử lý lỗi tại chỗ cho các file không thể giải mã, giúp Admin dễ dàng nhận biết và thay thế ảnh lỗi ngay lập tức. 📱🖼️🚀
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉

@@ -30,48 +30,54 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
-const compressImageToWebP = (file: File): Promise<Blob> => {
+export const compressImageToWebP = async (file: File, quality = 0.8): Promise<File> => {
   return new Promise((resolve, reject) => {
-    // 🛡️ SỬ DỤNG FILEREADER thay vì createObjectURL để ổn định hơn trên di động
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxWidth = 1100;
-        const scale = Math.min(1, maxWidth / img.width);
-
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-
-        const ctx = canvas.getContext('2d', { alpha: false }); // Optimize for non-transparent
-        if (!ctx) return reject(new Error("Lỗi khởi tạo Canvas"));
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        const quality = 0.75;
-        canvas.toBlob((blob) => {
-          if (!blob) return reject(new Error("Nén ảnh thất bại"));
-          resolve(blob);
-          
-          // 🧹 Dọn dẹp bộ nhớ triệt để
-          canvas.width = 0;
-          canvas.height = 0;
-          img.src = ""; // Clear Image memory
-        }, 'image/webp', quality);
-      };
-
-      img.onerror = () => reject(new Error("Trình duyệt không thể giải mã định dạng ảnh này."));
-      img.src = e.target?.result as string;
+    const imageUrl = URL.createObjectURL(file);
+    const img = new Image();
+    
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const maxWidth = 1200;
+      const scale = Math.min(1, maxWidth / img.width);
+      canvas.width = img.width * scale;
+      canvas.height = img.height * scale;
+      
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) {
+        URL.revokeObjectURL(imageUrl);
+        return reject(new Error("Canvas context failed"));
+      }
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(imageUrl);
+          if (!blob) {
+            reject(new Error("Không thể xử lý ảnh này"));
+            return;
+          }
+          const fileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+          const webpFile = new File([blob], fileName, {
+             type: "image/webp",
+          });
+          resolve(webpFile);
+        },
+        "image/webp",
+        quality
+      );
     };
-
-    reader.onerror = () => reject(new Error("Không thể đọc tệp tin từ thiết bị."));
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error("Image decode failed"));
+    };
+    img.src = imageUrl;
   });
 };
 
 // 🖼️ COMPONENT TRANG TRUYỆN SORTABLE
-function SortableItem({ id, item, index, onRemove, onPreview }: any) {
+function SortableItem({ id, item, index, onRemove, onPreview, onBroken }: any) {
   const {
     attributes,
     listeners,
@@ -98,18 +104,23 @@ function SortableItem({ id, item, index, onRemove, onPreview }: any) {
     >
       <img 
         src={item.type === 'new' ? displaySrc : optimizeImage(displaySrc, '200')} 
-        className="w-full h-full object-cover pointer-events-none" 
+        className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${item.error ? 'opacity-20' : 'opacity-100'}`} 
         draggable="false" 
         alt="" 
         onError={(e: any) => {
-          // 🛡️ FALLBACK: Nếu Cloudinary lỗi hoặc Blob có vấn đề, thử dùng ảnh gốc 🍀
-          if (e.target.src !== displaySrc) {
-            console.warn("🔄 Image preview fallback triggered for:", displaySrc);
-            e.target.removeAttribute('crossOrigin'); 
-            e.target.src = displaySrc;
+          // 🛡️ XỬ LÝ ẢNH LỖI (FIX VỠ ẢNH TIKTOK/MOBILE) 🍀
+          if (!item.error) {
+            console.error("❌ Preview failed for item:", id);
+            onBroken?.(id); // Thông báo cho cha biết ảnh này bị lỗi
           }
         }}
       />
+      {item.error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center bg-red-500/10">
+          <svg className="w-6 h-6 text-red-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <span className="text-[8px] font-black text-red-500 uppercase leading-tight">FILE CHỖ NÀY<br/>BỊ LỖI RỒI 🧱</span>
+        </div>
+      )}
       
       <div 
         {...attributes} 
@@ -223,11 +234,15 @@ export default function AdminUploadPage() {
     
     const newItems = files.map((file, idx) => {
       const id = `new-${Date.now()}-${idx}-${Math.random()}`;
+      // Kiểm tra sơ bộ định dạng file TikTok / Mobile 🕵️‍♂️
+      const isTikTok = file.name.toLowerCase().includes('tiktok') || file.size < 1000;
+      
       return {
         id,
         file, 
         preview: URL.createObjectURL(file),
-        type: 'new'
+        type: 'new',
+        isTikTok
       };
     });
 
@@ -255,6 +270,11 @@ export default function AdminUploadPage() {
       if (itemToDrop?.preview) URL.revokeObjectURL(itemToDrop.preview); 
       return prev.filter(i => i.id !== id);
     });
+  };
+
+  const markAsBroken = (id: string) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, error: true } : item));
+    setMessage({ type: 'error', text: 'PHÁT HIỆN ẢNH LỖI! VUI LÒNG KIỂM TRA LẠI FILE HOẶC CHỤP MÀN HÌNH ĐỂ THAY THẾ. 🛡️' });
   };
 
   const handleFinalDelete = async () => {
@@ -310,6 +330,11 @@ export default function AdminUploadPage() {
         // Xử lý song song các trang trong đợt hiện tại
         const batchResults = await Promise.all(batch.map(async (item, localIndex) => {
           const globalIndex = i + localIndex;
+          
+          if (item.error) {
+            throw new Error(`Trang số ${globalIndex + 1} đang bị lỗi hiển thị. Vui lòng xóa trang này và thử lại!`);
+          }
+
           let finalUrl = "";
           let fileSizeKb = 0;
           let retryCount = 0;
@@ -486,7 +511,7 @@ export default function AdminUploadPage() {
                  <SortableContext items={items.map(i => i.id)} strategy={rectSortingStrategy}>
                     <div className="flex flex-wrap gap-5">
                        {items.map((item, index) => (
-                          <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} onPreview={setPreviewImage} />
+                          <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} onPreview={setPreviewImage} onBroken={markAsBroken} />
                        ))}
                        <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
                           <input type="file" id="fileInput" multiple accept="image/*" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
