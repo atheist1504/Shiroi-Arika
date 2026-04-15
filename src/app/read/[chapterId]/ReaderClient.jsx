@@ -465,7 +465,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         )}
 
         {showChapterModal && (
-          <div className="fixed inset-0 z-[20002] flex items-start justify-center pt-20 px-4">
+          <div className="fixed inset-0 z-[20002] flex items-center justify-center px-4">
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
              <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
                 <div className="p-4 border-b border-current/5 flex items-center justify-between">

@@ -179,8 +179,8 @@ body:has(#shiroi-reader-mode) .layout-root {
 /* 🎢 CUSTOM PREMIUM SCROLLBAR 🍀 */
 /* Toàn bộ trình duyệt */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
 }
 
 ::-webkit-scrollbar-track {
@@ -192,14 +192,14 @@ body:has(#shiroi-reader-mode) .layout-root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.3);
-  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 12px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 
 [data-theme='dark'] ::-webkit-scrollbar-thumb, [data-theme='deep'] ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -209,9 +209,9 @@ body:has(#shiroi-reader-mode) .layout-root {
 
 /* 🌿 Riêng cho Reader List */
 .reader-chapter-list::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 .reader-chapter-list::-webkit-scrollbar-thumb {
   background: var(--accent);
-  opacity: 0.5;
+  opacity: 0.8;
 }
