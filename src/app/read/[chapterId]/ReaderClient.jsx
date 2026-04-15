@@ -319,7 +319,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
   return (
-    <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 overflow-x-hidden text-[var(--text-reader)]" style={{ backgroundColor: 'var(--bg-reader)' }}>
+    <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 text-[var(--text-reader)]" style={{ backgroundColor: 'var(--bg-reader)' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <style dangerouslySetInnerHTML={{ __html: `
         nav.sticky-nav, footer.footer { display: none !important; }
@@ -373,75 +373,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                )}
             </div>
             <button onClick={() => { setShowSettings(!showSettings); setShowReportModal(false); }} className={`p-1.5 sm:p-2 rounded-lg border transition-all flex-shrink-0 ${showSettings ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`} >
-               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            </button>
-        </div>
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724         </div>
       </div>
-
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[20001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
-             <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-4">Cài đặt đọc truyện</h3>
-             <div className="space-y-4">
-                <div className="space-y-2">
-                   <label className="text-[9px] text-gray-500 font-bold uppercase">Chế độ đọc</label>
-                   <div className="grid grid-cols-2 gap-2">
-                      <button onClick={() => setReadingMode('scroll')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${readingMode === 'scroll' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-black/20 text-gray-400 border-white/5')}`}>CUỘN DỌC</button>
-                      <button onClick={() => setReadingMode('page')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${readingMode === 'page' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-black/20 text-gray-400 border-white/5')}`}>LẬT TRANG</button>
-                   </div>
-                </div>
-                <div className="space-y-2">
-                   <label className="text-[9px] text-gray-500 font-bold uppercase">Màu phong nền</label>
-                   <div className="grid grid-cols-2 gap-2">
-                      <button onClick={() => setTheme('dark')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'dark' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>ĐEN TUYỀN</button>
-                      <button onClick={() => setTheme('deep')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'deep' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>XÁM ĐẬM</button>
-                      <button onClick={() => setTheme('light')} className={`py-2 text-[8px] font-black rounded-lg border transition-all col-span-2 ${theme === 'light' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-white text-black border-white shadow-xl'}`}>NỀN TRẮNG</button>
-                   </div>
-                </div>
-             </div>
-          </motion.div>
-        )}
-
-        {showReportModal && (
-          <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[20001] w-72 backdrop-blur-2xl border rounded-2xl p-5 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
-             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Báo lỗi chương truyện</h3>
-                <button onClick={() => { setShowReportModal(false); setReportStatus(null); }} className="text-gray-500 hover:text-white transition-colors">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-             </div>
-             
-             {reportStatus ? (
-               <div className={`py-8 text-center space-y-3 animate-fade-in`}>
-                  <div className={`text-2xl ${reportStatus.type === 'error' ? 'animate-shake' : 'animate-bounce'}`}>
-                    {reportStatus.type === 'success' ? '✅' : (reportStatus.type === 'error' ? '❌' : '⏳')}
-                  </div>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ${reportStatus.type === 'error' ? 'text-red-500' : (reportStatus.type === 'success' ? 'text-[#4caf50]' : 'text-amber-500')}`}>
-                    {reportStatus.text}
-                  </p>
-               </div>
-             ) : (
-               <form onSubmit={handleReportSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                     <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Loại lỗi</label>
-                     <select 
-                       value={reportType} 
-                       onChange={(e) => setReportType(e.target.value)}
-                       className={`w-full p-2.5 rounded-xl text-[10px] font-black uppercase tracking-tight outline-none border transition-all ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
-                     >
-                        <option value="image_broken">Ảnh bị hỏng / Không load được</option>
-                        <option value="wrong_translation">Dịch sai / Lỗi chính tả</option>
-                        <option value="wrong_order">Trình tự trang bị lộn xộn</option>
-                        <option value="other">Lỗi khác...</option>
-                     </select>
-                  </div>
-                  <div className="space-y-2">
-                     <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Mô tả chi tiết</label>
-                     <textarea 
-                        value={reportDescription}
-                        onChange={(e) => setReportDescription(e.target.value)}
-                        placeholder="VD: Trang số 5 bị trắng xóa..."
-                        className={`w-full p-3 rounded-xl text-[10px] font-medium h-20 outline-none border transition-all resize-none ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
+der-white/5 text-gray-300 focus:border-red-500/50'}`}
                      />
                   </div>
                   <button 
@@ -616,6 +550,158 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 15l7-7 7 7"/></svg>
         </button>
       )}
+
+      {/* 🚀 PORTAL-LIKE OVERLAYS (Moved to end for guaranteed fixed positioning) 🍀 */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[30001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10 text-black' : 'bg-[#1c221c]/95 border-white/5 text-white'}`} >
+             <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-4">Cài đặt đọc truyện</h3>
+             <div className="space-y-4">
+                <div className="space-y-2">
+                   <label className="text-[9px] text-gray-500 font-bold uppercase">Chế độ đọc</label>
+                   <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setReadingMode('scroll')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${readingMode === 'scroll' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-black/20 text-gray-400 border-white/5')}`}>CUỘN DỌC</button>
+                      <button onClick={() => setReadingMode('page')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${readingMode === 'page' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-gray-100 text-gray-400 border-gray-200' : 'bg-black/20 text-gray-400 border-white/5')}`}>LẬT TRANG</button>
+                   </div>
+                </div>
+                <div className="space-y-2">
+                   <label className="text-[9px] text-gray-500 font-bold uppercase">Màu phong nền</label>
+                   <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => setTheme('dark')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'dark' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>ĐEN TUYỀN</button>
+                      <button onClick={() => setTheme('deep')} className={`py-2 text-[8px] font-black rounded-lg border transition-all ${theme === 'deep' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-black/20 text-gray-400 border-white/5'}`}>XÁM ĐẬM</button>
+                       <button onClick={() => setTheme('light')} className={`py-2 text-[8px] font-black rounded-lg border transition-all col-span-2 ${theme === 'light' ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : 'bg-white text-black border-white shadow-xl'}`}>NỀN TRẮNG</button>
+                   </div>
+                </div>
+             </div>
+          </motion.div>
+        )}
+
+        {showReportModal && (
+          <div className="fixed inset-0 z-[30002] flex items-center justify-center px-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`relative w-72 backdrop-blur-2xl border rounded-2xl p-5 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
+               <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Báo lỗi chương truyện</h3>
+                  <button onClick={() => { setShowReportModal(false); setReportStatus(null); }} className="text-gray-500 hover:text-white transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+               </div>
+               
+               {reportStatus ? (
+                 <div className={`py-8 text-center space-y-3 animate-fade-in`}>
+                    <div className={`text-2xl ${reportStatus.type === 'error' ? 'animate-shake' : 'animate-bounce'}`}>
+                      {reportStatus.type === 'success' ? '✅' : (reportStatus.type === 'error' ? '❌' : '⏳')}
+                    </div>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${reportStatus.type === 'error' ? 'text-red-500' : (reportStatus.type === 'success' ? 'text-[#4caf50]' : 'text-amber-500')}`}>
+                      {reportStatus.text}
+                    </p>
+                 </div>
+               ) : (
+                 <form onSubmit={handleReportSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                       <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Loại lỗi</label>
+                       <select 
+                         value={reportType} 
+                         onChange={(e) => setReportType(e.target.value)}
+                         className={`w-full p-2.5 rounded-xl text-[10px] font-black uppercase tracking-tight outline-none border transition-all ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
+                       >
+                          <option value="image_broken">Ảnh bị hỏng / Không load được</option>
+                          <option value="wrong_translation">Dịch sai / Lỗi chính tả</option>
+                          <option value="wrong_order">Trình tự trang bị lộn xộn</option>
+                          <option value="other">Lỗi khác...</option>
+                       </select>
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">Mô tả chi tiết</label>
+                       <textarea 
+                          value={reportDescription}
+                          onChange={(e) => setReportDescription(e.target.value)}
+                          placeholder="VD: Trang số 5 bị trắng xóa..."
+                          className={`w-full p-3 rounded-xl text-[10px] font-medium h-20 outline-none border transition-all resize-none ${theme === 'light' ? 'bg-gray-100 border-black/5 text-black' : 'bg-black/40 border-white/5 text-gray-300 focus:border-red-500/50'}`}
+                       />
+                    </div>
+                    <button 
+                      type="submit"
+                      className="w-full py-3 bg-red-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-lg active:scale-95"
+                    >
+                      GỬI BÁO CÁO 🚀
+                    </button>
+                 </form>
+               )}
+            </motion.div>
+          </div>
+        )}
+
+        {showChapterModal && (
+          <div className="fixed inset-0 z-[30003] flex items-center justify-center px-4">
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+             <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
+                <div className="p-4 border-b border-current/5 flex items-center justify-between">
+                   <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-widest">Chọn chương truyện</h3>
+                   <button onClick={() => setShowChapterModal(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
+                      <svg className="w-5 h-5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                   </button>
+                </div>
+                
+                <div className="p-4">
+                   <div className="relative group">
+                      <input 
+                        type="text" 
+                        placeholder="Tìm chương (VD: 24)..." 
+                        value={chapterSearchTerm}
+                        onChange={(e) => setChapterSearchTerm(e.target.value)}
+                        className={`w-full px-10 py-3 rounded-xl text-sm font-bold outline-none border transition-all ${theme === 'light' ? 'bg-gray-50 border-black/5 focus:border-[#4caf50]' : 'bg-black/40 border-white/5 focus:border-[#4caf50]'}`}
+                      />
+                      <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30 group-focus-within:opacity-100 group-focus-within:text-[#4caf50] transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                      {chapterSearchTerm && (
+                        <button onClick={() => setChapterSearchTerm('')} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-white/10 rounded-full">
+                           <svg className="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                      )}
+                   </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-2 min-h-0 reader-chapter-list">
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {allChapters
+                        .filter(c => c.chapter_number.toString().includes(chapterSearchTerm) || (c.title && c.title.toLowerCase().includes(chapterSearchTerm.toLowerCase())))
+                        .map(c => (
+                        <button 
+                           key={c.id} 
+                           onClick={() => { router.push(`/read/${c.id}`); setShowChapterModal(false); }}
+                           className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${c.id === chapterId ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' : (theme === 'light' ? 'bg-gray-50 border-black/5 hover:border-[#4caf50]/50' : 'bg-black/20 border-white/5 hover:border-[#4caf50]/30 hover:bg-[#4caf50]/5')}`}
+                        >
+                           <span className={`text-[8px] font-black uppercase tracking-tighter mb-1 ${c.id === chapterId ? 'text-[#0a0c0a]/60' : 'opacity-40'}`}>Chương</span>
+                           <span className="text-lg font-black">{c.chapter_number}</span>
+                           {c.id === chapterId && (
+                             <div className="absolute top-2 right-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-[#0a0c0a] animate-pulse" />
+                             </div>
+                           )}
+                        </button>
+                      ))}
+                   </div>
+                   {allChapters.filter(c => c.chapter_number.toString().includes(chapterSearchTerm)).length === 0 && (
+                     <div className="py-20 text-center opacity-30">
+                        <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p className="text-xs font-black uppercase tracking-widest">Không tìm thấy chương nào</p>
+                     </div>
+                   )}
+                </div>
+                
+                <div className={`p-4 border-t text-center ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-black/20 border-white/5'}`}>
+                   <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Shiroi Arika Premium Selector</p>
+                </div>
+             </motion.div>
+          </div>
+        )}
+
+        {xpToast && (
+          <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -50, opacity: 0 }} className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[30004] bg-[#4caf50] text-[#0a0c0a] px-8 py-4 rounded-3xl font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(76,175,80,0.4)] flex items-center gap-3 border-2 border-white/20" >
+             <span className="text-xl animate-bounce">💎</span> KHO THÀNH TỰU +20 XP !
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
