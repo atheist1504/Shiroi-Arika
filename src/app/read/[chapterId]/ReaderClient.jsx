@@ -318,10 +318,19 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     };
 
     const onTap = (e) => {
+      // 🏛️ Ở chế độ lật trang, menu luôn cố định theo yêu cầu
+      if (readingModeRef.current === 'page') {
+        if (!showNavRef.current) {
+          showNavRef.current = true;
+          setShowNav(true);
+        }
+        return;
+      }
+
       // Chỉ bỏ qua nếu bấm vào các nút điều khiển, link, hoặc các ô nhập liệu
       if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('.modal')) return;
       
-      // Nếu bấm vào vùng Fixed mà KHÔNG PHẢI là menu chính thì vẫn cho toggle (để sửa lỗi Page Mode)
+      // Nếu bấm vào vùng Fixed mà KHÔNG PHẢI là menu chính thì vẫn cho toggle (để sửa lỗi Page Mode cũ)
       if (e.target.closest('.fixed') && !e.target.closest('nav') && !e.target.closest('.sticky-nav')) {
           // Vẫn cho phép toggle nếu không phải bấm vào các nút chức năng
       }
@@ -560,8 +569,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                   }} 
                 />
             </div>
-            <div onClick={() => currentPageIndex > 0 && setCurrentPageIndex(c => c - 1)} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
-            <div onClick={() => currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter()} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
+            <div onClick={(e) => { e.stopPropagation(); currentPageIndex > 0 && setCurrentPageIndex(c => c - 1); }} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
+            <div onClick={(e) => { e.stopPropagation(); currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter(); }} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
           </div>
         )}
       </div>

@@ -32,6 +32,7 @@ Dự án Manga Platform thế hệ mới.
     - **Turbo Upload Mode**: Tăng Batch Size từ 2 lên **5 ảnh song song**, giúp tốc độ xuất bản chương mới nhanh gấp 2.5 lần mà vẫn giữ được sự ổn định tuyệt đối.
     - **Auto-Sort by Date**: Tự động sắp xếp các trang truyện theo thời gian chỉnh sửa file (Last Modified) ngay khi chọn, giúp Admin không còn phải kéo thả thủ công. 🕒✨
     - **Navbar Pinning & Stabilization**: Chuyển đổi Navbar sang **position: fixed** và loại bỏ các hiệu ứng pop-up/fade-in không cần thiết, giúp thanh menu luôn "ghim" cố định, mượt mà và không còn hiện tượng nhấp nháy khi chuyển trang. 📌🍀🚩
+- [x] **Horizontal Reader Menu Fix (v21)**: Khắc phục lỗi thanh menu bị ẩn khi nhấn chuyển trang ở chế độ đọc ngang. Đã cô lập sự kiện click (Stop Propagation) cho vùng điều hướng và cưỡng bức hiển thị menu cố định trong chế độ Lật trang. 📖🛡️✨
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
