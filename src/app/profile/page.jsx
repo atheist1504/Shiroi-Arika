@@ -505,6 +505,17 @@ export default function ProfilePage() {
                          Vận may sẽ đến với người kiên trì!
                       </p>
                    </div>
+
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">⚡</span>
+                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Thăng cấp</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Cứ mỗi <span className="text-[#4caf50]">100 XP</span> bạn sẽ thăng 1 cấp. <br/>
+                         Cấp càng cao, danh hiệu và quyền hạn càng lớn!
+                      </p>
+                   </div>
                </div>
             </div>
 
