@@ -177,12 +177,6 @@ export default function Navbar() {
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
           <div className="hidden lg:flex h-10 items-center justify-end animate-fade-in relative px-6 mb-2 gap-4">
-            <div className="scale-90">
-              <LuckyDraw />
-            </div>
-            <div className="scale-90">
-              <CheckIn />
-            </div>
             <button 
               onClick={() => setIsMissionsOpen(true)}
               className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#4caf50]/5"
@@ -194,6 +188,12 @@ export default function Navbar() {
                   BÁO CÁO 🚩
                </Link>
             )}
+            <div className="scale-90">
+              <LuckyDraw />
+            </div>
+            <div className="scale-90">
+              <CheckIn />
+            </div>
           </div>
 
         </div>
