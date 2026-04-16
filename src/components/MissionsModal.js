@@ -75,9 +75,8 @@ export default function MissionsModal({ isOpen, onClose }) {
                 setMissions(prev => prev.map(m => m.key === missionKey ? { ...m, isClaimed: true } : m));
                 
                 // Update local storage XP
-                const updatedUser = { ...user, xp: (user.xp || 0) + res.rewardXp };
-                localStorage.setItem('shiroi_user', JSON.stringify(updatedUser));
-                setUser(updatedUser);
+                localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+                setUser(res.user);
                 window.dispatchEvent(new Event('storage'));
             } else {
                 alert(res.error || "Có lỗi khi nhận thưởng! 🛡️");

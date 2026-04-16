@@ -98,13 +98,8 @@ export default function LuckyDraw() {
         setCanDraw(false);
 
         // Cập nhật LocalStorage để đồng bộ UI ngay lập tức 🍀
-        const updatedUser = { 
-          ...user, 
-          xp: (user.xp || 0) + res.xpGain,
-          last_lucky_draw: new Date().toISOString() 
-        };
-        localStorage.setItem("shiroi_user", JSON.stringify(updatedUser));
-        setUser(updatedUser);
+        localStorage.setItem("shiroi_user", JSON.stringify(res.user));
+        setUser(res.user);
         window.dispatchEvent(new Event("storage"));
       } else {
         let errorMsg = res.error || "Hệ thống bận, hãy thử lại sau! 🙏";

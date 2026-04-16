@@ -135,7 +135,7 @@ export async function getAuthenticatedUser() {
       const client = getDbClient();
       const { data, error } = await client
         .from('shiroi_users')
-        .select('id, username, role')
+        .select('id, username, display_name, avatar_url, role, xp, last_check_in, check_in_streak, last_lucky_draw')
         .eq('username', user.username)
         .single();
       
@@ -436,7 +436,8 @@ export async function addReadXPAction(mangaId, chapterId) {
     const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
     if (!resLog.success) return resLog;
 
-    return { success: true, xpGain: 20 };
+    const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+    return { success: true, xpGain: 20, user: updatedUser };
   } catch (error) {
     console.error('Lỗi addReadXPAction:', error);
     return { success: false, error: error.message };
@@ -786,17 +787,19 @@ export async function performLuckyDrawAction() {
     }
 
     // 3. Cập nhật thời gian bốc quà cuối cùng vào bảng Users 🛡️
-    const { error: upError } = await client
+    const { data: updatedUser, error: upError } = await client
       .from('shiroi_users')
       .update({ last_lucky_draw: new Date().toISOString() })
-      .eq('id', userId);
+      .eq('id', userId)
+      .select()
+      .single();
 
     if (upError) {
        console.warn("⚠️ [Server] Không thể cập nhật last_lucky_draw (vẫn cộng điểm xong):", upError.message);
     }
 
     // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
-    return { success: true, xpGain };
+    return { success: true, xpGain, user: updatedUser };
   } catch (error) {
     console.error('Lỗi performLuckyDrawAction:', error);
     return { success: false, error: error.message };
@@ -934,7 +937,8 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     const resLog = await recordXpLogAction(userId, rewardXp, 'mission', missionKey);
     if (!resLog.success) throw new Error(resLog.error);
 
-    return { success: true, rewardXp };
+    const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+    return { success: true, rewardXp, user: updatedUser };
   } catch (error) {
     console.error('❌ Lỗi claimMissionRewardAction:', error.message);
     return { success: false, error: error.message };

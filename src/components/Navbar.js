@@ -39,9 +39,36 @@ export default function Navbar() {
     const checkUser = () => {
       const storedUser = localStorage.getItem('shiroi_user');
       if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+
+        // 🚑 TỰ KHÔI PHỤC (SELF-HEALING) 🛡️ 
+        // Nếu phát hiện dữ liệu thiếu XP hoặc không có tên hiển thị, hãy âm thầm tải lại từ DB
+        if (parsed.id && (parsed.xp === undefined || parsed.xp === null || !parsed.display_name)) {
+            console.log("🚑 [Navbar] Phát hiện dữ liệu thô/thiếu (LV 1 Bug), đang tự động khôi phục...");
+            refreshUserData(parsed.id);
+        }
       } else {
         setUser(null);
+      }
+    };
+
+    const refreshUserData = async (userId) => {
+      try {
+        const { data, error } = await supabase
+          .from('shiroi_users')
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        if (!error && data) {
+          localStorage.setItem('shiroi_user', JSON.stringify(data));
+          setUser(data);
+          // Gửi event để các component khác (CheckIn, LuckyDraw) cập nhật theo 🍀
+          window.dispatchEvent(new Event('storage'));
+        }
+      } catch (err) {
+        console.warn("Lỗi tự khôi phục dữ liệu:", err);
       }
     };
 

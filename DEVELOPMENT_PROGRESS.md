@@ -33,6 +33,10 @@ Dự án Manga Platform thế hệ mới.
     - **Auto-Sort by Date**: Tự động sắp xếp các trang truyện theo thời gian chỉnh sửa file (Last Modified) ngay khi chọn, giúp Admin không còn phải kéo thả thủ công. 🕒✨
     - **Navbar Pinning & Stabilization**: Chuyển đổi Navbar sang **position: fixed** và loại bỏ các hiệu ứng pop-up/fade-in không cần thiết, giúp thanh menu luôn "ghim" cố định, mượt mà và không còn hiện tượng nhấp nháy khi chuyển trang. 📌🍀🚩
 - [x] **Horizontal Reader Menu Fix (v21)**: Khắc phục lỗi thanh menu bị ẩn khi nhấn chuyển trang ở chế độ đọc ngang. Đã cô lập sự kiện click (Stop Propagation) cho vùng điều hướng và cưỡng bức hiển thị menu cố định trong chế độ Lật trang. 📖🛡️✨
+- [x] **Level Display Fix & Sync (v22 - Core Stability)**: 💎🛡️
+    - **Self-Healing Navbar**: Tự động phát hiện và khôi phục dữ liệu người dùng từ Database nếu `localStorage` bị lỗi hoặc thiếu thông tin XP (Sửa lỗi hiển thị LV 1 chập chờn).
+    - **Atomic XP Updates**: Chuẩn hóa toàn bộ Server Actions (Đọc truyện, Bốc quà, Nhiệm vụ) để luôn trả về đối tượng User đầy đủ và mới nhất sau khi cộng điểm.
+    - **Enriched Auth Session**: Nâng cấp cơ chế khôi phục phiên (Auth Healing) để lấy đầy đủ thông tin XP và định danh, đảm bảo session luôn đồng nhất với Database. 🚀🍀🛡️
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉

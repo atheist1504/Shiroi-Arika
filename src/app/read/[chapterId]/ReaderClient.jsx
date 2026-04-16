@@ -203,8 +203,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       
       if (res.success) {
         // Cập nhật lại UI thông qua localStorage 🍀
-        const updatedUser = { ...userData, xp: res.newXP };
-        localStorage.setItem('shiroi_user', JSON.stringify(updatedUser));
+        localStorage.setItem('shiroi_user', JSON.stringify(res.user));
         
         sessionStorage.setItem(sessionKey, 'true');
         setXpToast(true);
