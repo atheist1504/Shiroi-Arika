@@ -123,12 +123,6 @@ export default function Navbar() {
                 <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
                 <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
                 <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch sử</Link>
-                <button 
-                  onClick={() => setIsMissionsOpen(true)}
-                  className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap shadow-lg shadow-[#4caf50]/5"
-                >
-                  Nhiệm vụ
-                </button>
               </div>
             </div>
 
@@ -139,14 +133,9 @@ export default function Navbar() {
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                       <>
-                        <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
-                           ĐĂNG TRUYỆN
-                        </Link>
-                        <Link href="/admin/reports" className="hidden lg:flex items-center px-4 py-2 bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/10">
-                           BÁO CÁO 🚩
-                        </Link>
-                       </>
+                       <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
+                          ĐĂNG TRUYỆN
+                       </Link>
                     )}
 
                     <div className="flex items-center gap-4 border-l border-white/5 pl-6">
@@ -194,6 +183,17 @@ export default function Navbar() {
             <div className="scale-90">
               <CheckIn />
             </div>
+            <button 
+              onClick={() => setIsMissionsOpen(true)}
+              className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#4caf50]/5"
+            >
+              NHIỆM VỤ 🎯
+            </button>
+            {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+               <Link href="/admin/reports" className="px-4 py-1.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5">
+                  BÁO CÁO 🚩
+               </Link>
+            )}
           </div>
 
         </div>
@@ -242,9 +242,26 @@ export default function Navbar() {
 
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar flex-1 pb-10">
                 <div className="bg-[#141814] p-4 rounded-3xl mb-2 border border-white/5 shadow-inner flex flex-col gap-3">
-                   <LuckyDraw />
+                   <div className="flex gap-3">
+                      <div className="flex-1"><LuckyDraw /></div>
+                      <div className="flex-1"><CheckIn /></div>
+                   </div>
                    <div className="h-px bg-white/5 w-full"></div>
-                   <CheckIn />
+                   <button 
+                      onClick={() => { setIsMissionsOpen(true); setIsMobileMenuOpen(false); }}
+                      className="flex items-center justify-center gap-3 py-3 bg-[#4caf50]/10 text-[#4caf50] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-[#4caf50]/20 active:scale-95 transition-all"
+                   >
+                      <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
+                   </button>
+                   {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                      <Link 
+                        href="/admin/reports" 
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center justify-center gap-3 py-3 bg-red-500/10 text-red-500 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-red-500/20 active:scale-95 transition-all"
+                      >
+                        <span className="text-sm">🚩</span> QUẢN LÝ BÁO CÁO
+                      </Link>
+                   )}
                 </div>
                 
                 <Link href="/manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all border border-transparent hover:border-[#4caf50]/20 group">
@@ -254,24 +271,14 @@ export default function Navbar() {
                   Kho Truyện
                 </Link>
 
-                <button 
-                  onClick={() => { setIsMissionsOpen(true); setIsMobileMenuOpen(false); }}
-                  className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#4caf50]/10 to-transparent rounded-2xl text-[#4caf50] font-black transition-all border border-[#4caf50]/20"
-                >
-                  <div className="w-10 h-10 bg-[#4caf50]/20 rounded-xl flex items-center justify-center text-xl">🎯</div> 
-                  NHIỆM VỤ & THƯỞNG
-                </button>
-
-                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all border border-transparent hover:border-white/5">
-                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center text-xl">🏆</div> 
-                  BẢNG XẾP HẠNG
+                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all border border-transparent hover:border-[#4caf50]/20 group">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all text-xl">🏆</div> 
+                  Bảng Xếp Hạng
                 </Link>
 
                 <Link href="/bookmarks" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
-                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all text-xl">
-                    ❤️
-                  </div>
-                  Tủ Truyện (Theo dõi)
+                   <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all text-xl">❤️</div>
+                   Tủ Truyện (Theo dõi)
                 </Link>
 
                 <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
@@ -289,20 +296,12 @@ export default function Navbar() {
                 </Link>
 
                 {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                  <div className="flex flex-col gap-2">
-                    <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
-                       <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-                       </div>
-                       Admin: Đăng Truyện
-                    </Link>
-                    <Link href="/admin/reports" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-2xl font-black text-red-500 transition-all border border-red-500/20">
-                       <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
-                          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                       </div>
-                       Admin: Quản lý Báo cáo
-                    </Link>
-                  </div>
+                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
+                     <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+                     </div>
+                     Admin: Đăng Truyện
+                  </Link>
                 )}
               </div>
 
