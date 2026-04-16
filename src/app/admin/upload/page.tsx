@@ -30,59 +30,59 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
+// 🖼️ HÀM NÉN ẢNH CHUẨN WEB (TỐI ƯU CHO R2 & MOBILE RAM) 🍀
 const compressImageToWebP = async (file: File, isTikTok: boolean = false): Promise<File> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const imageUrl = URL.createObjectURL(file);
     const img = new Image();
     
     img.onload = () => {
-      const canvas = document.createElement("canvas");
-      // 🚀 TĂNG ĐỘ PHÂN GIẢI LÊN 1600PX ĐẾ TRÁNH VỠ ẢNH TRÊN MÀN HÌNH LỚN 🍀
-      const maxWidth = 1600;
-      const scale = Math.min(1, maxWidth / img.width);
-      canvas.width = img.width * scale;
-      canvas.height = img.height * scale;
-      
-      // 🛡️ SỬ DỤNG CHẤT LƯỢNG CAO NHẤT ĐỂ TRÁNH ALIASING (RĂNG CƯA) 🍀
-      const ctx = canvas.getContext("2d", { alpha: false });
-      if (!ctx) {
-        URL.revokeObjectURL(imageUrl);
-        return reject(new Error("Canvas context failed"));
-      }
-
-      // ✨ CẤU HÌNH RENDERING CHẤT LƯỢNG CAO
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
-      
-      // ⚪️ ĐỔ NỀN TRẮNG (TRÁNH LỖI VÙNG ĐEN TRÊN ẢNH TRONG SUỐT)
-      ctx.fillStyle = "#FFFFFF";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      // 📈 CHẤT LƯỢNG THÍCH ỨNG: TIKTOK CHƯA NÉN TỐT NÊN DÙNG 0.9, ẢNH KHÁC DÙNG 0.8
-      const quality = isTikTok ? 0.92 : 0.82;
-
-      canvas.toBlob(
-        (blob) => {
+      try {
+        const canvas = document.createElement("canvas");
+        const maxWidth = 1600;
+        const scale = Math.min(1, maxWidth / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        
+        const ctx = canvas.getContext("2d", { alpha: false });
+        if (!ctx) {
           URL.revokeObjectURL(imageUrl);
-          if (!blob) {
-            reject(new Error("Không thể xử lý ảnh này"));
-            return;
-          }
-          const fileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
-          const webpFile = new File([blob], fileName, {
-             type: "image/webp",
-          });
-          resolve(webpFile);
-        },
-        "image/webp",
-        quality
-      );
+          resolve(file); // Fallback: Dùng ảnh gốc 🛡️
+          return;
+        }
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        const quality = isTikTok ? 0.92 : 0.82;
+
+        canvas.toBlob(
+          (blob) => {
+            URL.revokeObjectURL(imageUrl);
+            if (!blob) {
+              resolve(file); // Fallback: Dùng ảnh gốc 🛡️
+              return;
+            }
+            const fileName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+            resolve(new File([blob], fileName, { type: "image/webp" }));
+          },
+          "image/webp",
+          quality
+        );
+      } catch (e) {
+        console.warn("⚠️ Lỗi nén ảnh, dùng ảnh gốc:", e);
+        URL.revokeObjectURL(imageUrl);
+        resolve(file); // Fallback khi canvas lỗi 🛡️
+      }
     };
+
     img.onerror = () => {
+      console.warn("⚠️ Trình duyệt không thể giải mã ảnh (Decode Failed), dùng ảnh gốc thay thế.");
       URL.revokeObjectURL(imageUrl);
-      reject(new Error("Image decode failed"));
+      resolve(file); // TRẢ VỀ FILE GỐC NẾU KHÔNG THỂ GIẢI MÃ ĐỂ NÉN 🍀
     };
     img.src = imageUrl;
   });
@@ -413,7 +413,11 @@ export default function AdminUploadPage() {
         type: "error", 
         text: err.message || "UPLOAD THẤT BẠI!",
         details: err.stack || String(err),
-        suggestion: "Hãy kiểm tra xem ảnh có vượt quá 4.5MB không, hoặc thử tải lên từng đợt ít trang hơn."
+        suggestion: (err.message?.includes("CORS") || err.message?.includes("fetch"))
+          ? "PHÁT HIỆN LỖI CHẶN TRUY CẬP (CORS). Đạo hữu vui lòng kiểm tra lại cấu hình CORS trên Cloudflare R2."
+          : (err.message?.includes("Decode") || err.message?.includes("nén"))
+          ? "Ảnh có thể bị lỗi định dạng. Tôi đã thử dùng ảnh gốc nhưng vẫn không được, đạo hữu hãy thử chọn lại file khác nhé."
+          : "Hãy kiểm tra lại mạng di động hoặc thử tải lên từng đợt ít trang hơn (chọn 5-10 trang mỗi lần)."
       });
       console.error("DEBUG UPLOAD:", err);
     } finally { 
