@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 
 import CheckIn from "./CheckIn";
 import LuckyDraw from "./LuckyDraw";
+import MissionsModal from "./MissionsModal";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [results, setResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMissionsOpen, setIsMissionsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -121,6 +123,12 @@ export default function Navbar() {
                 <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
                 <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
                 <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch sử</Link>
+                <button 
+                  onClick={() => setIsMissionsOpen(true)}
+                  className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap shadow-lg shadow-[#4caf50]/5"
+                >
+                  Nhiệm vụ
+                </button>
               </div>
             </div>
 
@@ -241,8 +249,16 @@ export default function Navbar() {
                   Kho Truyện
                 </Link>
 
-                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#141814] to-transparent hover:from-[#4caf50]/10 rounded-2xl text-[#4caf50] font-black transition-all border border-[#4caf50]/10">
-                  <div className="w-10 h-10 bg-[#4caf50]/10 rounded-xl flex items-center justify-center text-xl">🏆</div> 
+                <button 
+                  onClick={() => { setIsMissionsOpen(true); setIsMobileMenuOpen(false); }}
+                  className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#4caf50]/10 to-transparent rounded-2xl text-[#4caf50] font-black transition-all border border-[#4caf50]/20"
+                >
+                  <div className="w-10 h-10 bg-[#4caf50]/20 rounded-xl flex items-center justify-center text-xl">🎯</div> 
+                  NHIỆM VỤ & THƯỞNG
+                </button>
+
+                <Link href="/leaderboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all border border-transparent hover:border-white/5">
+                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center text-xl">🏆</div> 
                   BẢNG XẾP HẠNG
                 </Link>
 
@@ -299,6 +315,7 @@ export default function Navbar() {
           </div>
         )}
       </AnimatePresence>
+      <MissionsModal isOpen={isMissionsOpen} onClose={() => setIsMissionsOpen(false)} />
     </>
   );
 }

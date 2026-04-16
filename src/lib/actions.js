@@ -851,3 +851,68 @@ export async function updateReportStatusAction(reportId, status) {
     return { success: false, error: error.message };
   }
 }
+/**
+ * 🎯 SERVER ACTION: Nhận thưởng nhiệm vụ (Bảo mật 🛡️)
+ */
+export async function claimMissionRewardAction(missionKey, mangaId = null) {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user || !user.id) throw new Error("Vui lòng đăng nhập để nhận thưởng! 🍀");
+
+    const userId = user.id;
+    const client = getDbClient();
+
+    // 1. Kiểm tra xem đã nhận thưởng chưa (Tránh double claim)
+    const { data: existing } = await client
+      .from('shiroi_mission_claims')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('mission_key', missionKey)
+      .single();
+
+    if (existing) throw new Error("Bạn đã nhận phần thưởng này rồi! 🛡️");
+
+    // 2. Lấy định nghĩa nhiệm vụ để xác định XP (Tránh Client gửi XP láo)
+    const { MISSIONS } = await import('./missions');
+    let rewardXp = 0;
+    
+    if (missionKey.startsWith('conqueror_')) {
+        rewardXp = 10000;
+    } else if (missionKey.startsWith('finish_series_')) {
+        // Phân loại Tier cho bộ truyện đã hoàn thành
+        const mangaIdFromKey = missionKey.replace('finish_series_', '');
+        const { data: readCount } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
+        const n = readCount || 0;
+        
+        if (n < 20) rewardXp = 200;
+        else if (n < 50) rewardXp = 500;
+        else if (n < 100) rewardXp = 1000;
+        else rewardXp = 2000;
+    } else {
+        const mission = MISSIONS[missionKey];
+        if (!mission) throw new Error("Nhiệm vụ không tồn tại! 🕵️‍♂️");
+        rewardXp = mission.xp;
+    }
+
+    // 3. Ghi log nhận thưởng (Atomic operation)
+    const { error: claimError } = await client
+      .from('shiroi_mission_claims')
+      .insert([{
+        user_id: userId,
+        mission_key: missionKey,
+        manga_id: mangaId,
+        reward_xp: rewardXp
+      }]);
+
+    if (claimError) throw claimError;
+
+    // 4. Ghi log XP (Trigger sẽ tự cộng cho user)
+    const resLog = await recordXpLogAction(userId, rewardXp, 'mission', missionKey);
+    if (!resLog.success) throw new Error(resLog.error);
+
+    return { success: true, rewardXp };
+  } catch (error) {
+    console.error('❌ Lỗi claimMissionRewardAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
