@@ -311,7 +311,7 @@ export default function AdminUploadPage() {
     
     setUploading(true); 
     setProgress(0);
-    setMessage({ type: "info", text: "🚀 ĐANG KHỞI TẠO QUY TRÌNH UPLOAD SIÊU TỐC..." });
+    setMessage({ type: "info", text: "🚀 ĐANG KHỞI TẠO QUY TRÌNH UPLOAD PROXY SIÊU ỔN ĐỊNH..." });
     
     try {
       const chapterPayload = { 
@@ -320,14 +320,10 @@ export default function AdminUploadPage() {
         title: chapterTitle 
       };
 
-      // 1. CHUẨN BỊ VÀ TẢI LÊN SONG SONG THEO ĐỢT (BATCH PARALLEL) 🚀
-      // Tải 3 ảnh cùng lúc để tăng tốc độ lên gấp 3 lần mà vẫn an toàn cho Mobile 🛡️
       const pagesData: any[] = [];
       const total = items.length;
       let completedCount = 0;
-      const BATCH_SIZE = 3;
-
-      const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+      const BATCH_SIZE = 2; // Giảm xuống 2 để tránh nghẽn RAM khi xử lý Proxy 🛡️
 
       // Chia danh sách trang thành các đợt (chunks)
       for (let i = 0; i < items.length; i += BATCH_SIZE) {
@@ -337,7 +333,7 @@ export default function AdminUploadPage() {
 
         setMessage({ 
           type: "info", 
-          text: `🚀 ĐANG TĂNG TỐC... XỬ LÝ ĐỢT ${batchIndex}/${totalBatches} (${batch.length} TRANG SONG SONG) ⏳` 
+          text: `🚀 PROXY UPLOAD... ĐỜT ${batchIndex}/${totalBatches} SONG SONG ⏳` 
         });
 
         // Xử lý song song các trang trong đợt hiện tại
@@ -348,74 +344,59 @@ export default function AdminUploadPage() {
             throw new Error(`Trang số ${globalIndex + 1} đang bị lỗi hiển thị. Vui lòng xóa trang này và thử lại!`);
           }
 
-          let finalUrl = "";
-          let fileSizeKb = 0;
-          let retryCount = 0;
-          const maxRetries = 3;
-
-          let lastError = "";
-          while (retryCount <= maxRetries) {
-            try {
-              if (item.type === 'new') {
-                const compressed = await compressImageToWebP(item.file, item.isTikTok);
-                const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
-
-                const ticket: any = await getUploadUrlAction(fileName);
-                if (!ticket.success) throw new Error(`Lỗi lấy vé: ${ticket.error}`);
-
-                const uploadResponse = await fetch(ticket.signedUrl, {
-                    method: 'PUT',
-                    body: compressed,
-                    headers: { 'Content-Type': 'image/webp' }
-                });
-
-                if (!uploadResponse.ok) throw new Error(`Lỗi kết nối R2 (${uploadResponse.status} ${uploadResponse.statusText})`);
-                
-                finalUrl = ticket.finalPublicUrl;
-                fileSizeKb = Math.round(compressed.size / 1024);
-              } else {
-                finalUrl = item.data;
-              }
-
-              // Cập nhật tiến độ tổng thể ngay khi một trang hoàn thành
-              completedCount++;
-              setProgress(Math.round((completedCount / total) * 100));
-
-              return {
-                image_url: finalUrl,
-                page_number: globalIndex + 1,
-                size_kb: fileSizeKb || 150
-              };
-            } catch (err: any) {
-              retryCount++;
-              lastError = err.message || String(err);
-              console.error(`❌ Lỗi tại trang ${globalIndex + 1} (Lần ${retryCount}):`, err);
-              if (retryCount > maxRetries) throw new Error(`Trang số ${globalIndex + 1} không thể tải lên sau ${maxRetries} lần thử. Lỗi gốc: ${lastError}`);
-              await sleep(1000 * retryCount);
-            }
+          if (item.type === 'existing') {
+            completedCount++;
+            setProgress(Math.round((completedCount / total) * 100));
+            return {
+              image_url: item.data,
+              page_number: globalIndex + 1,
+              size_kb: 150
+            };
           }
-          throw new Error(`Lỗi không xác định tại trang ${globalIndex + 1}`);
+
+          try {
+            // 1. Nén ảnh
+            const compressed = await compressImageToWebP(item.file, item.isTikTok);
+            const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
+
+            // 2. Chuẩn bị FormData cho Proxy Upload
+            const formData = new FormData();
+            formData.append('file', compressed);
+            formData.append('fileName', fileName);
+
+            // 3. Gửi lên qua Server Action Proxy
+            const res = await uploadChapterPageAction(formData);
+
+            if (!res.success) throw new Error(res.error || "Lỗi Proxy Upload");
+            
+            completedCount++;
+            setProgress(Math.round((completedCount / total) * 100));
+
+            return {
+              image_url: res.url,
+              page_number: globalIndex + 1,
+              size_kb: Math.round(compressed.size / 1024)
+            };
+          } catch (err: any) {
+            console.error(`❌ Lỗi tại trang ${globalIndex + 1}:`, err);
+            throw new Error(`Trang số ${globalIndex + 1}: ${err.message || String(err)}`);
+          }
         }));
 
-        // Đẩy kết quả của đợt vào danh sách tổng
         pagesData.push(...batchResults.filter(r => r !== null));
-        
-        // Nghỉ một chút giữa các đợt để trình duyệt dọn dẹp RAM (đặc biệt quan trọng cho Mobile) 🍀
-        if (i + BATCH_SIZE < total) await sleep(300);
       }
+
       if (pagesData.length === 0) throw new Error("Không có ảnh để lưu.");
 
       // 2. GỌI SERVER ACTION ĐỂ LƯU TẤT CẢ DỮ LIỆU DB CÙNG LÚC 🛡️
-      const { saveChapterDataAction } = await import("../../../lib/actions");
-      const res = await saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId);
+      const saveRes = await saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId);
 
-      if (!res.success) throw new Error(res.error);
+      if (!saveRes.success) throw new Error(saveRes.error);
 
       // 3. 🔔 GỬI THÔNG BÁO CHƯƠNG MỚI 🍀
       const selectedManga = mangas.find(m => m.id === selectedMangaId);
       if (selectedManga && !isEditing) {
          try {
-            const { notifyNewChapterAction } = await import("../../../lib/actions");
             await notifyNewChapterAction(
               selectedMangaId, 
               selectedManga.title, 
@@ -432,9 +413,7 @@ export default function AdminUploadPage() {
         type: "error", 
         text: err.message || "UPLOAD THẤT BẠI!",
         details: err.stack || String(err),
-        suggestion: (err.message?.includes("CORS") || err.message?.includes("fetch") || !err.message?.includes("Lỗi mạng"))
-          ? "PHÁT HIỆN LỖI CHẶN TRUY CẬP (CORS). Đạo hữu vui lòng kiểm tra lại cấu hình CORS trên Cloudflare R2 và thêm tên miền của web vào danh sách cho phép."
-          : "Hãy kiểm tra lại mạng di động, đảm bảo ổn định và thử lại từng trang một."
+        suggestion: "Hãy kiểm tra xem ảnh có vượt quá 4.5MB không, hoặc thử tải lên từng đợt ít trang hơn."
       });
       console.error("DEBUG UPLOAD:", err);
     } finally { 

@@ -274,7 +274,7 @@ export async function deleteMangaAction(mangaId) {
 }
 
 /**
- * 🎫 SERVER ACTION: Lấy vé tải ảnh lên R2
+ * 🎫 SERVER ACTION: Lấy vé tải ảnh lên R2 (Dành cho các file lớn hoặc hạ tầng có CORS)
  */
 export async function getUploadUrlAction(fileName) {
   try {
@@ -284,6 +284,29 @@ export async function getUploadUrlAction(fileName) {
     return { success: true, ...data };
   } catch (error) {
     console.error('Lỗi lấy Signed URL:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🌩️ SERVER ACTION: Upload Chapter Page (Proxy Mode 🚀)
+ * Khắc phục triệt để lỗi CORS bằng cách tải lên từ môi trường Server.
+ */
+export async function uploadChapterPageAction(formData) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    const file = formData.get('file');
+    const fileName = formData.get('fileName');
+
+    if (!file || !fileName) throw new Error("Thiếu dữ liệu upload!");
+
+    const { uploadToR2 } = await import('./r2');
+    const result = await uploadToR2(file, fileName);
+
+    return { success: true, url: result };
+  } catch (error) {
+    console.error('❌ [Server] Lỗi uploadChapterPageAction:', error.message);
     return { success: false, error: error.message };
   }
 }
