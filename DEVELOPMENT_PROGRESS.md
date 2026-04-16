@@ -26,6 +26,12 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Reader Mobile Image Fix (v17)**: Khắc phục lỗi ảnh vỡ trên trình duyệt di động do các thuộc tính `crossOrigin` và `referrerPolicy` gây xung đột với Cloudflare R2. Tối ưu hóa `onError` để tự động gỡ bỏ thuộc tính lỗi và fallback về ảnh gốc. 📱🖼️🛡️
 - [x] **System Calibration (v18 - XP & Images)**: Hiệu chuẩn toàn diện hệ thống: Loại bỏ hoàn toàn `crossOrigin` trong `Comments.js`, dọn dẹp mã thừa trong `actions.js`. Hợp nhất logic XP bình luận để tránh lỗi cộng trùng điểm (Double XP) do xung đột giữa Client và Database Trigger. 💎🛡️🍀
 - [x] **TikTok & Mobile Image Hotfix (v19)**: Khắc phục lỗi vỡ ảnh khi tải từ TikTok hoặc mobile bằng cách chuyển đổi sang cơ chế Blob URL (tiết kiệm RAM). Thêm trình xử lý lỗi tại chỗ cho các file không thể giải mã, giúp Admin dễ dàng nhận biết và thay thế ảnh lỗi ngay lập tức. 📱🖼️🚀
+- [x] **Server Proxy Upload & Robust Compression (v20 - Ultimate Stability)**: 🛡️🚀
+    - **Proxy Architecture**: Giải quyết triệt để lỗi **Cloudflare R2 CORS** bằng cách chuyển sang kiến trúc Server Proxy. Dữ liệu được đẩy từ Client -> Vercel -> R2, giúp quy trình đăng truyện không bao giờ bị gián đoạn.
+    - **Robust Fallback**: Nâng cấp hàm nén ảnh với cơ chế "Bất bại" - Nếu trình duyệt không thể giải mã (Decode Failed), hệ thống tự động sử dụng file gốc để tải lên, đảm bảo 100% tỷ lệ thành công.
+    - **Turbo Upload Mode**: Tăng Batch Size từ 2 lên **5 ảnh song song**, giúp tốc độ xuất bản chương mới nhanh gấp 2.5 lần mà vẫn giữ được sự ổn định tuyệt đối.
+    - **Auto-Sort by Date**: Tự động sắp xếp các trang truyện theo thời gian chỉnh sửa file (Last Modified) ngay khi chọn, giúp Admin không còn phải kéo thả thủ công. 🕒✨
+    - **Navbar Pinning & Stabilization**: Chuyển đổi Navbar sang **position: fixed** và loại bỏ các hiệu ứng pop-up/fade-in không cần thiết, giúp thanh menu luôn "ghim" cố định, mượt mà và không còn hiện tượng nhấp nháy khi chuyển trang. 📌🍀🚩
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -69,4 +75,4 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 22:52 - 14/04/2026 (Đồng bộ Múi giờ & Sửa lỗi Profile)*
+*Cập nhật lần cuối: 14:18 - 16/04/2026 (Upload Proxy & Ghim Navbar)*

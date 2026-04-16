@@ -94,7 +94,7 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="glass sticky-nav z-[1000] border-b border-white/5 py-3 lg:py-0">
+      <nav className="glass fixed-nav z-[1000] border-b border-white/5 py-3 lg:py-0">
         <div className="container mx-auto px-4 flex flex-col w-full relative">
           
           {/* TẦNG 1: LOGO - NAV LINKS - USER AREA 🚀 */}
@@ -176,7 +176,7 @@ export default function Navbar() {
           </div>
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
-          <div className="hidden lg:flex h-10 items-center justify-end animate-fade-in relative px-6 mb-2 gap-4">
+          <div className="hidden lg:flex h-10 items-center justify-end relative px-6 mb-2 gap-4">
             <button 
               onClick={() => setIsMissionsOpen(true)}
               className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#4caf50]/5"

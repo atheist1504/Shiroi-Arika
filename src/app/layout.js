@@ -77,17 +77,32 @@ export default function RootLayout({ children }) {
             min-height: 80vh; 
           }
 
-          .sticky-nav {
-            position: sticky;
+          .fixed-nav {
+            position: fixed;
             top: 0;
             z-index: 10000;
             width: 100%;
-            background: rgba(10, 12, 10, 0.85);
+            background: rgba(10, 12, 10, 0.9);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
           }
 
+          /* 🛡️ Bù đắp cho Fixed Navbar (Tier 1: 70px + Tier 2: 40px + padding) 🍀 */
+          .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            position: relative;
+            min-height: 80vh;
+            padding-top: 120px; 
+          }
+
+          /* Tắt padding-top cho Reader (vì Reader ẩn nav) */
+          body:has(#shiroi-reader-mode) .main-content {
+            padding-top: 0 !important;
+          }
           .footer {
             margin-top: auto;
             flex-shrink: 0;
