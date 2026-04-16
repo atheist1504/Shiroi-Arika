@@ -614,7 +614,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                       <div className={`text-2xl ${reportStatus.type === 'error' ? 'animate-shake' : 'animate-bounce'}`}>
                         {reportStatus.type === 'success' ? '✅' : (reportStatus.type === 'error' ? '❌' : '⏳')}
                       </div>
-                      <p className={`text-[9px] font-black uppercase tracking-widest ${reportStatus.type === 'error' ? 'text-red-500' : (res.type === 'success' ? 'text-[#4caf50]' : 'text-amber-500')}`}>
+                      <p className={`text-[9px] font-black uppercase tracking-widest ${reportStatus.type === 'error' ? 'text-red-500' : (reportStatus.type === 'success' ? 'text-[#4caf50]' : 'text-amber-500')}`}>
                         {reportStatus.text}
                       </p>
                    </div>

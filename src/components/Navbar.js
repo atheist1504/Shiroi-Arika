@@ -139,9 +139,14 @@ export default function Navbar() {
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                       <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
-                          ĐĂNG TRUYỆN
-                       </Link>
+                       <>
+                        <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
+                           ĐĂNG TRUYỆN
+                        </Link>
+                        <Link href="/admin/reports" className="hidden lg:flex items-center px-4 py-2 bg-red-500/20 text-red-500 border border-red-500/30 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/10">
+                           BÁO CÁO 🚩
+                        </Link>
+                       </>
                     )}
 
                     <div className="flex items-center gap-4 border-l border-white/5 pl-6">
@@ -284,12 +289,20 @@ export default function Navbar() {
                 </Link>
 
                 {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
-                     <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-                     </div>
-                     Admin: Đăng Truyện
-                  </Link>
+                  <div className="flex flex-col gap-2">
+                    <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
+                       <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+                       </div>
+                       Admin: Đăng Truyện
+                    </Link>
+                    <Link href="/admin/reports" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-red-500/10 hover:bg-red-500 hover:text-white rounded-2xl font-black text-red-500 transition-all border border-red-500/20">
+                       <div className="w-10 h-10 bg-red-500/20 rounded-xl flex items-center justify-center">
+                          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                       </div>
+                       Admin: Quản lý Báo cáo
+                    </Link>
+                  </div>
                 )}
               </div>
 
