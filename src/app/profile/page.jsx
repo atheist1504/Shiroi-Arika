@@ -452,25 +452,13 @@ export default function ProfilePage() {
                </div>
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all col-span-1 sm:col-span-2">
                       <div className="flex items-center gap-2">
                          <span className="text-lg">🎯</span>
-                         <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Nhiệm vụ hàng ngày</span>
+                         <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Làm Nhiệm vụ</span>
                       </div>
                       <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                         Độc hành giả I (1 chap): <span className="text-[#4caf50]">+50 XP</span>. <br/>
-                         Độc hành giả II (3 chap): <span className="text-[#4caf50]">+100 XP</span>.
-                      </p>
-                   </div>
-
-                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                      <div className="flex items-center gap-2">
-                         <span className="text-lg">🏆</span>
-                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Phá đảo thăng hoa</span>
-                      </div>
-                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                         Đọc hết bộ truyện tùy độ dài nhận từ <span className="text-[#4caf50]">200 - 2000 XP</span>. <br/>
-                         Phá đảo toàn web nhận danh hiệu <span className="text-[#4caf50]">Kẻ Chinh Phục (+10.000 XP)</span>!
+                         Nhận được <span className="text-[#4caf50]">lượng lớn XP</span> khi hoàn thành các nhiệm vụ hằng ngày, trọn đời và chinh phục toàn web!
                       </p>
                    </div>
 
