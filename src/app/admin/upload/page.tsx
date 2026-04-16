@@ -311,7 +311,7 @@ export default function AdminUploadPage() {
     
     setUploading(true); 
     setProgress(0);
-    setMessage({ type: "info", text: "🚀 ĐANG KHỞI TẠO QUY TRÌNH UPLOAD PROXY SIÊU ỔN ĐỊNH..." });
+    setMessage({ type: "info", text: "🚀 ĐANG KÍCH HOẠT QUY TRÌNH UPLOAD TURBO PROXY... 🌪️" });
     
     try {
       const chapterPayload = { 
@@ -323,7 +323,7 @@ export default function AdminUploadPage() {
       const pagesData: any[] = [];
       const total = items.length;
       let completedCount = 0;
-      const BATCH_SIZE = 2; // Giảm xuống 2 để tránh nghẽn RAM khi xử lý Proxy 🛡️
+      const BATCH_SIZE = 5; // Tăng lên 5 để tối ưu tốc độ upload Turbo 🚀
 
       // Chia danh sách trang thành các đợt (chunks)
       for (let i = 0; i < items.length; i += BATCH_SIZE) {
