@@ -278,6 +278,7 @@ export async function deleteMangaAction(mangaId) {
  */
 export async function getUploadUrlAction(fileName) {
   try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     if (!fileName) throw new Error('Thiếu tên tệp!');
     const data = await getPresignedUploadUrl(fileName);
     return { success: true, ...data };

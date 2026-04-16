@@ -353,6 +353,7 @@ export default function AdminUploadPage() {
           let retryCount = 0;
           const maxRetries = 3;
 
+          let lastError = "";
           while (retryCount <= maxRetries) {
             try {
               if (item.type === 'new') {
@@ -368,7 +369,7 @@ export default function AdminUploadPage() {
                     headers: { 'Content-Type': 'image/webp' }
                 });
 
-                if (!uploadResponse.ok) throw new Error(`Lỗi mạng (${uploadResponse.status})`);
+                if (!uploadResponse.ok) throw new Error(`Lỗi kết nối R2 (${uploadResponse.status} ${uploadResponse.statusText})`);
                 
                 finalUrl = ticket.finalPublicUrl;
                 fileSizeKb = Math.round(compressed.size / 1024);
@@ -387,8 +388,9 @@ export default function AdminUploadPage() {
               };
             } catch (err: any) {
               retryCount++;
+              lastError = err.message || String(err);
               console.error(`❌ Lỗi tại trang ${globalIndex + 1} (Lần ${retryCount}):`, err);
-              if (retryCount > maxRetries) throw new Error(`Trang số ${globalIndex + 1} không thể tải lên sau ${maxRetries} lần thử. Vui lòng kiểm tra mạng và thử lại!`);
+              if (retryCount > maxRetries) throw new Error(`Trang số ${globalIndex + 1} không thể tải lên sau ${maxRetries} lần thử. Lỗi gốc: ${lastError}`);
               await sleep(1000 * retryCount);
             }
           }
@@ -430,7 +432,9 @@ export default function AdminUploadPage() {
         type: "error", 
         text: err.message || "UPLOAD THẤT BẠI!",
         details: err.stack || String(err),
-        suggestion: "Hãy kiểm tra lại mạng di động, đảm bảo ổn định và thử lại từng trang một."
+        suggestion: (err.message?.includes("CORS") || err.message?.includes("fetch") || !err.message?.includes("Lỗi mạng"))
+          ? "PHÁT HIỆN LỖI CHẶN TRUY CẬP (CORS). Đạo hữu vui lòng kiểm tra lại cấu hình CORS trên Cloudflare R2 và thêm tên miền của web vào danh sách cho phép."
+          : "Hãy kiểm tra lại mạng di động, đảm bảo ổn định và thử lại từng trang một."
       });
       console.error("DEBUG UPLOAD:", err);
     } finally { 
