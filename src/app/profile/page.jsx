@@ -452,60 +452,71 @@ export default function ProfilePage() {
                </div>
 
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                     <div className="flex items-center gap-2">
-                        <span className="text-lg">🗓️</span>
-                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Điểm danh</span>
-                     </div>
-                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                        Mỗi ngày nhận <span className="text-[#4caf50]">+100 XP</span>. <br/>
-                        Chuỗi: 3đ <span className="text-[#4caf50]">(+100)</span>, 7đ <span className="text-[#4caf50]">(+200)</span>, 14đ/21đ <span className="text-[#4caf50]">(+500)</span>, 30đ <span className="text-[#4caf50]">(+1000)</span>!
-                     </p>
-                  </div>
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">🎯</span>
+                         <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Nhiệm vụ hàng ngày</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Độc hành giả I (1 chap): <span className="text-[#4caf50]">+50 XP</span>. <br/>
+                         Độc hành giả II (3 chap): <span className="text-[#4caf50]">+100 XP</span>.
+                      </p>
+                   </div>
 
-                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                     <div className="flex items-center gap-2">
-                        <span className="text-lg">📖</span>
-                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Đọc truyện</span>
-                     </div>
-                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                        Mỗi chương truyện đọc xong giúp bạn tích lũy <span className="text-[#4caf50]">+20 XP</span>. <br/>
-                        (Chỉ tính 1 lần duy nhất cho mỗi chương).
-                     </p>
-                  </div>
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">🏆</span>
+                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Phá đảo thăng hoa</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Đọc hết bộ truyện tùy độ dài nhận từ <span className="text-[#4caf50]">200 - 2000 XP</span>. <br/>
+                         Phá đảo toàn web nhận danh hiệu <span className="text-[#4caf50]">Kẻ Chinh Phục (+10.000 XP)</span>!
+                      </p>
+                   </div>
 
-                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                     <div className="flex items-center gap-2">
-                        <span className="text-lg">💬</span>
-                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Bình luận</span>
-                     </div>
-                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                        Bình luận đầu ngày: <span className="text-[#4caf50]">+10 XP</span>. <br/>
-                        Bình luận tiếp theo: <span className="text-[#4caf50]">+5 XP</span>. (Max 100 XP/ngày)
-                     </p>
-                  </div>
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">🗓️</span>
+                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Điểm danh</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Mỗi ngày nhận <span className="text-[#4caf50]">+100 XP</span>. <br/>
+                         Chuỗi: 7đ <span className="text-[#4caf50]">(+200)</span>, 14đ/21đ <span className="text-[#4caf50]">(+500)</span>, 30đ <span className="text-[#4caf50]">(+1000)</span>!
+                      </p>
+                   </div>
 
-                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                     <div className="flex items-center gap-2">
-                        <span className="text-lg">🧧</span>
-                        <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Thử thách vận khí</span>
-                     </div>
-                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                        Mỗi ngày bốc quà nhận ngẫu nhiên: <br/>
-                        Quà: <span className="text-[#4caf50]">10-50</span>, Lớn: <span className="text-[#4caf50]">100</span>, Nổ hũ: <span className="text-[#4caf50]">500 XP</span>!
-                     </p>
-                  </div>
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">📖</span>
+                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Thành tựu đọc</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Cứ mỗi <span className="text-[#4caf50]">100 chương</span> đọc xong nhận lượng lớn XP. <br/>
+                         Mốc Thánh Nhân (1000 chương) nhận <span className="text-[#4caf50]">10.000 XP</span>!
+                      </p>
+                   </div>
 
-                  <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
-                     <div className="flex items-center gap-2">
-                        <span className="text-lg">⚡</span>
-                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Thăng cấp</span>
-                     </div>
-                     <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
-                        Cứ mỗi <span className="text-[#4caf50]">100 XP</span> bạn sẽ thăng 1 cấp. <br/>
-                        Cấp càng cao, danh hiệu và quyền hạn càng lớn!
-                     </p>
-                  </div>
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">💬</span>
+                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Tương tác</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Bình luận trọn đời nhận tới <span className="text-[#4caf50]">10.000 XP</span>. <br/>
+                         (Chỉ tính tối đa 10 bình luận chất lượng mỗi ngày).
+                      </p>
+                   </div>
+
+                   <div className="p-5 bg-black/40 rounded-3xl border border-white/5 space-y-2 group/item hover:border-[#4caf50]/30 transition-all">
+                      <div className="flex items-center gap-2">
+                         <span className="text-lg">🧧</span>
+                         <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-wider">Vận khí</span>
+                      </div>
+                      <p className="text-[9px] text-gray-500 font-bold leading-relaxed">
+                         Bốc quà hàng ngày nhận <span className="text-[#4caf50]">10-500 XP</span>. <br/>
+                         Vận may sẽ đến với người kiên trì!
+                      </p>
+                   </div>
                </div>
             </div>
 
