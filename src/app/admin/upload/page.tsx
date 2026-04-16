@@ -241,9 +241,10 @@ export default function AdminUploadPage() {
   };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    // 🕵️‍♂️ TỰ ĐỘNG SẮP XẾP THEO NGÀY (FILE LAST MODIFIED) 🍀
+    const files = Array.from(e.target.files || []).sort((a, b) => a.lastModified - b.lastModified);
     if (files.length === 0) return;
-    setMessage({ type: 'info', text: `ĐANG XỬ LÝ ${files.length} ẢNH... ⏳` });
+    setMessage({ type: 'info', text: `ĐANG XỬ LÝ & SẮP XẾP ${files.length} ẢNH THEO NGÀY... ⏳` });
     
     const newItems = files.map((file, idx) => {
       const id = `new-${Date.now()}-${idx}-${Math.random()}`;
