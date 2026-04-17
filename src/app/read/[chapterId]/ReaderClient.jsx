@@ -11,6 +11,12 @@ import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { XP_REWARDS, recordXpLog } from '@/lib/xp';
 import { submitReportAction } from '@/lib/actions';
 
+// 🏛️ PORTAL HELPER: Đảm bảo Modal luôn nằm ngoài mọi container bị giới hạn layout (fixed positioning fix) 🚀
+const ReaderPortal = ({ children, mounted }) => {
+  if (!mounted || typeof window === 'undefined') return null;
+  return createPortal(children, document.body);
+};
+
 // 🚀 COMPONENT TỐI ƯU: Đóng băng danh sách trang để tránh re-render thừa khi thanh Nav ẩn/hiện
 const MangaPages = memo(({ pages, theme, optimizeImage, fixR2Url }) => {
   return (
@@ -381,11 +387,6 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
-  // 🏛️ PORTAL HELPER: Đảm bảo Modal luôn nằm ngoài mọi container bị giới hạn layout (fixed positioning fix) 🚀
-  const Portal = ({ children }) => {
-    if (!mounted || typeof document === 'undefined') return null;
-    return createPortal(children, document.body);
-  };
 
   return (
     <div id="shiroi-reader-mode" data-theme={theme} className="min-h-screen transition-colors duration-500 text-[var(--text-reader)]" style={{ backgroundColor: 'var(--bg-reader)' }}>
@@ -415,7 +416,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       `}} />
 
       {/* THANH ĐIỀU HƯỚNG TỐI ƯU 🚀 */}
-      <Portal>
+      <ReaderPortal mounted={mounted}>
         <div className={`fixed top-0 left-0 right-0 z-[20000] border-b pl-4 pr-8 sm:pr-10 py-2 flex items-center justify-between transition-transform duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] will-change-transform ${showNav ? 'translate-y-0' : '-translate-y-full'} ${theme === 'light' ? 'bg-white border-black/5 shadow-sm' : (theme === 'deep' ? 'bg-[#141814]/95 border-white/5 shadow-lg' : 'bg-[#0a0c0a]/95 border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]')}`}>
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 overflow-hidden">
               <Link href="/" className={`p-1.5 sm:p-2 rounded-lg transition-colors flex-shrink-0 ${theme === 'light' ? 'text-gray-900 hover:bg-gray-100' : 'text-gray-400 hover:text-white hover:bg-white/5'}`} title="Trang chủ">
@@ -465,7 +466,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
               </button>
           </div>
         </div>
-      </Portal>
+      </ReaderPortal>
 
       <AnimatePresence>
         {xpToast && (
@@ -564,7 +565,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       )}
 
       {/* 🚀 PORTAL-LIKE OVERLAYS (Moved to end for guaranteed fixed positioning) 🍀 */}
-      <Portal>
+      <ReaderPortal mounted={mounted}>
         <AnimatePresence>
           {showSettings && (
             <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`modal fixed top-16 right-4 z-[30001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10 text-black' : 'bg-[#1c221c]/95 border-white/5 text-white'}`} >
@@ -712,7 +713,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             </div>
           )}
         </AnimatePresence>
-      </Portal>
+      </ReaderPortal>
     </div>
   );
 }
