@@ -155,13 +155,11 @@ export const fetchUserMissionProgress = async (userId) => {
             if (completedMangas && completedMangas.length > 0) {
                 const mangaIds = completedMangas.map(m => m.id);
                 
-                // Lấy tổng số chương của các bộ này
-                const { data: chapterCounts } = await supabase.from('chapters').select('manga_id');
+                // Lấy tổng số chương của các bộ này (Tăng giới hạn lên 10,000 để tránh mất dữ liệu)
+                const { data: chapterCounts } = await supabase.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000);
                 const totalMap = {};
                 chapterCounts?.forEach(c => {
-                    if (mangaIds.includes(c.manga_id)) {
-                        totalMap[c.manga_id] = (totalMap[c.manga_id] || 0) + 1;
-                    }
+                    totalMap[c.manga_id] = (totalMap[c.manga_id] || 0) + 1;
                 });
 
                 // Lấy số lượng user đã đọc trong các bộ này
