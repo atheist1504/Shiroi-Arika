@@ -36,19 +36,35 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     // Luôn bóc tách dữ liệu mới nhất từ server để tránh cache ảnh cũ 🍀
     fetchMangaDetails();
     checkFollowStatus();
-    loadReadHistory();
+    loadReadHistory(JSON.parse(localStorage.getItem('shiroi_user') || '{}')?.id);
 
     return () => window.removeEventListener('storage', checkSession);
   }, [mangaId]);
 
-  const loadReadHistory = () => {
-    const read = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
-    setReadChapters(read);
-
-    const history = JSON.parse(localStorage.getItem('shiroi_history') || '{}');
-    if (history[mangaId]) {
-      setLastReadChapterId(history[mangaId]);
+  const loadReadHistory = async (userId = null) => {
+    let read = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
+    
+    // ⚔️ ĐỒNG BỘ TỪ DATABASE NẾU ĐÃ ĐĂNG NHẬP 🍀
+    if (userId) {
+      try {
+        const { data: dbRead } = await supabase
+          .from('shiroi_read_chapters')
+          .select('chapter_id')
+          .eq('user_id', userId)
+          .eq('manga_id', mangaId);
+        
+        if (dbRead) {
+          const dbIds = dbRead.map(r => r.chapter_id);
+          const combined = Array.from(new Set([...read, ...dbIds]));
+          read = combined;
+          localStorage.setItem('shiroi_read_chapters', JSON.stringify(combined));
+        }
+      } catch (err) { console.warn("Lỗi đồng bộ lịch sử đọc:", err); }
     }
+
+    setReadChapters(read);
+    const history = JSON.parse(localStorage.getItem('shiroi_history') || '{}');
+    if (history[mangaId]) setLastReadChapterId(history[mangaId]);
   };
 
   const checkFollowStatus = async () => {
@@ -384,19 +400,33 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                       <div key={chap.id} className="flex gap-2 group">
                           <Link 
                           href={`/read/${chap.id}`} 
-                          className={`flex-1 flex justify-between items-center p-5 bg-[#141814]/40 backdrop-blur-sm border border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80 rounded-2xl transition-all duration-300 ${isRead ? 'opacity-50' : 'opacity-100'}`}
+                          className={`flex-1 flex justify-between items-center p-5 backdrop-blur-sm border rounded-2xl transition-all duration-300 ${isRead ? 'bg-[#141814]/20 border-white/5 opacity-60' : 'bg-[#141814]/40 border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80'}`}
                           >
-                          <div className="flex flex-col truncate">
-                              <span className={`font-black uppercase tracking-tight transition-colors truncate text-xs ${isRead ? 'text-gray-500' : 'text-gray-100 group-hover:text-[#4caf50]'}`}>
-                              Chương {chap.chapter_number}
-                              </span>
-                              {chap.title && (
-                              <span className="text-[9px] font-bold text-gray-500 mt-1 line-clamp-1 group-hover:text-gray-400">{chap.title}</span>
-                              )}
+                           <div className="flex items-center gap-4 truncate">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${isRead ? 'bg-black/40 text-gray-700' : 'bg-[#4caf50]/10 text-[#4caf50]'}`}>
+                                    {chap.chapter_number}
+                                </div>
+                                <div className="flex flex-col truncate">
+                                    <span className={`font-black uppercase tracking-tight transition-colors truncate text-[11px] ${isRead ? 'text-gray-500' : 'text-gray-100 group-hover:text-[#4caf50]'}`}>
+                                        Chương {chap.chapter_number}
+                                    </span>
+                                    {chap.title && (
+                                        <span className="text-[9px] font-bold text-gray-600 mt-1 line-clamp-1 group-hover:text-gray-400">{chap.title}</span>
+                                    )}
+                                </div>
+                           </div>
+
+                          <div className="flex items-center gap-3 shrink-0">
+                                {isRead && (
+                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-lg">
+                                        <svg className="w-2.5 h-2.5 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
+                                        <span className="text-[7px] font-black text-[#4caf50] uppercase tracking-tighter">ĐÃ XEM</span>
+                                    </div>
+                                )}
+                                <span className="text-[9px] font-black text-gray-700 bg-black/20 px-2 py-1 rounded-lg border border-white/5">
+                                    {new Date(chap.created_at).toLocaleDateString('vi-VN')}
+                                </span>
                           </div>
-                          <span className="shrink-0 text-[10px] font-black text-gray-700 bg-black/20 px-2.5 py-1 rounded-lg border border-white/5">
-                              {new Date(chap.created_at).toLocaleDateString('vi-VN')}
-                          </span>
                           </Link>
                           
                           {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (

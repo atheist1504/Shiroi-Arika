@@ -128,14 +128,14 @@ export async function getAuthenticatedUser() {
   try {
     let user = JSON.parse(sessionData.value);
     
-    // 🚑 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING): 
-    // Nếu thiếu ID nhưng là Admin whitelist (atheist1504), hãy truy vấn lại Database 🍀
+    // 🚑 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING) ⚡
+    // Chỉ truy vấn Database nếu session thiếu ID quan trọng của Admin whitelist 🍀
     if (!user.id && user.username?.toLowerCase() === 'atheist1504') {
-      console.log(`🚑 [Auth] Phát hiện session lỗi cho Admin ${user.username}, đang khôi phục ID...`);
+      console.log(`🚑 [Auth] Phát hiện session thiếu ID cho Admin ${user.username}, đang khôi phục...`);
       const client = getDbClient();
       const { data, error } = await client
         .from('shiroi_users')
-        .select('id, username, display_name, avatar_url, role, xp, last_check_in, check_in_streak, last_lucky_draw')
+        .select('id, username, role')
         .eq('username', user.username)
         .single();
       
@@ -204,16 +204,22 @@ export async function getStorageUsageAction() {
        return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: "NO_ADMIN_CLIENT" };
     }
 
-    const { data: pagesData, error: pagesError } = await supabaseAdmin.from('pages').select('size_kb').limit(1000);
+    // 🛡️ 3. Tính toán dung lượng (Tối ưu hóa truy vấn) ⚡
+    // Lấy toàn bộ size_kb thay vì giới hạn 1000 bản ghi để đảm bảo tính chuẩn xác
+    const { data: pagesData, error: pagesError } = await supabaseAdmin
+      .from('pages')
+      .select('size_kb'); 
     
     if (pagesError) {
       console.warn("⚠️ Pages Query Error:", pagesError.message);
       return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: `PAGES_ERR_${pagesError.code}` };
     }
     
-    const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
+    const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (Number(p.size_kb) || 150), 0);
 
-    const { data: mangasData, error: mangasError } = await supabaseAdmin.from('mangas').select('size_kb');
+    const { data: mangasData, error: mangasError } = await supabaseAdmin
+      .from('mangas')
+      .select('size_kb');
     
     let mangasTotal = 0;
     if (!mangasError && mangasData) {
@@ -890,17 +896,30 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     const client = getDbClient();
 
     // 1. Kiểm tra xem đã nhận thưởng chưa (Tránh double claim)
-    const { data: existing } = await client
-      .from('shiroi_mission_claims')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('mission_key', missionKey)
-      .single();
+    const { MISSIONS } = await import('./missions');
+    const mission = MISSIONS[missionKey];
+    const isDaily = mission?.type === 'daily';
 
-    if (existing) throw new Error("Bạn đã nhận phần thưởng này rồi! 🛡️");
+    let query = client
+      .from('shiroi_mission_claims')
+      .select('id, claimed_at')
+      .eq('user_id', userId)
+      .eq('mission_key', missionKey);
+
+    if (isDaily) {
+        // Nếu là nhiệm vụ hàng ngày: Chỉ tính lượt nhận trong hôm nay (UTC)
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        query = query.gte('claimed_at', today.toISOString());
+    }
+
+    const { data: existing } = await query.maybeSingle();
+
+    if (existing) {
+        throw new Error(isDaily ? "Hôm nay bạn đã nhận thưởng nhiệm vụ này rồi! Hãy quay lại vào ngày mai 🛡️" : "Bạn đã nhận phần thưởng này rồi! 🛡️");
+    }
 
     // 2. Lấy định nghĩa nhiệm vụ để xác định XP (Tránh Client gửi XP láo)
-    const { MISSIONS } = await import('./missions');
     let rewardXp = 0;
     
     if (missionKey.startsWith('conqueror_')) {

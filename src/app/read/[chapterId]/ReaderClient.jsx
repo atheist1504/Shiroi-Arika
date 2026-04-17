@@ -252,58 +252,47 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     readingModeRef.current = readingMode;
   }, [readingMode]);
 
-  useEffect(() => {
-    const handleGesture = (delta, currentY) => {
-      // 🏛️ Ở chế độ lật trang, menu luôn cố định
-      if (readingModeRef.current === 'page') {
+  // 🎢 LOGIC XỬ LÝ CỬ CHỈ (MODULE HÓA) 🚀
+  const handleGesture = (delta, currentY) => {
+    if (readingModeRef.current === 'page') {
+      if (!showNavRef.current) {
+        showNavRef.current = true;
+        setShowNav(true);
+      }
+      return;
+    }
+
+    if (delta > 8 && currentY > 80) {
+      accumUpRef.current = 0;
+      if (showNavRef.current) {
+        showNavRef.current = false;
+        setShowNav(false);
+      }
+    } else if (delta < 0) {
+      accumUpRef.current += Math.abs(delta);
+      if (accumUpRef.current > 10 || currentY <= 30) {
         if (!showNavRef.current) {
           showNavRef.current = true;
           setShowNav(true);
         }
-        return;
+        accumUpRef.current = 0;
       }
+    }
+  };
 
-      // 1. Logic ẩn Nav: Lướt xuống (delta > 8)
-      if (delta > 8 && currentY > 80) {
-        accumUpRef.current = 0; // Reset tích lũy khi đổi hướng xuống
-        if (showNavRef.current) {
-          showNavRef.current = false;
-          setShowNav(false);
-        }
-      } 
-      // 2. Logic hiện Nav: Tích lũy lướt lên (delta < 0)
-      else if (delta < 0) {
-        accumUpRef.current += Math.abs(delta);
-        // Chỉ cần lướt lên tổng cộng 10px (rất ngắn) hoặc về gần đỉnh trang
-        if (accumUpRef.current > 10 || currentY <= 30) {
-          if (!showNavRef.current) {
-            showNavRef.current = true;
-            setShowNav(true);
-          }
-          accumUpRef.current = 0;
-        }
-      }
-      // Reset khi dừng hoặc lướt nhẹ không đáng kể
-      else if (Math.abs(delta) < 1) {
-        // Giữ nguyên trạng thái
-      }
-    };
-
+  useEffect(() => {
     const onScroll = () => {
       const curY = window.scrollY;
       const delta = curY - lastScrollYRef.current;
       handleGesture(delta, curY);
       
-      // Cập nhật Back to Top button (vẫn dùng state để re-render UI này)
       if (Math.abs(curY - lastScrollYState) > 300 || curY < 100) {
         setLastScrollYState(curY);
       }
       lastScrollYRef.current = curY;
     };
 
-    const onWheel = (e) => {
-      handleGesture(e.deltaY, window.scrollY);
-    };
+    const onWheel = (e) => handleGesture(e.deltaY, window.scrollY);
 
     const onTouchStart = (e) => {
       touchStartY.current = e.touches[0].clientY;
@@ -317,23 +306,17 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     };
 
     const onTap = (e) => {
-      // 🏛️ Ở chế độ lật trang, menu luôn cố định theo yêu cầu
       if (readingModeRef.current === 'page') {
-        if (!showNavRef.current) {
-          showNavRef.current = true;
-          setShowNav(true);
-        }
-        return;
+          if (!showNavRef.current) {
+              showNavRef.current = true;
+              setShowNav(true);
+          }
+          return;
       }
 
-      // Chỉ bỏ qua nếu bấm vào các nút điều khiển, link, hoặc các ô nhập liệu
-      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('.modal')) return;
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('.modal')) return;
+
       
-      // Nếu bấm vào vùng Fixed mà KHÔNG PHẢI là menu chính thì vẫn cho toggle (để sửa lỗi Page Mode cũ)
-      if (e.target.closest('.fixed') && !e.target.closest('nav') && !e.target.closest('.sticky-nav')) {
-          // Vẫn cho phép toggle nếu không phải bấm vào các nút chức năng
-      }
-
       showNavRef.current = !showNavRef.current;
       setShowNav(showNavRef.current);
     };
@@ -584,7 +567,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       <Portal>
         <AnimatePresence>
           {showSettings && (
-            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`fixed top-16 right-4 z-[30001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10 text-black' : 'bg-[#1c221c]/95 border-white/5 text-white'}`} >
+            <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`modal fixed top-16 right-4 z-[30001] w-64 backdrop-blur-2xl border rounded-2xl p-4 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10 text-black' : 'bg-[#1c221c]/95 border-white/5 text-white'}`} >
+
                <h3 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-4">Cài đặt đọc truyện</h3>
                <div className="space-y-4">
                   <div className="space-y-2">
@@ -609,7 +593,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           {showReportModal && (
             <div className="fixed inset-0 z-[30002] flex items-center justify-center px-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowReportModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`relative w-72 backdrop-blur-2xl border rounded-2xl p-5 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
+              <motion.div initial={{ opacity: 0, y: -10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: 0.95 }} className={`modal relative w-72 backdrop-blur-2xl border rounded-2xl p-5 shadow-2xl ${theme === 'light' ? 'bg-white/95 border-black/10' : 'bg-[#1c221c]/95 border-white/5'}`} >
+
                  <div className="flex items-center justify-between mb-4">
                     <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest">Báo lỗi chương truyện</h3>
                     <button onClick={() => { setShowReportModal(false); setReportStatus(null); }} className="text-gray-500 hover:text-white transition-colors">
@@ -665,7 +650,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           {showChapterModal && (
             <div className="fixed inset-0 z-[30003] flex items-center justify-center px-4">
                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowChapterModal(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-               <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
+               <motion.div initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -20, scale: 0.95 }} className={`modal relative w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden border rounded-3xl shadow-2xl ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#1c221c] border-white/5'}`} >
+
                   <div className="p-4 border-b border-current/5 flex items-center justify-between">
                      <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-widest">Chọn chương truyện</h3>
                      <button onClick={() => setShowChapterModal(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors">

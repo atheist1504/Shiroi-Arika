@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { fetchUserMissionProgress } from '@/lib/missions';
 import { claimMissionRewardAction } from '@/lib/actions';
+import { fixR2Url, optimizeImage } from '@/lib/cloudinary';
+
 
 export default function MissionsModal({ isOpen, onClose }) {
     const [activeTab, setActiveTab] = useState('missions'); // 'missions' | 'compass'
@@ -227,8 +229,12 @@ export default function MissionsModal({ isOpen, onClose }) {
                                 ) : (
                                     compassData.pending.map(m => (
                                         <div key={m.id} className="flex gap-4 p-4 bg-white/5 border border-white/5 rounded-3xl hover:border-[#4caf50]/20 transition-all group">
-                                            <div className="w-16 h-20 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10">
-                                                <img src={m.cover_image} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" alt="" />
+                                            <div className="w-16 h-20 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 flex items-center justify-center">
+                                                {m.cover_image ? (
+                                                    <img src={optimizeImage(fixR2Url(m.cover_image), '200')} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" alt="" />
+                                                ) : (
+                                                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                )}
                                             </div>
                                             <div className="flex-1 flex flex-col justify-center">
                                                 <h4 className="text-xs font-black text-white uppercase tracking-tight line-clamp-1">{m.title}</h4>
@@ -243,6 +249,14 @@ export default function MissionsModal({ isOpen, onClose }) {
                                         </div>
                                     ))
                                 )}
+                            </div>
+                            
+                            {/* 💡 TIP 🚀 */}
+                            <div className="mt-8 p-4 bg-[#4caf50]/5 border border-[#4caf50]/10 rounded-2xl text-center">
+                                <p className="text-[9px] font-bold text-[#4caf50] uppercase tracking-widest">
+                                    Đã đọc xong một bộ truyện? <br/>
+                                    Hãy sang tab <span className="underline decoration-wavy mx-1">Nhiệm vụ & Thưởng</span> để nhận ngay XP Chinh phục! ⚔️
+                                </p>
                             </div>
                         </div>
                     )}

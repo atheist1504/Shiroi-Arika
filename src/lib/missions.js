@@ -112,9 +112,22 @@ export const fetchUserMissionProgress = async (userId) => {
         const dailyValidCommentsRaw = validComments.filter(c => new Date(c.created_at) >= today);
         const dailyContributionCount = Math.min(dailyValidCommentsRaw.length, 10);
         
-        // Lấy danh sách đã nhận thưởng
-        const { data: claims } = await supabase.from('shiroi_mission_claims').select('mission_key').eq('user_id', userId);
-        const claimedKeys = new Set(claims?.map(c => c.mission_key) || []);
+        // Lấy danh sách đã nhận thưởng (Bao gồm cả thời điểm nhận)
+        const { data: claims } = await supabase.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId);
+        
+        // Phân loại Claim thành 2 loại: Hàng ngày và Trọn đời
+        const lifetimeClaimedKeys = new Set();
+        const dailyClaimedKeysToday = new Set();
+
+        claims?.forEach(c => {
+            const claimedDate = new Date(c.claimed_at);
+            claimedDate.setHours(0,0,0,0);
+            
+            if (claimedDate.getTime() === today.getTime()) {
+                dailyClaimedKeysToday.add(c.mission_key);
+            }
+            lifetimeClaimedKeys.add(c.mission_key);
+        });
 
         // 2. Map dữ liệu vào định nghĩa nhiệm vụ
         const results = Object.values(MISSIONS).map(m => {
@@ -131,12 +144,64 @@ export const fetchUserMissionProgress = async (userId) => {
                 ...m,
                 current: current,
                 isCompleted: current >= m.target,
-                isClaimed: claimedKeys.has(m.key)
+                isClaimed: m.type === 'daily' ? dailyClaimedKeysToday.has(m.key) : lifetimeClaimedKeys.has(m.key)
             };
         });
 
-        // 3. Xử lý nhiệm vụ Chinh phục & Hoàn tất (Tiered)
-        // [Cần logic phức tạp hơn cho từng bộ truyện - sẽ làm ở bước sau hoặc component]
+        // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Đã hoàn thành) ⚔️
+        // Chỉ hiện với những bộ truyện có Status là 'completed' và user đã đọc xong hoàn toàn.
+        try {
+            const { data: completedMangas } = await supabase.from('mangas').select('id, title').eq('status', 'completed');
+            if (completedMangas && completedMangas.length > 0) {
+                const mangaIds = completedMangas.map(m => m.id);
+                
+                // Lấy tổng số chương của các bộ này
+                const { data: chapterCounts } = await supabase.from('chapters').select('manga_id');
+                const totalMap = {};
+                chapterCounts?.forEach(c => {
+                    if (mangaIds.includes(c.manga_id)) {
+                        totalMap[c.manga_id] = (totalMap[c.manga_id] || 0) + 1;
+                    }
+                });
+
+                // Lấy số lượng user đã đọc trong các bộ này
+                const { data: userReadCounts } = await supabase.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds);
+                const userMap = {};
+                userReadCounts?.forEach(c => {
+                    userMap[c.manga_id] = (userMap[c.manga_id] || 0) + 1;
+                });
+
+                // Tạo nhiệm vụ Chinh phục cho từng bộ
+                completedMangas.forEach(m => {
+                    const total = totalMap[m.id] || 0;
+                    const read = userMap[m.id] || 0;
+                    
+                    if (total > 0 && read >= total) {
+                        const mKey = `finish_series_${m.id}`;
+                        
+                        // Tính toán thưởng dựa trên số chương (Logic khớp với actions.js)
+                        let rewardXp = 200;
+                        if (total >= 100) rewardXp = 2000;
+                        else if (total >= 50) rewardXp = 1000;
+                        else if (total >= 20) rewardXp = 500;
+
+                        results.push({
+                            key: mKey,
+                            title: `Chinh phục: ${m.title}`,
+                            description: `Hoàn thành bộ truyện dài ${total} chương`,
+                            category: MISSION_CATEGORIES.CONQUEST,
+                            target: total,
+                            current: read,
+                            xp: rewardXp,
+                            isCompleted: true,
+                            isClaimed: lifetimeClaimedKeys.has(mKey)
+                        });
+                    }
+                });
+            }
+        } catch (err) {
+            console.error("Lỗi tính toán nhiệm vụ Chinh phục:", err);
+        }
         
         return results;
     } catch (err) {
