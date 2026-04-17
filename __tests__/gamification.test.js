@@ -34,10 +34,10 @@ describe('Thư viện Logic Cấp độ & Gamification (src/lib/xp.js) 🍀', ()
     });
 
     it('phải mở khóa danh hiệu cấp cao khi đạt đủ cấp độ', () => {
-      // Cấp 10 (900 XP) -> Kẻ vô danh
-      expect(calculateTitle(900).name).toBe('Kẻ vô danh');
-      // Cấp 31 (3000 XP) -> Kỳ môn độn giả
-      expect(calculateTitle(3000).name).toBe('Kỳ môn độn giả');
+      // Cấp 10 (900 XP) -> Tiểu quy đầu
+      expect(calculateTitle(900).name).toBe('Tiểu quy đầu');
+      // Cấp 31 (3000 XP) -> Hồ ly tinh
+      expect(calculateTitle(3000).name).toBe('Hồ ly tinh');
     });
 
     it('phải ưu tiên danh hiệu được người dùng chọn (Selected Badge)', () => {

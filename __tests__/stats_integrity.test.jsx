@@ -15,10 +15,29 @@ jest.mock('framer-motion', () => ({
   AnimatePresence: ({ children }) => <>{children}</>,
 }));
 
+// GIẢ LẬP NEXT/NAVIGATION 🚀
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => ({ get: jest.fn() }),
+}));
+
+// GIẢ LẬP NEXT/NAVIGATION 🚀
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({ push: jest.fn(), refresh: jest.fn() }),
+  useSearchParams: () => ({ get: jest.fn() }),
+}));
+
 // Giả lập Supabase
 jest.mock('../src/lib/supabase', () => ({
   supabase: {
-    from: jest.fn(),
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      ilike: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      single: jest.fn().mockImplementation(() => Promise.resolve({ data: { id: 'user-unique-id-123', xp: 500 }, error: null })),
+    })),
   },
 }));
 
@@ -52,17 +71,20 @@ describe('🍀 KIỂM THỬ ĐỘ CHÍNH XÁC THỐNG KÊ (STATS INTEGRITY)', ()
                 })
             };
         }
-        // Cho các bảng khác (users, etc.)
-        return {
-           select: () => ({
-              ilike: () => ({
-                 single: () => Promise.resolve({ data: mockUser, error: null })
-              }),
-              eq: () => ({
-                 order: () => Promise.resolve({ data: [], error: null })
-              })
-           })
-        };
+    // Cho các bảng khác (users, etc.)
+    return {
+       select: () => ({
+          eq: () => ({
+             single: () => Promise.resolve({ data: mockUser, error: null }),
+             order: () => ({
+                limit: () => Promise.resolve({ data: [], error: null })
+             })
+          }),
+          ilike: () => ({
+             single: () => Promise.resolve({ data: mockUser, error: null })
+          })
+       })
+    };
     });
 
     render(<ProfilePage />);

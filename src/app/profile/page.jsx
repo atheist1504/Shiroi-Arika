@@ -297,7 +297,7 @@ export default function ProfilePage() {
 
           <div className="space-y-4">
             <div className="flex flex-col items-center gap-2">
-              {(user.selected_badge || calculateTitle(user.xp).name) && (
+              {user && (user.selected_badge || calculateTitle(user.xp).name) && (
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[10px] font-black px-6 py-2 rounded-xl border border-[#4caf50]/30 text-[#4caf50] uppercase tracking-[0.4em] bg-[#4caf50]/15 shadow-[0_0_30px_rgba(76,175,80,0.2)] animate-pulse border-t-[#4caf50]/60">
                     {user.selected_badge || calculateTitle(user.xp).name}
@@ -316,7 +316,7 @@ export default function ProfilePage() {
           {/* DAILY CHECK-IN & STATS 💎 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
             <div className={`p-8 rounded-[48px] border-2 transition-all duration-700 relative overflow-hidden flex flex-col items-center gap-6 group ${
-                user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString()
+                user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString()
                 ? 'bg-[#141814]/40 border-white/10 shadow-inner'
                 : 'bg-gradient-to-br from-[#1a221a] to-[#0a0c0a] border-[#4caf50]/20 shadow-[0_20px_50px_rgba(76,175,80,0.1)] hover:border-[#4caf50]/40'
               }`}>
@@ -344,11 +344,11 @@ export default function ProfilePage() {
               </div>
 
               <button
-                disabled={checkInLoading || (user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())}
+                disabled={checkInLoading || (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())}
                 onClick={handleCheckIn}
                 className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-3xl text-xs uppercase tracking-widest shadow-[0_15px_30px_rgba(76,175,80,0.3)] hover:scale-[1.03] active:scale-95 transition-all disabled:bg-white/5 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
               >
-                {checkInLoading ? 'ĐANG ĐIỂM DANH...' : (user.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString() ? 'ĐÃ NHẬN HÔM NAY' : 'ĐIỂM DANH NGAY ✨')}
+                {checkInLoading ? 'ĐANG ĐIỂM DANH...' : (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString() ? 'ĐÃ NHẬN HÔM NAY' : 'ĐIỂM DANH NGAY ✨')}
               </button>
 
               {/* 📅 CALENDAR GRID 🍀 */}
@@ -421,16 +421,16 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
               <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Cấp độ hiện tại</span>
-              <span className="text-4xl font-black text-[#4caf50] italic drop-shadow-[0_0_15px_rgba(76,175,80,0.3)]">{calculateLevel(user.xp)}</span>
+              <span className="text-4xl font-black text-[#4caf50] italic drop-shadow-[0_0_15px_rgba(76,175,80,0.3)]">{calculateLevel(user?.xp)}</span>
             </div>
             <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
               <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Tổng Thánh tích (XP)</span>
-              <span className="text-4xl font-black text-gray-200 italic">{user.xp || 0}</span>
+              <span className="text-4xl font-black text-gray-200 italic">{user?.xp || 0}</span>
             </div>
             <div className="bg-gradient-to-br from-[#141814] to-black border border-white/5 p-6 rounded-[32px] flex flex-col items-center gap-2 shadow-xl">
-              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Tiến trình ({calculateProgress(user.xp)}/100)</span>
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest opacity-60">Tiến trình ({calculateProgress(user?.xp)}/100)</span>
               <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden mt-2 border border-white/5">
-                <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_15px_#4caf50]" style={{ width: `${calculateProgress(user.xp)}%` }}></div>
+                <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_15px_#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }}></div>
               </div>
             </div>
           </div>
@@ -569,9 +569,9 @@ export default function ProfilePage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {TITLES.slice().reverse().map(badge => {
-                const userLv = calculateLevel(user.xp);
+                const userLv = calculateLevel(user?.xp);
                 const isUnlocked = userLv >= badge.lv;
-                const isSelected = user.selected_badge === badge.name || (!user.selected_badge && badge.name === 'Vô danh tiểu tốt');
+                const isSelected = user?.selected_badge === badge.name || (!user?.selected_badge && badge.name === 'Vô danh tiểu tốt');
 
                 return (
                   <button
