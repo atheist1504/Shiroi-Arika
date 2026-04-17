@@ -927,13 +927,17 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     } else if (missionKey.startsWith('finish_series_')) {
         // Phân loại Tier cho bộ truyện đã hoàn thành
         const mangaIdFromKey = missionKey.replace('finish_series_', '');
-        const { data: readCount } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
-        const n = readCount || 0;
-        
+        // Kiểm tra xem có phải One-shot không (One-shot không có thưởng Chinh phục)
+        const { data: totalChapters } = await client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey);
+        const total = totalChapters || 0;
+
+        if (total <= 1) throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
+
         if (n < 20) rewardXp = 200;
         else if (n < 50) rewardXp = 500;
         else if (n < 100) rewardXp = 1000;
         else rewardXp = 2000;
+
     } else {
         const mission = MISSIONS[missionKey];
         if (!mission) throw new Error("Nhiệm vụ không tồn tại! 🕵️‍♂️");

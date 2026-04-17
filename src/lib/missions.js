@@ -176,7 +176,8 @@ export const fetchUserMissionProgress = async (userId) => {
                     const total = totalMap[m.id] || 0;
                     const read = userMap[m.id] || 0;
                     
-                    if (total > 0 && read >= total) {
+                    if (total > 1 && read >= total) {
+
                         const mKey = `finish_series_${m.id}`;
                         
                         // Tính toán thưởng dựa trên số chương (Logic khớp với actions.js)
