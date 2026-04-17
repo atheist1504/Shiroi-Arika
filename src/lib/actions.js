@@ -934,7 +934,10 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
 
         // 2. Kiểm tra thể loại One-shot
         const { data: manga } = await client.from('mangas').select('genres').eq('id', mangaIdFromKey).single();
-        const isOneShotGenre = manga?.genres?.some(g => g.toLowerCase().includes('one-shot') || g.toLowerCase().includes('oneshot'));
+        const isOneShotGenre = manga?.genres?.some(g => {
+            const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
+            return normalized.includes('oneshot');
+        });
 
         if (total <= 1 || isOneShotGenre) {
             throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");

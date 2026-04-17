@@ -175,7 +175,10 @@ export const fetchUserMissionProgress = async (userId) => {
                     const read = userMap[m.id] || 0;
                     
                     // 🚩 LOẠI BỎ ONE-SHOT (Dựa trên số chương HOẶC Thể loại) 🛡️
-                    const isOneShotGenre = m.genres?.some(g => g.toLowerCase().includes('one-shot') || g.toLowerCase().includes('oneshot'));
+                    const isOneShotGenre = m.genres?.some(g => {
+                        const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
+                        return normalized.includes('oneshot');
+                    });
                     
                     if (total > 1 && !isOneShotGenre && read >= total) {
 
