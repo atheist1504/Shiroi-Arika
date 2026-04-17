@@ -37,6 +37,11 @@ Dự án Manga Platform thế hệ mới.
     - **Self-Healing Navbar**: Tự động phát hiện và khôi phục dữ liệu người dùng từ Database nếu `localStorage` bị lỗi hoặc thiếu thông tin XP (Sửa lỗi hiển thị LV 1 chập chờn).
     - **Atomic XP Updates**: Chuẩn hóa toàn bộ Server Actions (Đọc truyện, Bốc quà, Nhiệm vụ) để luôn trả về đối tượng User đầy đủ và mới nhất sau khi cộng điểm.
     - **Enriched Auth Session**: Nâng cấp cơ chế khôi phục phiên (Auth Healing) để lấy đầy đủ thông tin XP và định danh, đảm bảo session luôn đồng nhất với Database. 🚀🍀🛡️
+- [x] **UI Polish & Stability (v23)**: 🎀✨
+    - **Slider Skeleton Loader**: Thêm lớp phủ Skeleton cho Slider trang chủ, khắc phục hoàn toàn hiện tượng nháy đen khi tải ảnh hoặc chuyển slide.
+    - **Vietnamese Logic Audit**: Nâng cấp hàm `isGibberish` để chặn spam tiếng Việt thông minh hơn (chặn lặp từ, ký tự đặc biệt không có chữ cái).
+    - **Mobile UX Optimization**: Xác thực độ phản hồi của Compact Filter và Reader trên thiết bị di động (375px).
+    - **Build Fix**: Khắc phục lỗi thiếu `firebase-admin` trong môi trường local. 🛠️✅
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -74,10 +79,12 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Navbar Alignment**: Đã xác nhận nút Điểm danh thẳng hàng dưới Avatar. 📐
 - [x] **OG Image API Status**: Đã fix lỗi kết nối Database và RLS. Hiển thị chuẩn xác. ✅
 - [x] **Reader Image Load**: Đã xác nhận trang đọc lấy dữ liệu qua Admin Client ổn định. ✅
+- [x] **Vietnamese Logic V2 Test**: Đã PASS 100% bộ test mới về danh hiệu và bộ lọc spam. 🇻🇳🧪
+- [x] **Missions Logic V2 Test**: Đã xác nhận tính toán XP chinh phục và nhiệm vụ trọn đời chuẩn xác. 🎯✅
 
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 14:18 - 16/04/2026 (Upload Proxy & Ghim Navbar)*
+*Cập nhật lần cuối: 22:42 - 17/04/2026 (Fix Slider, Anti-Spam & VN Tests)*

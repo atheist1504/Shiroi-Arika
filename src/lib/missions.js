@@ -60,12 +60,33 @@ export const MISSIONS = {
 };
 
 /**
- * 🕵️‍♂️ Kiểm tra Spam bình luận: Chặn ký tự lặp lại vô nghĩa (eeeeee, vvvvvv...)
+ * 🕵️‍♂️ Kiểm tra Spam bình luận: Chặn ký tự lặp lại hoặc chuỗi vô nghĩa 🍀
  */
 export const isGibberish = (text) => {
-    if (!text || text.length < 3) return false;
-    const repeatedPattern = /(.)\1{4,}/; // Lặp lại 1 ký tự 5 lần trở lên
-    return repeatedPattern.test(text);
+    if (!text || text.length < 2) return true;
+    
+    const trimmed = text.trim();
+    if (trimmed.length < 2) return true;
+
+    // 1. Chặn lặp ký tự vô nghĩa (eee, vvv, ...)
+    const repeatedPattern = /(.)\1{4,}/; 
+    if (repeatedPattern.test(trimmed)) return true;
+
+    // 2. Chặn lặp từ (ví dụ: "hay hay hay hay hay")
+    const words = trimmed.toLowerCase().split(/\s+/);
+    if (words.length >= 5) {
+        let sameCount = 0;
+        for (let i = 0; i < words.length - 1; i++) {
+            if (words[i] === words[i+1] && words[i].length > 1) sameCount++;
+        }
+        if (sameCount >= 3) return true;
+    }
+
+    // 3. Chặn chỉ có ký tự đặc biệt/số (không có chữ cái)
+    const hasAlpha = /[a-zA-Z\u00C0-\u1EF9]/.test(trimmed);
+    if (!hasAlpha) return true;
+
+    return false;
 };
 
 /**

@@ -87,7 +87,10 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
       {/* FEATURED BANNER - SIÊU PHẨM SHIROI (Chỉ hiện ở trang 1) 🍀 */}
       {currentPage === 1 && featured.length > 0 && (
         <section className="max-w-6xl mx-auto px-4 mb-16 relative group/banner">
-            <div className="relative md:aspect-[21/9] min-h-[400px] md:min-h-0 w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5">
+            <div className="relative md:aspect-[21/9] min-h-[400px] md:min-h-0 w-full rounded-3xl overflow-hidden glass shadow-2xl border border-white/5 bg-[#141814]">
+                {/* 🦴 SKELETON LAYER (Hiện khi đang chờ ảnh hoặc chuyển slide) */}
+                <div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#141814] via-[#1a201a] to-[#141814]" />
+
                 <AnimatePresence mode="wait">
                     {featured[activeSlide] && (
                     <motion.div
@@ -122,7 +125,7 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                         {/* CONTENT LAYER */}
                         <div className="relative h-full flex items-center p-8 md:p-14">
                             <div className="flex flex-col md:flex-row gap-8 items-center w-full">
-                                <div className="hidden md:block w-48 lg:w-56 shrink-0 aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 group-hover/banner:scale-105 transition-transform duration-500">
+                                <div className="hidden md:block w-48 lg:w-56 shrink-0 aspect-[2/3] rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 group-hover/banner:scale-105 transition-transform duration-500 bg-black/50">
                                    <img src={optimizeImage(featured[activeSlide].cover_image, 600)} className="w-full h-full object-cover" alt="" />
                                 </div>
                                 <div className="flex-1 space-y-4 text-center md:text-left">
