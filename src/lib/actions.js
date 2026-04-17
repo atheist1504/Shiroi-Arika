@@ -927,12 +927,22 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     } else if (missionKey.startsWith('finish_series_')) {
         // Phân loại Tier cho bộ truyện đã hoàn thành
         const mangaIdFromKey = missionKey.replace('finish_series_', '');
-        // Kiểm tra xem có phải One-shot không (One-shot không có thưởng Chinh phục)
-        const { data: totalChapters } = await client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey);
-        const total = totalChapters || 0;
+        
+        // 1. Kiểm tra số chương thực tế
+        const { count } = await client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey);
+        const total = count || 0;
 
-        if (total <= 1) throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
+        // 2. Kiểm tra thể loại One-shot
+        const { data: manga } = await client.from('mangas').select('genres').eq('id', mangaIdFromKey).single();
+        const isOneShotGenre = manga?.genres?.some(g => g.toLowerCase().includes('one-shot') || g.toLowerCase().includes('oneshot'));
 
+        if (total <= 1 || isOneShotGenre) {
+            throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
+        }
+
+        // 3. Kiểm tra số lượng đã đọc
+        const { count: n } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
+        
         if (n < 20) rewardXp = 200;
         else if (n < 50) rewardXp = 500;
         else if (n < 100) rewardXp = 1000;

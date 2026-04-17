@@ -151,7 +151,7 @@ export const fetchUserMissionProgress = async (userId) => {
         // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Đã hoàn thành) ⚔️
         // Chỉ hiện với những bộ truyện có Status là 'completed' và user đã đọc xong hoàn toàn.
         try {
-            const { data: completedMangas } = await supabase.from('mangas').select('id, title').eq('status', 'completed');
+            const { data: completedMangas } = await supabase.from('mangas').select('id, title, genres').eq('status', 'completed');
             if (completedMangas && completedMangas.length > 0) {
                 const mangaIds = completedMangas.map(m => m.id);
                 
@@ -174,7 +174,10 @@ export const fetchUserMissionProgress = async (userId) => {
                     const total = totalMap[m.id] || 0;
                     const read = userMap[m.id] || 0;
                     
-                    if (total > 1 && read >= total) {
+                    // 🚩 LOẠI BỎ ONE-SHOT (Dựa trên số chương HOẶC Thể loại) 🛡️
+                    const isOneShotGenre = m.genres?.some(g => g.toLowerCase().includes('one-shot') || g.toLowerCase().includes('oneshot'));
+                    
+                    if (total > 1 && !isOneShotGenre && read >= total) {
 
                         const mKey = `finish_series_${m.id}`;
                         
