@@ -400,8 +400,16 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                       <div key={chap.id} className="flex gap-2 group">
                           <Link 
                           href={`/read/${chap.id}`} 
-                          className={`flex-1 flex justify-between items-center p-5 backdrop-blur-sm border rounded-2xl transition-all duration-300 ${isRead ? 'bg-[#141814]/20 border-white/5 opacity-60' : 'bg-[#141814]/40 border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80'}`}
+                          className={`relative flex-1 flex justify-between items-center p-5 backdrop-blur-sm border rounded-2xl transition-all duration-300 ${isRead ? 'bg-[#141814]/20 border-white/5 opacity-60' : 'bg-[#141814]/40 border-[#2a332a] group-hover:border-[#4caf50] group-hover:bg-[#141814]/80'}`}
                           >
+                           {/* 🏷️ BADGE ĐÃ XEM (Gọn gàng ở góc) 🍀 */}
+                           {isRead && (
+                                <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1 px-2 py-0.5 bg-[#4caf50] border border-white/10 rounded-lg shadow-lg z-10 animate-fade-in shadow-[#4caf50]/20">
+                                    <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="5" d="M5 13l4 4L19 7"></path></svg>
+                                    <span className="text-[6px] font-black text-white uppercase tracking-tighter">ĐÃ XEM</span>
+                                </div>
+                            )}
+
                            <div className="flex items-center gap-4 truncate">
                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${isRead ? 'bg-black/40 text-gray-700' : 'bg-[#4caf50]/10 text-[#4caf50]'}`}>
                                     {chap.chapter_number}
@@ -417,12 +425,6 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                            </div>
 
                           <div className="flex items-center gap-3 shrink-0">
-                                {isRead && (
-                                    <div className="flex items-center gap-1 px-2 py-0.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-lg">
-                                        <svg className="w-2.5 h-2.5 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7"></path></svg>
-                                        <span className="text-[7px] font-black text-[#4caf50] uppercase tracking-tighter">ĐÃ XEM</span>
-                                    </div>
-                                )}
                                 <span className="text-[9px] font-black text-gray-700 bg-black/20 px-2 py-1 rounded-lg border border-white/5">
                                     {new Date(chap.created_at).toLocaleDateString('vi-VN')}
                                 </span>
