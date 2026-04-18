@@ -168,6 +168,7 @@ export default function Comments({ mangaId, chapterId }) {
     window.addEventListener('storage', checkSession);
     
     fetchComments();
+    setIsMounted(true);
     
     // 🕵️‍♂️ ĐỒNG BỘ COOKIE (Dành cho Server Actions) 🍪
     const syncCookie = async () => {
