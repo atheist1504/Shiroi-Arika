@@ -147,6 +147,7 @@ export default function Comments({ mangaId, chapterId }) {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [xpToast, setXpToast] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     const checkSession = () => {
@@ -208,7 +209,10 @@ export default function Comments({ mangaId, chapterId }) {
   const fetchComments = async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const { data: cData } = await supabase.from('comments').select('*, chapters(chapter_number)').order('created_at', { ascending: false });
+      let query = supabase.from('comments').select('*, chapters(chapter_number)');
+      if (chapterId) query = query.eq('chapter_id', chapterId);
+      else if (mangaId) query = query.eq('manga_id', mangaId);
+      const { data: cData } = await query.order('created_at', { ascending: false });
       const { data: uData } = await supabase.from('shiroi_users').select('*');
       const uMap = {};
       const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
@@ -221,7 +225,7 @@ export default function Comments({ mangaId, chapterId }) {
       });
 
       console.log("🔍 [Fetch] Đang lọc bình luận cho:", { mangaId, chapterId, totalRaw: cData?.length });
-      const filtered = (chapterId ? (cData?.filter(c => String(c.chapter_id) === String(chapterId)) || []) : (mangaId ? (cData?.filter(c => String(c.manga_id) === String(mangaId)) || []) : (cData || [])));
+      const filtered = cData || [];
       
       console.log("🔍 [Fetch] Sau khi lọc:", filtered.length);
       
@@ -320,7 +324,7 @@ export default function Comments({ mangaId, chapterId }) {
       )}
 
       <div className="space-y-12">
-        {loading ? (
+        {!isMounted || loading ? (
              <div className="text-center py-10 opacity-30 animate-pulse text-[10px] font-black uppercase tracking-widest text-[#4caf50]">Đang kết nối...</div>
         ) : comments.length === 0 ? (
              <div className="text-center py-20 bg-white/[0.01] rounded-[40px] border border-dashed border-white/5 text-gray-800 font-black text-[9px] uppercase tracking-[0.4em]">KHÔNG CÓ TIẾNG NÓI NÀO...</div>
@@ -341,7 +345,7 @@ export default function Comments({ mangaId, chapterId }) {
               />
               <div className="space-y-6">
                 {comments
-                  .filter(r => r.parent_id && String(r.parent_id).trim() === String(comment.id).trim())
+                  .filter(r => r.parent_id && String(r.parent_id) === String(comment.id))
                   .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
                   .map(reply => (
                   <CommentItem 

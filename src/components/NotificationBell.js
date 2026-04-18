@@ -13,8 +13,10 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
+        setIsMounted(true);
         const storedUser = localStorage.getItem('shiroi_user');
         const user = storedUser ? JSON.parse(storedUser) : null;
         
@@ -90,6 +92,8 @@ export default function NotificationBell() {
             default: return '🔔';
         }
     };
+
+    if (!isMounted) return <div className="w-10 h-10"></div>;
 
     return (
         <div className="relative" ref={dropdownRef}>

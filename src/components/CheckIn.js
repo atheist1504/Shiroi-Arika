@@ -13,11 +13,13 @@ export default function CheckIn() {
   const [modalMessage, setModalMessage] = useState("");
   const [message, setMessage] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     checkUserAndStatus();
     // 🚀 ĐỒNG BỘ THỰC TẾ: Tránh lỗi Refresh vẫn hiện nút điểm danh
     fetchStatusFromDb();
+    setIsMounted(true);
 
     window.addEventListener("storage", checkUserAndStatus);
     return () => window.removeEventListener("storage", checkUserAndStatus);

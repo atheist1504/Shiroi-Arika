@@ -13,11 +13,13 @@ export default function LuckyDraw() {
   const [showModal, setShowModal] = useState(false);
   const [modalResult, setModalResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     checkStatus();
     // 🚀 ĐỒNG BỘ THỰC TẾ: Kiểm tra thêm từ DB để tránh dữ liệu LocalStorage bị cũ (Stale)
     fetchStatusFromDb();
+    setIsMounted(true);
 
     window.addEventListener("storage", checkStatus);
     return () => window.removeEventListener("storage", checkStatus);

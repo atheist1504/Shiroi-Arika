@@ -19,6 +19,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMissionsOpen, setIsMissionsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchRef = useRef(null);
@@ -76,6 +77,9 @@ export default function Navbar() {
     checkUser();
     window.addEventListener('storage', checkUser);
     
+    // 🛡️ ĐÁNH DẤU ĐÃ MOUNT AN TOÀN TRÊN CLIENT 🍀
+    setIsMounted(true);
+
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearch(false);
@@ -150,13 +154,8 @@ export default function Navbar() {
                 <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Kho Truyện</Link>
                 <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
                 <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
-                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch sử</Link>
-              </div>
-            </div>
-
-            {/* USER AREA TẦNG 1 - POINT ĐIỂM DANH DƯỚI AVATAR 🛡️ */}
-            <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
-              {user ? (
+                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch s�            <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
+              {isMounted && (user ? (
                  <div className="flex items-center gap-4 animate-fade-in py-2">
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
@@ -170,7 +169,7 @@ export default function Navbar() {
                       <div className="hidden sm:flex flex-col items-end gap-1">
                         <div className="flex items-center gap-2">
                             <span className="bg-[#4caf50]/20 text-[#4caf50] text-[8px] font-black px-1.5 py-0.5 rounded-lg border border-[#4caf50]/20 italic">
-                               LVL {calculateLevel(user.xp)}
+                                LVL {calculateLevel(user.xp)}
                             </span>
                             <span className="text-[11px] text-white font-bold uppercase tracking-widest truncate max-w-[100px]">{user.display_name || user.username}</span>
                          </div>
@@ -202,39 +201,49 @@ export default function Navbar() {
                 >
                   Đăng nhập
                 </Link>
+              ))}
+            </div>
+-all text-[10px] uppercase tracking-wider"
+                >
+                  Đăng nhập
+                </Link>
               )}
             </div>
           </div>
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
           <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-6">
-            <div className="scale-100 flex items-center gap-6">
-              <CheckIn />
-              <div className="w-[1px] h-3 bg-white/10"></div>
-            </div>
-            
-            {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-               <>
-                <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2">
-                    <span className="text-sm opacity-80">🚩</span>
-                    Báo cáo
-                </Link>
-                <div className="w-[1px] h-3 bg-white/10"></div>
-               </>
+            {isMounted && (
+              <>
+                <div className="scale-100 flex items-center gap-6">
+                  <CheckIn />
+                  <div className="w-[1px] h-3 bg-white/10"></div>
+                </div>
+                
+                {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                  <>
+                    <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2">
+                        <span className="text-sm opacity-80">🚩</span>
+                        Báo cáo
+                    </Link>
+                    <div className="w-[1px] h-3 bg-white/10"></div>
+                  </>
+                )}
+
+                <div className="scale-100 flex items-center gap-6">
+                  <LuckyDraw />
+                  <div className="w-[1px] h-3 bg-white/10"></div>
+                </div>
+
+                <button 
+                  onClick={() => setIsMissionsOpen(true)}
+                  className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
+                >
+                  <span className="text-sm opacity-80">🎯</span>
+                  Nhiệm vụ
+                </button>
+              </>
             )}
-
-            <div className="scale-100 flex items-center gap-6">
-              <LuckyDraw />
-              <div className="w-[1px] h-3 bg-white/10"></div>
-            </div>
-
-            <button 
-              onClick={() => setIsMissionsOpen(true)}
-              className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
-            >
-              <span className="text-sm opacity-80">🎯</span>
-              Nhiệm vụ
-            </button>
           </div>
 
         </div>
@@ -347,7 +356,8 @@ export default function Navbar() {
               </div>
 
               <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0 flex flex-col gap-4">
-                {user ? (
+                {isMounted ? (
+                  user ? (
                    <button 
                      onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
                      className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg"
@@ -359,6 +369,9 @@ export default function Navbar() {
                   <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full flex items-center justify-center p-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-bold">
                     Đăng nhập ngay
                   </Link>
+                  )
+                ) : (
+                  <div className="w-full h-14 bg-white/5 animate-pulse rounded-2xl"></div>
                 )}
                 <div className="text-center">
                   <span className="text-[8px] font-black text-gray-700 uppercase tracking-[0.3em]">v1.2 - Shiroi Mobile Fix</span>
