@@ -342,16 +342,38 @@ export async function uploadImageAction(formData) {
 
 /**
  * 🔔 SERVER ACTION: Gửi thông báo chương mới
+ * Xử lý cả Push Notification và In-app cho người theo dõi 🍀
  */
 export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, coverImage) {
   try {
-    // 🔔 Gửi thông báo qua hệ thống (Silent check)
+    const client = getDbClient();
     const title = `${mangaName} vừa có chương ${chapterNumber}! 📚`;
+    
+    // 1. Gửi Push Notification (Topic-based) 🌩️
     await sendMangaNotification(title, mangaName, mangaId, coverImage);
+
+    // 2. Gửi In-app Notification cho toàn bộ người theo dõi 🔔
+    const { data: followers } = await client
+      .from('shiroi_follows')
+      .select('user_id')
+      .eq('manga_id', mangaId);
+    
+    if (followers && followers.length > 0) {
+        const body = `Siêu phẩm "${mangaName}" vừa cập nhật chương ${chapterNumber}. Đọc ngay nào! 🚀`;
+        const notifType = 'chapter_update';
+        const notifData = { mangaId, mangaName, chapterIndex: chapterNumber };
+
+        // Tạo thông báo trong ứng dụng cho từng follower (Xử lý hàng loạt) ⚡
+        const notificationPromises = followers.map(f => 
+            createInAppNotification(f.user_id, title, body, notifType, notifData)
+        );
+        await Promise.allSettled(notificationPromises);
+    }
+
     return { success: true };
   } catch (error) {
-    console.warn('Lỗi gửi thông báo (không chặn luồng):', error);
-    return { success: true }; // Trả về true để không làm hỏng trải nghiệm người dùng
+    console.warn('⚠️ Lỗi gửi thông báo chương mới:', error);
+    return { success: true }; 
   }
 }
 
@@ -997,6 +1019,74 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     return { success: false, error: error.message };
   }
 }
+/**
+ * 📝 SERVER ACTION: Gửi bình luận và xử lý thông báo phản hồi (Real-time Readiness) 💬🍀
+ */
+export async function addCommentAction(commentData) {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user || !user.id) throw new Error("Vui lòng đăng nhập để bình luận! 🛡️");
+
+    const client = getDbClient();
+    const userId = user.id;
+
+    // 1. Ghi bình luận vào Database
+    const { data: newComment, error: commentError } = await client
+      .from('comments')
+      .insert([{
+        ...commentData,
+        user_id: userId,
+        user_name: user.display_name || user.username
+      }])
+      .select()
+      .single();
+
+    if (commentError) throw commentError;
+
+    // 2. XỬ LÝ THÔNG BÁO PHẢN HỒI (REPLY NOTIFICATION) 🔔
+    if (commentData.parent_id) {
+        try {
+            // Lấy thông tin người sở hữu bình luận gốc
+            const { data: parentComment } = await client
+                .from('comments')
+                .select('user_id, user_name, content')
+                .eq('id', commentData.parent_id)
+                .single();
+            
+            // Chỉ gửi nếu người trả lời không phải là chính mình 🕵️‍♂️
+            if (parentComment && parentComment.user_id !== userId) {
+                const title = `${user.display_name || user.username} đã phản hồi bình luận của bạn! 💬`;
+                const body = `"${newComment.content.substring(0, 50)}${newComment.content.length > 50 ? '...' : ''}"`;
+                const notifType = 'reply';
+                const notifData = { 
+                    commentId: newComment.id, 
+                    parentId: commentData.parent_id,
+                    mangaId: commentData.manga_id,
+                    chapterId: commentData.chapter_id
+                };
+
+                await createInAppNotification(parentComment.user_id, title, body, notifType, notifData);
+            }
+        } catch (notifErr) {
+            console.warn("⚠️ Lỗi gửi thông báo phản hồi bình luận:", notifErr);
+        }
+    }
+
+    // 3. CỘNG XP BÌNH LUẬN (Securely handled on Server) 💎
+    await recordXpLogAction(userId, XP_REWARDS.FIRST_COMMENT, 'first_comment').then(res => {
+        if (!res.success) {
+            return recordXpLogAction(userId, XP_REWARDS.SUBSEQUENT_COMMENT, 'comment');
+        }
+    });
+
+    revalidatePath('/');
+    return { success: true, comment: newComment };
+  } catch (error) {
+    console.error("❌ Lỗi addCommentAction:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
 /**
  * 🔔 SERVER ACTION: Lấy danh sách thông báo của người dùng
  */

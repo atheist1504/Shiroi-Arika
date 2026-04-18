@@ -1,12 +1,6 @@
-'use client';
+import { addCommentAction } from '@/lib/actions';
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { calculateLevel, calculateTitle, XP_REWARDS, recordXpLog } from '@/lib/xp';
-import { fixR2Url } from '@/lib/cloudinary';
-import Link from 'next/link';
-
-// 🛠️ COMPONENT CON: FORM TRẢ LỜI (Đưa ra ngoài để tránh nháy 🚀)
+// 🛠️ COMPONENT CON: FORM TRẢ LỜI 🚀
 const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSuccess, fetchComments }) => {
     const [replyContent, setReplyContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,21 +9,25 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
       if (!replyContent.trim()) return;
       try {
         setIsSubmitting(true);
-        const { error } = await supabase.from('comments').insert([{
+        
+        // 💬 TỰ ĐỘNG GẮN THẺ @ NẾU TRẢ LỜI MỘT BÌNH LUẬN CON 🍀
+        const finalContent = parentComment.parent_id 
+            ? `@${parentComment.user_name} ${replyContent.trim()}`
+            : replyContent.trim();
+
+        const res = await addCommentAction({
             manga_id: mangaId || null,
             chapter_id: chapterId || null,
-            user_id: user.id,
-            user_name: user.display_name || user.username,
-            content: replyContent.trim(),
-            parent_id: parentComment.id
-        }]);
+            content: finalContent,
+            parent_id: parentComment.parent_id || parentComment.id
+        });
 
-        if (!error) {
+        if (res.success) {
           setReplyContent('');
           onSuccess();
-          // Gọi callback cộng XP từ cha nếu cần, hoặc tự xử lý ở đây 🍀
-          window.dispatchEvent(new CustomEvent('shiroi_xp_reward', { detail: { type: 'comment' } }));
           fetchComments(true); // Silent refresh
+        } else {
+          alert(res.error);
         }
       } finally {
         setIsSubmitting(false);
@@ -38,7 +36,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
 
     return (
       <div className="mt-4 animate-fade-in-up space-y-2">
-         <textarea autoFocus placeholder={`Đang trả lời @${parentComment.user_name}...`} value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="w-full bg-black/60 border border-[#4caf50]/20 rounded-xl py-3 px-4 text-xs focus:border-[#4caf50] outline-none transition-all text-gray-300 min-h-[70px] resize-none shadow-inner"></textarea>
+         <textarea autoFocus placeholder={parentComment.parent_id ? `Đang trả lời @${parentComment.user_name}...` : "Viết phản hồi của bạn..."} value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="w-full bg-black/60 border border-[#4caf50]/20 rounded-xl py-3 px-4 text-xs focus:border-[#4caf50] outline-none transition-all text-gray-300 min-h-[70px] resize-none shadow-inner"></textarea>
          <div className="flex justify-end gap-3 mt-1">
             <button onClick={onCancel} className="text-[8px] font-black text-gray-600 hover:text-white uppercase tracking-widest">Hủy</button>
             <button onClick={handleReplySubmit} disabled={isSubmitting} className="px-5 py-2 bg-[#4caf50] text-[#0a0c0a] font-black rounded-lg text-[9px] shadow-lg shadow-[#4caf50]/20 uppercase tracking-widest">{isSubmitting ? '...' : 'GỬI ✨'}</button>
@@ -47,7 +45,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
     );
 };
 
-// 🛠️ COMPONENT CON: ITEM BÌNH LUẬN (Đưa ra ngoài để tránh nháy 🚀)
+// 🛠️ COMPONENT CON: ITEM BÌNH LUẬN 🚀
 const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, handleLike, handleDelete, localLikes, mangaId, chapterId, fetchComments }) => {
     const isReplyingThis = replyTo?.id === comment.id;
     const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
@@ -103,12 +101,11 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
                    <svg className="w-3 h-3" fill={localLikes[comment.id] ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                    {comment.likes_count || 0}
                 </button>
-                {!isReply && (
-                   <button onClick={() => setReplyTo(isReplyingThis ? null : comment)} className={`flex items-center gap-1 text-[9px] font-black transition-colors ${isReplyingThis ? 'text-[#4caf50]' : 'text-gray-600 hover:text-[#4caf50]'}`}>
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                      TRẢ LỜI
-                   </button>
-                )}
+                {/* 💬 MỞ NÚT TRẢ LỜI CHO TẤT CẢ TẦNG 🚀 */}
+                <button onClick={() => setReplyTo(isReplyingThis ? null : comment)} className={`flex items-center gap-1 text-[9px] font-black transition-colors ${isReplyingThis ? 'text-[#4caf50]' : 'text-gray-600 hover:text-[#4caf50]'}`}>
+                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                   TRẢ LỜI
+                </button>
              </div>
              {isReplyingThis && (
                 <ReplyForm 
@@ -155,90 +152,26 @@ export default function Comments({ mangaId, chapterId }) {
     checkSession();
     window.addEventListener('storage', checkSession);
     
-    // 👂 Lắng nghe sự kiện cộng XP từ component con hoặc chính mình 🍀
-    const handleXPReward = () => giveCommentXP();
-    window.addEventListener('shiroi_xp_reward', handleXPReward);
-
     fetchComments();
+
+    // ⚡ KÍCH HOẠT REAL-TIME CHO DANH SÁCH BÌNH LUẬN 🚀
+    const channel = supabase
+        .channel('comments-realtime')
+        .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'comments',
+            filter: mangaId ? `manga_id=eq.${mangaId}` : (chapterId ? `chapter_id=eq.${chapterId}` : undefined)
+        }, () => {
+            fetchComments(true); // Tải lại danh sách khi có thay đổi (Silent)
+        })
+        .subscribe();
+
     return () => {
         window.removeEventListener('storage', checkSession);
-        window.removeEventListener('shiroi_xp_reward', handleXPReward);
+        supabase.removeChannel(channel);
     };
-  }, [mangaId, chapterId]);
-
-  const giveCommentXP = async () => {
-    if (!user) return;
-    try {
-        // 🕒 Thiết lập mốc thời gian "Hôm nay" (00:00:00) 🍀
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayISO = today.toISOString();
-
-        // 🔍 Lấy tất cả bình luận của người dùng trong ngày hôm nay để tính toán XP 🕵️‍♂️
-        const { data: todayComments, error: fetchErr } = await supabase
-            .from('comments')
-            .select('created_at')
-            .eq('user_id', user.id)
-            .gte('created_at', todayISO)
-            .order('created_at', { ascending: true });
-
-        if (fetchErr || !todayComments || todayComments.length === 0) return;
-
-        // 🧠 THUẬT TOÁN MÔ PHỎNG PHẦN THƯỞNG (Simulated Rewards) 🏗️
-        let totalXPEarnedToday = 0;
-        let lastRewardedTime = 0;
-        let rewardedCount = 0;
-        let currentCommentShouldReward = false;
-        let rewardAmount = 0;
-
-        todayComments.forEach((c, index) => {
-            const cTime = new Date(c.created_at).getTime();
-            
-            if (index === 0) {
-                // Bình luận đầu tiên: Luôn nhận 10 XP 🥇
-                totalXPEarnedToday += XP_REWARDS.FIRST_COMMENT;
-                lastRewardedTime = cTime;
-                rewardedCount++;
-                if (index === todayComments.length - 1) {
-                    currentCommentShouldReward = true;
-                    rewardAmount = XP_REWARDS.FIRST_COMMENT;
-                }
-            } else {
-                // Các bình luận tiếp theo: Check Cooldown 60s & Giới hạn 100 XP 🛡️
-                if (cTime - lastRewardedTime >= XP_REWARDS.COMMENT_COOLDOWN && totalXPEarnedToday < XP_REWARDS.MAX_DAILY_COMMENT_XP) {
-                    const amount = XP_REWARDS.SUBSEQUENT_COMMENT;
-                    totalXPEarnedToday += amount;
-                    lastRewardedTime = cTime;
-                    rewardedCount++;
-                    if (index === todayComments.length - 1) {
-                        currentCommentShouldReward = true;
-                        rewardAmount = amount;
-                    }
-                }
-            }
-        });
-
-        // 🚀 THỰC HIỆN GHI LOG XP (Database Trigger sẽ tự động cộng điểm cho User) 🛡️
-        if (currentCommentShouldReward && rewardAmount > 0) {
-            // 📝 GHI NHẬN NHẬT KÝ XP CHO BXH THÁNG 🏆
-            // Chúng ta không cộng XP trực tiếp ở đây nữa để tránh lỗi "Nhân đôi XP" do Trigger 🍀
-            await recordXpLog(supabase, user.id, rewardAmount, 'comment', mangaId || chapterId || 'General');
-
-            // Cập nhật lại User state từ Database sau khi Trigger đã chạy xong ⚡
-            setTimeout(async () => {
-                const { data: updated } = await supabase.from('shiroi_users').select('*').eq('id', user.id).single();
-                if (updated) {
-                    localStorage.setItem('shiroi_user', JSON.stringify(updated));
-                    setUser(updated);
-                    // Hiển thị thông báo phần thưởng tương ứng 🔔
-                    setXpToast(rewardAmount === XP_REWARDS.FIRST_COMMENT ? "✨ KHỞI ĐẦU NGÀY MỚI +10 XP! 🥇" : `✨ THẢO LUẬN TÍCH CỰC +${rewardAmount} XP! 🚀`);
-                    setTimeout(() => setXpToast(false), 4000);
-                    window.dispatchEvent(new Event('storage'));
-                }
-            }, 500); // Đợi 500ms để trigger DB hoàn tất xử lý
-        }
-    } catch (err) { console.error("Lỗi xác thực XP bình luận:", err); }
-  };
+}, [mangaId, chapterId]);
 
   const fetchComments = async (silent = false) => {
     try {
@@ -300,18 +233,20 @@ export default function Comments({ mangaId, chapterId }) {
     if (!user || !content.trim()) return;
     try {
       setSubmitting(true);
-      const { error } = await supabase.from('comments').insert([{
+      const res = await addCommentAction({
           manga_id: mangaId || null,
           chapter_id: chapterId || null,
-          user_id: user.id,
-          user_name: user.display_name || user.username,
           content: content.trim(),
           parent_id: null
-      }]);
-      if (!error) {
+      });
+
+      if (res.success) {
         setContent('');
-        giveCommentXP();
         fetchComments(true); // Silent refresh 🚀
+        setXpToast("✨ GỬI LỜI THẢO LUẬN THÀNH CÔNG! 🚀");
+        setTimeout(() => setXpToast(false), 3000);
+      } else {
+        alert(res.error);
       }
     } finally { setSubmitting(false); }
   };

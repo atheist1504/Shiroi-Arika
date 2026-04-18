@@ -14,10 +14,37 @@ export default function NotificationBell() {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        fetchNotifications();
-        // Cập nhật lại mỗi 5 phút (Optional)
-        const interval = setInterval(fetchNotifications, 5 * 60 * 1000);
+        const storedUser = localStorage.getItem('shiroi_user');
+        const user = storedUser ? JSON.parse(storedUser) : null;
         
+        fetchNotifications();
+
+        let channel;
+        if (user && user.id) {
+            // ⚡ KÍCH HOẠT THÔNG BÁO TỨC THỜI (REAL-TIME) 🚀
+            const { supabase } = require('@/lib/supabase');
+            channel = supabase
+                .channel(`notif-${user.id}`)
+                .on('postgres_changes', { 
+                    event: 'INSERT', 
+                    schema: 'public', 
+                    table: 'shiroi_notifications',
+                    filter: `user_id=eq.${user.id}`
+                }, (payload) => {
+                    console.log("🔔 Nhận thông báo mới:", payload.new);
+                    setNotifications(prev => [payload.new, ...prev]);
+                    setUnreadCount(prev => prev + 1);
+                    
+                    // ✨ Hiệu ứng âm thanh nhẹ (Tùy chọn)
+                    try {
+                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                        audio.volume = 0.2;
+                        audio.play();
+                    } catch (e) {}
+                })
+                .subscribe();
+        }
+
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setIsOpen(false);
@@ -26,7 +53,7 @@ export default function NotificationBell() {
         document.addEventListener('mousedown', handleClickOutside);
         
         return () => {
-            clearInterval(interval);
+            if (channel) channel.unsubscribe();
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
