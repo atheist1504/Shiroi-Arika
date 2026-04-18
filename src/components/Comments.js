@@ -163,6 +163,24 @@ export default function Comments({ mangaId, chapterId }) {
     window.addEventListener('storage', checkSession);
     
     fetchComments();
+    
+    // 🕵️‍♂️ ĐỒNG BỘ COOKIE (Dành cho Server Actions) 🍪
+    const syncCookie = async () => {
+        const storedUser = localStorage.getItem('shiroi_user');
+        if (storedUser) {
+            try {
+                const u = JSON.parse(storedUser);
+                // Nếu chưa có Cookie, hãy gọi loginAction (silent) để tạo lại Cookie
+                // Điều này giúp Server Action getAuthenticatedUser() hoạt động chính xác
+                const res = await fetch('/api/auth-sync', { 
+                    method: 'POST', 
+                    body: JSON.stringify(u),
+                    headers: { 'Content-Type': 'application/json' }
+                }).catch(() => null);
+            } catch (e) {}
+        }
+    };
+    syncCookie();
 
     // ⚡ KÍCH HOẠT REAL-TIME CHO DANH SÁCH BÌNH LUẬN 🚀
     const channel = supabase

@@ -1031,17 +1031,18 @@ export async function addCommentAction(commentData) {
     const userId = user.id;
 
     // 1. Ghi bình luận vào Database (Sử dụng client tốt nhất có sẵn)
-    const { data: newComment, error: commentError } = await client
+    // Nếu dùng Anon Client (thiếu Admin key), .select() có thể về null do RLS => Vẫn cho phép thành công.
+    const { data: insertData, error: commentError } = await client
       .from('comments')
       .insert([{
         ...commentData,
         user_id: userId,
         user_name: user.display_name || user.username
       }])
-      .select()
-      .single();
+      .select();
 
     if (commentError) throw commentError;
+    const newComment = insertData && insertData.length > 0 ? insertData[0] : null;
 
     // 2. XỬ LÝ THÔNG BÁO PHẢN HỒI (REPLY NOTIFICATION) 🔔
     if (commentData.parent_id) {
@@ -1056,10 +1057,10 @@ export async function addCommentAction(commentData) {
             // Chỉ gửi nếu người trả lời không phải là chính mình 🕵️‍♂️
             if (parentComment && parentComment.user_id !== userId) {
                 const title = `${user.display_name || user.username} đã phản hồi bình luận của bạn! 💬`;
-                const body = `"${newComment.content.substring(0, 50)}${newComment.content.length > 50 ? '...' : ''}"`;
+                const body = `"${commentData.content.substring(0, 50)}${commentData.content.length > 50 ? '...' : ''}"`;
                 const notifType = 'reply';
                 const notifData = { 
-                    commentId: newComment.id, 
+                    commentId: newComment?.id || null, 
                     parentId: commentData.parent_id,
                     mangaId: commentData.manga_id,
                     chapterId: commentData.chapter_id
