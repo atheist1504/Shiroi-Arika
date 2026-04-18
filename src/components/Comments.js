@@ -314,6 +314,8 @@ export default function Comments({ mangaId, chapterId }) {
                     comment={reply} 
                     isReply={true} 
                     user={user} 
+                    replyTo={replyTo}
+                    setReplyTo={setReplyTo}
                     handleLike={handleLike} 
                     handleDelete={handleDelete} 
                     localLikes={localLikes} 
