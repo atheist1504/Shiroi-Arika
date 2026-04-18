@@ -22,7 +22,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             ? `@${parentComment.user_name} ${replyContent.trim()}`
             : replyContent.trim();
 
-        console.log("💬 Request phản hồi:", { mangaId, chapterId, parentId: parentComment.id });
+        console.log("💬 Gửi PHẢN HỒI (Server Action):", { manga_id: mangaId, parent_id: parentComment.parent_id || parentComment.id, content: finalContent });
         const res = await addCommentAction({
             manga_id: mangaId || null,
             chapter_id: chapterId || null,
@@ -30,14 +30,18 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             parent_id: parentComment.parent_id || parentComment.id
         });
 
-        console.log("💬 Kết quả phản hồi từ Server:", res);
+        console.log("💬 Kết quả PHẢN HỒI từ Server:", res);
         if (res.success) {
           setReplyContent('');
-          onSuccess();
-          setTimeout(() => fetchComments(true), 1000); // Tăng lên 1s để chắc chắn DB đã ghi xong ⚡
+          onSuccess(); // Đóng form
+          // Đợi 1.5s để đồng bộ hoàn tất trước khi fetch mới ⚡
+          setTimeout(() => {
+            console.log("🔄 Bắt đầu fetch lại bình luận sau khi reply thành công...");
+            fetchComments(true);
+          }, 1500); 
         } else {
           console.error("❌ Lỗi phản hồi (Server):", res.error);
-          alert(`KHÔNG THỂ GỬI PHẢN HỒI: ${res.error}\n(Lưu ý: Bạn có thể cần đăng xuất và đăng nhập lại nếu phiên bị hết hạn)`);
+          alert(`LỖI: ${res.error}\n(Bạn có thể cần đăng xuất và đăng nhập lại để làm mới phiên)`);
         }
       } finally {
         setIsSubmitting(false);
@@ -216,7 +220,11 @@ export default function Comments({ mangaId, chapterId }) {
          if (!uMap[nameKey]) uMap[nameKey] = info;
       });
 
-      const filtered = (chapterId ? (cData?.filter(c => c.chapter_id === chapterId) || []) : (mangaId ? (cData?.filter(c => c.manga_id === mangaId) || []) : (cData || [])));
+      console.log("🔍 [Fetch] Đang lọc bình luận cho:", { mangaId, chapterId, totalRaw: cData?.length });
+      const filtered = (chapterId ? (cData?.filter(c => String(c.chapter_id) === String(chapterId)) || []) : (mangaId ? (cData?.filter(c => String(c.manga_id) === String(mangaId)) || []) : (cData || [])));
+      
+      console.log("🔍 [Fetch] Sau khi lọc:", filtered.length);
+      
       const enriched = filtered.map(c => {
           const key = cK(c.user_name);
           const info = (c.user_id && uMap[c.user_id]) ? uMap[c.user_id] : uMap[key];
