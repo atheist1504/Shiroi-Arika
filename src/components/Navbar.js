@@ -44,10 +44,7 @@ export default function Navbar() {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
 
-        // 🚑 TỰ KHÔI PHỤC (SELF-HEALING) 🛡️ 
-        // Nếu phát hiện dữ liệu thiếu XP hoặc không có tên hiển thị, hãy âm thầm tải lại từ DB
         if (parsed.id && (parsed.xp === undefined || parsed.xp === null || !parsed.display_name)) {
-            console.log("🚑 [Navbar] Phát hiện dữ liệu thô/thiếu (LV 1 Bug), đang tự động khôi phục...");
             refreshUserData(parsed.id);
         }
       } else {
@@ -66,18 +63,17 @@ export default function Navbar() {
         if (!error && data) {
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           setUser(data);
-          // Gửi event để các component khác (CheckIn, LuckyDraw) cập nhật theo 🍀
+          // Thông báo cho các component khác
           window.dispatchEvent(new Event('storage'));
         }
       } catch (err) {
-        console.warn("Lỗi tự khôi phục dữ liệu:", err);
+        console.warn("Lỗi từ khôi phục dữ liệu:", err);
       }
     };
 
     checkUser();
     window.addEventListener('storage', checkUser);
     
-    // 🛡️ ĐÁNH DẤU ĐÃ MOUNT AN TOÀN TRÊN CLIENT 🍀
     setIsMounted(true);
 
     const handleClickOutside = (event) => {
@@ -129,9 +125,7 @@ export default function Navbar() {
       <nav className="glass fixed-nav z-[1000] border-b border-white/5 py-3 lg:py-0">
         <div className="container mx-auto px-4 flex flex-col w-full relative">
           
-          {/* TẦNG 1: LOGO - NAV LINKS - USER AREA 🚀 */}
           <div className="flex h-[70px] items-center justify-between w-full">
-            {/* LEFT: Logo & Hamburger */}
             <div className="flex items-center gap-6">
               <button 
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -149,18 +143,19 @@ export default function Navbar() {
                 <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
               </Link>
 
-              {/* NAV LINKS (TẦNG 1) - CHỐNG XUỐNG DÒNG & BỎ ICON 🍀 */}
               <div className="hidden lg:flex items-center gap-6 ml-8">
                 <Link href="/manga" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Kho Truyện</Link>
                 <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
                 <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
-                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch s�            <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
+                <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch sử</Link>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
               {!isMounted ? (
                 <div className="w-24 h-8 bg-white/5 animate-pulse rounded-xl"></div>
               ) : user ? (
                  <div className="flex items-center gap-4 animate-fade-in py-2">
-                    
-                    {/* ADMIN ĐĂNG TRUYỆN */}
                     {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
                        <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
                           ĐĂNG TRUYỆN
@@ -201,40 +196,12 @@ export default function Navbar() {
                   href="/login" 
                   className="px-6 py-2.5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl hover:scale-105 transition-all text-[10px] uppercase tracking-wider"
                 >
-                  Ä Äƒng nháº­p
-                </Link>
-              )}
-            </div>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                          <NotificationBell />
-                          <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
-                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                          </Link>
-                      </div>
-
-                      <button 
-                        onClick={handleLogout}
-                        className="p-2 text-gray-700 hover:text-red-500 transition-colors"
-                        title="Đăng xuất"
-                      >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                      </button>
-                    </div>
-                 </div>
-              ) : (
-                <Link 
-                  href="/login" 
-                  className="px-6 py-2.5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl hover:scale-105 transition-all text-[10px] uppercase tracking-wider"
-                >
                   Đăng nhập
                 </Link>
               )}
             </div>
           </div>
 
-          {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
           <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-6">
             {isMounted && (
               <>
@@ -272,7 +239,6 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* MOBILE MENU OVERLAY - MOVED OUTSIDE NAV FOR SOLID BACKGROUND */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <div className="fixed inset-0 z-[2000]">
@@ -289,7 +255,7 @@ export default function Navbar() {
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className="absolute top-0 left-0 bottom-0 w-[85%] max-w-[300px] bg-[#0a0c0a] border-r border-[#4caf50]/30 p-6 flex flex-col shadow-[20px_0_100px_rgba(0,0,0,1)] z-[2001]"
-              style={{ backgroundColor: '#0a0c0a' }} // Ép màu nền đen đặc 🛡️
+              style={{ backgroundColor: '#0a0c0a' }}
             >
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
@@ -301,7 +267,6 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* Mobile Search */}
               <form onSubmit={handleSearchSubmit} className="relative mb-6">
                 <input 
                   type="text" 
