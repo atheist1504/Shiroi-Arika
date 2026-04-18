@@ -1031,11 +1031,15 @@ export async function addCommentAction(commentData) {
     const userId = user.id;
 
     // 1. Ghi bình luận vào Database (Sử dụng client tốt nhất có sẵn)
-    // Nếu dùng Anon Client (thiếu Admin key), .select() có thể về null do RLS => Vẫn cho phép thành công.
+    console.log("📝 [Server] Thực hiện INSERT bình luận:", { mangaId: commentData.manga_id, parentId: commentData.parent_id });
+    
     const { data: insertData, error: commentError } = await client
       .from('comments')
       .insert([{
-        ...commentData,
+        manga_id: commentData.manga_id || null,
+        chapter_id: commentData.chapter_id || null,
+        parent_id: commentData.parent_id || null,
+        content: commentData.content,
         user_id: userId,
         user_name: user.display_name || user.username
       }])

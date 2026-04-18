@@ -27,7 +27,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             manga_id: mangaId || null,
             chapter_id: chapterId || null,
             content: finalContent,
-            parent_id: parentComment.parent_id || parentComment.id
+            parent_id: (parentComment.parent_id || parentComment.id) || null
         });
 
         console.log("💬 Kết quả PHẢN HỒI từ Server:", res);
@@ -340,7 +340,10 @@ export default function Comments({ mangaId, chapterId }) {
                 fetchComments={fetchComments}
               />
               <div className="space-y-6">
-                {comments.filter(r => r.parent_id === comment.id).sort((a,b) => new Date(a.created_at) - new Date(b.created_at)).map(reply => (
+                {comments
+                  .filter(r => r.parent_id && String(r.parent_id).trim() === String(comment.id).trim())
+                  .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
+                  .map(reply => (
                   <CommentItem 
                     key={reply.id} 
                     comment={reply} 
