@@ -1,3 +1,10 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { calculateLevel } from '@/lib/xp';
+import { fixR2Url } from '@/lib/cloudinary';
+import Link from 'next/link';
 import { addCommentAction } from '@/lib/actions';
 
 // 🛠️ COMPONENT CON: FORM TRẢ LỜI 🚀

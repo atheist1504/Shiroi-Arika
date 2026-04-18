@@ -6,6 +6,7 @@ import { getNotificationsAction, markNotificationAsReadAction, markAllNotificati
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { supabase } from '@/lib/supabase';
 
 export default function NotificationBell() {
     const [notifications, setNotifications] = useState([]);
@@ -22,7 +23,6 @@ export default function NotificationBell() {
         let channel;
         if (user && user.id) {
             // ⚡ KÍCH HOẠT THÔNG BÁO TỨC THỜI (REAL-TIME) 🚀
-            const { supabase } = require('@/lib/supabase');
             channel = supabase
                 .channel(`notif-${user.id}`)
                 .on('postgres_changes', { 
