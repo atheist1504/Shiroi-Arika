@@ -22,6 +22,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             ? `@${parentComment.user_name} ${replyContent.trim()}`
             : replyContent.trim();
 
+        console.log("💬 Request phản hồi:", { mangaId, chapterId, parentId: parentComment.id });
         const res = await addCommentAction({
             manga_id: mangaId || null,
             chapter_id: chapterId || null,
@@ -29,14 +30,14 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             parent_id: parentComment.parent_id || parentComment.id
         });
 
-        console.log("💬 Kết quả phản hồi:", res);
+        console.log("💬 Kết quả phản hồi từ Server:", res);
         if (res.success) {
           setReplyContent('');
           onSuccess();
-          setTimeout(() => fetchComments(true), 500); // Đợi 500ms để DB đồng bộ ⚡
+          setTimeout(() => fetchComments(true), 1000); // Tăng lên 1s để chắc chắn DB đã ghi xong ⚡
         } else {
-          console.error("❌ Lỗi phản hồi:", res.error);
-          alert(`Lỗi: ${res.error}`);
+          console.error("❌ Lỗi phản hồi (Server):", res.error);
+          alert(`KHÔNG THỂ GỬI PHẢN HỒI: ${res.error}\n(Lưu ý: Bạn có thể cần đăng xuất và đăng nhập lại nếu phiên bị hết hạn)`);
         }
       } finally {
         setIsSubmitting(false);
@@ -242,6 +243,7 @@ export default function Comments({ mangaId, chapterId }) {
     if (!user || !content.trim()) return;
     try {
       setSubmitting(true);
+      console.log("💬 Gửi bình luận:", { mangaId, chapterId, content: content.trim() });
       const res = await addCommentAction({
           manga_id: mangaId || null,
           chapter_id: chapterId || null,
@@ -249,15 +251,15 @@ export default function Comments({ mangaId, chapterId }) {
           parent_id: null
       });
 
-      console.log("💬 Kết quả bình luận:", res);
+      console.log("💬 Kết quả bình luận từ Server:", res);
       if (res.success) {
         setContent('');
-        setTimeout(() => fetchComments(true), 500); // Đợi 500ms để DB đồng bộ ⚡
+        setTimeout(() => fetchComments(true), 1000); // Tăng lên 1s ⚡
         setXpToast("✨ GỬI LỜI THẢO LUẬN THÀNH CÔNG! 🚀");
         setTimeout(() => setXpToast(false), 3000);
       } else {
-        console.error("❌ Lỗi bình luận:", res.error);
-        alert(`Lỗi: ${res.error}`);
+        console.error("❌ Lỗi bình luận (Server):", res.error);
+        alert(`KHÔNG THỂ GỬI BÌNH LUẬN: ${res.error}\n(Lưu ý: Hãy thử đăng xuất và đăng nhập lại)`);
       }
     } finally { setSubmitting(false); }
   };
