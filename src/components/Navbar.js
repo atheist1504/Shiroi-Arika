@@ -199,13 +199,7 @@ export default function Navbar() {
                   href="/login" 
                   className="px-6 py-2.5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl hover:scale-105 transition-all text-[10px] uppercase tracking-wider"
                 >
-                  Đăng nhập
-                </Link>
-              ))}
-            </div>
--all text-[10px] uppercase tracking-wider"
-                >
-                  Đăng nhập
+                  Ã„Ã„ng nháº¬p
                 </Link>
               )}
             </div>
