@@ -127,20 +127,13 @@ export default function LuckyDraw() {
     <div className="relative group">
       <button
         onClick={handleDraw}
-        className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-[20px] font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 border-2 relative active:scale-95 ${
+        className={`transition-all font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 ${
           canDraw 
-          ? "bg-gradient-to-br from-[#141814] to-black border-[#4caf50]/50 text-[#4caf50] hover:border-[#4caf50] hover:shadow-[0_0_30px_rgba(76,175,80,0.4)] shadow-xl"
-          : "bg-[#141814] border-white/5 text-gray-500 cursor-default opacity-80"
+          ? "text-[#4caf50] hover:brightness-125"
+          : "text-gray-500 cursor-default"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-sm">{canDraw ? "🎁" : "💮"}</span>
-          {canDraw ? (
-            <>{isDrawing ? "ĐANG MỞ..." : "BỐC QUÀ"}</>
-          ) : (
-            <>HẸN MAI NHÉ</>
-          )}
-        </div>
+        {canDraw ? (isDrawing ? "Đang mở..." : "Bốc quà") : "Hẹn mai nhé"}
       </button>
 
       {/* MODAL KẾT QUẢ 🧧 */}

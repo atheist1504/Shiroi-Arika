@@ -207,23 +207,23 @@ export default function Navbar() {
           </div>
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
-          <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-4">
-            <div className="scale-90">
+          <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-8">
+            <div className="scale-100">
               <CheckIn />
             </div>
             {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-               <Link href="/admin/reports" className="px-4 py-1.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5">
-                  BÁO CÁO 🚩
+               <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">
+                  Báo cáo
                </Link>
             )}
-            <div className="scale-90">
+            <div className="scale-100">
               <LuckyDraw />
             </div>
             <button 
               onClick={() => setIsMissionsOpen(true)}
-              className="px-4 py-1.5 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-xl hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#4caf50]/5"
+              className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap"
             >
-              NHIỆM VỤ 🎯
+              Nhiệm vụ
             </button>
           </div>
 

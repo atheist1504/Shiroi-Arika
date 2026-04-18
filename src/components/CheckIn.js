@@ -139,26 +139,19 @@ export default function CheckIn() {
       <button
         onClick={handleCheckIn}
         style={{ zIndex: 100001, pointerEvents: 'auto' }}
-        className={`px-4 sm:px-6 py-2.5 sm:py-3 rounded-[20px] font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-2 border-2 relative active:scale-95 ${
+        className={`transition-all flex items-center gap-2 group/btn active:scale-95 ${
           canCheckIn 
-          ? "bg-[#141814] border-[#4caf50] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] hover:shadow-[0_0_30px_rgba(76,175,80,0.5)] shadow-[0_10px_40px_rgba(0,0,0,0.3)] animate-pulse"
-          : "bg-[#141814] border-white/10 text-gray-400 hover:border-white/20 active:bg-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.3)]"
+          ? "text-[#4caf50] hover:brightness-125"
+          : "text-gray-500 cursor-default"
         }`}
       >
-        <div className="flex items-center gap-2">
-          <span className="text-sm">🔥</span>
-          <span className="text-[12px] font-black mr-1">{user?.check_in_streak || 0}</span>
-          {canCheckIn ? (
-            <>
-              {checking ? "ĐANG GỬI..." : "NHẬN QUÀ"}
-            </>
-          ) : (
-            <>
-              HẸN MAI NHÉ
-            </>
-          )}
+        <div className="flex items-center gap-2 font-black text-[10px] uppercase tracking-[0.2em]">
+          <span className="text-sm opacity-80 group-hover/btn:scale-110 transition-transform">🔥</span>
+          <span className="opacity-80">{user?.check_in_streak || 0}</span>
+          <span>
+             {canCheckIn ? (checking ? "Đang gửi..." : "Nhận quà") : "Hẹn mai nhé"}
+          </span>
         </div>
-
       </button>
 
       {/* HIỆU ỨNG THÔNG BÁO MODAL TRUNG TÂM TUYỆT ĐỐI 💎 */}
