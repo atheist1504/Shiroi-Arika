@@ -87,9 +87,11 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
                 )}
                 
                 {/* 📖 NHÃN PHÂN LOẠI CHƯƠNG / TỔNG 🍀 */}
-                <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-md border border-white/5 bg-white/[0.02] text-gray-400 group-hover:border-[#4caf50]/20 group-hover:text-[#4caf50] transition-all tracking-tighter shrink-0">
-                  {comment.chapters?.chapter_number ? `Chương ${comment.chapters.chapter_number}` : 'Bình luận tổng'}
-                </span>
+                {!isReply && (
+                   <span className="text-[8px] font-black uppercase px-2 py-0.5 rounded-md border border-white/5 bg-white/[0.02] text-gray-400 group-hover:border-[#4caf50]/20 group-hover:text-[#4caf50] transition-all tracking-tighter shrink-0">
+                     {comment.chapters?.chapter_number ? `Chương ${comment.chapters.chapter_number}` : 'Bình luận tổng'}
+                   </span>
+                )}
 
                 {(() => {
                    if (!user) return false;
