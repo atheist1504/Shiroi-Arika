@@ -77,7 +77,7 @@ export default function NotificationBell() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-[#0a0c0a] animate-pulse">
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[8px] font-black flex items-center justify-center rounded-full border-2 border-[#0a0c0a] animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
@@ -90,10 +90,13 @@ export default function NotificationBell() {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-4 w-[320px] bg-[#141814] border border-[#2a332a] rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] z-[200] overflow-hidden"
+                        className="absolute right-0 mt-4 w-[340px] bg-[#0c0f0c] border border-[#4caf50]/20 rounded-[32px] shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_20px_rgba(76,175,80,0.05)] z-[200] overflow-hidden"
                     >
-                        <div className="p-5 border-b border-[#2a332a] flex justify-between items-center bg-black/20">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-white">Thông báo</h3>
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-[#4caf50]/10 to-transparent">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                                <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white">Thông báo</h3>
+                            </div>
                             {unreadCount > 0 && (
                                 <button 
                                     onClick={handleMarkAllRead}
