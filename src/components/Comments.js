@@ -18,9 +18,8 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
         setIsSubmitting(true);
         
         // 💬 TỰ ĐỘNG GẮN THẺ @ NẾU TRẢ LỜI MỘT BÌNH LUẬN CON 🍀
-        const finalContent = parentComment.parent_id 
-            ? `@${parentComment.user_name} ${replyContent.trim()}`
-            : replyContent.trim();
+        // 🔍 CHỈ GỬI NỘI DUNG SẠCH (Bản tối ưu UI mới) 🍀
+        const finalContent = replyContent.trim();
 
         console.log("💬 Gửi PHẢN HỒI (Server Action):", { manga_id: mangaId, parent_id: parentComment.parent_id || parentComment.id, content: finalContent });
         const res = await addCommentAction({
@@ -123,7 +122,17 @@ const CommentItem = ({ comment, isReply = false, allComments = [], user, replyTo
                 </div>
              )}
              <div className="p-4 rounded-2xl rounded-tl-none border border-white/5 transition-all shadow-sm" style={{ backgroundColor: 'var(--bg-card-reader, rgba(20, 24, 20, 0.5))' }}>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted-reader, #9ca3af)' }}>{comment.content}</p>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted-reader, #9ca3af)' }}>
+                  {(() => {
+                      if (!replyingTo || !comment.content) return comment.content;
+                      // 🔍 TỰ ĐỘNG LỌC BỎ @username NẾU TRÙNG VỚI NGƯỜI ĐƯỢC PHẢN HỒI 🍀
+                      const tag = `@${replyingTo}`;
+                      if (comment.content.startsWith(tag)) {
+                          return comment.content.substring(tag.length).trim();
+                      }
+                      return comment.content;
+                  })()}
+                </p>
              </div>
              <div className="flex items-center gap-6 ml-1">
                 <button onClick={() => handleLike(comment.id)} className={`flex items-center gap-1.5 text-[9px] font-black transition-all ${localLikes[comment.id] ? 'text-red-500 scale-110' : 'text-gray-600 hover:text-red-500'}`}>
