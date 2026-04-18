@@ -207,22 +207,32 @@ export default function Navbar() {
           </div>
 
           {/* TẦNG 2: CHỈ GIỮ ĐIỂM DANH DƯỚI AVATAR ⚡ (THANH TÌM KIẾM ĐÃ XÓA THEO YÊU CẦU) */}
-          <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-8">
-            <div className="scale-100">
+          <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-6">
+            <div className="scale-100 flex items-center gap-6">
               <CheckIn />
+              <div className="w-[1px] h-3 bg-white/10"></div>
             </div>
+            
             {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-               <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">
-                  Báo cáo
-               </Link>
+               <>
+                <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2">
+                    <span className="text-sm opacity-80">🚩</span>
+                    Báo cáo
+                </Link>
+                <div className="w-[1px] h-3 bg-white/10"></div>
+               </>
             )}
-            <div className="scale-100">
+
+            <div className="scale-100 flex items-center gap-6">
               <LuckyDraw />
+              <div className="w-[1px] h-3 bg-white/10"></div>
             </div>
+
             <button 
               onClick={() => setIsMissionsOpen(true)}
-              className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap"
+              className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
             >
+              <span className="text-sm opacity-80">🎯</span>
               Nhiệm vụ
             </button>
           </div>

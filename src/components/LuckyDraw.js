@@ -127,12 +127,13 @@ export default function LuckyDraw() {
     <div className="relative group">
       <button
         onClick={handleDraw}
-        className={`transition-all font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 ${
+        className={`transition-all font-black text-[10px] uppercase tracking-[0.2em] active:scale-95 flex items-center gap-2 ${
           canDraw 
           ? "text-[#4caf50] hover:brightness-125"
           : "text-gray-500 cursor-default"
         }`}
       >
+        <span className="text-sm opacity-80">{canDraw ? "🎁" : "💮"}</span>
         {canDraw ? (isDrawing ? "Đang mở..." : "Bốc quà") : "Hẹn mai nhé"}
       </button>
 
