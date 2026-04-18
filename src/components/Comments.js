@@ -38,7 +38,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
           setTimeout(() => {
             console.log("🔄 Bắt đầu fetch lại bình luận sau khi reply thành công...");
             fetchComments(true);
-          }, 1500); 
+          }, 800); 
         } else {
           console.error("❌ Lỗi phản hồi (Server):", res.error);
           alert(`LỖI: ${res.error}\n(Bạn có thể cần đăng xuất và đăng nhập lại để làm mới phiên)`);
@@ -53,7 +53,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
          <textarea autoFocus placeholder={parentComment.parent_id ? `Đang trả lời @${parentComment.user_name}...` : "Viết phản hồi của bạn..."} value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="w-full bg-black/60 border border-[#4caf50]/20 rounded-xl py-3 px-4 text-xs focus:border-[#4caf50] outline-none transition-all text-gray-300 min-h-[70px] resize-none shadow-inner"></textarea>
          <div className="flex justify-end gap-3 mt-1">
             <button onClick={onCancel} className="text-[8px] font-black text-gray-600 hover:text-white uppercase tracking-widest">Hủy</button>
-            <button onClick={handleReplySubmit} disabled={isSubmitting} className="px-5 py-2 bg-[#4caf50] text-[#0a0c0a] font-black rounded-lg text-[9px] shadow-lg shadow-[#4caf50]/20 uppercase tracking-widest">{isSubmitting ? '...' : 'GỬI ✨'}</button>
+            <button onClick={handleReplySubmit} disabled={isSubmitting} className="px-5 py-2 bg-[#4caf50] text-[#0a0c0a] font-black rounded-lg text-[9px] shadow-lg shadow-[#4caf50]/20 uppercase tracking-widest">{isSubmitting ? 'ĐANG GỬI...' : 'GỬI ✨'}</button>
          </div>
       </div>
     );

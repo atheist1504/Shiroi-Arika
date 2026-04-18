@@ -1023,78 +1023,70 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
  * 📝 SERVER ACTION: Gửi bình luận và xử lý thông báo phản hồi (Real-time Readiness) 💬🍀
  */
 export async function addCommentAction(commentData) {
-  try {
-    const user = await getAuthenticatedUser();
-    if (!user || !user.id) throw new Error("Vui lòng đăng nhập để bình luận! 🛡️");
+    try {
+      const user = await getAuthenticatedUser();
+      if (!user || !user.id) throw new Error("Vui lòng đăng nhập để bình luận! 🛡️");
+  
+      const client = getDbClient();
+      const userId = user.id;
 
-    const client = getDbClient();
-    const userId = user.id;
+      let m_id = commentData.manga_id || null;
+      let c_id = commentData.chapter_id || null;
+      const parent_id = commentData.parent_id || null;
 
-    // 1. Ghi bình luận vào Database (Sử dụng client tốt nhất có sẵn)
-    console.log("📝 [Server] Thực hiện INSERT bình luận:", { mangaId: commentData.manga_id, parentId: commentData.parent_id });
-    
-    const { data: insertData, error: commentError } = await client
-      .from('comments')
-      .insert([{
-        manga_id: commentData.manga_id || null,
-        chapter_id: commentData.chapter_id || null,
-        parent_id: commentData.parent_id || null,
-        content: commentData.content,
-        user_id: userId,
-        user_name: user.display_name || user.username
-      }])
-      .select();
-
-    if (commentError) throw commentError;
-    const newComment = insertData && insertData.length > 0 ? insertData[0] : null;
-
-    // 2. XỬ LÝ THÔNG BÁO PHẢN HỒI (REPLY NOTIFICATION) 🔔
-    if (commentData.parent_id) {
-        try {
-            // Lấy thông tin người sở hữu bình luận gốc
-            const { data: parentComment } = await client
-                .from('comments')
-                .select('user_id, user_name, content')
-                .eq('id', commentData.parent_id)
-                .single();
-            
-            // Chỉ gửi nếu người trả lời không phải là chính mình 🕵️‍♂️
-            if (parentComment && parentComment.user_id !== userId) {
-                const title = `${user.display_name || user.username} đã phản hồi bình luận của bạn! 💬`;
-                const body = `"${commentData.content.substring(0, 50)}${commentData.content.length > 50 ? '...' : ''}"`;
-                const notifType = 'reply';
-                const notifData = { 
-                    commentId: newComment?.id || null, 
-                    parentId: commentData.parent_id,
-                    mangaId: commentData.manga_id,
-                    chapterId: commentData.chapter_id
-                };
-
-                await createInAppNotification(parentComment.user_id, title, body, notifType, notifData);
-            }
-        } catch (notifErr) {
-            console.warn("⚠️ Lỗi gửi thông báo phản hồi bình luận:", notifErr);
-        }
+      if (parent_id && (!m_id || !c_id)) {
+          try {
+              const { data: p } = await client.from('comments').select('manga_id, chapter_id').eq('id', parent_id).single();
+              if (p) {
+                  m_id = m_id || p.manga_id;
+                  c_id = c_id || p.chapter_id;
+              }
+          } catch (e) {}
+      }
+      
+      const { data: insertData, error: commentError } = await client
+        .from('comments')
+        .insert([{
+          manga_id: m_id,
+          chapter_id: c_id,
+          parent_id: parent_id,
+          content: commentData.content,
+          user_id: userId,
+          user_name: user.display_name || user.username
+        }])
+        .select();
+  
+      if (commentError) throw commentError;
+      const newComment = insertData && insertData.length > 0 ? insertData[0] : null;
+  
+      if (parent_id) {
+          try {
+              const { data: parentComment } = await client.from('comments').select('user_id, user_name').eq('id', parent_id).single();
+              if (parentComment && parentComment.user_id !== userId) {
+                  const title = `${user.display_name || user.username} đã phản hồi bình luận của bạn! 💬`;
+                  const body = `"${commentData.content.substring(0, 50)}${commentData.content.length > 50 ? '...' : ''}"`;
+                  const notifType = 'reply';
+                  const notifData = { 
+                      commentId: newComment?.id || null, 
+                      parentId: parent_id,
+                      mangaId: m_id,
+                      chapterId: c_id
+                  };
+  
+                  await createInAppNotification(parentComment.user_id, title, body, notifType, notifData);
+              }
+          } catch (notifErr) {
+              console.warn("⚠️ Lỗi thông báo:", notifErr.message);
+          }
+      }
+  
+      return { success: true, comment: newComment };
+    } catch (error) {
+      console.error("❌ Lỗi addCommentAction:", error.message);
+      return { success: false, error: error.message };
     }
-
-    // 3. CỘNG XP BÌNH LUẬN (Securely handled on Server) 💎
-    // Xử lý song song không làm nghẽn luồng trả về ⚡
-    recordXpLogAction(userId, XP_REWARDS.FIRST_COMMENT, 'first_comment').then(res => {
-        if (!res.success) {
-            return recordXpLogAction(userId, XP_REWARDS.SUBSEQUENT_COMMENT, 'comment');
-        }
-    }).catch(e => console.error("⚠️ Lỗi cộng XP bình luận:", e));
-
-    return { success: true, comment: newComment };
-  } catch (error) {
-    console.error("❌ Lỗi addCommentAction:", error.message);
-    return { success: false, error: error.message };
-  }
 }
 
-/**
- * 🔔 SERVER ACTION: Lấy danh sách thông báo của người dùng
- */
 export async function getNotificationsAction(limit = 20) {
     try {
         const user = await getAuthenticatedUser();
