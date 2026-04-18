@@ -5,8 +5,9 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabaseAdmin';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { sendMangaNotification } from './notifications';
+import { sendMangaNotification, createInAppNotification } from './notifications';
 import { XP_REWARDS, getStreakBonus } from './xp';
+import { getStartOfVNDay } from './missions';
 
 /**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
@@ -367,17 +368,14 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
 
     // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
     if (type === 'comment' || type === 'first_comment') {
-        const now = getVietnamTime();
-        const startOfDay = new Date(now.setUTCHours(0, 0, 0, 0)).toISOString();
-        const endOfDay = new Date(now.setUTCHours(23, 59, 59, 999)).toISOString();
+        const startOfTodayISO = getStartOfVNDay().toISOString();
 
         const { data: todayLogs, error: logError } = await client
             .from('shiroi_xp_logs')
             .select('amount')
             .eq('user_id', userId)
             .in('type', ['comment', 'first_comment'])
-            .gte('created_at', startOfDay)
-            .lte('created_at', endOfDay);
+            .gte('created_at', startOfTodayISO);
 
         if (!logError && todayLogs) {
             const totalToday = todayLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
@@ -471,14 +469,12 @@ export async function performCheckInAction() {
       .single();
 
     if (fetchError || !userData) throw new Error("Không tìm thấy thông tin người dùng");
-    const now = getVietnamTime();
-    const lastCheck = userData.last_check_in ? new Date(new Date(userData.last_check_in).getTime() + (7 * 60 * 60 * 1000)) : null;
     
-    // 1. Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo giờ Việt Nam)
-    const isSameDay = lastCheck && 
-      lastCheck.getUTCDate() === now.getUTCDate() &&
-      lastCheck.getUTCMonth() === now.getUTCMonth() &&
-      lastCheck.getUTCFullYear() === now.getUTCFullYear();
+    const startOfToday = getStartOfVNDay();
+    const lastCheck = userData.last_check_in ? new Date(userData.last_check_in) : null;
+    
+    // 1. Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo mốc 0h Việt Nam) 🇻🇳
+    const isSameDay = lastCheck && lastCheck >= startOfToday;
  
     if (isSameDay) return { success: false, error: 'Bạn đã điểm danh hôm nay rồi!' };
  
@@ -487,8 +483,10 @@ export async function performCheckInAction() {
     
     if (lastCheck) {
         // Tính khoảng cách ngày (dựa trên mốc 00:00:00 giờ VN)
-        const lastCheckDate = new Date(lastCheck.getUTCFullYear(), lastCheck.getUTCMonth(), lastCheck.getUTCDate());
-        const nowDate = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        const lastCheckVnStr = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh'}).format(lastCheck);
+        const lastCheckDate = new Date(`${lastCheckVnStr}T00:00:00+07:00`);
+        
+        const nowDate = startOfToday;
         const diffTime = Math.abs(nowDate - lastCheckDate);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
  
@@ -526,7 +524,7 @@ export async function performCheckInAction() {
     const { data: updatedUser, error: updateError } = await client
       .from('shiroi_users')
       .update({
-        last_check_in: now.toISOString(),
+        last_check_in: new Date().toISOString(),
         check_in_streak: newStreak
       })
       .eq('id', userId)
@@ -624,10 +622,30 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
 
     if (pagesError) throw pagesError;
 
-    // 4. Gửi thông báo tự động (Silent fail - không làm chết luồng upload)
+    // 4. Gửi thông báo tự động (Silent fail - không làm chết luồng upload) 🔔🍀
     try {
         const title = `Chương ${chapter.chapter_number} vừa ra mắt! 📚`;
+        
+        // A. Gửi Push Broadcast (Topic)
         await sendMangaNotification(title, mangaTitle, mangaId, coverImage);
+
+        // B. Gửi In-app Notification cho toàn bộ người theo dõi
+        const { data: followers } = await client
+            .from('shiroi_follows')
+            .select('user_id')
+            .eq('manga_id', mangaId);
+        
+        if (followers && followers.length > 0) {
+            const body = `Siêu phẩm "${mangaTitle}" vừa cập nhật chương ${chapter.chapter_number}. Đọc ngay nào!`;
+            const notifType = 'chapter_update';
+            const notifData = { mangaId, chapterId: chapter.id, mangaName: mangaTitle };
+
+            // Tạo thông báo trong ứng dụng cho từng follower
+            const notificationPromises = followers.map(f => 
+                createInAppNotification(f.user_id, title, body, notifType, notifData)
+            );
+            await Promise.allSettled(notificationPromises);
+        }
     } catch (notifyErr) {
         console.warn("Lỗi gửi thông báo (bỏ qua):", notifyErr);
     }
@@ -907,10 +925,9 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
       .eq('mission_key', missionKey);
 
     if (isDaily) {
-        // Nếu là nhiệm vụ hàng ngày: Chỉ tính lượt nhận trong hôm nay (UTC)
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        query = query.gte('claimed_at', today.toISOString());
+        // Nếu là nhiệm vụ hàng ngày: Chỉ tính lượt nhận trong hôm nay (Mốc 0h Việt Nam) 🇻🇳
+        const startOfTodayISO = getStartOfVNDay().toISOString();
+        query = query.gte('claimed_at', startOfTodayISO);
     }
 
     const { data: existing } = await query.maybeSingle();
@@ -979,4 +996,100 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     console.error('❌ Lỗi claimMissionRewardAction:', error.message);
     return { success: false, error: error.message };
   }
+}
+/**
+ * 🔔 SERVER ACTION: Lấy danh sách thông báo của người dùng
+ */
+export async function getNotificationsAction(limit = 20) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const client = getDbClient();
+        const { data, error } = await client
+            .from('shiroi_notifications')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return { success: true, notifications: data };
+    } catch (error) {
+        console.error('Lỗi getNotificationsAction:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🔔 SERVER ACTION: Đánh dấu thông báo đã đọc
+ */
+export async function markNotificationAsReadAction(notificationId) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const client = getDbClient();
+        const { error } = await client
+            .from('shiroi_notifications')
+            .update({ is_read: true })
+            .eq('id', notificationId)
+            .eq('user_id', user.id);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Lỗi markNotificationAsReadAction:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🔔 SERVER ACTION: Đánh dấu tất cả thông báo là đã đọc
+ */
+export async function markAllNotificationsAsReadAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const client = getDbClient();
+        const { error } = await client
+            .from('shiroi_notifications')
+            .update({ is_read: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Lỗi markAllNotificationsAsReadAction:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📱 SERVER ACTION: Lưu FCM Token của thiết bị
+ */
+export async function saveFcmTokenAction(token, platform = 'web') {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const client = getDbClient();
+        
+        // Upsert token: Nếu tồn tại thì cập nhật last_seen_at (tự động qua trigger)
+        const { error } = await client
+            .from('shiroi_fcm_tokens')
+            .upsert({ 
+                user_id: user.id, 
+                token: token,
+                platform: platform
+            }, { onConflict: 'token' });
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Lỗi saveFcmTokenAction:', error);
+        return { success: false, error: error.message };
+    }
 }

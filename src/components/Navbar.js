@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import CheckIn from "./CheckIn";
 import LuckyDraw from "./LuckyDraw";
 import MissionsModal from "./MissionsModal";
+import NotificationBell from "./NotificationBell";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -178,9 +179,12 @@ export default function Navbar() {
                          </div>
                       </div>
 
-                      <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
-                          <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                      </Link>
+                      <div className="flex items-center gap-1">
+                          <NotificationBell />
+                          <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
+                          </Link>
+                      </div>
 
                       <button 
                         onClick={handleLogout}

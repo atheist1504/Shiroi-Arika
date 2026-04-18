@@ -36,7 +36,7 @@ export async function sendMangaNotification(title, mangaName, mangaId, coverImag
       image: coverImage
     },
     data: {
-      mangaId: mangaId,
+      mangaId: mangaId.toString(),
       url: `https://shiroiarika.vercel.app/manga/${mangaId}`
     },
     topic: 'all_manga_updates'
@@ -50,4 +50,33 @@ export async function sendMangaNotification(title, mangaName, mangaId, coverImag
     console.error('❌ Error sending notification:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🔔 TẠO THÔNG BÁO TRONG ỨNG DỤNG (IN-APP)
+ * Dành cho hệ thống Hộp thư thông báo trên Web 🍀
+ */
+export async function createInAppNotification(userId, title, body, type, data = {}) {
+    const { supabaseAdmin } = await import('./supabaseAdmin');
+    if (!supabaseAdmin) return { success: false, error: 'Supabase Admin not available' };
+
+    try {
+        const { data: notification, error } = await supabaseAdmin
+            .from('shiroi_notifications')
+            .insert([{
+                user_id: userId,
+                title,
+                body,
+                type,
+                data
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return { success: true, notification };
+    } catch (err) {
+        console.error("❌ Error creating in-app notification:", err);
+        return { success: false, error: err.message };
+    }
 }

@@ -42,10 +42,11 @@ Dự án Manga Platform thế hệ mới.
     - **Vietnamese Logic Audit**: Nâng cấp hàm `isGibberish` để chặn spam tiếng Việt thông minh hơn (chặn lặp từ, ký tự đặc biệt không có chữ cái).
     - **Mobile UX Optimization**: Xác thực độ phản hồi của Compact Filter và Reader trên thiết bị di động (375px).
     - **Build Fix**: Khắc phục lỗi thiếu `firebase-admin` trong môi trường local. 🛠️✅
-- [x] **Gamification Integrity (v24)**: 💎🎯
-    - **XP System Deep Audit**: Đã xác minh chu kỳ nhận XP (Check-in +100, Read +20) hoạt động hoàn hảo, đồng bộ Database tức thì.
-    - **Test Suite Resurrection**: Sửa lỗi 5 bộ test XP quan trọng (`stats_integrity`, `gamification`, v.v.), đạt tỷ lệ **PASS 100%**.
-    - **Safe Profile UX**: Sửa lỗi Null Pointer tại trang cá nhân khi dữ liệu chưa tải xong. 🛡️✨
+- [x] **Notification System (v26 - Social & Engagement)**: 🔔🚀
+    - **In-app Notification Hub**: Triển khai bảng `shiroi_notifications` và hệ thống thông báo nội bộ (Bell icon). Người dùng nhận được tin nhắn ngay trên Navbar khi có chương mới.
+    - **Smart Follow Logic**: Tích hợp vào `publishChapterAction` để tự động gửi thông báo đến hàng nghìn người theo dõi chỉ với một click đăng chương.
+    - **Targeted Push Readiness**: Nâng cấp `notifications.js` hỗ trợ FCM v1, sẵn sàng cho việc gửi Push Notification đa thiết bị.
+    - **Profile Integration**: Thêm mục "Trung tâm Thông báo" vào trang cá nhân để quản lý lịch sử và trạng thái đã đọc. 🛡️🍀
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉

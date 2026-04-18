@@ -105,22 +105,31 @@ export const recordUniqueRead = async (userId, username, mangaId, chapterId) => 
 };
 
 /**
+ * 🇻🇳 HÀM HELPER: Lấy thời điểm 00:00:00 của ngày hiện tại tại Việt Nam (GMT+7)
+ * Trả về đối tượng Date ở dạng UTC tương ứng để so sánh chính xác trên DB. 🍀
+ */
+export const getStartOfVNDay = () => {
+    const now = new Date();
+    const vnDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+    return new Date(`${vnDateStr}T00:00:00+07:00`);
+};
+
+/**
  * 🧭 Tính toán tiến trình nhiệm vụ của người dùng
  */
 export const fetchUserMissionProgress = async (userId) => {
     if (!userId) return [];
 
     try {
-        // 1. Lấy dữ liệu thô
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const todayISO = today.toISOString();
+        // 1. Lấy mốc thời gian "Hôm nay" chuẩn Việt Nam 🇻🇳
+        const startOfToday = getStartOfVNDay();
+        const startOfTodayISO = startOfToday.toISOString();
 
         // Đếm tổng chương đã đọc
         const { count: totalRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId);
         
-        // Đọc trong ngày
-        const { count: dailyRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', todayISO);
+        // Đọc trong ngày (Dựa trên mốc 00:00:00 VN)
+        const { count: dailyRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO);
 
         // Đếm bình luận hợp lệ (Không tính spam)
         const { data: comments } = await supabase.from('comments').select('content, created_at').eq('user_id', userId);
@@ -130,7 +139,7 @@ export const fetchUserMissionProgress = async (userId) => {
         const totalValidComments = validComments.length;
         
         // Bình luận trong ngày (Giới hạn 10 lần đóng góp/ngày)
-        const dailyValidCommentsRaw = validComments.filter(c => new Date(c.created_at) >= today);
+        const dailyValidCommentsRaw = validComments.filter(c => new Date(c.created_at) >= startOfToday);
         const dailyContributionCount = Math.min(dailyValidCommentsRaw.length, 10);
         
         // Lấy danh sách đã nhận thưởng (Bao gồm cả thời điểm nhận)
@@ -141,10 +150,9 @@ export const fetchUserMissionProgress = async (userId) => {
         const dailyClaimedKeysToday = new Set();
 
         claims?.forEach(c => {
-            const claimedDate = new Date(c.claimed_at);
-            claimedDate.setHours(0,0,0,0);
+            const claimedAt = new Date(c.claimed_at);
             
-            if (claimedDate.getTime() === today.getTime()) {
+            if (claimedAt >= startOfToday) {
                 dailyClaimedKeysToday.add(c.mission_key);
             }
             lifetimeClaimedKeys.add(c.mission_key);

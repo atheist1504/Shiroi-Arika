@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { calculateLevel, calculateProgress, calculateTitle, TITLES, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
+import { getNotificationsAction, markNotificationAsReadAction } from '@/lib/actions';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
@@ -17,6 +20,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState('');
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
+  const [notifications, setNotifications] = useState([]); // 🔔 Lịch sử thông báo 🍀
   const [checkInDates, setCheckInDates] = useState([]); // 📅 Các ngày đã điểm danh THÁNG NÀY 🍀
   const [totalCheckIns, setTotalCheckIns] = useState(0); // 🔥 Tổng số ngày điểm danh trọn đời 🍀
   const fileInputRef = useRef(null);
@@ -46,10 +50,12 @@ export default function ProfilePage() {
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           fetchStats(data.id);
           fetchXpLogs(data.id);
+          fetchNotifications();
         } else {
           setUser(userData);
           fetchStats(userData.id);
           fetchXpLogs(userData.id);
+          fetchNotifications();
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -126,6 +132,20 @@ export default function ProfilePage() {
       }
     } catch (err) {
       console.error("Lỗi lấy nhật ký XP:", err);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    const res = await getNotificationsAction(50); // Lấy 50 thông báo gần nhất
+    if (res.success) {
+      setNotifications(res.notifications);
+    }
+  };
+
+  const handleMarkAsRead = async (id) => {
+    const res = await markNotificationAsReadAction(id);
+    if (res.success) {
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     }
   };
 
@@ -562,6 +582,65 @@ export default function ProfilePage() {
                   }) : (
                      <div className="py-10 text-center text-[10px] font-black uppercase text-gray-700 tracking-widest italic opacity-50">
                         Chưa có dấu ấn tu luyện nào... ✨
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            {/* 🔔 LỊCH SỬ THÔNG BÁO (NOTIFICATION HUB) 🍀 */}
+            <div id="notifications" className="bg-[#141814]/40 border border-[#4caf50]/10 rounded-[40px] p-8 space-y-6 animate-fade-in relative overflow-hidden">
+               <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-[#4caf50]/10 rounded-xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(76,175,80,0.2)]">🔔</div>
+                     <h3 className="text-sm font-black text-white uppercase tracking-widest">Trung tâm Thông báo</h3>
+                  </div>
+                  {notifications.some(n => !n.is_read) && (
+                     <span className="text-[8px] bg-red-500 text-white px-2 py-0.5 rounded font-black animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]">CÓ TIN MỚI</span>
+                  )}
+               </div>
+
+               <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  {notifications && notifications.length > 0 ? notifications.map((notif) => (
+                      <div 
+                        key={notif.id} 
+                        onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
+                        className={`flex gap-4 p-5 rounded-[28px] border transition-all relative group cursor-pointer ${
+                          !notif.is_read 
+                          ? 'bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50]/40' 
+                          : 'bg-black/40 border-white/5 hover:border-white/10'
+                        }`}
+                      >
+                         <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            {notif.type === 'chapter_update' ? '📚' : '🔔'}
+                         </div>
+                         <div className="flex-1 space-y-1">
+                            <div className="flex justify-between items-start">
+                               <h4 className={`text-[11px] font-black uppercase tracking-wide ${!notif.is_read ? 'text-[#4caf50]' : 'text-gray-300'}`}>
+                                  {notif.title}
+                               </h4>
+                               <span className="text-[8px] font-bold text-gray-600 uppercase">
+                                  {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 font-bold leading-relaxed">{notif.body}</p>
+                            
+                            {notif.data?.mangaId && (
+                               <div className="pt-2">
+                                  <Link 
+                                    href={`/manga/${notif.data.mangaId}`}
+                                    className="inline-flex items-center gap-2 text-[9px] font-black text-[#4caf50] uppercase tracking-wider group/link"
+                                  >
+                                    Đến xem ngay
+                                    <svg className="w-2.5 h-2.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                  </Link>
+                                </div>
+                            )}
+                         </div>
+                      </div>
+                  )) : (
+                     <div className="py-20 text-center space-y-4 opacity-50">
+                        <div className="text-5xl opacity-20">📭</div>
+                        <p className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Hộp thư đang trống...</p>
                      </div>
                   )}
                </div>
