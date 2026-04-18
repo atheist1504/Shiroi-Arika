@@ -60,11 +60,18 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
 };
 
 // 🛠️ COMPONENT CON: ITEM BÌNH LUẬN 🚀
-const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, handleLike, handleDelete, localLikes, mangaId, chapterId, fetchComments }) => {
+const CommentItem = ({ comment, isReply = false, allComments = [], user, replyTo, setReplyTo, handleLike, handleDelete, localLikes, mangaId, chapterId, fetchComments }) => {
     const isReplyingThis = replyTo?.id === comment.id;
     const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
-    const key = cK(comment.user_name);
+        const key = cK(comment.user_name);
     const isAdmin = key.includes('admin') || key.includes('quan tri') || key.includes('shiroi arika');
+
+    // 🔍 TÌM THÔNG TIN NGƯỜI ĐƯỢC PHẢN HỒI (UI MỚI) 🍀
+    let replyingTo = null;
+    if (comment.parent_id) {
+        const parent = allComments.find(c => String(c.id) === String(comment.parent_id));
+        if (parent) replyingTo = parent.user_name;
+    }
 
     return (
       <div className={`${isReply ? 'ml-10 border-l border-white/5 pl-6' : ''} group animate-fade-in`}>
@@ -109,6 +116,12 @@ const CommentItem = ({ comment, isReply = false, user, replyTo, setReplyTo, hand
                 )}
                 <span className="text-[8px] text-gray-700 font-bold ml-auto">{new Date(comment.created_at).toLocaleTimeString('vi-VN')}</span>
              </div>
+             {replyingTo && (
+                <div className="flex items-center gap-1.5 mb-1.5 ml-2 opacity-60">
+                   <svg className="w-2.5 h-2.5 text-[#4caf50]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                   <span className="text-[9px] font-black uppercase text-[#4caf50]">Phản hồi @{replyingTo}</span>
+                </div>
+             )}
              <div className="p-4 rounded-2xl rounded-tl-none border border-white/5 transition-all shadow-sm" style={{ backgroundColor: 'var(--bg-card-reader, rgba(20, 24, 20, 0.5))' }}>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted-reader, #9ca3af)' }}>{comment.content}</p>
              </div>
@@ -334,7 +347,7 @@ export default function Comments({ mangaId, chapterId }) {
         ) : (
           comments.filter(c => !c.parent_id).map((comment) => (
             <div key={comment.id} className="space-y-6">
-              <CommentItem 
+              <CommentItem allComments={comments} 
                 comment={comment} 
                 user={user} 
                 replyTo={replyTo} 
@@ -351,7 +364,7 @@ export default function Comments({ mangaId, chapterId }) {
                   .filter(r => r.parent_id && String(r.parent_id) === String(comment.id))
                   .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
                   .map(reply => (
-                  <CommentItem 
+                  <CommentItem allComments={comments} 
                     key={reply.id} 
                     comment={reply} 
                     isReply={true} 
