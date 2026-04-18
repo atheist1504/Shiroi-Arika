@@ -8,6 +8,7 @@ import { performLuckyDrawAction } from "@/lib/actions";
 export default function LuckyDraw() {
   const [user, setUser] = useState(null);
   const [canDraw, setCanDraw] = useState(false);
+  const [buttonText, setButtonText] = useState("Bốc quà");
   const [isDrawing, setIsDrawing] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalResult, setModalResult] = useState(null);
@@ -134,7 +135,7 @@ export default function LuckyDraw() {
         }`}
       >
         <span className="text-sm opacity-80">{canDraw ? "🎁" : "💮"}</span>
-        {canDraw ? (isDrawing ? "Đang mở..." : "Bốc quà") : "Hẹn mai nhé"}
+        {canDraw ? (isDrawing ? "Đang mở..." : buttonText) : "Hẹn mai nhé"}
       </button>
 
       {/* MODAL KẾT QUẢ 🧧 */}
