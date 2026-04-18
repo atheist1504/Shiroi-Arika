@@ -1030,12 +1030,7 @@ export async function addCommentAction(commentData) {
     const client = getDbClient();
     const userId = user.id;
 
-    // 🔬 KIỂM TRA QUYỀN GHI (SERVER-SIDE) 🛡️
-    if (!supabaseAdmin) {
-        throw new Error("Hệ thống chưa cấu hình Service Role Key. Vui lòng liên hệ Admin để kiểm tra biến môi trường Vercel! 🔐");
-    }
-
-    // 1. Ghi bình luận vào Database (Sử dụng Admin client để đảm bảo quyền ghi)
+    // 1. Ghi bình luận vào Database (Sử dụng client tốt nhất có sẵn)
     const { data: newComment, error: commentError } = await client
       .from('comments')
       .insert([{
