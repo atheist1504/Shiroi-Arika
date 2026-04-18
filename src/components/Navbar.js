@@ -201,7 +201,34 @@ export default function Navbar() {
                   href="/login" 
                   className="px-6 py-2.5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl hover:scale-105 transition-all text-[10px] uppercase tracking-wider"
                 >
-                  Ã„Ã„ng nháº¬p
+                  Ä Äƒng nháº­p
+                </Link>
+              )}
+            </div>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                          <NotificationBell />
+                          <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
+                          </Link>
+                      </div>
+
+                      <button 
+                        onClick={handleLogout}
+                        className="p-2 text-gray-700 hover:text-red-500 transition-colors"
+                        title="Đăng xuất"
+                      >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                      </button>
+                    </div>
+                 </div>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="px-6 py-2.5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl hover:scale-105 transition-all text-[10px] uppercase tracking-wider"
+                >
+                  Đăng nhập
                 </Link>
               )}
             </div>
