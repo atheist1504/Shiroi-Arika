@@ -68,7 +68,7 @@ export async function createInAppNotification(userId, title, body, type, data = 
                 title,
                 body,
                 type,
-                data
+                data: data || {}
             }])
             .select()
             .single();
