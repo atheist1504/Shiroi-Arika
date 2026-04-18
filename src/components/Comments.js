@@ -27,7 +27,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             manga_id: mangaId || null,
             chapter_id: chapterId || null,
             content: finalContent,
-            parent_id: (parentComment.parent_id || parentComment.id) || null
+            parent_id: parentComment.id || null
         });
 
         console.log("💬 Kết quả PHẢN HỒI từ Server:", res);
@@ -163,6 +163,20 @@ export default function Comments({ mangaId, chapterId }) {
   const [submitting, setSubmitting] = useState(false);
   const [xpToast, setXpToast] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  // 🔍 HÀM TÌM TẤT CẢ CON CHÁU ĐỂ HIỂN THỊ DẠNG PHẲNG (2 CẤP) 🍀
+  const getAllDescendants = (parentId, allComments) => {
+    let results = [];
+    const directChildren = allComments.filter(c => String(c.parent_id) === String(parentId));
+    
+    directChildren.forEach(child => {
+        results.push(child);
+        const grandchildren = getAllDescendants(child.id, allComments);
+        results = results.concat(grandchildren);
+    });
+    
+    return results;
+  };
+
 
   useEffect(() => {
     const checkSession = () => {
@@ -360,8 +374,7 @@ export default function Comments({ mangaId, chapterId }) {
                 fetchComments={fetchComments}
               />
               <div className="space-y-6">
-                {comments
-                  .filter(r => r.parent_id && String(r.parent_id) === String(comment.id))
+                {getAllDescendants(comment.id, comments)
                   .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
                   .map(reply => (
                   <CommentItem allComments={comments} 
