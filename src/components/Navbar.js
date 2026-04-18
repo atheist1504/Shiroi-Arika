@@ -155,7 +155,9 @@ export default function Navbar() {
                 <Link href="/leaderboard" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">BXH</Link>
                 <Link href="/bookmarks" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Tủ Truyện</Link>
                 <Link href="/history" className="text-gray-500 hover:text-[#4caf50] transition-colors font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap">Lịch s�            <div className="flex items-center gap-4 lg:gap-6 shrink-0 ml-auto lg:ml-0">
-              {isMounted && (user ? (
+              {!isMounted ? (
+                <div className="w-24 h-8 bg-white/5 animate-pulse rounded-xl"></div>
+              ) : user ? (
                  <div className="flex items-center gap-4 animate-fade-in py-2">
                     
                     {/* ADMIN ĐĂNG TRUYỆN */}
