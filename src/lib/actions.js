@@ -1073,13 +1073,13 @@ export async function addCommentAction(commentData) {
     }
 
     // 3. CỘNG XP BÌNH LUẬN (Securely handled on Server) 💎
-    await recordXpLogAction(userId, XP_REWARDS.FIRST_COMMENT, 'first_comment').then(res => {
+    // Xử lý song song không làm nghẽn luồng trả về ⚡
+    recordXpLogAction(userId, XP_REWARDS.FIRST_COMMENT, 'first_comment').then(res => {
         if (!res.success) {
             return recordXpLogAction(userId, XP_REWARDS.SUBSEQUENT_COMMENT, 'comment');
         }
-    });
+    }).catch(e => console.error("⚠️ Lỗi cộng XP bình luận:", e));
 
-    revalidatePath('/');
     return { success: true, comment: newComment };
   } catch (error) {
     console.error("❌ Lỗi addCommentAction:", error.message);

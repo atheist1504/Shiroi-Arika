@@ -29,12 +29,14 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
             parent_id: parentComment.parent_id || parentComment.id
         });
 
+        console.log("💬 Kết quả phản hồi:", res);
         if (res.success) {
           setReplyContent('');
           onSuccess();
-          fetchComments(true); // Silent refresh
+          setTimeout(() => fetchComments(true), 500); // Đợi 500ms để DB đồng bộ ⚡
         } else {
-          alert(res.error);
+          console.error("❌ Lỗi phản hồi:", res.error);
+          alert(`Lỗi: ${res.error}`);
         }
       } finally {
         setIsSubmitting(false);
@@ -247,13 +249,15 @@ export default function Comments({ mangaId, chapterId }) {
           parent_id: null
       });
 
+      console.log("💬 Kết quả bình luận:", res);
       if (res.success) {
         setContent('');
-        fetchComments(true); // Silent refresh 🚀
+        setTimeout(() => fetchComments(true), 500); // Đợi 500ms để DB đồng bộ ⚡
         setXpToast("✨ GỬI LỜI THẢO LUẬN THÀNH CÔNG! 🚀");
         setTimeout(() => setXpToast(false), 3000);
       } else {
-        alert(res.error);
+        console.error("❌ Lỗi bình luận:", res.error);
+        alert(`Lỗi: ${res.error}`);
       }
     } finally { setSubmitting(false); }
   };
