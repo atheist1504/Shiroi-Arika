@@ -34,18 +34,11 @@ BEFORE UPDATE ON public.shiroi_fcm_tokens
 FOR EACH ROW EXECUTE FUNCTION update_fcm_last_seen();
 
 -- Cài đặt quyền truy cập (RLS) 🛡️
-ALTER TABLE public.shiroi_notifications ENABLE ROW LEVEL SECURITY;
+-- CHÚ Ý: Đã tắt RLS cho shiroi_notifications để hỗ trợ hệ thống Custom Auth của Shiroi Arika
+ALTER TABLE public.shiroi_notifications DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shiroi_fcm_tokens ENABLE ROW LEVEL SECURITY;
 
--- 1. Quyền xem thông báo của chính mình
-CREATE POLICY "Người dùng tự xem thông báo" ON public.shiroi_notifications
-    FOR SELECT USING (auth.uid() = user_id);
-
--- 2. Quyền cập nhật trạng thái đã đọc
-CREATE POLICY "Người dùng tự cập nhật thông báo" ON public.shiroi_notifications
-    FOR UPDATE USING (auth.uid() = user_id);
-
--- 3. Quyền quản lý FCM Token (chỉ chính chủ)
+-- 1. Quyền quản lý FCM Token (chỉ chính chủ)
 CREATE POLICY "Quản lý FCM Token cá nhân" ON public.shiroi_fcm_tokens
     FOR ALL USING (auth.uid() = user_id);
 

@@ -1092,8 +1092,8 @@ export async function getNotificationsAction(limit = 20) {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        const client = getDbClient();
-        const { data, error } = await client
+        // 🛡️ SỬ DỤNG ADMIN CLIENT ĐỂ BYPASS RLS (Do hệ thống Custom Auth) 🍀
+        const { data, error } = await supabaseAdmin
             .from('shiroi_notifications')
             .select('*')
             .eq('user_id', user.id)
@@ -1103,9 +1103,10 @@ export async function getNotificationsAction(limit = 20) {
         if (error) throw error;
         return { success: true, notifications: data };
     } catch (error) {
-        console.error('Lỗi getNotificationsAction:', error);
+        console.error('❌ Lỗi getNotificationsAction:', error.message);
         return { success: false, error: error.message };
     }
+}
 }
 
 /**
@@ -1116,8 +1117,7 @@ export async function markNotificationAsReadAction(notificationId) {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        const client = getDbClient();
-        const { error } = await client
+        const { error } = await supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })
             .eq('id', notificationId)
@@ -1126,9 +1126,10 @@ export async function markNotificationAsReadAction(notificationId) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Lỗi markNotificationAsReadAction:', error);
+        console.error('❌ Lỗi markNotificationAsReadAction:', error.message);
         return { success: false, error: error.message };
     }
+}
 }
 
 /**
@@ -1139,19 +1140,18 @@ export async function markAllNotificationsAsReadAction() {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        const client = getDbClient();
-        const { error } = await client
+        const { error } = await supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })
-            .eq('user_id', user.id)
-            .eq('is_read', false);
+            .eq('user_id', user.id);
 
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Lỗi markAllNotificationsAsReadAction:', error);
+        console.error('❌ Lỗi markAllNotificationsAsReadAction:', error.message);
         return { success: false, error: error.message };
     }
+}
 }
 
 /**
