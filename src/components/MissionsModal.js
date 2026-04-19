@@ -36,6 +36,7 @@ export default function MissionsModal({ isOpen, onClose }) {
     };
 
     const loadCompass = async (userId) => {
+        try {
             const { data: allManga, error: mangaErr } = await supabase.from('mangas').select('id, title, cover_image, status');
             const { data: readLogs, error: logsErr } = await supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId);
             const { data: allChapters, error: chapErr } = await supabase.from('chapters').select('id, manga_id');
