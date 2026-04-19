@@ -11,7 +11,7 @@ import MissionsModal from "./MissionsModal";
 import NotificationBell from "./NotificationBell";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Suspense } from 'react';
+import { Suspense, useCallback } from 'react';
 
 // 🔔 HELPER COMPONENT ĐỂ XỬ LÝ URL QUERY PARAM TRONG SUSPENSE 🍀
 // ĐỊNH NGHĨA NGOÀI ĐỂ TRÁNH LỖI CLIENT-SIDE EXCEPTION 🚀
@@ -39,6 +39,18 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchRef = useRef(null);
+
+  const handleOpenMissions = useCallback(() => {
+    setIsMissionsOpen(true);
+  }, []);
+
+  const handleCloseMissions = () => {
+    setIsMissionsOpen(false);
+    // 🪄 XÓA THAM SỐ TAB TRÊN URL KHI ĐÓNG BẢNG 🍀
+    if (window.location.search.includes('tab=')) {
+        router.replace(pathname);
+    }
+  };
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -386,9 +398,9 @@ export default function Navbar() {
         )}
       </AnimatePresence>
       <Suspense fallback={null}>
-        <MissionsURLHandler onOpenMissions={() => setIsMissionsOpen(true)} />
+        <MissionsURLHandler onOpenMissions={handleOpenMissions} />
       </Suspense>
-      <MissionsModal isOpen={isMissionsOpen} onClose={() => setIsMissionsOpen(false)} />
+      <MissionsModal isOpen={isMissionsOpen} onClose={handleCloseMissions} />
     </>
   );
 }
