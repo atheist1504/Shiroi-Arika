@@ -11,6 +11,7 @@ import MissionsModal from "./MissionsModal";
 import NotificationBell from "./NotificationBell";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Suspense } from 'react';
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,8 +23,21 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const searchRef = useRef(null);
+
+  // 🔔 HELPER COMPONENT ĐỂ XỬ LÝ URL QUERY PARAM TRONG SUSPENSE 🍀
+  const MissionsURLHandler = () => {
+    const searchParams = useSearchParams();
+    
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'achievements' || tab === 'missions') {
+            setIsMissionsOpen(true);
+        }
+    }, [searchParams]);
+    
+    return null;
+  };
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -75,12 +89,6 @@ export default function Navbar() {
     checkUser();
     window.addEventListener('storage', checkUser);
     
-    // 🔔 TỰ ĐỘNG MỞ KHO THÀNH TỰU NẾU CÓ THAM SỐ TAB 🍀
-    const tab = searchParams.get('tab');
-    if (tab === 'achievements' || tab === 'missions') {
-        setIsMissionsOpen(true);
-    }
-
     setIsMounted(true);
 
     const handleClickOutside = (event) => {
@@ -376,6 +384,9 @@ export default function Navbar() {
           </div>
         )}
       </AnimatePresence>
+      <Suspense fallback={null}>
+        <MissionsURLHandler />
+      </Suspense>
       <MissionsModal isOpen={isMissionsOpen} onClose={() => setIsMissionsOpen(false)} />
     </>
   );
