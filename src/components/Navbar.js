@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 import CheckIn from "./CheckIn";
@@ -22,6 +22,7 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -74,6 +75,12 @@ export default function Navbar() {
     checkUser();
     window.addEventListener('storage', checkUser);
     
+    // 🔔 TỰ ĐỘNG MỞ KHO THÀNH TỰU NẾU CÓ THAM SỐ TAB 🍀
+    const tab = searchParams.get('tab');
+    if (tab === 'achievements' || tab === 'missions') {
+        setIsMissionsOpen(true);
+    }
+
     setIsMounted(true);
 
     const handleClickOutside = (event) => {

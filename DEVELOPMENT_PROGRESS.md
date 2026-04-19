@@ -95,9 +95,11 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Domain Typo Fix**: Sửa lỗi sai tên miền (thiếu dấu gạch ngang) trong `notifications.js`. 🛠️✅
 - [x] **Diagnostic Identification**: Xác định lỗi thiếu `SUPABASE_SERVICE_ROLE_KEY` trên Vercel qua link debug. 🕵️‍♂️🛡️
 
+- [x] **Notification Deep-link Fix**: Cập nhật `Navbar.js` và `NotificationBell.js` để tự động mở Kho thành tựu (Missions Modal) khi nhấn vào thông báo nhiệm vụ. 🎯✨
+
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TỰ ĐỘNG THỰC HIỆN GIT add, commit và push lên github TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 18:05 - 19/04/2026 (Diagnostic & Domain Fix Sync)*
+*Cập nhật lần cuối: 18:30 - 19/04/2026 (Deep-link & UX Optimization)*

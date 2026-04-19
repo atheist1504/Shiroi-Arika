@@ -142,7 +142,7 @@ export default function NotificationBell() {
             if (data.mangaId) return `/manga/${data.mangaId}`;
         }
         if (notif.type === 'system' && data.missionKey) {
-            return '/profile?tab=achievements';
+            return '?tab=achievements';
         }
         if (data.mangaId) return `/manga/${data.mangaId}`;
         return '#';
