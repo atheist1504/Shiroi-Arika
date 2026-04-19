@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { calculateLevel, calculateProgress, calculateTitle, TITLES, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
-import { getNotificationsAction, markNotificationAsReadAction } from '@/lib/actions';
+import { getNotificationsAction, markNotificationAsReadAction, cleanupNotificationsAction } from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -36,6 +36,8 @@ export default function ProfilePage() {
   const [notifications, setNotifications] = useState([]); // 🔔 Lịch sử thông báo 🍀
   const [checkInDates, setCheckInDates] = useState([]); // 📅 Các ngày đã điểm danh THÁNG NÀY 🍀
   const [totalCheckIns, setTotalCheckIns] = useState(0); // 🔥 Tổng số ngày điểm danh trọn đời 🍀
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [hasMoreNotifications, setHasMoreNotifications] = useState(true);
   const fileInputRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
@@ -69,11 +71,13 @@ export default function ProfilePage() {
           fetchStats(data.id);
           fetchXpLogs(data.id);
           fetchNotifications();
-        } else {
-          setUser(userData);
-          fetchStats(userData.id);
-          fetchXpLogs(userData.id);
-          fetchNotifications();
+          
+          // 🧹 TỰ ĐỘNG DỌN DẸP THÔNG BÁO CŨ HƠN 1 TUẦN 🛡️
+          cleanupNotificationsAction().then(res => {
+            if (res.success && res.deletedCount > 0) {
+              console.log(`🧹 Đã dọn dẹp ${res.deletedCount} thông báo cũ.`);
+            }
+          });
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -156,10 +160,27 @@ export default function ProfilePage() {
     }
   };
 
-  const fetchNotifications = async () => {
-    const res = await getNotificationsAction(50); // Lấy 50 thông báo gần nhất
-    if (res.success) {
-      setNotifications(res.notifications);
+  const fetchNotifications = async (isLoadMore = false) => {
+    if (notificationsLoading) return;
+    try {
+      setNotificationsLoading(true);
+      const limit = 20;
+      const offset = isLoadMore ? notifications.length : 0;
+      
+      const res = await getNotificationsAction(limit, offset);
+      if (res.success) {
+        if (isLoadMore) {
+          setNotifications(prev => [...prev, ...res.notifications]);
+        } else {
+          setNotifications(res.notifications);
+        }
+        // Nếu số lượng trả về ít hơn limit thì nghĩa là hết dữ liệu 🛡️
+        setHasMoreNotifications(res.notifications.length === limit);
+      }
+    } catch (err) {
+      console.error("Lỗi lấy thông báo:", err);
+    } finally {
+      setNotificationsLoading(false);
     }
   };
 
@@ -589,7 +610,9 @@ export default function ProfilePage() {
                               </div>
                               <div>
                                  <div className="text-[10px] font-black text-white uppercase tracking-tight">{typeInfo.label}</div>
-                                 <div className="text-[8px] text-gray-600 font-bold">{new Date(log.created_at).toLocaleString('vi-VN')}</div>
+                                 <div className="text-[8px] text-gray-600 font-bold">
+                                    {log.created_at ? new Date(log.created_at).toLocaleString('vi-VN') : 'Vừa xong'}
+                                 </div>
                               </div>
                            </div>
                            <div className="text-right">
@@ -621,49 +644,75 @@ export default function ProfilePage() {
                </div>
 
                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {notifications && notifications.length > 0 ? notifications.map((notif) => (
-                      <div 
-                        key={notif.id} 
-                        onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
-                        className={`flex gap-4 p-5 rounded-[28px] border transition-all relative group cursor-pointer ${
-                          !notif.is_read 
-                          ? 'bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50]/40' 
-                          : 'bg-black/40 border-white/5 hover:border-white/10'
-                        }`}
-                      >
-                         <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                            {notif.type === 'chapter_update' ? '📚' : '🔔'}
-                         </div>
-                         <div className="flex-1 space-y-1">
-                            <div className="flex justify-between items-start">
-                               <h4 className={`text-[11px] font-black uppercase tracking-wide ${!notif.is_read ? 'text-[#4caf50]' : 'text-gray-300'}`}>
-                                  {notif.title}
-                               </h4>
-                               <span className="text-[8px] font-bold text-gray-600 uppercase">
-                                  {formatSafeDistance(notif.created_at)}
-                               </span>
-                            </div>
-                            <p className="text-[10px] text-gray-500 font-bold leading-relaxed">{notif.body}</p>
-                            
-                            {notif.data?.mangaId && (
-                               <div className="pt-2">
-                                  <Link 
-                                    href={`/manga/${notif.data.mangaId}`}
-                                    className="inline-flex items-center gap-2 text-[9px] font-black text-[#4caf50] uppercase tracking-wider group/link"
-                                  >
-                                    Đến xem ngay
-                                    <svg className="w-2.5 h-2.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                                  </Link>
+                  {notifications && notifications.length > 0 ? (
+                      <>
+                        {notifications.map((notif) => (
+                          <div 
+                            key={notif.id} 
+                            onClick={() => !notif.is_read && handleMarkAsRead(notif.id)}
+                            className={`flex gap-4 p-5 rounded-[28px] border transition-all relative group cursor-pointer ${
+                              !notif.is_read 
+                              ? 'bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50]/40' 
+                              : 'bg-black/40 border-white/5 hover:border-white/10'
+                            }`}
+                          >
+                             <div className="w-10 h-10 shrink-0 rounded-2xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                                {notif.type === 'chapter_update' ? '📚' : '🔔'}
+                             </div>
+                             <div className="flex-1 space-y-1">
+                                <div className="flex justify-between items-start">
+                                   <h4 className={`text-[11px] font-black uppercase tracking-wide ${!notif.is_read ? 'text-[#4caf50]' : 'text-gray-300'}`}>
+                                      {notif.title}
+                                   </h4>
+                                   <span className="text-[8px] font-bold text-gray-600 uppercase">
+                                      {formatSafeDistance(notif.created_at)}
+                                   </span>
                                 </div>
-                            )}
-                         </div>
+                                <p className="text-[10px] text-gray-500 font-bold leading-relaxed">{notif.body}</p>
+                                
+                                {notif.data?.mangaId && (
+                                   <div className="pt-2">
+                                      <Link 
+                                        href={`/manga/${notif.data.mangaId}`}
+                                        className="inline-flex items-center gap-2 text-[9px] font-black text-[#4caf50] uppercase tracking-wider group/link"
+                                      >
+                                        Đến xem ngay
+                                        <svg className="w-2.5 h-2.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                      </Link>
+                                    </div>
+                                )}
+                             </div>
+                          </div>
+                        ))}
+
+                        {hasMoreNotifications && (
+                          <div className="pt-4 pb-4 flex justify-center">
+                            <button
+                              onClick={() => fetchNotifications(true)}
+                              disabled={notificationsLoading}
+                              className="px-8 py-3 rounded-2xl bg-[#4caf50]/10 border border-[#4caf50]/20 text-[10px] font-black text-[#4caf50] uppercase tracking-widest hover:bg-[#4caf50]/20 hover:border-[#4caf50]/40 transition-all flex items-center gap-3 group relative overflow-hidden"
+                            >
+                              {notificationsLoading ? (
+                                <>
+                                  <div className="w-3 h-3 border-2 border-[#4caf50]/30 border-t-[#4caf50] rounded-full animate-spin"></div>
+                                  <span className="animate-pulse">Đang kết nối...</span>
+                                </>
+                              ) : (
+                                <>
+                                  Xem thêm thông báo cũ
+                                  <svg className="w-3 h-3 group-hover:translate-y-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" /></svg>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </>
+                   ) : (
+                      <div className="py-20 text-center space-y-4 opacity-50">
+                         <div className="text-5xl opacity-20">📭</div>
+                         <p className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Hộp thư đang trống...</p>
                       </div>
-                  )) : (
-                     <div className="py-20 text-center space-y-4 opacity-50">
-                        <div className="text-5xl opacity-20">📭</div>
-                        <p className="text-[10px] font-black uppercase text-gray-600 tracking-widest">Hộp thư đang trống...</p>
-                     </div>
-                  )}
+                   )}
                </div>
             </div>
 

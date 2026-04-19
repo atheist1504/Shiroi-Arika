@@ -1139,7 +1139,7 @@ export async function addCommentAction(commentData) {
     }
 }
 
-export async function getNotificationsAction(limit = 20) {
+export async function getNotificationsAction(limit = 20, offset = 0) {
     try {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'ChÆ°a Ä‘Äƒng nháº­p' };
@@ -1150,7 +1150,7 @@ export async function getNotificationsAction(limit = 20) {
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(limit);
+            .range(offset, offset + limit - 1);
 
         if (error) throw error;
         return { success: true, notifications: data };
@@ -1226,6 +1226,31 @@ export async function saveFcmTokenAction(token, platform = 'web') {
         return { success: true };
     } catch (error) {
         console.error('Lá»—i saveFcmTokenAction:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * ?? SERVER ACTION: T? d?ng xóa thông báo cu hon 1 tu?n
+ */
+export async function cleanupNotificationsAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chua dang nh?p' };
+
+        const ONE_WEEK_AGO = new Date();
+        ONE_WEEK_AGO.setDate(ONE_WEEK_AGO.getDate() - 7);
+
+        const { error, count } = await supabaseAdmin
+            .from('shiroi_notifications')
+            .delete({ count: 'exact' })
+            .eq('user_id', user.id)
+            .lt('created_at', ONE_WEEK_AGO.toISOString());
+
+        if (error) throw error;
+        return { success: true, deletedCount: count };
+    } catch (error) {
+        console.error('? L?i cleanupNotificationsAction:', error.message);
         return { success: false, error: error.message };
     }
 }
