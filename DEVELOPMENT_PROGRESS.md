@@ -92,9 +92,12 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Syntax Error Clean-up**: Đã dọn dẹp toàn bộ lỗi `}` dư thừa gây sập Build Vercel. 🛠️✅
 - [x] **Full Gamification System Test**: Đã xác minh luồng thực tế (Signup -> Checkin -> Read) chạy ổn định, cộng XP chuẩn. 💎✅
 
+- [x] **Domain Typo Fix**: Sửa lỗi sai tên miền (thiếu dấu gạch ngang) trong `notifications.js`. 🛠️✅
+- [x] **Diagnostic Identification**: Xác định lỗi thiếu `SUPABASE_SERVICE_ROLE_KEY` trên Vercel qua link debug. 🕵️‍♂️🛡️
+
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TỰ ĐỘNG THỰC HIỆN GIT add, commit và push lên github TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 13:20 - 19/04/2026 (Notification Hardening & Deployment Fix)*
+*Cập nhật lần cuối: 18:05 - 19/04/2026 (Diagnostic & Domain Fix Sync)*

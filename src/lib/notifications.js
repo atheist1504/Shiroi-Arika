@@ -37,7 +37,7 @@ export async function sendMangaNotification(title, mangaName, mangaId, coverImag
     },
     data: {
       mangaId: mangaId.toString(),
-      url: `https://shiroiarika.vercel.app/manga/${mangaId}`
+      url: `https://shiroi-arika.vercel.app/manga/${mangaId}`
     },
     topic: 'all_manga_updates'
   };
