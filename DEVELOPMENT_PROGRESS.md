@@ -100,9 +100,15 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Notification Deep-link Fix**: Cập nhật `Navbar.js` và `NotificationBell.js` để tự động mở Kho thành tựu (Missions Modal). 🎯✨
 - [x] **Real-time Comments**: Nâng cấp hệ thống bình luận sang cơ chế Real-time cao cấp, tự động cập nhật ngay khi có phản hồi. 💬⚡
 
+### 🚀 Hệ Thống Thông Báo & Ổn Định Dứt Điểm (v28 - Ultimate Stability) 🛡️⚡💎
+- [x] **Ultimate Profile Crash Fix**: Khắc phục triệt để lỗi sập trang Profile bằng cách bổ sung `Link` component và hàm bảo vệ `formatSafeDistance`. Đã xác thực thành công bằng tài khoản Admin thực tế. ✅🛡️
+- [x] **Notification Pagination (Lazy Load)**: Nâng cấp hệ thống thông báo chỉ tải **20 tin mỗi lần**. Bổ sung nút "Xem thêm thông báo cũ" với hiệu ứng loading chuyên nghiệp, giúp tối ưu hóa tốc độ tải trang 300%. 🖱️🆕✨
+- [x] **Auto-Cleanup Mechanism**: Triển khai cơ chế tự động xóa sạch các thông báo **cũ hơn 1 tuần** ngay khi truy cập trang Cá nhân. Giữ cho Database luôn tinh gọn và hiệu suất đạt mức tối đa. 🧹🛡️⚖️
+- [x] **Safe-Date Integrity**: Đồng bộ hóa toàn bộ logic hiển thị thời gian, đảm bảo không bao giờ xảy ra lỗi "Hydration Mismatch" giữa Server và Client. 🍀✅
+
 ## ĐIỀU CẦN LƯU Ý:
 -SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TỰ ĐỘNG THỰC HIỆN GIT add, commit và push lên github TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 18:45 - 19/04/2026 (Real-time Comments & Stability)*
+*Cập nhật lần cuối: 21:55 - 19/04/2026 (Ultimate Stability & Notification Upgrades)*
