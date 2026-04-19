@@ -42,11 +42,12 @@ Dự án Manga Platform thế hệ mới.
     - **Vietnamese Logic Audit**: Nâng cấp hàm `isGibberish` để chặn spam tiếng Việt thông minh hơn (chặn lặp từ, ký tự đặc biệt không có chữ cái).
     - **Mobile UX Optimization**: Xác thực độ phản hồi của Compact Filter và Reader trên thiết bị di động (375px).
     - **Build Fix**: Khắc phục lỗi thiếu `firebase-admin` trong môi trường local. 🛠️✅
-- [x] **Notification System (v26 - Social & Engagement)**: 🔔🚀
-    - **In-app Notification Hub**: Triển khai bảng `shiroi_notifications` và hệ thống thông báo nội bộ (Bell icon). Người dùng nhận được tin nhắn ngay trên Navbar khi có chương mới.
-    - **Smart Follow Logic**: Tích hợp vào `publishChapterAction` để tự động gửi thông báo đến hàng nghìn người theo dõi chỉ với một click đăng chương.
-    - **Targeted Push Readiness**: Nâng cấp `notifications.js` hỗ trợ FCM v1, sẵn sàng cho việc gửi Push Notification đa thiết bị.
-    - **Profile Integration**: Thêm mục "Trung tâm Thông báo" vào trang cá nhân để quản lý lịch sử và trạng thái đã đọc. 🛡️🍀
+### 🔔 Hệ Thống Thông Báo (v27 - Hardened & Real-time) 🚀
+- [x] **Real-time Synchronization**: Kích hoạt Supabase Real-time cho bảng `shiroi_notifications`. Đảm bảo thông báo hiện lên ngay lập tức mà không cần F5. 🟢⚡
+- [x] **Diagnostic API (`/api/debug-notif`)**: Triển khai endpoint kiểm tra kết nối Admin, biến môi trường và quyền truy cập DB trực tiếp trên Production. 🕵️‍♂️🛡️
+- [x] **Connection Status HUD**: Thêm đèn tín hiệu trạng thái kết nối (🟢/🔴) vào Notification Bell để người dùng (và Admin) dễ dàng nhận biết trạng thái đồng bộ. 🚦✨
+- [x] **Auth Sync Enhancement**: Khắc phục lỗi lệch phiên đăng nhập giữa Navbar và Notification bằng cơ chế đồng bộ hóa Server-side API fallback. 🔐🛡️
+- [x] **Production Error Logging**: Nâng cấp log lỗi chuyên sâu trong `notifications.js` để bắt chính xác các mã lỗi Supabase trên Vercel. 🛠️✅
 
 ### 🌩️ Lưu Trữ & Hiệu Năng (v5 - Storage Master) 💾
 - [x] **Retrospective Compression**: Đã chạy Script di trú (Migration) thực tế, nén thành công **491 trang truyện cũ** trên Cloudflare R2. 📉
@@ -86,11 +87,14 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Reader Image Load**: Đã xác nhận trang đọc lấy dữ liệu qua Admin Client ổn định. ✅
 - [x] **Vietnamese Logic V2 Test**: Đã PASS 100% bộ test mới về danh hiệu và bộ lọc spam. 🇻🇳🧪
 - [x] **Missions Logic V2 Test**: Đã xác nhận tính toán XP chinh phục và nhiệm vụ trọn đời chuẩn xác. 🎯✅
+- [x] **Real-time Subscription Test**: Đã xác nhận trạng thái 🟢 ổn định khi đăng nhập.
+- [x] **Debug API Test**: Đã chạy thành công `/api/debug-notif` để verify các biến môi trường. 🕵️‍♂️
+- [x] **Syntax Error Clean-up**: Đã dọn dẹp toàn bộ lỗi `}` dư thừa gây sập Build Vercel. 🛠️✅
 - [x] **Full Gamification System Test**: Đã xác minh luồng thực tế (Signup -> Checkin -> Read) chạy ổn định, cộng XP chuẩn. 💎✅
 
 ## ĐIỀU CẦN LƯU Ý:
--SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
+-SAU NÀY KHI CẬP NHẬT HAY SỬA CODE GÌ XONG THÌ PHẢI GHI CHÚ NGAY VÀO NHẬT KÝ DEVELOPMENT VÀ TỰ ĐỘNG THỰC HIỆN GIT add, commit và push lên github TẢI CODE LÊN GITHUB NGAY LẬP TỨC LUÔN NHÉ!!!
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 23:10 - 17/04/2026 (Verify XP & Gamification Audit)*
+*Cập nhật lần cuối: 13:20 - 19/04/2026 (Notification Hardening & Deployment Fix)*
