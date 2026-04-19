@@ -36,28 +36,33 @@ export default function MissionsModal({ isOpen, onClose }) {
     };
 
     const loadCompass = async (userId) => {
-        try {
-            const { data: allManga } = await supabase.from('mangas').select('id, title, cover_image, status');
-            const { data: readLogs } = await supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId);
-            const { data: allChapters } = await supabase.from('chapters').select('id, manga_id');
+            const { data: allManga, error: mangaErr } = await supabase.from('mangas').select('id, title, cover_image, status');
+            const { data: readLogs, error: logsErr } = await supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId);
+            const { data: allChapters, error: chapErr } = await supabase.from('chapters').select('id, manga_id');
+
+            if (mangaErr || !allManga) return;
 
             const mangaMap = {};
             allManga.forEach(m => {
                 mangaMap[m.id] = { ...m, chapters: [], readCount: 0 };
             });
 
-            allChapters.forEach(c => {
-                if (mangaMap[c.manga_id]) mangaMap[c.manga_id].chapters.push(c.id);
-            });
+            if (allChapters) {
+                allChapters.forEach(c => {
+                    if (mangaMap[c.manga_id]) mangaMap[c.manga_id].chapters.push(c.id);
+                });
+            }
 
-            readLogs.forEach(log => {
-                if (mangaMap[log.manga_id]) mangaMap[log.manga_id].readCount++;
-            });
+            if (readLogs) {
+                readLogs.forEach(log => {
+                    if (mangaMap[log.manga_id]) mangaMap[log.manga_id].readCount++;
+                });
+            }
 
-            const pending = Object.values(mangaMap).filter(m => m.readCount < m.chapters.length && m.chapters.length > 0)
+            const pending = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount < m.chapters.length)
                 .sort((a, b) => b.readCount - a.readCount);
             
-            const finishedCount = Object.values(mangaMap).filter(m => m.readCount >= m.chapters.length && m.chapters.length > 0).length;
+            const finishedCount = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount >= m.chapters.length).length;
 
             setCompassData({
                 total: allManga.length,
@@ -145,7 +150,7 @@ export default function MissionsModal({ isOpen, onClose }) {
                                 </div>
                             ) : (
                                 Object.entries(
-                                    missions.reduce((acc, m) => {
+                                    (missions || []).reduce((acc, m) => {
                                         if (!acc[m.category]) acc[m.category] = [];
                                         acc[m.category].push(m);
                                         return acc;

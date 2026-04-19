@@ -115,9 +115,12 @@ export default function ProfilePage() {
         
         if (!checkInError && checkInData) {
           // 🇻🇳 CHUYỂN ĐỔI NGÀY SANG DẠNG CHUỖI 'YYYY-MM-DD' (VN) ĐỂ SO SÁNH CHUẨN XÁC 🛡️
-          const dates = checkInData.map(log => 
-            new Date(log.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })
-          );
+          const dates = checkInData
+            .map(log => {
+              const d = new Date(log.created_at);
+              return isNaN(d.getTime()) ? null : d.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+            })
+            .filter(Boolean);
           setCheckInDates(dates);
         }
 
@@ -261,7 +264,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return (
+  if (!isMounted || loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#0a0c0a]">
       <div className="text-[#4caf50] font-black animate-pulse text-[10px] uppercase tracking-widest italic">Đang kết nối Thánh địa Shiroi...</div>
     </div>
