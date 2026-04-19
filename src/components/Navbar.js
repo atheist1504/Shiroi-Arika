@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 import CheckIn from "./CheckIn";
@@ -11,22 +11,8 @@ import MissionsModal from "./MissionsModal";
 import NotificationBell from "./NotificationBell";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Suspense, useCallback } from 'react';
+import { useCallback } from 'react';
 
-// 🔔 HELPER COMPONENT ĐỂ XỬ LÝ URL QUERY PARAM TRONG SUSPENSE 🍀
-// ĐỊNH NGHĨA NGOÀI ĐỂ TRÁNH LỖI CLIENT-SIDE EXCEPTION 🚀
-const MissionsURLHandler = ({ onOpenMissions }) => {
-  const searchParams = useSearchParams();
-  
-  useEffect(() => {
-      const tab = searchParams.get('tab');
-      if (tab === 'achievements' || tab === 'missions') {
-          onOpenMissions();
-      }
-  }, [searchParams, onOpenMissions]);
-  
-  return null;
-};
 
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,6 +88,15 @@ export default function Navbar() {
     checkUser();
     window.addEventListener('storage', checkUser);
     
+    // 🍀 KIỂM TRA URL ĐỂ MỞ NHIỆM VỤ (DÙNG WINDOW ĐỂ ỔN ĐỊNH) ✨
+    if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        if (tab === 'achievements' || tab === 'missions') {
+            setIsMissionsOpen(true);
+        }
+    }
+
     setIsMounted(true);
 
     const handleClickOutside = (event) => {
@@ -397,9 +392,6 @@ export default function Navbar() {
           </div>
         )}
       </AnimatePresence>
-      <Suspense fallback={null}>
-        <MissionsURLHandler onOpenMissions={handleOpenMissions} />
-      </Suspense>
       <MissionsModal isOpen={isMissionsOpen} onClose={handleCloseMissions} />
     </>
   );
