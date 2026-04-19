@@ -13,6 +13,21 @@ import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Suspense } from 'react';
 
+// 🔔 HELPER COMPONENT ĐỂ XỬ LÝ URL QUERY PARAM TRONG SUSPENSE 🍀
+// ĐỊNH NGHĨA NGOÀI ĐỂ TRÁNH LỖI CLIENT-SIDE EXCEPTION 🚀
+const MissionsURLHandler = ({ onOpenMissions }) => {
+  const searchParams = useSearchParams();
+  
+  useEffect(() => {
+      const tab = searchParams.get('tab');
+      if (tab === 'achievements' || tab === 'missions') {
+          onOpenMissions();
+      }
+  }, [searchParams, onOpenMissions]);
+  
+  return null;
+};
+
 export default function Navbar() {
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
@@ -24,20 +39,6 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchRef = useRef(null);
-
-  // 🔔 HELPER COMPONENT ĐỂ XỬ LÝ URL QUERY PARAM TRONG SUSPENSE 🍀
-  const MissionsURLHandler = () => {
-    const searchParams = useSearchParams();
-    
-    useEffect(() => {
-        const tab = searchParams.get('tab');
-        if (tab === 'achievements' || tab === 'missions') {
-            setIsMissionsOpen(true);
-        }
-    }, [searchParams]);
-    
-    return null;
-  };
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -385,7 +386,7 @@ export default function Navbar() {
         )}
       </AnimatePresence>
       <Suspense fallback={null}>
-        <MissionsURLHandler />
+        <MissionsURLHandler onOpenMissions={() => setIsMissionsOpen(true)} />
       </Suspense>
       <MissionsModal isOpen={isMissionsOpen} onClose={() => setIsMissionsOpen(false)} />
     </>
