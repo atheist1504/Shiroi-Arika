@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import PageTransition from "../components/PageTransition";
 import "./globals.css";
+import { Suspense } from 'react';
 
 export const metadata = {
   metadataBase: new URL('https://shiroi-arika.vercel.app'),
@@ -44,12 +45,16 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased">
         <div className="layout-root">
-          <Navbar />
+          <Suspense fallback={<div className="h-[70px] bg-[#0a0c0a] animate-pulse whitespace-nowrap overflow-hidden"></div>}>
+            <Navbar />
+          </Suspense>
 
           <main className="main-content">
-            <PageTransition>
-                {children}
-            </PageTransition>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0a0c0a] animate-fade-in"><div className="w-12 h-12 border-4 border-[#4caf50]/20 border-t-[#4caf50] rounded-full animate-spin"></div></div>}>
+                <PageTransition>
+                    {children}
+                </PageTransition>
+            </Suspense>
           </main>
 
           <footer className="footer shadow-2xl">

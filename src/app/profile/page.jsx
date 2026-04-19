@@ -320,7 +320,7 @@ export default function ProfilePage() {
               {user && (user.selected_badge || calculateTitle(user.xp).name) && (
                 <div className="flex flex-col items-center gap-1">
                   <span className="text-[10px] font-black px-6 py-2 rounded-xl border border-[#4caf50]/30 text-[#4caf50] uppercase tracking-[0.4em] bg-[#4caf50]/15 shadow-[0_0_30px_rgba(76,175,80,0.2)] animate-pulse border-t-[#4caf50]/60">
-                    {user.selected_badge || calculateTitle(user.xp).name}
+                    {user?.selected_badge || calculateTitle(user?.xp).name}
                   </span>
                   {user.selected_badge && user.selected_badge !== calculateTitle(user.xp).name && (
                     <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest opacity-40">
