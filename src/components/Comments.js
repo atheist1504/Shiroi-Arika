@@ -226,18 +226,24 @@ export default function Comments({ mangaId, chapterId }) {
     };
     syncCookie();
 
-    // ⚡ KÍCH HOẠT REAL-TIME CHO DANH SÁCH BÌNH LUẬN 🚀
+    // ⚡ KÍCH HOẠT REAL-TIME CAO CẤP CHO BÌNH LUẬN 🚀
     const channel = supabase
-        .channel('comments-realtime')
+        .channel(`room-${mangaId || chapterId || 'global'}`)
         .on('postgres_changes', { 
-            event: '*', 
+            event: '*', // Nghe cả INSERT, UPDATE, DELETE 🎯
             schema: 'public', 
             table: 'comments',
+            // Lọc theo manga_id hoặc chapter_id để tránh nhận nhầm của truyện khác
             filter: mangaId ? `manga_id=eq.${mangaId}` : (chapterId ? `chapter_id=eq.${chapterId}` : undefined)
-        }, () => {
-            fetchComments(true); // Tải lại danh sách khi có thay đổi (Silent)
+        }, (payload) => {
+            console.log("💬 Phát hiện thay đổi bình luận (Real-time):", payload.eventType);
+            fetchComments(true); // Tải lại danh sách (Silent) khi có bất kỳ thay đổi nào
         })
-        .subscribe();
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log("✅ Đã kết nối Real-time cho mục Bình luận");
+            }
+        });
 
     return () => {
         window.removeEventListener('storage', checkSession);
