@@ -61,6 +61,8 @@ export async function createInAppNotification(userId, title, body, type, data = 
     if (!supabaseAdmin) return { success: false, error: 'Supabase Admin not available' };
 
     try {
+        console.log(`🔔 [Notification] Đang tạo thông báo cho User: ${userId}, Type: ${type}`);
+        
         const { data: notification, error } = await supabaseAdmin
             .from('shiroi_notifications')
             .insert([{
@@ -73,10 +75,20 @@ export async function createInAppNotification(userId, title, body, type, data = 
             .select()
             .single();
 
-        if (error) throw error;
+        if (error) {
+            console.error("❌ [Notification] Database Error:", {
+                code: error.code,
+                message: error.message,
+                details: error.details,
+                hint: error.hint
+            });
+            throw error;
+        }
+        
+        console.log("✅ [Notification] Tạo thông báo thành công:", notification.id);
         return { success: true, notification };
     } catch (err) {
-        console.error("❌ Error creating in-app notification:", err);
+        console.error("❌ [Notification] Critical Exception:", err.message);
         return { success: false, error: err.message };
     }
 }

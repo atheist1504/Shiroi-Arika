@@ -361,7 +361,7 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
     if (followers && followers.length > 0) {
         const body = `Siêu phẩm "${mangaName}" vừa cập nhật chương ${chapterNumber}. Đọc ngay nào! 🚀`;
         const notifType = 'chapter_update';
-        const notifData = { mangaId, mangaName, chapterIndex: chapterNumber };
+        const notifData = { mangaId, chapterId: null, mangaName, chapterNumber }; // chapterId null as we might not have it here, but we have mangaId
 
         // Tạo thông báo trong ứng dụng cho từng follower (Xử lý hàng loạt) ⚡
         const notificationPromises = followers.map(f => 
@@ -463,6 +463,21 @@ export async function addReadXPAction(mangaId, chapterId) {
     if (!resLog.success) return resLog;
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+
+    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
+    try {
+        const { count: dailyRead } = await client
+            .from('shiroi_read_chapters')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .gte('read_at', getStartOfVNDay().toISOString());
+        
+        if (dailyRead === 1 || dailyRead === 3) {
+            const mTitle = dailyRead === 1 ? "Độc hành giả I" : "Độc hành giả II";
+            await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
+        }
+    } catch (e) {}
+
     return { success: true, xpGain: 20, user: updatedUser };
   } catch (error) {
     console.error('Lỗi addReadXPAction:', error);
@@ -554,6 +569,13 @@ export async function performCheckInAction() {
       .single();
 
     if (updateError) throw updateError;
+    
+    // 🔔 Gửi thông báo trong ứng dụng (Silent fail)
+    try {
+        const title = `Điểm Danh Thành Công! 📅`;
+        const body = `Bạn vừa nhận được ${xpGain} XP (Chuỗi: ${newStreak} ngày). 🍀`;
+        await createInAppNotification(userId, title, body, 'system', { streak: newStreak });
+    } catch (e) {}
 
     return { success: true, user: updatedUser, xpGain };
   } catch (error) {
@@ -660,7 +682,7 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
         if (followers && followers.length > 0) {
             const body = `Siêu phẩm "${mangaTitle}" vừa cập nhật chương ${chapter.chapter_number}. Đọc ngay nào!`;
             const notifType = 'chapter_update';
-            const notifData = { mangaId, chapterId: chapter.id, mangaName: mangaTitle };
+            const notifData = { mangaId, chapterId: chapter.id, mangaName: mangaTitle, chapterNumber: chapter.chapter_number };
 
             // Tạo thông báo trong ứng dụng cho từng follower
             const notificationPromises = followers.map(f => 
@@ -845,6 +867,13 @@ export async function performLuckyDrawAction() {
     }
 
     // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
+    // 🔔 Gửi thông báo trong ứng dụng (Silent fail)
+    try {
+        const title = `Bốc Quà May Mắn! 🎁`;
+        const body = `Chúc mừng! Bạn vừa nhận được ${xpGain} XP từ Hộp Quà Shiroi. 🍀`;
+        await createInAppNotification(userId, title, body, 'system', { xpGain });
+    } catch (e) {}
+
     return { success: true, xpGain, user: updatedUser };
   } catch (error) {
     console.error('Lỗi performLuckyDrawAction:', error);
@@ -1013,6 +1042,16 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     if (!resLog.success) throw new Error(resLog.error);
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+
+    // 5. Gửi thông báo trong ứng dụng (Silent fail) 🔔🍀
+    try {
+        const title = `Nhận thưởng thành công! 💎`;
+        const body = `Bạn vừa nhận được ${rewardXp} XP từ nhiệm vụ ${mission?.title || 'Chinh phục'}.`;
+        await createInAppNotification(userId, title, body, 'system', { missionKey });
+    } catch (e) {
+        console.warn("⚠️ [Notification] Lỗi gửi thông báo nhận thưởng:", e.message);
+    }
+
     return { success: true, rewardXp, user: updatedUser };
   } catch (error) {
     console.error('❌ Lỗi claimMissionRewardAction:', error.message);
@@ -1080,6 +1119,19 @@ export async function addCommentAction(commentData) {
           }
       }
   
+      // 🔔 Kiểm tra hoàn thành nhiệm vụ Bình luận (Silent check) 🏆
+      try {
+          const { count: dailyComment } = await client
+              .from('comments')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', userId)
+              .gte('created_at', getStartOfVNDay().toISOString());
+          
+          if (dailyComment === 1) {
+              await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "Thảo luận viên". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: 'daily_comment_1' });
+          }
+      } catch (e) {}
+
       return { success: true, comment: newComment };
     } catch (error) {
       console.error("❌ Lỗi addCommentAction:", error.message);
@@ -1107,7 +1159,6 @@ export async function getNotificationsAction(limit = 20) {
         return { success: false, error: error.message };
     }
 }
-}
 
 /**
  * 🔔 SERVER ACTION: Đánh dấu thông báo đã đọc
@@ -1130,7 +1181,6 @@ export async function markNotificationAsReadAction(notificationId) {
         return { success: false, error: error.message };
     }
 }
-}
 
 /**
  * 🔔 SERVER ACTION: Đánh dấu tất cả thông báo là đã đọc
@@ -1151,7 +1201,6 @@ export async function markAllNotificationsAsReadAction() {
         console.error('❌ Lỗi markAllNotificationsAsReadAction:', error.message);
         return { success: false, error: error.message };
     }
-}
 }
 
 /**
