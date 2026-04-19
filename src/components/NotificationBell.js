@@ -8,6 +8,18 @@ import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
 
+// 🛡️ HÀM HELPER: Kiểm tra và định dạng thời gian an toàn, tránh sập trang (Anti-crash) 🍀
+const formatSafeDistance = (dateStr) => {
+  try {
+    if (!dateStr) return "Vừa xong";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "Vừa xong";
+    return formatDistanceToNow(d, { addSuffix: true, locale: vi });
+  } catch (err) {
+    return "Vừa xong";
+  }
+};
+
 export default function NotificationBell() {
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
@@ -233,7 +245,7 @@ export default function NotificationBell() {
                                                 </p>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-[10px] text-gray-600 font-bold uppercase tracking-tight">
-                                                        {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
+                                                        {formatSafeDistance(notif.created_at)}
                                                     </span>
                                                     <Link 
                                                         href={getLink(notif)}

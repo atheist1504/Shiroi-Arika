@@ -8,6 +8,18 @@ import { getNotificationsAction, markNotificationAsReadAction } from '@/lib/acti
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
+// 🛡️ HÀM HELPER: Kiểm tra và định dạng thời gian an toàn, tránh sập trang (Anti-crash) 🍀
+const formatSafeDistance = (dateStr) => {
+  try {
+    if (!dateStr) return "Vừa xong";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "Vừa xong";
+    return formatDistanceToNow(d, { addSuffix: true, locale: vi });
+  } catch (err) {
+    return "Vừa xong";
+  }
+};
+
 export default function ProfilePage() {
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState('');
@@ -627,8 +639,8 @@ export default function ProfilePage() {
                                   {notif.title}
                                </h4>
                                <span className="text-[8px] font-bold text-gray-600 uppercase">
-                                  {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
-                                </span>
+                                  {formatSafeDistance(notif.created_at)}
+                               </span>
                             </div>
                             <p className="text-[10px] text-gray-500 font-bold leading-relaxed">{notif.body}</p>
                             
