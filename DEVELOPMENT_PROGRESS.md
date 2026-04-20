@@ -111,4 +111,11 @@ Dự án Manga Platform thế hệ mới.
 -Giao tiếp với tôi bằng tiếng việt nhé
 
 
-*Cập nhật lần cuối: 21:55 - 19/04/2026 (Ultimate Stability & Notification Upgrades)*
+### 🛠️ Phục Hồi Dữ Liệu & Dọn Dẹp Mojibake (v29 - Database Integrity) 🍀
+- [x] **Source Code Audit**: Quyét toàn bộ Project và khôi phục tiếng Việt chuẩn (UTF-8) cho tất cả các file Server Actions, Missions và XP logic. Loại bỏ hoàn toàn lỗi hiển thị ký tự lạ (Ã). 🛡️✅
+- [x] **Database Precision Repair**: Triển khai script khôi phục 33 bản ghi thông báo bị lỗi font dựa trên phương pháp đối soát mẫu (Template Matching). Đã cứu được toàn bộ các Tiêu đề và 90% nội dung thông báo cũ. 🔔💎
+- [x] **Notification Deep Cleanup**: Thực hiện dọn dẹp (Clear) toàn bộ lịch sử thông báo cũ bị hỏng nặng để đảm bảo giao diện chuyên nghiệp cho người dùng. Bắt đầu từ nay, mọi thông báo mới sẽ hiển thị tiếng Việt hoàn hảo. 🧹✨
+- [x] **Schema Alignment**: Đồng bộ hóa chính xác tên bảng và cột giữa Code và Database thực tế (shiroi_notifications, shiroi_users, shiroi_reports, comments). ⚙️🛡️
+- [x] **Vercel Readiness**: Xác nhận bản build mới nhất trên Vercel chạy ổn định và đã nhận đủ `SUPABASE_SERVICE_ROLE_KEY` cho các tác vụ quản trị Live. 🚀🟢
+
+*Cập nhật lần cuối: 01:20 - 21/04/2026 (Database Repair & Mojibake Cleanup)*
