@@ -132,7 +132,7 @@ export async function getAuthenticatedUser() {
       const { data, error } = await client
         .from('shiroi_users')
         .select('id, username, role')
-        .eq('username', user.username)
+        .eq('username', user.username)  
         .single();
       
       if (!error && data) {
