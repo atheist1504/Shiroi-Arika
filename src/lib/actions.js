@@ -18,6 +18,157 @@ const getVietnamTime = () => {
 };
 
 /**
+ * 🔐 SERVER ACTION: Đăng nhập và tạo Session (Cookie)
+ * Thay thế cho việc chỉ dùng LocalStorage 🛡️
+ */
+export async function loginAction(username, password) {
+  try {
+    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
+    const hashed = hashPassword(password);
+
+    const { data: user, error } = await supabase
+      .from('shiroi_users')
+      .select('*')
+      .ilike('username', username.trim())
+      .single();
+
+    if (error || !user) throw new Error('Không tìm thấy tài khoản Shiroi này!');
+    
+    if (user.password !== hashed && user.password !== password) {
+       throw new Error('Mật khẩu chưa chính xác! 🔐');
+    }
+
+    // 🍪 TẠO SESSION BẰNG COOKIE (Hết hạn sau 7 ngày)
+    cookies().set('shiroi_session', JSON.stringify({
+      id: user.id,
+      username: user.username,
+      role: user.role || 'user'
+    }), { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+      sameSite: 'lax'
+    });
+
+    return { success: true, user };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 📝 SERVER ACTION: Đăng ký tài khoản mới và cấp Session
+ * Đồng bộ hóa LocalStorage và Cookie ngay lập tức 🚀
+ */
+export async function signupAction(userData) {
+  try {
+    const { username, password } = userData;
+    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
+    const hashed = hashPassword(password);
+
+    const client = getDbClient();
+
+    // 1. Kiểm tra trùng lặp
+    const { data: existing } = await client
+      .from('shiroi_users')
+      .select('username')
+      .ilike('username', username.trim())
+      .single();
+    
+    if (existing) throw new Error('Tên này đã có chủ nhân sở hữu rồi! 👤');
+
+    // 2. Tạo tài khoản
+    const { data: newUser, error: signupError } = await client
+      .from('shiroi_users')
+      .insert([{
+        ...userData,
+        username: username.trim(),
+        password: hashed,
+        display_name: userData.display_name || username.trim(),
+        xp: 0,
+        level: 1,
+        check_in_streak: 0
+      }])
+      .select()
+      .single();
+
+    if (signupError) throw signupError;
+
+    // 3. TỰ ĐỘNG ĐĂNG NHẬP: Tạo Session bằng Cookie 🍪
+    cookies().set('shiroi_session', JSON.stringify({
+      id: newUser.id,
+      username: newUser.username,
+      role: newUser.role || 'user'
+    }), { 
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+      sameSite: 'lax'
+    });
+
+    return { success: true, user: newUser };
+  } catch (error) {
+    console.error('❌ Lỗi signupAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🔐 HELPER: Lấy thông tin người dùng đang đăng nhập (Auto-healing) 🛡️
+ */
+export async function getAuthenticatedUser() {
+  const sessionData = cookies().get('shiroi_session');
+  if (!sessionData) return null;
+
+  try {
+    let user = JSON.parse(sessionData.value);
+    
+    // 🔍 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING) 🩹
+    if (!user.id && user.username?.toLowerCase() === 'atheist1504') {
+      console.log(`⚠️ [Auth] Phát hiện session thiếu ID cho Admin ${user.username}, đang khôi phục...`);
+      const client = getDbClient();
+      const { data, error } = await client
+        .from('shiroi_users')
+        .select('id, username, role')
+        .eq('username', user.username)
+        .single();
+      
+      if (!error && data) {
+        user.id = data.id;
+        user.role = data.role || 'admin';
+        console.log(`✅ [Auth] Khôi phục ID thành công: ${user.id}`);
+        
+        cookies().set('shiroi_session', JSON.stringify(user), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 7,
+          path: '/',
+          sameSite: 'lax'
+        });
+      }
+    }
+
+    return user.id ? user : null;
+  } catch (err) {
+    console.error("❌ Lỗi giải mã Session:", err.message);
+    return null;
+  }
+}
+
+/**
+ * 🛡️ HELPER: Kiểm tra quyền Admin từ Cookie
+ */
+async function checkAdminAuth() {
+  const user = await getAuthenticatedUser();
+  if (!user) return false;
+  
+  if (user.username?.toLowerCase() === 'atheist1504') return true;
+  return user.role === 'admin';
+}
+
+/**
  * 🛠️ HÀM HỖ TRỢ: Lấy Client DB phù hợp (Admin hoặc Anon dự phòng) 🛡️
  */
 function getDbClient() {
@@ -405,6 +556,76 @@ export async function performCheckInAction() {
     return { success: true, xpGain: totalXP, streak: newStreak, user: updatedUser };
   } catch (error) {
     console.error('Lỗi performCheckInAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🖋️ SERVER ACTION: Lưu hoặc Cập nhật Manga (Bảo mật 🛡️)
+ */
+export async function saveMangaAction(mangaData, mangaId = null) {
+  try {
+    const isAdmin = await checkAdminAuth().catch(() => false);
+    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
+    
+    const client = getDbClient();
+
+    if (mangaId) {
+      const { data, error } = await client
+        .from('mangas')
+        .update({ ...mangaData })
+        .eq('id', mangaId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    } else {
+      const { data, error } = await client
+        .from('mangas')
+        .insert([{ ...mangaData }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return { success: true, data };
+    }
+  } catch (error) {
+    console.error('❌ Lỗi saveMangaAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 📣 SERVER ACTION: Đăng chương mới (Atomic operation)
+ */
+export async function publishChapterAction(mangaId, mangaTitle, chapterData, pagesData, coverImage) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+    const client = getDbClient();
+    const { data: chapter, error: chapterError } = await client
+      .from('chapters')
+      .insert([chapterData])
+      .select()
+      .single();
+
+    if (chapterError) throw chapterError;
+
+    const pagesWithChapterId = pagesData.map(page => ({
+        ...page,
+        chapter_id: chapter.id
+    }));
+
+    const { error: pagesError } = await client.from('pages').insert(pagesWithChapterId);
+    if (pagesError) throw pagesError;
+
+    // Gửi thông báo ngầm
+    notifyNewChapterAction(mangaId, mangaTitle, chapter.chapter_number, coverImage).catch(() => {});
+
+    return { success: true, chapterId: chapter.id };
+  } catch (error) {
+    console.error('❌ Lỗi publishChapterAction:', error);
     return { success: false, error: error.message };
   }
 }
