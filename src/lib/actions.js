@@ -10,7 +10,7 @@ import { XP_REWARDS, getStreakBonus } from './xp';
 import { getStartOfVNDay } from './missions';
 
 /**
- * đŸ‡»đŸ‡³ HĂ€M HELPER: Láº¥y thá»i gian hiá»‡n táº¡i theo mĂºi giá» Viá»‡t Nam (GMT+7)
+ * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
  */
 const getVietnamTime = () => {
   const now = new Date();
@@ -18,181 +18,23 @@ const getVietnamTime = () => {
 };
 
 /**
- * đŸ“ SERVER ACTION: Láº¥y thĂ´ng tin dung lÆ°á»£ng Ä‘Ă£ sá»­ dá»¥ng
- * TĂ­nh toĂ¡n dá»±a trĂªn cá»™t size_kb trong báº£ng pages vĂ  mangas đŸ€
- */
-/**
- * đŸ” SERVER ACTION: ÄÄƒng nháº­p vĂ  táº¡o Session (Cookie)
- * Thay tháº¿ cho viá»‡c chá»‰ dĂ¹ng LocalStorage á»Ÿ Client đŸ€
- */
-export async function loginAction(username, password) {
-  try {
-    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
-    const hashed = hashPassword(password);
-
-    const { data: user, error } = await supabase
-      .from('shiroi_users')
-      .select('*')
-      .ilike('username', username.trim())
-      .single();
-
-    if (error || !user) throw new Error('KhĂ´ng tĂ¬m tháº¥y tĂ i khoáº£n Shiroi nĂ y!');
-    
-    if (user.password !== hashed && user.password !== password) {
-       throw new Error('Máº­t kháº©u chÆ°a chĂ­nh xĂ¡c! đŸ›¡ï¸');
-    }
-
-    // âœ… Táº O SESSION Báº°NG COOKIE (Háº¿t háº¡n sau 7 ngĂ y)
-    cookies().set('shiroi_session', JSON.stringify({
-      id: user.id,
-      username: user.username,
-      role: user.role || 'user'
-    }), { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-      sameSite: 'lax'
-    });
-
-    return { success: true, user };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * đŸ” SERVER ACTION: ÄÄƒng kĂ½ tĂ i khoáº£n má»›i vĂ  cáº¥p Session
- * Äá»“ng bá»™ hĂ³a LocalStorage vĂ  Cookie ngay láº­p tá»©c đŸ€
- */
-export async function signupAction(userData) {
-  try {
-    const { username, password } = userData;
-    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
-    const hashed = hashPassword(password);
-
-    const client = getDbClient();
-
-    // 1. Kiá»ƒm tra trĂ¹ng láº·p
-    const { data: existing } = await client
-      .from('shiroi_users')
-      .select('username')
-      .ilike('username', username.trim())
-      .single();
-    
-    if (existing) throw new Error('TĂªn nĂ y Ä‘Ă£ cĂ³ chá»§ nhĂ¢n sá»Ÿ há»¯u rá»“i! đŸ°');
-
-    // 2. Táº¡o tĂ i khoáº£n
-    const { data: newUser, error: signupError } = await client
-      .from('shiroi_users')
-      .insert([{
-        ...userData,
-        username: username.trim(),
-        password: hashed,
-        display_name: userData.display_name || username.trim(),
-        xp: 0,
-        level: 1,
-        check_in_streak: 0
-      }])
-      .select()
-      .single();
-
-    if (signupError) throw signupError;
-
-    // 3. Tá»° Äá»˜NG ÄÄ‚NG NHáº¬P: Táº¡o Session báº±ng Cookie đŸª
-    cookies().set('shiroi_session', JSON.stringify({
-      id: newUser.id,
-      username: newUser.username,
-      role: newUser.role || 'user'
-    }), { 
-      httpOnly: true, 
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7,
-      path: '/',
-      sameSite: 'lax'
-    });
-
-    return { success: true, user: newUser };
-  } catch (error) {
-    console.error('âŒ Lá»—i signupAction:', error.message);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * đŸ•µï¸â€â™‚ï¸ HĂ€M Há»– TRá»¢: Láº¥y thĂ´ng tin ngÆ°á»i dĂ¹ng Ä‘ang Ä‘Äƒng nháº­p vá»›i kháº£ nÄƒng tá»± khĂ´i phá»¥c (Auto-healing) đŸ›¡ï¸
- */
-export async function getAuthenticatedUser() {
-  const sessionData = cookies().get('shiroi_session');
-  if (!sessionData) return null;
-
-  try {
-    let user = JSON.parse(sessionData.value);
-    
-    // đŸ‘ CÆ  CHáº¾ Tá»° KHĂ”I PHá»¤C (AUTO-HEALING) â¡
-    // Chá»‰ truy váº¥n Database náº¿u session thiáº¿u ID quan trá»ng cá»§a Admin whitelist đŸ€
-    if (!user.id && user.username?.toLowerCase() === 'atheist1504') {
-      console.log(`đŸ‘ [Auth] PhĂ¡t hiá»‡n session thiáº¿u ID cho Admin ${user.username}, Ä‘ang khĂ´i phá»¥c...`);
-      const client = getDbClient();
-      const { data, error } = await client
-        .from('shiroi_users')
-        .select('id, username, role')
-        .eq('username', user.username)
-        .single();
-      
-      if (!error && data) {
-        user.id = data.id;
-        user.role = data.role || 'admin';
-        console.log(`âœ… [Auth] KhĂ´i phá»¥c ID thĂ nh cĂ´ng: ${user.id}`);
-        
-        // Cáº­p nháº­t láº¡i Cookie Ä‘á»ƒ láº§n sau khĂ´ng pháº£i query ná»¯a đŸª
-        cookies().set('shiroi_session', JSON.stringify(user), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60 * 24 * 7,
-          path: '/',
-          sameSite: 'lax'
-        });
-      }
-    }
-
-    return user.id ? user : null;
-  } catch (err) {
-    console.error("âŒ Lá»—i giáº£i mĂ£ Session:", err.message);
-    return null;
-  }
-}
-
-/**
- * đŸ•µï¸â€â™‚ï¸ HĂ€M Há»– TRá»¢: Kiá»ƒm tra quyá»n Admin tá»« Cookie
- */
-async function checkAdminAuth() {
-  const user = await getAuthenticatedUser();
-  if (!user) return false;
-  
-  // đŸ›¡ï¸ Báº¢O Vá»† CHá»¦ Sá» Há»®U: Whitelist tĂ i khoáº£n atheist1504 luĂ´n cĂ³ quyá»n admin đŸ€
-  if (user.username?.toLowerCase() === 'atheist1504') return true;
-  return user.role === 'admin';
-}
-
-/**
- * đŸ› ï¸ HĂ€M Há»– TRá»¢: Láº¥y Client DB phĂ¹ há»£p (Admin hoáº·c Anon dá»± phĂ²ng) đŸ›¡ï¸
+ * 🛠️ HÀM HỖ TRỢ: Lấy Client DB phù hợp (Admin hoặc Anon dự phòng) 🛡️
  */
 function getDbClient() {
   if (supabaseAdmin) return supabaseAdmin;
-  console.warn("â ï¸ [Auth] KhĂ´ng tĂ¬m tháº¥y Admin Client, sá»­ dá»¥ng Anon Client lĂ m dá»± phĂ²ng.");
+  console.warn("⚠️ [Auth] Không tìm thấy Admin Client, sử dụng Anon Client làm dự phòng.");
   return supabase;
 }
 
 /**
- * đŸ“ SERVER ACTION: Láº¥y thĂ´ng tin dung lÆ°á»£ng Ä‘Ă£ sá»­ dá»¥ng
+ * 📊 SERVER ACTION: Lấy thông tin dung lượng đã sử dụng
  */
 export async function getStorageUsageAction() {
-  console.log("đŸ“ [Storage] Báº¯t Ä‘áº§u láº¥y thĂ´ng sá»‘...");
+  console.log("📊 [Storage] Bắt đầu lấy thông số...");
   try {
-    // đŸ›¡ï¸ Kiá»ƒm tra quyá»n (Silent check)
+    // 🛡️ Kiểm tra quyền (Silent check)
     const isAdmin = await checkAdminAuth().catch(err => {
-      console.warn("â ï¸ checkAdminAuth sáº­p:", err.message);
+      console.warn("⚠️ checkAdminAuth sập:", err.message);
       return false;
     });
 
@@ -200,19 +42,19 @@ export async function getStorageUsageAction() {
       return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: "NOT_ADMIN" };
     }
     
-    // đŸ›¡ï¸ Kiá»ƒm tra Client
+    // 🛡️ Kiểm tra Client
     if (!supabaseAdmin) {
        return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: "NO_ADMIN_CLIENT" };
     }
 
-    // đŸ›¡ï¸ 3. TĂ­nh toĂ¡n dung lÆ°á»£ng (Tá»‘i Æ°u hĂ³a truy váº¥n) â¡
-    // Láº¥y toĂ n bá»™ size_kb thay vĂ¬ giá»›i háº¡n 1000 báº£n ghi Ä‘á»ƒ Ä‘áº£m báº£o tĂ­nh chuáº©n xĂ¡c
+    // 🛡️ 3. Tính toán dung lượng (Tối ưu hóa truy vấn) ⚡
+    // Lấy toàn bộ size_kb thay vì giới hạn 1000 bản ghi để đảm bảo tính chuẩn xác
     const { data: pagesData, error: pagesError } = await supabaseAdmin
       .from('pages')
       .select('size_kb'); 
     
     if (pagesError) {
-      console.warn("â ï¸ Pages Query Error:", pagesError.message);
+      console.warn("⚠️ Pages Query Error:", pagesError.message);
       return { success: true, totalGB: 0, totalKB: 0, limitGB: 10, debug: `PAGES_ERR_${pagesError.code}` };
     }
     
@@ -238,7 +80,7 @@ export async function getStorageUsageAction() {
       debug: "OK"
     };
   } catch (error) {
-    console.error("âŒ Lá»—i náº·ng getStorageUsageAction:", error.message);
+    console.error("❌ Lỗi nặng getStorageUsageAction:", error.message);
     return { 
       success: true, 
       totalGB: 0, 
@@ -250,11 +92,11 @@ export async function getStorageUsageAction() {
 }
 
 /**
- * đŸ—‘ï¸ SERVER ACTION: XĂ³a trá»n bá»™ truyá»‡n (Data + R2)
+ * 🗑️ SERVER ACTION: Xóa trọn bộ truyện (Data + R2)
  */
 export async function deleteMangaAction(mangaId) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Dá»«ng láº¡i! Chá»‰ quáº£n trá»‹ viĂªn má»›i cĂ³ quyá»n hĂ nh quyáº¿t nĂ y! đŸ›¡ï¸");
+    if (!(await checkAdminAuth())) throw new Error("Dừng lại! Chỉ quản trị viên mới có quyền hành quyết này! 🛡️");
     const client = getDbClient();
     const { data: chapters, error: chapError } = await client.from('chapters').select('id').eq('manga_id', mangaId);
     if (chapError) throw chapError;
@@ -281,53 +123,53 @@ export async function deleteMangaAction(mangaId) {
 }
 
 /**
- * đŸ« SERVER ACTION: Láº¥y vĂ© táº£i áº£nh lĂªn R2 (DĂ nh cho cĂ¡c file lá»›n hoáº·c háº¡ táº§ng cĂ³ CORS)
+ * 🎫 SERVER ACTION: Lấy vé tải ảnh lên R2 (Dành cho các file lớn hoặc hạ tầng có CORS)
  */
 export async function getUploadUrlAction(fileName) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
-    if (!fileName) throw new Error('Thiáº¿u tĂªn tá»‡p!');
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!fileName) throw new Error('Thiếu tên tệp!');
     const data = await getPresignedUploadUrl(fileName);
     return { success: true, ...data };
   } catch (error) {
-    console.error('Lá»—i láº¥y Signed URL:', error);
+    console.error('Lỗi lấy Signed URL:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸŒ©ï¸ SERVER ACTION: Upload Chapter Page (Proxy Mode đŸ€)
- * Kháº¯c phá»¥c triá»‡t Ä‘á»ƒ lá»—i CORS báº±ng cĂ¡ch táº£i lĂªn tá»« mĂ´i trÆ°á»ng Server.
+ * 🌩️ SERVER ACTION: Upload Chapter Page (Proxy Mode 🚀)
+ * Khắc phục triệt để lỗi CORS bằng cách tải lên từ môi trường Server.
  */
 export async function uploadChapterPageAction(formData) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
 
     const file = formData.get('file');
     const fileName = formData.get('fileName');
 
-    if (!file || !fileName) throw new Error("Thiáº¿u dá»¯ liá»‡u upload!");
+    if (!file || !fileName) throw new Error("Thiếu dữ liệu upload!");
 
     const { uploadToR2 } = await import('./r2');
     const result = await uploadToR2(file, fileName);
 
     return { success: true, url: result };
   } catch (error) {
-    console.error('âŒ [Server] Lá»—i uploadChapterPageAction:', error.message);
+    console.error('❌ [Server] Lỗi uploadChapterPageAction:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸŒ©ï¸ SERVER ACTION: Upload Image to R2
+ * 🌩️ SERVER ACTION: Upload Image to R2
  */
 export async function uploadImageAction(formData) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const file = formData.get('file');
-    if (!file) throw new Error("KhĂ´ng tĂ¬m tháº¥y file áº£nh!");
+    if (!file) throw new Error("Không tìm thấy file ảnh!");
     
-    // Sá»­ dá»¥ng helper uploadToR2 cĂ³ sáºµn
+    // Sử dụng helper uploadToR2 có sẵn
     const { uploadToR2 } = await import('./r2');
     const fileName = `covers/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     const result = await uploadToR2(file, fileName);
@@ -335,35 +177,35 @@ export async function uploadImageAction(formData) {
     if (!result.success) throw new Error(result.error);
     return { success: true, url: result.url };
   } catch (error) {
-    console.error('Lá»—i uploadImageAction:', error);
+    console.error('Lỗi uploadImageAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ”” SERVER ACTION: Gá»­i thĂ´ng bĂ¡o chÆ°Æ¡ng má»›i
- * Xá»­ lĂ½ cáº£ Push Notification vĂ  In-app cho ngÆ°á»i theo dĂµi đŸ€
+ * 🔔 SERVER ACTION: Gửi thông báo chương mới
+ * Xử lý cả Push Notification và In-app cho người theo dõi 🍀
  */
 export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, coverImage) {
   try {
     const client = getDbClient();
-    const title = `${mangaName} vá»«a cĂ³ chÆ°Æ¡ng ${chapterNumber}! đŸ“`;
+    const title = `${mangaName} vừa có chương ${chapterNumber}! 📚`;
     
-    // 1. Gá»­i Push Notification (Topic-based) đŸŒ©ï¸
+    // 1. Gửi Push Notification (Topic-based) 🌩️
     await sendMangaNotification(title, mangaName, mangaId, coverImage);
 
-    // 2. Gá»­i In-app Notification cho toĂ n bá»™ ngÆ°á»i theo dĂµi đŸ””
+    // 2. Gửi In-app Notification cho toàn bộ người theo dõi 🔔
     const { data: followers } = await client
       .from('shiroi_follows')
       .select('user_id')
       .eq('manga_id', mangaId);
     
     if (followers && followers.length > 0) {
-        const body = `SiĂªu pháº©m "${mangaName}" vá»«a cáº­p nháº­t chÆ°Æ¡ng ${chapterNumber}. Äá»c ngay nĂ o! đŸ€`;
+        const body = `Siêu phẩm "${mangaName}" vừa cập nhật chương ${chapterNumber}. Đọc ngay nào! 🚀`;
         const notifType = 'chapter_update';
         const notifData = { mangaId, chapterId: null, mangaName, chapterNumber }; // chapterId null as we might not have it here, but we have mangaId
 
-        // Táº¡o thĂ´ng bĂ¡o trong á»©ng dá»¥ng cho tá»«ng follower (Xá»­ lĂ½ hĂ ng loáº¡t) â¡
+        // Tạo thông báo trong ứng dụng cho từng follower (Xử lý hàng loạt) ⚡
         const notificationPromises = followers.map(f => 
             createInAppNotification(f.user_id, title, body, notifType, notifData)
         );
@@ -372,23 +214,23 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
 
     return { success: true };
   } catch (error) {
-    console.warn('â ï¸ Lá»—i gá»­i thĂ´ng bĂ¡o chÆ°Æ¡ng má»›i:', error);
+    console.warn('⚠️ Lỗi gửi thông báo chương mới:', error);
     return { success: true }; 
   }
 }
 
 /**
- * đŸ“ SERVER ACTION: Ghi Log XP Báº£o Máº­t
+ * 📊 SERVER ACTION: Ghi Log XP Bảo Mật
  */
 export async function recordXpLogAction(userId, amount, type, reason = null) {
   try {
     if (!userId || userId === 'undefined' || !amount) {
-      return { success: false, error: 'Thiáº¿u Ä‘á»‹nh danh ngÆ°á»i dĂ¹ng (User ID) hoáº·c thĂ´ng sá»‘ XP' };
+      return { success: false, error: 'Thiếu định danh người dùng (User ID) hoặc thông số XP' };
     }
     
     const client = getDbClient();
 
-    // đŸ›¡ï¸ KIá»‚M TRA GIá»I Háº N XP HĂ€NG NGĂ€Y (CHá»ˆ CHO BĂŒNH LUáº¬N) đŸ€
+    // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
     if (type === 'comment' || type === 'first_comment') {
         const startOfTodayISO = getStartOfVNDay().toISOString();
 
@@ -401,10 +243,10 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
 
         if (!logError && todayLogs) {
             const totalToday = todayLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
-            const MAX_COMMENT_XP = 100; // Khá»›p vá»›i xp.js
+            const MAX_COMMENT_XP = 100; // Khớp với xp.js
             
             if (totalToday + amount > MAX_COMMENT_XP) {
-                return { success: false, error: 'ÄĂ£ Ä‘áº¡t giá»›i háº¡n XP bĂ¬nh luáº­n trong ngĂ y (100 XP)! đŸ›¡ï¸' };
+                return { success: false, error: 'Đã đạt giới hạn XP bình luận trong ngày (100 XP)! 🛡️' };
             }
         }
     }
@@ -421,25 +263,25 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
     if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('âŒ Lá»—i recordXpLogAction:', error.message);
+    console.error('❌ Lỗi recordXpLogAction:', error.message);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ’ SERVER ACTION: Cá»™ng XP khi Ä‘á»c chÆ°Æ¡ng (Báº£o máº­t đŸ›¡ï¸)
+ * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
  */
 export async function addReadXPAction(mangaId, chapterId) {
   try {
     const user = await getAuthenticatedUser();
     
     if (!user || !user.id) {
-       throw new Error("PhiĂªn lĂ m viá»‡c lá»—i (Thiáº¿u ID). Vui lĂ²ng Ä‘Äƒng xuáº¥t vĂ  Ä‘Äƒng nháº­p láº¡i! đŸ›¡ï¸");
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
     const userId = user.id;
     const client = getDbClient();
-    // 1. Kiá»ƒm tra xem Ä‘Ă£ Ä‘á»c chÆ°Æ¡ng nĂ y chÆ°a (TrĂ¡nh spam)
+    // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
     const { data: alreadyRead } = await client
       .from('shiroi_read_chapters')
       .select('id')
@@ -447,9 +289,9 @@ export async function addReadXPAction(mangaId, chapterId) {
       .eq('chapter_id', chapterId)
       .single();
 
-    if (alreadyRead) return { success: false, error: 'ÄĂ£ nháº­n thÆ°á»Ÿng cho chÆ°Æ¡ng nĂ y' };
+    if (alreadyRead) return { success: false, error: 'Đã nhận thưởng cho chương này' };
 
-    // 3. Ghi log nháº­t kĂ½ (Database Trigger sáº½ tá»± Ä‘á»™ng cá»™ng XP vĂ o báº£ng Users) đŸ›¡ï¸
+    // 3. Ghi log nhật ký (Database Trigger sẽ tự động cộng XP vào bảng Users) 🛡️
     await client.from('shiroi_read_chapters').insert({ 
       user_id: userId, 
       username: user.username, 
@@ -458,13 +300,13 @@ export async function addReadXPAction(mangaId, chapterId) {
       read_at: new Date().toISOString() 
     });
     
-    // 4. Ghi log vĂ  nháº­n XP đŸ’
+    // 4. Ghi log và nhận XP 💎
     const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
     if (!resLog.success) return resLog;
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
 
-    // 5. Kiá»ƒm tra hoĂ n thĂ nh nhiá»‡m vá»¥ Äá»c truyá»‡n (Silent check) đŸ†
+    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
     try {
         const { count: dailyRead } = await client
             .from('shiroi_read_chapters')
@@ -473,324 +315,154 @@ export async function addReadXPAction(mangaId, chapterId) {
             .gte('read_at', getStartOfVNDay().toISOString());
         
         if (dailyRead === 1 || dailyRead === 3) {
-            const mTitle = dailyRead === 1 ? "Äá»™c hĂ nh giáº£ I" : "Äá»™c hĂ nh giáº£ II";
-            await createInAppNotification(userId, `HoĂ n thĂ nh nhiá»‡m vá»¥! đŸ¯`, `Báº¡n Ä‘Ă£ xong "${mTitle}". HĂ£y má»Ÿ Kho thĂ nh tá»±u Ä‘á»ƒ nháº­n thÆ°á»Ÿng! đŸ€`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
+            const mTitle = dailyRead === 1 ? "Độc hành giả I" : "Độc hành giả II";
+            await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
         }
     } catch (e) {}
 
     return { success: true, xpGain: 20, user: updatedUser };
   } catch (error) {
-    console.error('Lá»—i addReadXPAction:', error);
+    console.error('Lỗi addReadXPAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ“… SERVER ACTION: Äiá»ƒm danh hĂ ng ngĂ y (Báº£o máº­t đŸ›¡ï¸)
+ * 📅 SERVER ACTION: Điểm danh hàng ngày (Bảo mật 🛡️)
  */
 export async function performCheckInAction() {
   try {
     const user = await getAuthenticatedUser();
     
     if (!user || !user.id) {
-       throw new Error("PhiĂªn lĂ m viá»‡c lá»—i (Thiáº¿u ID). Vui lĂ²ng Ä‘Äƒng xuáº¥t vĂ  Ä‘Äƒng nháº­p láº¡i! đŸ›¡ï¸");
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
     const userId = user.id;
     const client = getDbClient();
-    // 1. Láº¥y tráº¡ng thĂ¡i Ä‘iá»ƒm danh hiá»‡n táº¡i tá»« DB (TrĂ¡nh hack thá»i gian á»Ÿ Client)
+
+    // 🎯 Lấy dữ liệu user hiện tại
     const { data: userData, error: fetchError } = await client
       .from('shiroi_users')
-      .select('xp, last_check_in, check_in_streak')
+      .select('xp, level, check_in_streak, last_check_in')
       .eq('id', userId)
       .single();
 
-    if (fetchError || !userData) throw new Error("KhĂ´ng tĂ¬m tháº¥y thĂ´ng tin ngÆ°á»i dĂ¹ng");
+    if (fetchError || !userData) throw new Error("Không tìm thấy thông tin người dùng");
     
     const startOfToday = getStartOfVNDay();
     const lastCheck = userData.last_check_in ? new Date(userData.last_check_in) : null;
     
-    // 1. Kiá»ƒm tra xem Ä‘Ă£ Ä‘iá»ƒm danh trong ngĂ y hĂ´m nay chÆ°a (theo má»‘c 0h Viá»‡t Nam) đŸ‡»đŸ‡³
+    // 1. Kiểm tra xem đã điểm danh trong ngày hôm nay chưa (theo mốc 0h Việt Nam) 🇻🇳
     const isSameDay = lastCheck && lastCheck >= startOfToday;
  
-    if (isSameDay) return { success: false, error: 'Báº¡n Ä‘Ă£ Ä‘iá»ƒm danh hĂ´m nay rá»“i!' };
+    if (isSameDay) return { success: false, error: 'Bạn đã điểm danh hôm nay rồi!' };
  
-    // 2. TĂNH TOĂN CHUá»–I (STREAK) CHUáº¨N đŸ›¡ï¸
+    // 2. TÍNH TOÁN CHUỖI (STREAK) CHUẨN 🛡️
     let newStreak = 1;
     
     if (lastCheck) {
-        // TĂ­nh khoáº£ng cĂ¡ch ngĂ y (dá»±a trĂªn má»‘c 00:00:00 giá» VN)
+        // Tính khoảng cách ngày (dựa trên mốc 00:00:00 giờ VN)
         const lastCheckVnStr = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Ho_Chi_Minh'}).format(lastCheck);
         const lastCheckDate = new Date(`${lastCheckVnStr}T00:00:00+07:00`);
         
-        const nowDate = startOfToday;
-        const diffTime = Math.abs(nowDate - lastCheckDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
- 
-        if (diffDays === 1) {
-            // Äiá»ƒm danh liĂªn tiáº¿p -> TÄƒng chuá»—i đŸ€
-            newStreak = (userData.check_in_streak || 0) + 1;
-        } else if (diffDays > 1) {
-            // Nghá»‰ quĂ¡ 1 ngĂ y -> Reset chuá»—i vá» 1 đŸŒµ
-            newStreak = 1;
-        } else {
-            // TrÆ°á»ng há»£p hy há»¯u (lá»‡ch giá») -> Giá»¯ nguyĂªn hoáº·c tÄƒng 1
-            newStreak = (userData.check_in_streak || 0) + 1;
+        const diffInTime = startOfToday.getTime() - lastCheckDate.getTime();
+        const diffInDays = Math.floor(diffInTime / (1000 * 3600 * 24));
+
+        if (diffInDays === 1) {
+            newStreak = userData.check_in_streak + 1; // Tiếp nối streak
         }
     }
- 
-    // đŸ”„ RESET CHUá»–I KHI SANG THĂNG Má»I (Náº¿u báº¡n muá»‘n chuá»—i reset theo thĂ¡ng Leaderboard)
-    // Náº¿u báº¡n muá»‘n chuá»—i lĂ  xuyĂªn suá»‘t Ä‘á»i ngÆ°á»i thĂ¬ cĂ³ thá»ƒ bá» qua bÆ°á»›c nĂ y.
-    /*
-    if (lastCheck && (lastCheck.getUTCMonth() !== now.getUTCMonth() || lastCheck.getUTCFullYear() !== now.getUTCFullYear())) {
-        newStreak = 1;
-    }
-    */
 
-    // đŸ† TĂNH TOĂN XP THÆ¯á»NG (100 XP Máº¶C Äá»NH + BONUS CHUá»–I) đŸ’
-    const xpGain = (XP_REWARDS.DAILY_CHECKIN || 100) + getStreakBonus(newStreak);
+    // 3. Tính toán XP thưởng
+    const baseXP = XP_REWARDS.DAILY_CHECKIN;
+    const bonusXP = getStreakBonus(newStreak);
+    const totalXP = baseXP + bonusXP;
 
-    // 3. Ghi log nháº­t kĂ½ ÄIá»‚M DANH (Sá»­ dá»¥ng 'check_in' cĂ³ gáº¡ch dÆ°á»›i chuáº©n hĂ³a) đŸ“…
-    const resLog = await recordXpLogAction(userId, xpGain, 'check_in', `Streak: ${newStreak}`);
-    
-    if (!resLog.success) {
-        return { success: false, error: resLog.error || 'Lá»—i Ä‘iá»ƒm danh!' };
-    }
+    // 4. Cập nhật Database (Dùng log và update user) 🛡️
+    const resLog = await recordXpLogAction(userId, totalXP, 'check_in', `Điểm danh (Chuỗi ${newStreak} ngày)`);
+    if (!resLog.success) throw new Error(resLog.error);
 
-    // Cáº­p nháº­t cĂ¡c thĂ´ng tin khĂ¡c (streak, ngĂ y Ä‘iá»ƒm danh) - XP sáº½ do Trigger lo đŸ›¡ï¸
     const { data: updatedUser, error: updateError } = await client
       .from('shiroi_users')
       .update({
-        last_check_in: new Date().toISOString(),
-        check_in_streak: newStreak
+        check_in_streak: newStreak,
+        last_check_in: new Date().toISOString()
       })
       .eq('id', userId)
       .select()
       .single();
 
     if (updateError) throw updateError;
-    
-    // đŸ”” Gá»­i thĂ´ng bĂ¡o trong á»©ng dá»¥ng (Silent fail)
+
+    // 5. Gửi thông báo trong ứng dụng (Silent fail) 🔔🍀
     try {
-        const title = `Äiá»ƒm Danh ThĂ nh CĂ´ng! đŸ“…`;
-        const body = `Báº¡n vá»«a nháº­n Ä‘Æ°á»£c ${xpGain} XP (Chuá»—i: ${newStreak} ngĂ y). đŸ€`;
-        await createInAppNotification(userId, title, body, 'system', { streak: newStreak });
+        const title = `Điểm danh thành công! 🌸`;
+        const body = `Hôm nay bạn nhận được ${totalXP} XP (Chuỗi ${newStreak} ngày). Hãy giữ vững phong độ nhé! 🍀`;
+        await createInAppNotification(userId, title, body, 'system', { streak: newStreak, xp: totalXP });
     } catch (e) {}
 
-    return { success: true, user: updatedUser, xpGain };
+    return { success: true, xpGain: totalXP, streak: newStreak, user: updatedUser };
   } catch (error) {
-    console.error('Lá»—i performCheckInAction:', error);
+    console.error('Lỗi performCheckInAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ“ SERVER ACTION: LÆ°u hoáº·c Cáº­p nháº­t Manga (Báº£o máº­t đŸ›¡ï¸)
+ * ⚡ SERVER ACTION: Lưu dữ liệu chương mới (Admin Only) 🍀
  */
-export async function saveMangaAction(mangaData, mangaId = null) {
+export async function saveChapterDataAction(chapterPayload, pagesPayload) {
   try {
-    // 1. Kiá»ƒm tra Admin Auth
-    const isAdmin = await checkAdminAuth().catch(() => false);
-    if (!isAdmin) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
-    
-    const client = getDbClient();
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ!");
 
-    if (mangaId) {
-      console.log(`[Admin] Cáº­p nháº­t truyá»‡n ID: ${mangaId}`);
-      // Cáº­p nháº­t
-      const { data, error } = await client
-        .from('mangas')
-        .update({
-          ...mangaData
-        })
-        .eq('id', mangaId)
-        .select()
-        .single();
-      
-      if (error) {
-        console.error("âŒ Lá»—i Update Manga:", error);
-        throw error;
-      }
-      return { success: true, data };
-    } else {
-      console.log(`[Admin] Táº¡o truyá»‡n má»›i: ${mangaData.title}`);
-      // ThĂªm má»›i
-      const { data, error } = await client
-        .from('mangas')
-        .insert([{
-          ...mangaData
-        }])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error("âŒ Lá»—i Insert Manga:", error);
-        throw error;
-      }
-      return { success: true, data };
-    }
-  } catch (error) {
-    console.error('âŒ Lá»—i saveMangaAction:', error.message);
-    return { success: false, error: error.message };
-  }
-}
+    const client = getDbClient(true);
 
-/**
- * đŸ“¤ SERVER ACTION: ÄÄƒng chÆ°Æ¡ng má»›i (Báº£o máº­t đŸ›¡ï¸)
- * Xá»­ lĂ½: Insert Chapter -> Insert Pages -> Send Notification
- */
-export async function publishChapterAction(mangaId, mangaTitle, chapterData, pagesData, coverImage) {
-  try {
-    // 1. Kiá»ƒm tra quyá»n Admin
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
-
-    const client = getDbClient();
-    // 2. Insert Chapter
-    const { data: chapter, error: chapterError } = await client
+    // 1. Lưu Chapter
+    const { data: chapterData, error: chapError } = await client
       .from('chapters')
-      .insert([chapterData])
-      .select()
-      .single();
+      .insert([chapterPayload])
+      .select();
 
-    if (chapterError) throw chapterError;
+    if (chapError) throw chapError;
+    const chapId = chapterData[0].id;
 
-    // 3. Insert Pages
-    const pagesWithChapterId = pagesData.map(page => ({
-        ...page,
-        chapter_id: chapter.id
-    }));
-
+    // 2. Lưu Pages
+    const pagesWithId = pagesPayload.map(p => ({ ...p, chapter_id: chapId }));
     const { error: pagesError } = await client
       .from('pages')
-      .insert(pagesWithChapterId);
+      .insert(pagesWithId);
 
-    if (pagesError) throw pagesError;
+    if (pagesError) throw new Error(`Lỗi lưu Pages: ${pagesError.message}`);
 
-    // 4. Gá»­i thĂ´ng bĂ¡o tá»± Ä‘á»™ng (Silent fail - khĂ´ng lĂ m cháº¿t luá»“ng upload) đŸ””đŸ€
-    try {
-        const title = `ChÆ°Æ¡ng ${chapter.chapter_number} vá»«a ra máº¯t! đŸ“`;
-        
-        // A. Gá»­i Push Broadcast (Topic)
-        await sendMangaNotification(title, mangaTitle, mangaId, coverImage);
-
-        // B. Gá»­i In-app Notification cho toĂ n bá»™ ngÆ°á»i theo dĂµi
-        const { data: followers } = await client
-            .from('shiroi_follows')
-            .select('user_id')
-            .eq('manga_id', mangaId);
-        
-        if (followers && followers.length > 0) {
-            const body = `SiĂªu pháº©m "${mangaTitle}" vá»«a cáº­p nháº­t chÆ°Æ¡ng ${chapter.chapter_number}. Äá»c ngay nĂ o!`;
-            const notifType = 'chapter_update';
-            const notifData = { mangaId, chapterId: chapter.id, mangaName: mangaTitle, chapterNumber: chapter.chapter_number };
-
-            // Táº¡o thĂ´ng bĂ¡o trong á»©ng dá»¥ng cho tá»«ng follower
-            const notificationPromises = followers.map(f => 
-                createInAppNotification(f.user_id, title, body, notifType, notifData)
-            );
-            await Promise.allSettled(notificationPromises);
-        }
-    } catch (notifyErr) {
-        console.warn("Lá»—i gá»­i thĂ´ng bĂ¡o (bá» qua):", notifyErr);
-    }
-
-    return { success: true, chapterId: chapter.id };
-  } catch (error) {
-    console.error('Lá»—i publishChapterAction:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-/**
- * đŸ“ SERVER ACTION: LÆ°u dá»¯ liá»‡u chÆ°Æ¡ng vĂ  cĂ¡c trang (Báº£o máº­t đŸ›¡ï¸)
- */
-export async function saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId = null) {
-  console.log(`đŸ€ [Server] Báº¯t Ä‘áº§u lÆ°u chÆ°Æ¡ng - Editing: ${isEditing}, ChapID: ${existingChapterId}`);
-  try {
-    const isAdmin = await checkAdminAuth().catch(() => false);
-    if (!isAdmin) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
-
-    const client = getDbClient();
-    let chapId = existingChapterId;
-
-    // 1. Xá»­ lĂ½ Chapter (DĂ¹ng UPSERT Ä‘á»ƒ an toĂ n tuyá»‡t Ä‘á»‘i) đŸ›¡ï¸
-    const chapterToSave = {
-      ...chapterPayload
-    };
-
-    if (!isEditing) {
-       // Náº¿u lĂ  táº¡o má»›i, kiá»ƒm tra trĂ¹ng láº·p theo sá»‘ chÆ°Æ¡ng
-       const { data: existing } = await client
-         .from("chapters")
-         .select("id")
-         .eq("manga_id", chapterPayload.manga_id)
-         .eq("chapter_number", chapterPayload.chapter_number)
-         .maybeSingle();
-       
-       if (existing) {
-         console.log("â™»ï¸ [Server] ÄĂ£ tĂ¬m tháº¥y chÆ°Æ¡ng tÆ°Æ¡ng á»©ng, thá»±c hiá»‡n cáº­p nháº­t ghi Ä‘Ă¨.");
-         chapId = existing.id;
-       }
-    }
-
-    if (chapId) {
-        const { error: upError } = await client
-          .from("chapters")
-          .update(chapterToSave)
-          .eq("id", chapId);
-        if (upError) throw new Error(`Lá»—i cáº­p nháº­t Chapter: ${upError.message}`);
-    } else {
-        const { data: newChap, error: inError } = await client
-          .from("chapters")
-          .insert([chapterToSave])
-          .select()
-          .single();
-        if (inError) throw new Error(`Lá»—i táº¡o má»›i Chapter: ${inError.message}`);
-        chapId = newChap.id;
-    }
-
-    console.log(`âœ… [Server] Chapter ${chapId} OK. Äang lÆ°u ${pagesData.length} trang truyá»‡n...`);
-
-    // 2. XĂ³a cĂ¡c trang cÅ© (ghi Ä‘Ă¨) đŸ§¹
-    await client.from("pages").delete().eq("chapter_id", chapId);
-
-    // 3. ChĂ¨n cĂ¡c trang má»›i (Batch Insert) â¡
-    const pagesWithId = pagesData.map(p => ({ 
-      ...p, 
-      chapter_id: chapId
-    }));
-
-    const { error: pagesError } = await client.from("pages").insert(pagesWithId);
-    if (pagesError) throw new Error(`Lá»—i lÆ°u Pages: ${pagesError.message}`);
-
-    // â¡ XĂ“A CACHE Äá»‚ ÄÆ¯A DATA Má»I LĂN READER NGAY Láº¬P Tá»¨C đŸ€
+    // ⚡ XÓA CACHE ĐỂ ĐƯA DATA MỚI LÊN READER NGAY LẬP TỨC 🍀
     revalidatePath(`/read/${chapId}`);
     revalidatePath(`/manga/${chapterPayload.manga_id}`);
     revalidatePath('/');
 
     return { success: true, chapterId: chapId };
   } catch (error) {
-    console.error('âŒ [Server] Lá»–I saveChapterDataAction:', error.message);
-    return { success: false, error: error.message || "Lá»—i Server Action" };
+    console.error('❌ [Server] LỖI saveChapterDataAction:', error.message);
+    return { success: false, error: error.message || "Lỗi Server Action" };
   }
 }
 
 /**
- * đŸ’– SERVER ACTION: Theo dĂµi / Bá» theo dĂµi truyá»‡n (Báº£o máº­t đŸ›¡ï¸)
+ * 💖 SERVER ACTION: Theo dõi / Bỏ theo dõi truyện (Bảo mật 🛡️)
  */
 export async function toggleFollowAction(mangaId, isFollowed) {
   try {
     const user = await getAuthenticatedUser();
     
     if (!user || !user.id) {
-       throw new Error("PhiĂªn lĂ m viá»‡c lá»—i (Thiáº¿u ID). Vui lĂ²ng Ä‘Äƒng xuáº¥t vĂ  Ä‘Äƒng nháº­p láº¡i! đŸ›¡ï¸");
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
     const userId = user.id;
     const client = getDbClient();
 
     if (!isFollowed) {
-      // Tiáº¿n hĂ nh Follow
+      // Tiến hành Follow
       const { error } = await client
         .from('shiroi_follows')
         .insert({ user_id: userId, manga_id: mangaId });
@@ -798,7 +470,7 @@ export async function toggleFollowAction(mangaId, isFollowed) {
       if (error) throw error;
       return { success: true, followed: true };
     } else {
-      // Tiáº¿n hĂ nh Unfollow
+      // Tiến hành Unfollow
       const { error } = await client
         .from('shiroi_follows')
         .delete()
@@ -809,32 +481,32 @@ export async function toggleFollowAction(mangaId, isFollowed) {
       return { success: true, followed: false };
     }
   } catch (error) {
-    console.error('Lá»—i toggleFollowAction:', error);
+    console.error('Lỗi toggleFollowAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ SERVER ACTION: Bá»‘c quĂ  may máº¯n hĂ ng ngĂ y (Báº£o máº­t đŸ›¡ï¸)
+ * 🎁 SERVER ACTION: Bốc quà may mắn hàng ngày (Bảo mật 🛡️)
  */
 export async function performLuckyDrawAction() {
   try {
     const user = await getAuthenticatedUser();
     
     if (!user || !user.id) {
-       throw new Error("PhiĂªn lĂ m viá»‡c lá»—i (Thiáº¿u ID). Vui lĂ²ng Ä‘Äƒng xuáº¥t vĂ  Ä‘Äƒng nháº­p láº¡i! đŸ›¡ï¸");
+       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
     }
 
     const userId = user.id;
     const client = getDbClient();
 
-    // 1. TĂ­nh toĂ¡n pháº§n thÆ°á»Ÿng ngáº«u nhiĂªn (Gacha logic)
+    // 1. Tính toán phần thưởng ngẫu nhiên (Gacha logic)
     const tiers = [10, 20, 30, 40, 50, 100, 500];
-    const weights = [40, 30, 15, 8, 4, 2.5, 0.5]; // Tá»•ng = 100%
+    const weights = [40, 30, 15, 8, 4, 2.5, 0.5]; // Tổng = 100%
     
     let randomValue = Math.random() * 100;
     let sum = 0;
-    let xpGain = 10; // Máº·c Ä‘á»‹nh
+    let xpGain = 10; // Mặc định
 
     for (let i = 0; i < tiers.length; i++) {
       sum += weights[i];
@@ -844,17 +516,17 @@ export async function performLuckyDrawAction() {
       }
     }
 
-    // 2. Ghi vĂ o Nháº­t kĂ½ (Database Unique Index sáº½ cháº·n náº¿u bá»‘c láº§n 2)
-    const resLog = await recordXpLogAction(userId, xpGain, 'lucky_draw', `May máº¯n hĂ ng ngĂ y: +${xpGain} XP`);
+    // 2. Ghi vào Nhật ký (Database Unique Index sẽ chặn nếu bốc lần 2)
+    const resLog = await recordXpLogAction(userId, xpGain, 'lucky_draw', `May mắn hàng ngày: +${xpGain} XP`);
     
     if (!resLog.success) {
       if (resLog.error?.includes('duplicate key') || resLog.error?.includes('23505')) {
-         return { success: false, error: 'HĂ´m nay váº­n may Ä‘Ă£ cáº¡n, hĂ£y quay láº¡i vĂ o ngĂ y mai! đŸ’®' };
+         return { success: false, error: 'Hôm nay vận may đã cạn, hãy quay lại vào ngày mai! 💮' };
       }
-      return { success: false, error: resLog.error || 'Lá»—i bá»‘c quĂ !' };
+      return { success: false, error: resLog.error || 'Lỗi bốc quà!' };
     }
 
-    // 3. Cáº­p nháº­t thá»i gian bá»‘c quĂ  cuá»‘i cĂ¹ng vĂ o báº£ng Users đŸ›¡ï¸
+    // 3. Cập nhật thời gian bốc quà cuối cùng vào bảng Users 🛡️
     const { data: updatedUser, error: upError } = await client
       .from('shiroi_users')
       .update({ last_lucky_draw: new Date().toISOString() })
@@ -863,26 +535,26 @@ export async function performLuckyDrawAction() {
       .single();
 
     if (upError) {
-       console.warn("â ï¸ [Server] KhĂ´ng thá»ƒ cáº­p nháº­t last_lucky_draw (váº«n cá»™ng Ä‘iá»ƒm xong):", upError.message);
+       console.warn("⚠️ [Server] Không thể cập nhật last_lucky_draw (vẫn cộng điểm xong):", upError.message);
     }
 
-    // ThĂ nh cĂ´ng! Trigger sáº½ tá»± Ä‘á»™ng cá»™ng Ä‘iá»ƒm vĂ o báº£ng Users.
-    // đŸ”” Gá»­i thĂ´ng bĂ¡o trong á»©ng dá»¥ng (Silent fail)
+    // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
+    // 🔔 Gửi thông báo trong ứng dụng (Silent fail)
     try {
-        const title = `Bá»‘c QuĂ  May Máº¯n! đŸ`;
-        const body = `ChĂºc má»«ng! Báº¡n vá»«a nháº­n Ä‘Æ°á»£c ${xpGain} XP tá»« Há»™p QuĂ  Shiroi. đŸ€`;
+        const title = `Bốc Quà May Mắn! 🎁`;
+        const body = `Chúc mừng! Bạn vừa nhận được ${xpGain} XP từ Hộp Quà Shiroi. 🍀`;
         await createInAppNotification(userId, title, body, 'system', { xpGain });
     } catch (e) {}
 
     return { success: true, xpGain, user: updatedUser };
   } catch (error) {
-    console.error('Lá»—i performLuckyDrawAction:', error);
+    console.error('Lỗi performLuckyDrawAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ© SERVER ACTION: Gá»­i bĂ¡o cĂ¡o lá»—i chÆ°Æ¡ng
+ * 🚩 SERVER ACTION: Gửi báo cáo lỗi chương
  */
 export async function submitReportAction(reportData) {
   try {
@@ -900,17 +572,17 @@ export async function submitReportAction(reportData) {
     if (error) throw error;
     return { success: true };
   } catch (error) {
-    console.error('Lá»—i submitReportAction:', error);
+    console.error('Lỗi submitReportAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ•µï¸â€â™‚ï¸ SERVER ACTION: Láº¥y danh sĂ¡ch bĂ¡o cĂ¡o (Chá»‰ Admin)
+ * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Chỉ Admin)
  */
 export async function getReportsAction() {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const client = getDbClient();
 
     const { data, error } = await client
@@ -926,17 +598,17 @@ export async function getReportsAction() {
     if (error) throw error;
     return { success: true, reports: data };
   } catch (error) {
-    console.error('Lá»—i getReportsAction:', error);
+    console.error('Lỗi getReportsAction:', error);
     return { success: false, error: error.message };
   }
 }
 
 /**
- * đŸ› ï¸ SERVER ACTION: Cáº­p nháº­t tráº¡ng thĂ¡i bĂ¡o cĂ¡o (Chá»‰ Admin)
+ * 🛠️ SERVER ACTION: Cập nhật trạng thái báo cáo (Chỉ Admin)
  */
 export async function updateReportStatusAction(reportId, status) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyá»n háº¡n khĂ´ng Ä‘á»§! đŸ›¡ï¸");
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const client = getDbClient();
 
     const { error } = await client
@@ -949,22 +621,22 @@ export async function updateReportStatusAction(reportId, status) {
     revalidatePath('/admin/reports');
     return { success: true };
   } catch (error) {
-    console.error('Lá»—i updateReportStatusAction:', error);
+    console.error('Lỗi updateReportStatusAction:', error);
     return { success: false, error: error.message };
   }
 }
 /**
- * đŸ¯ SERVER ACTION: Nháº­n thÆ°á»Ÿng nhiá»‡m vá»¥ (Báº£o máº­t đŸ›¡ï¸)
+ * 🎯 SERVER ACTION: Nhận thưởng nhiệm vụ (Bảo mật 🛡️)
  */
 export async function claimMissionRewardAction(missionKey, mangaId = null) {
   try {
     const user = await getAuthenticatedUser();
-    if (!user || !user.id) throw new Error("Vui lĂ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ nháº­n thÆ°á»Ÿng! đŸ€");
+    if (!user || !user.id) throw new Error("Vui lòng đăng nhập để nhận thưởng! 🍀");
 
     const userId = user.id;
     const client = getDbClient();
 
-    // 1. Kiá»ƒm tra xem Ä‘Ă£ nháº­n thÆ°á»Ÿng chÆ°a (TrĂ¡nh double claim)
+    // 1. Kiểm tra xem đã nhận thưởng chưa (Tránh double claim)
     const { MISSIONS } = await import('./missions');
     const mission = MISSIONS[missionKey];
     const isDaily = mission?.type === 'daily';
@@ -976,7 +648,7 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
       .eq('mission_key', missionKey);
 
     if (isDaily) {
-        // Náº¿u lĂ  nhiá»‡m vá»¥ hĂ ng ngĂ y: Chá»‰ tĂ­nh lÆ°á»£t nháº­n trong hĂ´m nay (Má»‘c 0h Viá»‡t Nam) đŸ‡»đŸ‡³
+        // Nếu là nhiệm vụ hàng ngày: Chỉ tính lượt nhận trong hôm nay (Mốc 0h Việt Nam) 🇻🇳
         const startOfTodayISO = getStartOfVNDay().toISOString();
         query = query.gte('claimed_at', startOfTodayISO);
     }
@@ -984,23 +656,23 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     const { data: existing } = await query.maybeSingle();
 
     if (existing) {
-        throw new Error(isDaily ? "HĂ´m nay báº¡n Ä‘Ă£ nháº­n thÆ°á»Ÿng nhiá»‡m vá»¥ nĂ y rá»“i! HĂ£y quay láº¡i vĂ o ngĂ y mai đŸ›¡ï¸" : "Báº¡n Ä‘Ă£ nháº­n pháº§n thÆ°á»Ÿng nĂ y rá»“i! đŸ›¡ï¸");
+        throw new Error(isDaily ? "Hôm nay bạn đã nhận thưởng nhiệm vụ này rồi! Hãy quay lại vào ngày mai 🛡️" : "Bạn đã nhận phần thưởng này rồi! 🛡️");
     }
 
-    // 2. Láº¥y Ä‘á»‹nh nghÄ©a nhiá»‡m vá»¥ Ä‘á»ƒ xĂ¡c Ä‘á»‹nh XP (TrĂ¡nh Client gá»­i XP lĂ¡o)
+    // 2. Lấy định nghĩa nhiệm vụ để xác định XP (Tránh Client gửi XP láo)
     let rewardXp = 0;
     
     if (missionKey.startsWith('conqueror_')) {
         rewardXp = 10000;
     } else if (missionKey.startsWith('finish_series_')) {
-        // PhĂ¢n loáº¡i Tier cho bá»™ truyá»‡n Ä‘Ă£ hoĂ n thĂ nh
+        // Phân loại Tier cho bộ truyện đã hoàn thành
         const mangaIdFromKey = missionKey.replace('finish_series_', '');
         
-        // 1. Kiá»ƒm tra sá»‘ chÆ°Æ¡ng thá»±c táº¿
+        // 1. Kiểm tra số chương thực tế
         const { count } = await client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey);
         const total = count || 0;
 
-        // 2. Kiá»ƒm tra thá»ƒ loáº¡i One-shot
+        // 2. Kiểm tra thể loại One-shot
         const { data: manga } = await client.from('mangas').select('genres').eq('id', mangaIdFromKey).single();
         const isOneShotGenre = manga?.genres?.some(g => {
             const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
@@ -1008,10 +680,10 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
         });
 
         if (total <= 1 || isOneShotGenre) {
-            throw new Error("Truyá»‡n One-shot khĂ´ng Ă¡p dá»¥ng pháº§n thÆ°á»Ÿng Chinh phá»¥c! đŸ›¡ï¸");
+            throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
         }
 
-        // 3. Kiá»ƒm tra sá»‘ lÆ°á»£ng Ä‘Ă£ Ä‘á»c
+        // 3. Kiểm tra số lượng đã đọc
         const { count: n } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
         
         if (n < 20) rewardXp = 200;
@@ -1021,50 +693,49 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
 
     } else {
         const mission = MISSIONS[missionKey];
-        if (!mission) throw new Error("Nhiá»‡m vá»¥ khĂ´ng tá»“n táº¡i! đŸ•µï¸â€â™‚ï¸");
+        if (!mission) throw new Error("Nhiệm vụ không tồn tại! 🕵️‍♂️");
         rewardXp = mission.xp;
     }
 
-    // 3. Ghi log nháº­n thÆ°á»Ÿng (Atomic operation)
+    // 3. Ghi log nhận thưởng (Atomic operation)
     const { error: claimError } = await client
       .from('shiroi_mission_claims')
       .insert([{
         user_id: userId,
         mission_key: missionKey,
-        manga_id: mangaId,
-        reward_xp: rewardXp
+        claimed_at: new Date().toISOString()
       }]);
 
     if (claimError) throw claimError;
 
-    // 4. Ghi log XP (Trigger sáº½ tá»± cá»™ng cho user)
+    // 4. Cộng XP và log nhật ký
     const resLog = await recordXpLogAction(userId, rewardXp, 'mission', missionKey);
     if (!resLog.success) throw new Error(resLog.error);
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
 
-    // 5. Gá»­i thĂ´ng bĂ¡o trong á»©ng dá»¥ng (Silent fail) đŸ””đŸ€
+    // 5. Gửi thông báo trong ứng dụng (Silent fail) 🔔🍀
     try {
-        const title = `Nháº­n thÆ°á»Ÿng thĂ nh cĂ´ng! đŸ’`;
-        const body = `Báº¡n vá»«a nháº­n Ä‘Æ°á»£c ${rewardXp} XP tá»« nhiá»‡m vá»¥ ${mission?.title || 'Chinh phá»¥c'}.`;
+        const title = `Nhận thưởng thành công! 💎`;
+        const body = `Bạn vừa nhận được ${rewardXp} XP từ nhiệm vụ ${mission?.title || 'Chinh phục'}.`;
         await createInAppNotification(userId, title, body, 'system', { missionKey });
     } catch (e) {
-        console.warn("â ï¸ [Notification] Lá»—i gá»­i thĂ´ng bĂ¡o nháº­n thÆ°á»Ÿng:", e.message);
+        console.warn("⚠️ [Notification] Lỗi gửi thông báo nhận thưởng:", e.message);
     }
 
     return { success: true, rewardXp, user: updatedUser };
   } catch (error) {
-    console.error('âŒ Lá»—i claimMissionRewardAction:', error.message);
+    console.error('❌ Lỗi claimMissionRewardAction:', error.message);
     return { success: false, error: error.message };
   }
 }
 /**
- * đŸ“ SERVER ACTION: Gá»­i bĂ¬nh luáº­n vĂ  xá»­ lĂ½ thĂ´ng bĂ¡o pháº£n há»“i (Real-time Readiness) đŸ’¬đŸ€
+ * 📝 SERVER ACTION: Gửi bình luận và xử lý thông báo phản hồi (Real-time Readiness) 💬🍀
  */
 export async function addCommentAction(commentData) {
     try {
       const user = await getAuthenticatedUser();
-      if (!user || !user.id) throw new Error("Vui lĂ²ng Ä‘Äƒng nháº­p Ä‘á»ƒ bĂ¬nh luáº­n! đŸ›¡ï¸");
+      if (!user || !user.id) throw new Error("Vui lòng đăng nhập để bình luận! 🛡️");
   
       const client = getDbClient();
       const userId = user.id;
@@ -1102,7 +773,7 @@ export async function addCommentAction(commentData) {
           try {
               const { data: parentComment } = await client.from('comments').select('user_id, user_name').eq('id', parent_id).single();
               if (parentComment && parentComment.user_id !== userId) {
-                  const title = `${user.display_name || user.username} Ä‘Ă£ pháº£n há»“i bĂ¬nh luáº­n cá»§a báº¡n! đŸ’¬`;
+                  const title = `${user.display_name || user.username} đã phản hồi bình luận của bạn! 💬`;
                   const body = `"${commentData.content.substring(0, 50)}${commentData.content.length > 50 ? '...' : ''}"`;
                   const notifType = 'reply';
                   const notifData = { 
@@ -1115,11 +786,11 @@ export async function addCommentAction(commentData) {
                   await createInAppNotification(parentComment.user_id, title, body, notifType, notifData);
               }
           } catch (notifErr) {
-              console.warn("â ï¸ Lá»—i thĂ´ng bĂ¡o:", notifErr.message);
+              console.warn("⚠️ Lỗi thông báo:", notifErr.message);
           }
       }
   
-      // đŸ”” Kiá»ƒm tra hoĂ n thĂ nh nhiá»‡m vá»¥ BĂ¬nh luáº­n (Silent check) đŸ†
+      // 🔔 Kiểm tra hoàn thành nhiệm vụ Bình luận (Silent check) 🏆
       try {
           const { count: dailyComment } = await client
               .from('comments')
@@ -1128,13 +799,13 @@ export async function addCommentAction(commentData) {
               .gte('created_at', getStartOfVNDay().toISOString());
           
           if (dailyComment === 1) {
-              await createInAppNotification(userId, `HoĂ n thĂ nh nhiá»‡m vá»¥! đŸ¯`, `Báº¡n Ä‘Ă£ xong "Tháº£o luáº­n viĂªn". HĂ£y má»Ÿ Kho thĂ nh tá»±u Ä‘á»ƒ nháº­n thÆ°á»Ÿng! đŸ€`, 'system', { missionKey: 'daily_comment_1' });
+              await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "Thảo luận viên". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: 'daily_comment_1' });
           }
       } catch (e) {}
 
       return { success: true, comment: newComment };
     } catch (error) {
-      console.error("âŒ Lá»—i addCommentAction:", error.message);
+      console.error("❌ Lỗi addCommentAction:", error.message);
       return { success: false, error: error.message };
     }
 }
@@ -1142,9 +813,9 @@ export async function addCommentAction(commentData) {
 export async function getNotificationsAction(limit = 20, offset = 0) {
     try {
         const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: 'ChÆ°a Ä‘Äƒng nháº­p' };
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        // đŸ›¡ï¸ Sá»¬ Dá»¤NG ADMIN CLIENT Äá»‚ BYPASS RLS (Do há»‡ thá»‘ng Custom Auth) đŸ€
+        // 🛡️ SỬ DỤNG ADMIN CLIENT ĐỂ BYPASS RLS (Do hệ thống Custom Auth) 🍀
         const { data, error } = await supabaseAdmin
             .from('shiroi_notifications')
             .select('*')
@@ -1155,18 +826,18 @@ export async function getNotificationsAction(limit = 20, offset = 0) {
         if (error) throw error;
         return { success: true, notifications: data };
     } catch (error) {
-        console.error('âŒ Lá»—i getNotificationsAction:', error.message);
+        console.error('❌ Lỗi getNotificationsAction:', error.message);
         return { success: false, error: error.message };
     }
 }
 
 /**
- * đŸ”” SERVER ACTION: ÄĂ¡nh dáº¥u thĂ´ng bĂ¡o Ä‘Ă£ Ä‘á»c
+ * 🔔 SERVER ACTION: Đánh dấu thông báo đã đọc
  */
 export async function markNotificationAsReadAction(notificationId) {
     try {
         const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: 'ChÆ°a Ä‘Äƒng nháº­p' };
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
         const { error } = await supabaseAdmin
             .from('shiroi_notifications')
@@ -1177,18 +848,18 @@ export async function markNotificationAsReadAction(notificationId) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('âŒ Lá»—i markNotificationAsReadAction:', error.message);
+        console.error('❌ Lỗi markNotificationAsReadAction:', error.message);
         return { success: false, error: error.message };
     }
 }
 
 /**
- * đŸ”” SERVER ACTION: ÄĂ¡nh dáº¥u táº¥t cáº£ thĂ´ng bĂ¡o lĂ  Ä‘Ă£ Ä‘á»c
+ * 🔔 SERVER ACTION: Đánh dấu tất cả thông báo là đã đọc
  */
 export async function markAllNotificationsAsReadAction() {
     try {
         const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: 'ChÆ°a Ä‘Äƒng nháº­p' };
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
         const { error } = await supabaseAdmin
             .from('shiroi_notifications')
@@ -1198,22 +869,22 @@ export async function markAllNotificationsAsReadAction() {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('âŒ Lá»—i markAllNotificationsAsReadAction:', error.message);
+        console.error('❌ Lỗi markAllNotificationsAsReadAction:', error.message);
         return { success: false, error: error.message };
     }
 }
 
 /**
- * đŸ“± SERVER ACTION: LÆ°u FCM Token cá»§a thiáº¿t bá»‹
+ * 📱 SERVER ACTION: Lưu FCM Token của thiết bị
  */
 export async function saveFcmTokenAction(token, platform = 'web') {
     try {
         const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: 'ChÆ°a Ä‘Äƒng nháº­p' };
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
         const client = getDbClient();
         
-        // Upsert token: Náº¿u tá»“n táº¡i thĂ¬ cáº­p nháº­t last_seen_at (tá»± Ä‘á»™ng qua trigger)
+        // Upsert token: Nếu tồn tại thì cập nhật last_seen_at (tự động qua trigger)
         const { error } = await client
             .from('shiroi_fcm_tokens')
             .upsert({ 
@@ -1225,18 +896,18 @@ export async function saveFcmTokenAction(token, platform = 'web') {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Lá»—i saveFcmTokenAction:', error);
+        console.error('❌ Lỗi saveFcmTokenAction:', error);
         return { success: false, error: error.message };
     }
 }
 
 /**
- * ?? SERVER ACTION: T? d?ng xóa thông báo cu hon 1 tu?n
+ * 🚀 SERVER ACTION: Tự động xóa thông báo cũ hơn 1 tuần
  */
 export async function cleanupNotificationsAction() {
     try {
         const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: 'Chua dang nh?p' };
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
         const ONE_WEEK_AGO = new Date();
         ONE_WEEK_AGO.setDate(ONE_WEEK_AGO.getDate() - 7);
@@ -1250,7 +921,7 @@ export async function cleanupNotificationsAction() {
         if (error) throw error;
         return { success: true, deletedCount: count };
     } catch (error) {
-        console.error('? L?i cleanupNotificationsAction:', error.message);
+        console.error('❌ Lỗi cleanupNotificationsAction:', error.message);
         return { success: false, error: error.message };
     }
 }
