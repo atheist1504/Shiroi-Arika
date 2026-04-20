@@ -161,9 +161,9 @@ export default function Navbar() {
                 )}
               </button>
 
-              <Link href="/" className="logo shrink-0 flex items-center gap-2 group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-                <span className="clover-icon text-2xl group-hover:rotate-12 transition-transform drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">🍀</span>
-                <span className="logo-text gradient-text font-black tracking-tighter text-lg md:text-xl">SHIROI ARIKA</span>
+              <Link href="/" className="logo shrink-0 flex items-center gap-2 group absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0 z-10">
+                <span className="clover-icon text-xl md:text-2xl group-hover:rotate-12 transition-transform drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">🍀</span>
+                <span className="logo-text gradient-text font-black tracking-tighter text-base md:text-xl whitespace-nowrap">SHIROI ARIKA</span>
               </Link>
 
               <div className="hidden lg:flex items-center gap-6 ml-8">
@@ -198,16 +198,16 @@ export default function Navbar() {
                          </div>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 sm:gap-2">
                           <NotificationBell />
-                          <Link href="/profile" className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
+                          <Link href="/profile" className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
                               <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
                           </Link>
                       </div>
 
                       <button 
                         onClick={handleLogout}
-                        className="p-2 text-gray-700 hover:text-red-500 transition-colors"
+                        className="hidden lg:flex p-2 text-gray-700 hover:text-red-500 transition-colors"
                         title="Đăng xuất"
                       >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>

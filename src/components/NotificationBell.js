@@ -188,8 +188,7 @@ export default function NotificationBell() {
                         initial={{ opacity: 0, y: 15, scale: 0.95, filter: 'blur(10px)' }}
                         animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
                         exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
-                        transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="absolute right-0 mt-4 w-[360px] bg-[#0c0f0c]/95 backdrop-blur-xl border border-[#4caf50]/30 rounded-[32px] shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_20px_rgba(76,175,80,0.1)] z-[200] overflow-hidden"
+                        className="absolute right-[-60px] sm:right-0 mt-4 w-[calc(100vw-32px)] sm:w-[360px] bg-[#0c0f0c]/95 backdrop-blur-xl border border-[#4caf50]/30 rounded-[28px] sm:rounded-[32px] shadow-[0_30px_90px_rgba(0,0,0,0.9),0_0_20px_rgba(76,175,80,0.1)] z-[200] overflow-hidden"
                     >
                         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-[#4caf50]/15 to-transparent">
                             <div className="flex flex-col">
