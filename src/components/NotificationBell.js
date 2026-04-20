@@ -107,8 +107,17 @@ export default function NotificationBell() {
                  if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe();
             });
             document.removeEventListener('mousedown', handleClickOutside);
+            document.body.style.overflow = 'unset';
         };
     }, []);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+    }, [isOpen]);
 
     const fetchNotifications = async () => {
         const res = await getNotificationsAction();

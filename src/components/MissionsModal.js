@@ -28,6 +28,17 @@ export default function MissionsModal({ isOpen, onClose }) {
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
     const loadProgress = async (userId) => {
         setLoading(true);
         const data = await fetchUserMissionProgress(userId);

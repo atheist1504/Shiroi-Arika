@@ -108,8 +108,17 @@ export default function Navbar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener('storage', checkUser);
+      document.body.style.overflow = 'unset';
     };
   }, [pathname]);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [isMobileMenuOpen]);
 
   const searchMangas = async () => {
     try {

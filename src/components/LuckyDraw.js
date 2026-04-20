@@ -22,8 +22,19 @@ export default function LuckyDraw() {
     setIsMounted(true);
 
     window.addEventListener("storage", checkStatus);
-    return () => window.removeEventListener("storage", checkStatus);
+    return () => {
+        window.removeEventListener("storage", checkStatus);
+        document.body.style.overflow = 'unset';
+    };
   }, []);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [showModal]);
 
   const fetchStatusFromDb = async () => {
     const storedUser = localStorage.getItem("shiroi_user");
