@@ -631,32 +631,69 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
 }
 
 /**
- * ⚡ SERVER ACTION: Lưu dữ liệu chương mới (Admin Only) 🍀
+ * ⚡ SERVER ACTION: Lưu dữ liệu chương mới và các trang (Admin Only) 🍀
+ * Xử lý cả chế độ tạo mới và chỉnh sửa (Upsert logic)
  */
-export async function saveChapterDataAction(chapterPayload, pagesPayload) {
+export async function saveChapterDataAction(chapterPayload, pagesData, isEditing, existingChapterId = null) {
+  console.log(`⚡ [Server] Bắt đầu lưu chương - Chỉnh sửa: ${isEditing}, ID hiện tại: ${existingChapterId}`);
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ!");
+    const isAdmin = await checkAdminAuth().catch(() => false);
+    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
 
-    const client = getDbClient(true);
+    const client = getDbClient();
+    let chapId = existingChapterId;
 
-    // 1. Lưu Chapter
-    const { data: chapterData, error: chapError } = await client
-      .from('chapters')
-      .insert([chapterPayload])
-      .select();
+    // 1. Xử lý Chapter (Dùng UPSERT để an toàn tuyệt đối) 🛡️
+    const chapterToSave = {
+      ...chapterPayload
+    };
 
-    if (chapError) throw chapError;
-    const chapId = chapterData[0].id;
+    if (!isEditing) {
+       // Nếu là tạo mới, kiểm tra trùng lặp theo số chương
+       const { data: existing } = await client
+         .from("chapters")
+         .select("id")
+         .eq("manga_id", chapterPayload.manga_id)
+         .eq("chapter_number", chapterPayload.chapter_number)
+         .maybeSingle();
+       
+       if (existing) {
+         console.log("♻️ [Server] Đã tìm thấy chương tương ứng, thực hiện cập nhật ghi đè.");
+         chapId = existing.id;
+       }
+    }
 
-    // 2. Lưu Pages
-    const pagesWithId = pagesPayload.map(p => ({ ...p, chapter_id: chapId }));
-    const { error: pagesError } = await client
-      .from('pages')
-      .insert(pagesWithId);
+    if (chapId) {
+        const { error: upError } = await client
+          .from("chapters")
+          .update(chapterToSave)
+          .eq("id", chapId);
+        if (upError) throw new Error(`Lỗi cập nhật Chapter: ${upError.message}`);
+    } else {
+        const { data: newChap, error: inError } = await client
+          .from("chapters")
+          .insert([chapterToSave])
+          .select()
+          .single();
+        if (inError) throw new Error(`Lỗi tạo mới Chapter: ${inError.message}`);
+        chapId = newChap.id;
+    }
 
+    console.log(`✅ [Server] Chapter ${chapId} OK. Đang lưu ${pagesData.length} trang truyện...`);
+
+    // 2. Xóa các trang cũ (ghi đè) 🗑️
+    await client.from("pages").delete().eq("chapter_id", chapId);
+
+    // 3. Chèn các trang mới (Batch Insert) 🚀
+    const pagesWithId = pagesData.map(p => ({ 
+      ...p, 
+      chapter_id: chapId
+    }));
+
+    const { error: pagesError } = await client.from("pages").insert(pagesWithId);
     if (pagesError) throw new Error(`Lỗi lưu Pages: ${pagesError.message}`);
 
-    // ⚡ XÓA CACHE ĐỂ ĐƯA DATA MỚI LÊN READER NGAY LẬP TỨC 🍀
+    // 🚀 XÓA CACHE ĐỂ ĐƯA DATA MỚI LÊN READER NGAY LẬP TỨC ⚡
     revalidatePath(`/read/${chapId}`);
     revalidatePath(`/manga/${chapterPayload.manga_id}`);
     revalidatePath('/');
