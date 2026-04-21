@@ -22,6 +22,8 @@ export default function Navbar() {
   const [isMissionsOpen, setIsMissionsOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+  const searchRef = useRef(null);
+  const navRef = useRef(null);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -143,6 +145,9 @@ export default function Navbar() {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearch(false);
       }
+      if (navRef.current && !navRef.current.contains(event.target) && isMobileMenuOpen) {
+        setIsMobileMenuOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
@@ -151,7 +156,7 @@ export default function Navbar() {
       if (subCleanup) subCleanup();
       document.body.style.overflow = 'unset';
     };
-  }, [pathname]);
+  }, [pathname, isMobileMenuOpen]);
 
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -329,6 +334,7 @@ export default function Navbar() {
               className="absolute inset-0 bg-black/80 backdrop-blur-sm shadow-2xl"
             />
             <motion.div 
+              ref={navRef}
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -346,7 +352,7 @@ export default function Navbar() {
                 </button>
               </div>
 
-              <form onSubmit={handleSearchSubmit} className="relative mb-6">
+              <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative mb-6">
                 <input 
                   type="text" 
                   placeholder="Tìm truyện..." 
