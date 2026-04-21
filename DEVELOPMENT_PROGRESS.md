@@ -145,4 +145,30 @@ Dự án Manga Platform thế hệ mới.
     - **Noise Reduction**: Loại bỏ các thông báo XP "Nhận thưởng thành công!" sau khi claim nhiệm vụ để giảm loãng hộp thư, ưu tiên sử dụng "Nhật ký tu luyện" làm nguồn tra cứu chính. 🧹✨
 - [x] **XP Log Standardization**: Chuẩn hóa nhãn trong Nhật ký tu luyện. Chuyển đổi toàn bộ log loại `first_comment` từ "Khác" sang nhãn "Bình luận" đồng nhất. 🕰️💬
 
-*Cập nhật lần cuối: 09:40 - 21/04/2026 (Consistency & UX Optimization)*
+### 📲 Background Push Notifications & Multi-channel Engagement (v33 - FCM Integration) 🌩️🔔🚀
+- [x] **Firebase Cloud Messaging (FCM) Core**: Tích hợp toàn diện Firebase cho cả Client và Server. Cho phép hệ thống gửi thông báo trực tiếp đến trình duyệt ngay cả khi người dùng không mở trang web. 🌐⚡
+- [x] **Server-side Firebase Admin**: Cấu hình `firebase-admin` sử dụng `FIREBASE_SERVICE_ACCOUNT_KEY` bí mật. Cho phép Admin gửi thông báo hàng loạt (Topic-based) một cách an toàn và bảo mật. 🛡️🔥
+- [x] **Service Worker Registration**: Triển khai `firebase-messaging-sw.js` tại thư mục công khai, tối ưu hóa khả năng lắng nghe sự kiện Push ngầm từ FCM. ⚙️📱
+- [x] **Intelligent Token Management**: 
+    - **Client**: Tự động xin quyền, lấy Token và đăng ký Topic `all_manga_updates` ngay khi người dùng cho phép.
+    - **Server**: Cập nhật Server Action `registerFcmTokenAction` để lưu trữ Token vào Database (`shiroi_users`), phục vụ cho việc gửi thông báo cá nhân hóa sau này. 💾🎫
+- [x] **Multi-channel Sync (Push + In-app)**: Nâng cấp `notifyNewChapterAction` để kích hoạt đồng thời cả thông báo đẩy (FCM) và thông báo trong ứng dụng (Supabase) khi có chương mới. Đảm bảo độc giả không bao giờ bỏ lỡ cập nhật từ bộ truyện yêu thích. 📚🔔✨
+- [x] **Environment Infrastructure**: Thiết lập hệ thống biến môi trường bảo mật (VAPID, Service Account) cho cả môi trường Local và Production (Vercel). 🔐🏗️
+
+---
+
+## 📅 KẾ HOẠCH TIẾP THEO
+1. **Kiểm thử thực tế (Test Flight)**: Chạy thử luồng gửi thông báo thực tế khi đăng chương mới trên môi trường Production.
+2. **UI Polish**: Hoàn thiện nút bật/tắt thông báo đẩy trong phần Cài đặt cá nhân hoặc Dropdown thông báo.
+3. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP.
+
+---
+
+## 🧪 KẾ QUẢ KIỂM THỬ (TEST RESULTS) 🍀
+- [x] **FCM Client Init**: Đã xác nhận Firebase Client nhận đủ Config từ biến môi trường. ✅
+- [x] **Permission Request**: Trình duyệt hiện Popup xin quyền thành công. 🔔
+- [ ] **Push Delivery Test**: Chờ kiểm thử gửi thông báo từ Server thực tế. 🚀
+
+...
+
+*Cập nhật lần cuối: 20:55 - 21/04/2026 (FCM Integration & Push Readiness)*

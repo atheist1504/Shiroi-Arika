@@ -3,12 +3,12 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compa
 
 // 🍀 FIREBASE CONFIG (Placeholder - Cần được điền từ môi trường)
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBzPZfQdLgWvcNF5Ph63bf7jrTn2vcgWVA",
+    authDomain: "shiroi-arika.firebaseapp.com",
+    projectId: "shiroi-arika",
+    storageBucket: "shiroi-arika.firebasestorage.app",
+    messagingSenderId: "101708955054",
+    appId: "1:101708955054:web:e6968c5ac2d0d9b6f61c3f"
 };
 
 firebase.initializeApp(firebaseConfig);

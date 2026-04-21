@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
+import { requestNotificationPermission } from '@/lib/fcmClient';
 
 // 🛡️ HÀM HELPER: Kiểm tra và định dạng thời gian an toàn, tránh sập trang (Anti-crash) 🍀
 const formatSafeDistance = (dateStr) => {
@@ -234,7 +235,13 @@ export default function NotificationBell() {
         <div className="relative" ref={dropdownRef}>
             {/* Bell Icon */}
             <button 
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    setIsOpen(!isOpen);
+                    // 🔔 Yêu cầu quyền thông báo khi người dùng quan tâm đến chuông
+                    if (!isOpen) { 
+                        requestNotificationPermission().catch(err => console.error("FCM Permission Error:", err));
+                    }
+                }}
                 className={`p-2.5 rounded-xl transition-all duration-300 relative group ${
                     isOpen ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_0_20px_rgba(76,175,80,0.4)]' : 'text-gray-400 hover:text-[#4caf50] hover:bg-[#4caf50]/10'
                 }`}

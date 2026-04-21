@@ -125,6 +125,15 @@ export default function Navbar() {
 
     const subCleanup = initialUser ? setupUserSync(initialUser.id) : null;
 
+    // 🔔 Đăng ký Service Worker cho FCM (Thông báo đẩy) 🍀
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(reg => console.log('🚀 Service Worker registered:', reg.scope))
+          .catch(err => console.error('❌ SW registration failed:', err));
+      });
+    }
+
     checkUser();
     window.addEventListener('storage', checkUser);
     

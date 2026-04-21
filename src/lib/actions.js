@@ -1268,3 +1268,44 @@ export async function cleanupNotificationsAction() {
         return { success: false, error: error.message };
     }
 }
+/**
+ * 🌩️ SERVER ACTION: Đăng ký FCM Token cho Push Notifications
+ */
+export async function registerFcmTokenAction(token) {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user || !user.id) return { success: false, error: 'Chưa đăng nhập' };
+
+    const client = getDbClient();
+    
+    // Cập nhật fcm_token cho người dùng
+    const { error } = await client
+      .from('shiroi_users')
+      .update({ fcm_token: token })
+      .eq('id', user.id);
+
+    if (error) {
+      // Nếu cột không tồn tại, ta báo lỗi để admin biết cần chạy migration
+      console.error("❌ Lỗi lưu FCM Token:", error.message);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi registerFcmTokenAction:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🌩️ SERVER ACTION: Đăng ký Topic cho FCM
+ */
+export async function subscribeToTopicAction(token, topic = 'all_manga_updates') {
+  try {
+    const { subscribeTokenToTopic } = await import('./notifications');
+    return await subscribeTokenToTopic(token, topic);
+  } catch (error) {
+    console.error("❌ Lỗi subscribeToTopicAction:", error.message);
+    return { success: false, error: error.message };
+  }
+}

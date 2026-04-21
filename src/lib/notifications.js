@@ -53,6 +53,22 @@ export async function sendMangaNotification(title, mangaName, mangaId, coverImag
 }
 
 /**
+ * 🔗 Đăng ký Token vào một Topic (ví dụ: 'all_manga_updates')
+ */
+export async function subscribeTokenToTopic(token, topic) {
+  if (!admin.apps.length) return { success: false, error: 'Firebase not initialized' };
+
+  try {
+    const response = await admin.messaging().subscribeToTopic(token, topic);
+    console.log(`✅ Successfully subscribed to topic ${topic}:`, response);
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Error subscribing to topic ${topic}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🔔 TẠO THÔNG BÁO TRONG ỨNG DỤNG (IN-APP)
  * Dành cho hệ thống Hộp thư thông báo trên Web 🍀
  */
