@@ -27,7 +27,7 @@ export default function CheckIn() {
     if (storedUser) {
         const u = JSON.parse(storedUser);
         channel = supabase
-            .channel(`checkin_sync_${u.id}`)
+            .channel(`checkin_sync_${u.id}_${Math.random().toString(36).substring(7)}`)
             .on('postgres_changes', { 
                 event: 'INSERT', 
                 schema: 'public', 

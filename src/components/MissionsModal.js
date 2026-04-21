@@ -30,7 +30,7 @@ export default function MissionsModal({ isOpen, onClose }) {
                 const tables = ['shiroi_read_chapters', 'comments', 'shiroi_mission_claims'];
                 tables.forEach(table => {
                     const channel = supabase
-                        .channel(`missions_${table}_${u.id}`)
+                        .channel(`missions_${table}_${u.id}_${Math.random().toString(36).substring(7)}`)
                         .on('postgres_changes', { 
                             event: '*', 
                             schema: 'public', 

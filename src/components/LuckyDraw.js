@@ -27,7 +27,7 @@ export default function LuckyDraw() {
     if (userStr) {
         const u = JSON.parse(userStr);
         channel = supabase
-            .channel(`luckydraw_sync_${u.id}`)
+            .channel(`luckydraw_sync_${u.id}_${Math.random().toString(36).substring(7)}`)
             .on('postgres_changes', { 
                 event: 'INSERT', 
                 schema: 'public', 
