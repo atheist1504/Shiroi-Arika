@@ -43,7 +43,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
     }
   }, [isOwner]);
 
-  const isOwner = sessionUser?.id === userId;
+  const isOwner = sessionUser?.id === userId && !!userId;
 
   useEffect(() => {
     if (!initialUser && userId) fetchUserData();
@@ -143,7 +143,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
     </div>
   );
 
-  const userTitle = calculateTitle(targetUser.xp, targetUser.selected_badge);
+  const userTitle = calculateTitle(targetUser?.xp || 0, targetUser?.selected_badge);
 
   return (
     <div className="min-h-screen bg-[#050605] text-white p-6 pt-32 pb-24 relative overflow-x-hidden selection:bg-[#4caf50]/30">
@@ -160,7 +160,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
             <div className="relative p-1.5 bg-gradient-to-br from-[#4caf50]/30 to-transparent rounded-[56px] shadow-[0_0_60px_rgba(76,175,80,0.15)]">
                <div className="w-64 h-64 rounded-[48px] overflow-hidden border-4 border-[#141814] bg-[#0a0c0a] relative group shadow-2xl">
                   <img 
-                    src={optimizeImage(targetUser.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 400)} 
+                    src={optimizeImage(targetUser?.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 400)} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                     alt="Avatar" 
                   />
@@ -169,7 +169,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                
                {/* Floating Badge */}
                <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-[#4caf50] text-[#0a0c0a] font-black text-[10px] uppercase tracking-[0.3em] rounded-full shadow-[0_10px_30px_rgba(76,175,80,0.4)] whitespace-nowrap z-20">
-                  Cấp {calculateLevel(targetUser.xp)}
+                  Cấp {calculateLevel(targetUser?.xp)}
                </div>
             </div>
 
@@ -178,11 +178,11 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                   <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.4em]">{userTitle.name}</span>
                </div>
                <h1 className="text-4xl md:text-5xl font-black tracking-tight uppercase gradient-text drop-shadow-2xl">
-                  {targetUser.display_name || targetUser.username}
+                  {targetUser?.display_name || targetUser?.username || 'Thành viên Shiroi'}
                </h1>
                <div className="w-20 h-1 whitespace-nowrap bg-gradient-to-r from-transparent via-[#4caf50]/40 to-transparent mx-auto"></div>
                <p className="text-gray-500 font-bold italic text-sm leading-relaxed max-w-sm">
-                  "{targetUser.bio || 'Một lãng khách bí ẩn chưa để lại lời giới thiệu nào tại Shiroi Arika...'}"
+                  "{targetUser?.bio || 'Một lãng khách bí ẩn chưa để lại lời giới thiệu nào tại Shiroi Arika...'}"
                </p>
             </div>
 
@@ -190,12 +190,12 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                <div className="absolute inset-0 bg-gradient-to-br from-[#4caf50]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                <div className="flex justify-between items-center text-[11px] font-black uppercase tracking-[0.2em] text-[#4caf50] relative z-10">
                   <span>Tiến trình cấp độ</span>
-                  <span className="bg-[#4caf50]/10 px-3 py-1 rounded-full">{calculateProgress(targetUser.xp)}%</span>
+                  <span className="bg-[#4caf50]/10 px-3 py-1 rounded-full">{calculateProgress(targetUser?.xp)}%</span>
                </div>
                <div className="w-full h-2.5 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px] relative z-10">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${calculateProgress(targetUser.xp)}%` }}
+                    animate={{ width: `${calculateProgress(targetUser?.xp)}%` }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                     className="h-full bg-gradient-to-r from-[#4caf50] to-[#a5d6a7] shadow-[0_0_20px_rgba(76,175,80,0.5)] rounded-full"
                   />
@@ -288,7 +288,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                   Quay lại
                </button>
                <Link href="/" className="flex-1 py-6 bg-[#4caf50] text-[#0a0c0a] font-black rounded-[32px] text-[10px] uppercase tracking-widest shadow-[0_20px_40px_rgba(76,175,80,0.25)] hover:scale-[1.03] active:scale-95 transition-all text-center">
-                  Đồng hành cùng {targetUser.display_name?.split(' ')[0]} 📖
+                  Đồng hành cùng {targetUser?.display_name?.split(' ')[0] || targetUser?.username || 'Bằng hữu'} 📖
                </Link>
             </div>
           </div>

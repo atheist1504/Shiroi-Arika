@@ -15,8 +15,22 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Khởi tạo Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Khởi tạo Firebase an toàn (Anti-crash) 🛡️
+const getFirebaseApp = () => {
+    if (typeof window === 'undefined') return null;
+    if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+        console.warn("⚠️ [FCM] Thiếu cấu hình Firebase, thông báo đẩy sẽ bị vô hiệu hóa.");
+        return null;
+    }
+    try {
+        return getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+    } catch (err) {
+        console.error("❌ [FCM] Lỗi khởi tạo Firebase:", err);
+        return null;
+    }
+};
+
+const app = getFirebaseApp();
 
 /**
  * 🚀 YÊU CẦU QUYỀN THÔNG BÁO & LẤY TOKEN

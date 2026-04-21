@@ -57,7 +57,7 @@ export const calculateTitle = (xp, selectedBadge = null) => {
     const unlockedTitles = TITLES.filter(t => lvl >= t.lv);
     
     // Nếu có chọn danh hiệu và danh hiệu đó đã mở khóa -> Ưu tiên dùng 🍀
-    if (selectedBadge) {
+    if (selectedBadge && typeof selectedBadge === 'string') {
         const selected = TITLES.find(t => t.name.toUpperCase() === selectedBadge.toUpperCase());
         if (selected && lvl >= selected.lv) return selected;
     }
