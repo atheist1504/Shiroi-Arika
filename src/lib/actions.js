@@ -1021,22 +1021,18 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
 
-    // 5. Gửi thông báo và TỰ ĐỘNG ĐÁNH DẤU ĐÃ ĐỌC thông báo cũ 🧹
+    // 5. TỰ ĐỘNG ĐÁNH DẤU ĐÃ ĐỌC thông báo nhắc nhở cũ 🧹
     try {
-        const title = `Nhận thưởng thành công! 💎`;
-        const body = `Bạn vừa nhận được ${rewardXp} XP từ nhiệm vụ ${mission?.title || 'Chinh phục'}.`;
-        await createInAppNotification(userId, title, body, 'system', { missionKey });
-
-        // Tìm và đánh dấu đã đọc cho thông báo nhắc nhở nhiệm vụ này
+        // Tìm và đánh dấu đã đọc cho thông báo nhắc nhở nhiệm vụ này (để dọn dẹp hộp thư)
         await supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })
             .eq('user_id', userId)
             .eq('is_read', false)
-            .contains('data', { missionKey: missionKey });
+            .contains('data', { missionKey });
             
     } catch (e) {
-        console.warn("⚠️ [Notification] Lỗi gửi thông báo nhận thưởng:", e.message);
+        console.warn("⚠️ [Notification] Lỗi dọn dẹp thông báo cũ:", e.message);
     }
 
     return { success: true, rewardXp, user: updatedUser };

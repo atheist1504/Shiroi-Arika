@@ -24,7 +24,7 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const searchRef = useRef(null);
+  const searchParams = useSearchParams();
 
   const handleOpenMissions = useCallback(() => {
     setIsMissionsOpen(true);
@@ -34,9 +34,20 @@ export default function Navbar() {
     setIsMissionsOpen(false);
     // 🪄 XÓA THAM SỐ TAB TRÊN URL KHI ĐÓNG BẢNG 🍀
     if (window.location.search.includes('tab=')) {
-        router.replace(pathname);
+        const params = new URLSearchParams(window.location.search);
+        params.delete('tab');
+        const newSearch = params.toString();
+        const newUrl = pathname + (newSearch ? `?${newSearch}` : '');
+        router.replace(newUrl);
     }
   };
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'achievements' || tab === 'missions') {
+        setIsMissionsOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -117,13 +128,6 @@ export default function Navbar() {
     checkUser();
     window.addEventListener('storage', checkUser);
     
-    // 🍀 KIỂM TRA URL ĐỂ MỞ NHIỆM VỤ ✨
-    if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const tab = params.get('tab');
-        if (tab === 'achievements' || tab === 'missions') setIsMissionsOpen(true);
-    }
-
     setIsMounted(true);
 
     const handleClickOutside = (event) => {

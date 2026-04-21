@@ -192,19 +192,36 @@ export default function NotificationBell() {
 
     const getLink = (notif) => {
         const data = notif.data || {};
+        
+        // 💬 1. BÌNH LUẬN & PHẢN HỒI
         if (notif.type === 'reply') {
             if (data.mangaId && data.chapterId) return `/read/${data.chapterId}#comments`;
             if (data.mangaId) return `/manga/${data.mangaId}#comments`;
         }
+
+        // 📚 2. CẬP NHẬT CHƯƠNG MỚI
         if (notif.type === 'chapter_update') {
             if (data.chapterId) return `/read/${data.chapterId}`;
             if (data.mangaId) return `/manga/${data.mangaId}`;
         }
-        if (notif.type === 'system') {
-            if (data.missionKey) return '?tab=achievements';
-            if (data.reportId === 'new') return '/admin/reports';
-            if (data.reportId) return '/profile?tab=reports'; // Giả sử user có tab báo cáo
+
+        // 🎯 3. NHIỆM VỤ & THÀNH TỰU (MỞ MODAL)
+        if (data.missionKey || notif.title?.includes('nhiệm vụ') || notif.title?.includes('Thưởng')) {
+            // Đính kèm tab=achievements để Navbar mở MissionsModal
+            const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+            return `${currentPath}?tab=achievements`;
         }
+
+        // 🚩 4. BÁO CÁO (ADMIN & USER)
+        if (notif.type === 'system' || notif.title?.includes('Báo cáo')) {
+            // Link cho Admin
+            if (data.reportId === 'new' || user?.username?.toLowerCase().includes('admin')) {
+                return '/admin/reports';
+            }
+            // Link cho User
+            return '/profile?tab=reports';
+        }
+
         if (data.mangaId) return `/manga/${data.mangaId}`;
         return '#';
     };
