@@ -1098,18 +1098,49 @@ export async function addCommentAction(commentData) {
           }
       }
   
-      // 🔔 Kiểm tra hoàn thành nhiệm vụ Bình luận (Silent check) 🏆
+      // 🔔 Kiểm tra và cộng điểm XP bình luận 💎
       try {
+          const startOfTodayISO = getStartOfVNDay().toISOString();
+          const { data: logs } = await supabaseAdmin
+              .from('shiroi_xp_logs')
+              .select('created_at, type')
+              .eq('user_id', userId)
+              .in('type', ['comment', 'first_comment'])
+              .gte('created_at', startOfTodayISO)
+              .order('created_at', { ascending: false });
+
+          let canReceiveXp = true;
+          let amount = XP_REWARDS.SUBSEQUENT_COMMENT; // Mặc định 5 XP
+          
+          if (!logs || logs.length === 0) {
+              amount = XP_REWARDS.FIRST_COMMENT; // 10 XP cho lần đầu
+          } else {
+              // Kiểm tra Cooldown 30s
+              const lastLogTime = new Date(logs[0].created_at).getTime();
+              const now = new Date().getTime();
+              if (now - lastLogTime < XP_REWARDS.COMMENT_COOLDOWN) {
+                  canReceiveXp = false;
+              }
+          }
+
+          if (canReceiveXp) {
+              const type = amount === XP_REWARDS.FIRST_COMMENT ? 'first_comment' : 'comment';
+              await recordXpLogAction(userId, amount, type, `Bình luận tại chương: ${c_id || 'Manga'}`);
+          }
+
+          // 🏆 Kiểm tra nhiệm vụ tuần (Thành tựu)
           const { count: dailyComment } = await client
               .from('comments')
               .select('*', { count: 'exact', head: true })
               .eq('user_id', userId)
-              .gte('created_at', getStartOfVNDay().toISOString());
+              .gte('created_at', startOfTodayISO);
           
           if (dailyComment === 1) {
               await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "Thảo luận viên". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: 'daily_comment_1' });
           }
-      } catch (e) {}
+      } catch (e) {
+          console.warn("⚠️ Lỗi cộng điểm bình luận:", e.message);
+      }
 
       return { success: true, comment: newComment };
     } catch (error) {
