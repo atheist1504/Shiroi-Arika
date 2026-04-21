@@ -23,6 +23,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   // 🔎 TÌM KIẾM & PHÂN TRANG 🍀
   const [searchTerm, setSearchTerm] = useState("");
   const [visibleCount, setVisibleCount] = useState(21);
+  const [isAscending, setIsAscending] = useState(false); // Mặc định: Mới nhất lên đầu (Descending) 🍀
 
   useEffect(() => {
     // ĐỒNG BỘ SESSION CHO QUẢN TRỊ VIÊN 🍀
@@ -187,14 +188,20 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   }
 
   // 🕵️‍♂️ XỬ LÝ LỌC VÀ PHÂN TRANG CHƯƠNG 🏗️
-  const filteredChapters = chapters.filter(chap => {
-    if (!searchTerm) return true;
-    const searchLow = searchTerm.toLowerCase();
-    return (
-        chap.chapter_number.toString().includes(searchLow) || 
-        (chap.title && chap.title.toLowerCase().includes(searchLow))
-    );
-  });
+  const filteredChapters = chapters
+    .filter(chap => {
+        if (!searchTerm) return true;
+        const searchLow = searchTerm.toLowerCase();
+        return (
+            chap.chapter_number.toString().includes(searchLow) || 
+            (chap.title && chap.title.toLowerCase().includes(searchLow))
+        );
+    })
+    .sort((a, b) => {
+        return isAscending 
+            ? a.chapter_number - b.chapter_number 
+            : b.chapter_number - a.chapter_number;
+    });
 
   const displayedChapters = filteredChapters.slice(0, visibleCount);
   const hasMore = visibleCount < filteredChapters.length;
@@ -371,19 +378,41 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
               Kho Chương ({chapters.length})
             </h2>
 
-            {/* Ô TÌM KIẾM THÔNG MINH 🔍 */}
-            <div className="relative w-full sm:w-64 group">
-              <input 
-                type="text" 
-                placeholder="TÌM CHƯƠNG NHANH..." 
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setVisibleCount(21); // Reset phân trang khi tìm kiếm
-                }}
-                className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
-              />
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* NÚT ĐẢO NGƯỢC THỨ TỰ 🔄 */}
+              <button 
+                onClick={() => setIsAscending(!isAscending)}
+                className={`flex items-center justify-center p-2.5 rounded-xl border transition-all duration-500 group/sort ${
+                  isAscending 
+                  ? 'bg-[#4caf50]/20 border-[#4caf50]/40 text-[#4caf50]' 
+                  : 'bg-[#141814] border-[#2a332a] text-gray-500 hover:text-[#4caf50] hover:border-[#4caf50]/50'
+                }`}
+                title={isAscending ? "Xem từ mới nhất" : "Xem từ Chap 1"}
+              >
+                <svg 
+                  className={`w-5 h-5 transition-transform duration-500 ${isAscending ? 'rotate-180' : 'rotate-0'}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+              </button>
+
+              {/* Ô TÌM KIẾM THÔNG MINH 🔍 */}
+              <div className="relative flex-1 sm:w-64 group">
+                <input 
+                  type="text" 
+                  placeholder="TÌM CHƯƠNG NHANH..." 
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setVisibleCount(21); // Reset phân trang khi tìm kiếm
+                  }}
+                  className="w-full bg-[#141814] border border-[#2a332a] focus:border-[#4caf50] rounded-xl py-2.5 pl-10 pr-4 text-[10px] font-black uppercase tracking-widest text-white outline-none transition-all shadow-inner"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4caf50] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
             </div>
           </div>
 
