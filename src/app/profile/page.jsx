@@ -946,7 +946,6 @@ export default function ProfilePage() {
                 {pwdUpdating ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT MẬT KHẨU 🛡️'}
               </button>
             </div>
-          </div>
         </form>
 
         {/* 👑 SECTION: QUẢN LÝ NHÂN SỰ SHIROI (CHỈ ADMIN) 🛡️ */}
