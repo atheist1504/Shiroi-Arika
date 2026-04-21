@@ -26,6 +26,7 @@ export default function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
     const [isMounted, setIsMounted] = useState(false);
+    const [user, setUser] = useState(null);
     const [userId, setUserId] = useState(null);
     const [connectionStatus, setConnectionStatus] = useState('disconnected');
     const [isLoading, setIsLoading] = useState(true);
@@ -40,16 +41,16 @@ export default function NotificationBell() {
             setConnectionStatus('connecting');
             // 1. Ưu tiên lấy từ LocalStorage để nhanh ⚡
             const storedUser = localStorage.getItem('shiroi_user');
-            let user = storedUser ? JSON.parse(storedUser) : null;
+            let u = storedUser ? JSON.parse(storedUser) : null;
             
             // 2. Dự phòng: Nếu LocalStorage trống, gọi API để lấy từ Cookie 🍪
-            if (!user || !user.id) {
+            if (!u || !u.id) {
                 try {
                     const res = await fetch('/api/user');
                     const data = await res.json();
                     if (data.success && data.user) {
-                        user = data.user;
-                        localStorage.setItem('shiroi_user', JSON.stringify(user));
+                        u = data.user;
+                        localStorage.setItem('shiroi_user', JSON.stringify(u));
                     }
                 } catch (e) {
                     console.error("❌ Không thể đồng bộ User ID từ API");
@@ -58,9 +59,10 @@ export default function NotificationBell() {
                 }
             }
 
-            if (user && user.id) {
-                setUserId(user.id);
-                return setupRealtime(user.id);
+            if (u && u.id) {
+                setUserId(u.id);
+                setUser(u);
+                return setupRealtime(u.id);
             }
             setConnectionStatus('disconnected');
             return null;
