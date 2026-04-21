@@ -240,7 +240,7 @@ export default function Navbar() {
                 <div className="w-24 h-8 bg-white/5 animate-pulse rounded-xl"></div>
               ) : user ? (
                  <div className="flex items-center gap-4 animate-fade-in py-2">
-                    {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                    {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                        <Link href="/admin/create-manga" className="hidden lg:flex items-center px-4 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-[0.2em] hover:brightness-110 transition-all shadow-lg shadow-[#4caf50]/10">
                           ĐĂNG TRUYỆN
                        </Link>
@@ -307,7 +307,7 @@ export default function Navbar() {
                   Nhiệm vụ
                 </button>
 
-                {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                   <>
                     <div className="w-[1px] h-3 bg-white/10"></div>
                     <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2">
@@ -376,7 +376,7 @@ export default function Navbar() {
                    >
                       <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
                    </button>
-                   {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                   {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                       <Link 
                         href="/admin/reports" 
                         onClick={() => setIsMobileMenuOpen(false)}
@@ -404,12 +404,15 @@ export default function Navbar() {
                    Tủ Truyện (Theo dõi)
                 </Link>
 
-                <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
-                  <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  </div>
-                  Lịch sử đọc
+                <Link href="/history" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 text-gray-400 font-bold uppercase text-[10px] tracking-widest">
+                  <span className="text-lg">🕒</span> Lịch sử xem
                 </Link>
+
+                {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
+                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 rounded-2xl bg-[#4caf50]/10 border border-[#4caf50]/20 text-[#4caf50] font-black uppercase text-[10px] tracking-widest shadow-[0_0_15px_rgba(76,175,80,0.1)]">
+                    <span className="text-lg">🎨</span> Đăng truyện mới
+                  </Link>
+                )}
 
                 <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 hover:bg-[#141814] rounded-2xl text-gray-300 font-bold transition-all group">
                   <div className="w-10 h-10 bg-[#141814] rounded-xl flex items-center justify-center group-hover:text-[#4caf50] transition-all">

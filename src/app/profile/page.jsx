@@ -39,6 +39,12 @@ export default function ProfilePage() {
   const [pwdUpdating, setPwdUpdating] = useState(false);
   const [pwdMessage, setPwdMessage] = useState('');
 
+  // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ (CHỈ ADMIN) 🛡️
+  const [searchQuery, setSearchQuery] = useState('');
+  const [foundUsers, setFoundUsers] = useState([]);
+  const [mgmtLoading, setMgmtLoading] = useState(false);
+  const [mgmtMessage, setMgmtMessage] = useState('');
+
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
   const [notifications, setNotifications] = useState([]); // 🔔 Lịch sử thông báo 🍀
@@ -341,6 +347,48 @@ export default function ProfilePage() {
       setPwdMessage(`LỖI HỆ THỐNG: ${err.message}`);
     } finally {
       setPwdUpdating(false);
+    }
+  };
+
+  const handleSearchUsers = async (e) => {
+    if (e) e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setMgmtLoading(true);
+    setMgmtMessage('');
+    try {
+      const { searchUsersAction } = await import('@/lib/actions');
+      const res = await searchUsersAction(searchQuery.trim());
+      if (res.success) {
+        setFoundUsers(res.users);
+        if (res.users.length === 0) setMgmtMessage('Không tìm thấy người dùng nào! 🕵️‍♂️');
+      } else {
+        setMgmtMessage(`LỖI: ${res.error}`);
+      }
+    } catch (err) {
+      setMgmtMessage(`LỖI HỆ THỐNG: ${err.message}`);
+    } finally {
+      setMgmtLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (targetUserId, newRole) => {
+    if (!window.confirm(`Xác nhận đổi chức vụ thành ${newRole.toUpperCase()}? 🛡️`)) return;
+
+    setMgmtLoading(true);
+    try {
+      const { updateUserRoleAction } = await import('@/lib/actions');
+      const res = await updateUserRoleAction(targetUserId, newRole);
+      if (res.success) {
+        setMgmtMessage('ĐÃ CẬP NHẬT CHỨC VỤ THÀNH CÔNG! 👑');
+        handleSearchUsers(); // Refresh list
+      } else {
+        setMgmtMessage(`LỖI: ${res.error}`);
+      }
+    } catch (err) {
+      setMgmtMessage(`LỖI HỆ THỐNG: ${err.message}`);
+    } finally {
+      setMgmtLoading(false);
     }
   };
 
@@ -889,16 +937,86 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-6 border-t border-white/5">
-            {pwdMessage && <span className={`text-[10px] font-black uppercase tracking-tight ${pwdMessage.includes('LỖI') ? 'text-red-500' : 'text-[#4caf50]'}`}>{pwdMessage}</span>}
-            <button
-              disabled={pwdUpdating}
-              className="w-full md:w-auto px-16 py-5 bg-gradient-to-r from-[#4caf50] to-[#2e7d32] text-[#0a0c0a] font-black rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest"
-            >
-              {pwdUpdating ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT MẬT MÃ 🛡️'}
-            </button>
           </div>
         </form>
+
+        {/* 👑 SECTION: QUẢN LÝ NHÂN SỰ SHIROI (CHỈ ADMIN) 🛡️ */}
+        {user?.role === 'admin' && (
+          <div className="bg-[#141814]/80 backdrop-blur-3xl border border-[#4caf50]/40 p-8 md:p-14 rounded-[64px] shadow-2xl relative space-y-10 mb-20">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-[#4caf50] text-[#0a0c0a] rounded-2xl flex items-center justify-center text-2xl shadow-[0_0_20px_rgba(76,175,80,0.3)]">👑</div>
+                  <div>
+                    <h2 className="text-xl font-black uppercase tracking-tighter text-white leading-none">Quản lý Nhân sự</h2>
+                    <p className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest mt-1 opacity-70">Quyền hạn cấp cao của Boss 🛡️</p>
+                  </div>
+               </div>
+            </div>
+
+            <form onSubmit={handleSearchUsers} className="flex gap-4">
+              <input
+                type="text"
+                placeholder="Nhập username cần tìm..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
+              />
+              <button
+                type="submit"
+                disabled={mgmtLoading}
+                className="px-8 bg-[#4caf50] text-[#0a0c0a] font-black rounded-3xl hover:scale-105 active:scale-95 transition-all text-[10px] uppercase tracking-widest"
+              >
+                TÌM KIẾM
+              </button>
+            </form>
+
+            <div className="space-y-4">
+               {foundUsers.map(u => (
+                 <div key={u.id} className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-black/40 border border-white/5 rounded-[40px] hover:border-[#4caf50]/20 transition-all group">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 rounded-xl overflow-hidden bg-white/5">
+                          {u.avatar_url ? <img src={u.avatar_url} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-black">{u.username[0].toUpperCase()}</div>}
+                       </div>
+                       <div>
+                          <div className="text-xs font-black text-white uppercase">{u.display_name || u.username}</div>
+                          <div className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest">Hiện tại: {u.role?.toUpperCase() || 'USER'}</div>
+                       </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                       <button 
+                          onClick={() => handleUpdateRole(u.id, 'user')}
+                          disabled={u.role === 'user' || mgmtLoading}
+                          className="px-4 py-2 bg-white/5 hover:bg-white/10 text-[8px] font-black rounded-xl uppercase transition-all disabled:opacity-30"
+                       >
+                          Hạ cấp User
+                       </button>
+                       <button 
+                          onClick={() => handleUpdateRole(u.id, 'staff')}
+                          disabled={u.role === 'staff' || mgmtLoading}
+                          className="px-4 py-2 bg-blue-500/20 text-blue-500 border border-blue-500/20 hover:bg-blue-500/40 text-[8px] font-black rounded-xl uppercase transition-all disabled:opacity-30"
+                       >
+                          Cấp quyền Staff
+                       </button>
+                       <button 
+                          onClick={() => handleUpdateRole(u.id, 'admin')}
+                          disabled={u.role === 'admin' || mgmtLoading}
+                          className="px-4 py-2 bg-[#4caf50]/20 text-[#4caf50] border border-[#4caf50]/20 hover:bg-[#4caf50]/40 text-[8px] font-black rounded-xl uppercase transition-all disabled:opacity-30"
+                       >
+                          Lên Admin 👑
+                       </button>
+                    </div>
+                 </div>
+               ))}
+               
+               {mgmtMessage && (
+                 <div className="text-center p-4 bg-[#4caf50]/5 border border-[#4caf50]/10 rounded-3xl">
+                    <p className={`text-[10px] font-black uppercase tracking-widest ${mgmtMessage.includes('LỖI') ? 'text-red-500' : 'text-[#4caf50]'}`}>{mgmtMessage}</p>
+                 </div>
+               )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

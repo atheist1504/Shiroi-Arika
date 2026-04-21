@@ -169,6 +169,40 @@ async function checkAdminAuth() {
 }
 
 /**
+ * 🛠️ HELPER: Kiểm tra quyền Staff (Cộng tác viên hoặc Admin)
+ */
+async function checkStaffAuth() {
+  const user = await getAuthenticatedUser();
+  if (!user) return false;
+  
+  if (user.role === 'admin' || user.role === 'staff') return true;
+  if (user.username?.toLowerCase() === 'atheist1504') return true;
+  return false;
+}
+
+/**
+ * 🛡️ HELPER: Kiểm tra quyền sở hữu bài đăng (Sửa bài)
+ */
+async function checkResourceOwnership(table, id) {
+  const user = await getAuthenticatedUser();
+  if (!user) return false;
+  
+  // Admin được sửa tất cả 👑
+  if (user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504') return true;
+  
+  // Staff chỉ sửa được của mình 🛡️
+  const client = getDbClient();
+  const { data, error } = await client
+    .from(table)
+    .select('uploader_id')
+    .eq('id', id)
+    .single();
+  
+  if (error || !data) return false;
+  return data.uploader_id === user.id;
+}
+
+/**
  * 🛠️ HÀM HỖ TRỢ: Lấy Client DB phù hợp (Admin hoặc Anon dự phòng) 🛡️
  */
 function getDbClient() {
@@ -596,9 +630,18 @@ export async function performCheckInAction() {
 export async function saveMangaAction(mangaData, mangaId = null) {
   try {
     const isAdmin = await checkAdminAuth().catch(() => false);
-    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
+    const isStaff = await checkStaffAuth().catch(() => false);
     
+    if (!isAdmin && !isStaff) throw new Error("Quyền hạn không đủ! 🛡️");
+    
+    // Nếu là sửa bài, kiểm tra quyền sở hữu (Nếu không phải Admin)
+    if (mangaId && !isAdmin) {
+      const canEdit = await checkResourceOwnership('mangas', mangaId);
+      if (!canEdit) throw new Error("Bạn không có quyền chỉnh sửa bộ truyện này! 🛡️");
+    }
+
     const client = getDbClient();
+    const user = await getAuthenticatedUser();
 
     if (mangaId) {
       const { data, error } = await client
@@ -613,7 +656,7 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     } else {
       const { data, error } = await client
         .from('mangas')
-        .insert([{ ...mangaData }])
+        .insert([{ ...mangaData, uploader_id: user.id }])
         .select()
         .single();
       
@@ -631,12 +674,15 @@ export async function saveMangaAction(mangaData, mangaId = null) {
  */
 export async function publishChapterAction(mangaId, mangaTitle, chapterData, pagesData, coverImage) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const isAdmin = await checkAdminAuth();
+    const isStaff = await checkStaffAuth();
+    if (!isAdmin && !isStaff) throw new Error("Quyền hạn không đủ! 🛡️");
 
+    const user = await getAuthenticatedUser();
     const client = getDbClient();
     const { data: chapter, error: chapterError } = await client
       .from('chapters')
-      .insert([chapterData])
+      .insert([{ ...chapterData, uploader_id: user.id }])
       .select()
       .single();
 
@@ -668,8 +714,16 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
   console.log(`⚡ [Server] Bắt đầu lưu chương - Chỉnh sửa: ${isEditing}, ID hiện tại: ${existingChapterId}`);
   try {
     const isAdmin = await checkAdminAuth().catch(() => false);
-    if (!isAdmin) throw new Error("Quyền hạn không đủ! 🛡️");
+    const isStaff = await checkStaffAuth().catch(() => false);
+    if (!isAdmin && !isStaff) throw new Error("Quyền hạn không đủ! 🛡️");
 
+    // Nếu sửa chương, kiểm tra quyền sở hữu
+    if (isEditing && existingChapterId && !isAdmin) {
+      const canEdit = await checkResourceOwnership('chapters', existingChapterId);
+      if (!canEdit) throw new Error("Bạn không có quyền chỉnh sửa chương này! 🛡️");
+    }
+
+    const user = await getAuthenticatedUser();
     const client = getDbClient();
     let chapId = existingChapterId;
 
@@ -702,7 +756,7 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     } else {
         const { data: newChap, error: inError } = await client
           .from("chapters")
-          .insert([chapterToSave])
+          .insert([{ ...chapterToSave, uploader_id: user.id }])
           .select()
           .single();
         if (inError) throw new Error(`Lỗi tạo mới Chapter: ${inError.message}`);
@@ -1350,6 +1404,55 @@ export async function changePasswordAction(oldPassword, newPassword) {
     return { success: true };
   } catch (error) {
     console.error('❌ Lỗi changePasswordAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🕵️‍♂️ SERVER ACTION: Tìm kiếm người dùng (Chỉ dành cho Admin) 🛡️
+ */
+export async function searchUsersAction(query) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+    
+    const { data, error } = await client
+      .from('shiroi_users')
+      .select('id, username, display_name, role, avatar_url, created_at')
+      .ilike('username', `%${query}%`)
+      .limit(10);
+      
+    if (error) throw error;
+    return { success: true, users: data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 👑 SERVER ACTION: Cập nhật chức vụ người dùng (Chỉ dành cho Admin) 🛡️
+ */
+export async function updateUserRoleAction(targetId, newRole) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!['admin', 'staff', 'user'].includes(newRole)) throw new Error("Chức vụ không hợp lệ!");
+    
+    // Bảo vệ: Không thể tự hạ cấp bản thân hoặc hạ cấp chủ sở hữu atheist1504 🛡️
+    const user = await getAuthenticatedUser();
+    if (user.id === targetId) throw new Error("Bạn không thể tự đổi chức vụ của chính mình! 🛡️");
+    
+    const client = getDbClient();
+    const { data: targetUser } = await client.from('shiroi_users').select('username').eq('id', targetId).single();
+    if (targetUser?.username?.toLowerCase() === 'atheist1504') throw new Error("Không thể tác động đến Boss của Thánh địa! 🛡️");
+
+    const { error } = await client
+      .from('shiroi_users')
+      .update({ role: newRole })
+      .eq('id', targetId);
+      
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
     return { success: false, error: error.message };
   }
 }
