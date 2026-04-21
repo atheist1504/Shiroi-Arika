@@ -118,4 +118,14 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Schema Alignment**: Đồng bộ hóa chính xác tên bảng và cột giữa Code và Database thực tế (shiroi_notifications, shiroi_users, shiroi_reports, comments). ⚙️🛡️
 - [x] **Vercel Readiness**: Xác nhận bản build mới nhất trên Vercel chạy ổn định và đã nhận đủ `SUPABASE_SERVICE_ROLE_KEY` cho các tác vụ quản trị Live. 🚀🟢
 
-*Cập nhật lần cuối: 01:20 - 21/04/2026 (Database Repair & Mojibake Cleanup)*
+### 🚀 Thông Báo Đa Chiều & Tự Động Hóa Thông Minh (v30 - Final Integrity) 🛡️⚡💎
+- [x] **Smart Auto-Read Logic**: Triển khai cơ chế tự động đánh dấu "Đã đọc" khi người dùng thực hiện hành động tương ứng. (Nhận thưởng nhiệm vụ -> Đọc xong nhắc nhở, Vào đọc truyện -> Đọc xong báo chương mới). 🧹📖
+- [x] **Noise Reduction (Hộp thư tinh gọn)**: Gỡ bỏ toàn bộ thông báo XP đơn lẻ (Điểm danh, Bốc quà...) để tránh làm phiền người dùng. Chỉ giữ lại các thông báo quan trọng cần hành động. 🔕✨
+- [x] **Two-way Report Feedback**: 
+    - **Admin Alert**: Thông báo ngay lập tức cho Quản trị viên (`atheist1504`) khi có báo cáo lỗi mới từ người dùng. 🚩🔔
+    - **User Feedback**: Tự động thông báo cho người dùng khi báo cáo của họ được Admin cập nhật trạng thái (Sửa lỗi, Đã xem...). 🛠️✅
+- [x] **Title Unlock Recognition**: Tích hợp logic phát hiện thăng cấp danh hiệu. Khi người dùng vượt mốc tu vị để đạt danh hiệu mới, một thông báo vinh danh 🏆 sẽ được gửi đến ngay lập tức. 🥇🍀
+- [x] **Real-time Status Synchronization**: Nâng cấp `NotificationBell` để đồng bộ trạng thái "Đã đọc" theo thời gian thực trên mọi thiết bị và trình duyệt thông qua Supabase Real-time. 🟢⚡
+- [x] **FCM Infrastructure Readiness**: Khởi tạo file Service Worker `firebase-messaging-sw.js` và cấu hình UI cho Push Notifications. (Sẵn sàng kích hoạt khi có Client Config). 🚀📲
+
+*Cập nhật lần cuối: 01:50 - 21/04/2026 (Multi-Dimensional Notifications & Smart Automation)*

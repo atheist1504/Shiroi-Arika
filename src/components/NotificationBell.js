@@ -66,20 +66,30 @@ export default function NotificationBell() {
             const channel = supabase
                 .channel(`notif-${uid}`)
                 .on('postgres_changes', { 
-                    event: 'INSERT', 
+                    event: '*', 
                     schema: 'public', 
                     table: 'shiroi_notifications',
                     filter: `user_id=eq.${uid}`
                 }, (payload) => {
-                    console.log("🔔 Nhận thông báo mới:", payload.new);
-                    setNotifications(prev => [payload.new, ...prev]);
-                    setUnreadCount(prev => prev + 1);
-                    
-                    try {
-                        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-                        audio.volume = 0.15;
-                        audio.play();
-                    } catch (e) {}
+                    if (payload.eventType === 'INSERT') {
+                        console.log("🔔 Nhận thông báo mới:", payload.new);
+                        setNotifications(prev => [payload.new, ...prev]);
+                        setUnreadCount(prev => prev + 1);
+                        
+                        try {
+                            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+                            audio.volume = 0.15;
+                            audio.play();
+                        } catch (e) {}
+                    } else if (payload.eventType === 'UPDATE') {
+                        setNotifications(prev => prev.map(n => n.id === payload.new.id ? payload.new : n));
+                        // Cập nhật lại số lượng chưa đọc dựa trên toàn bộ state (để chính xác nhất)
+                        setNotifications(current => {
+                            const updated = current.map(n => n.id === payload.new.id ? payload.new : n);
+                            setUnreadCount(updated.filter(n => !n.is_read).length);
+                            return updated;
+                        });
+                    }
                 })
                 .subscribe((status) => {
                     if (status === 'SUBSCRIBED') {
@@ -148,7 +158,11 @@ export default function NotificationBell() {
         }
     };
 
-    const getIcon = (type) => {
+    const getIcon = (type, title = '') => {
+        if (title.includes('Danh hiệu')) return '🏆';
+        if (title.includes('Báo cáo')) return '🚩';
+        if (title.includes('khắc phục')) return '🛠️';
+        
         switch (type) {
             case 'chapter_update': return '📚';
             case 'system': return '🎯';
@@ -167,8 +181,10 @@ export default function NotificationBell() {
             if (data.chapterId) return `/read/${data.chapterId}`;
             if (data.mangaId) return `/manga/${data.mangaId}`;
         }
-        if (notif.type === 'system' && data.missionKey) {
-            return '?tab=achievements';
+        if (notif.type === 'system') {
+            if (data.missionKey) return '?tab=achievements';
+            if (data.reportId === 'new') return '/admin/reports';
+            if (data.reportId) return '/profile?tab=reports'; // Giả sử user có tab báo cáo
         }
         if (data.mangaId) return `/manga/${data.mangaId}`;
         return '#';
@@ -242,7 +258,7 @@ export default function NotificationBell() {
                                     >
                                         <div className="flex gap-4">
                                             <div className="mt-1 text-xl shrink-0 group-hover:scale-125 transition-transform duration-300">
-                                                {getIcon(notif.type)}
+                                                {getIcon(notif.type, notif.title)}
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex justify-between items-start mb-1.5">

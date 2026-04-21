@@ -6,7 +6,7 @@ import { supabaseAdmin } from './supabaseAdmin';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { sendMangaNotification, createInAppNotification } from './notifications';
-import { XP_REWARDS, getStreakBonus } from './xp';
+import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
 import { getStartOfVNDay } from './missions';
 
 /**
@@ -412,6 +412,22 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
       });
 
     if (error) throw error;
+
+    // 🔔 KIỂM TRA ĐẠT DANH HIỆU MỚI (TITLE UNLOCK) 🏆
+    try {
+      const oldLevel = calculateLevel(user?.xp || 0);
+      const newXp = (user?.xp || 0) + amount;
+      const newLevel = calculateLevel(newXp);
+
+      if (newLevel > oldLevel) {
+          // Tìm xem có danh hiệu nào nằm trong dải level vừa vượt qua không
+          const newTitle = TITLES.find(t => newLevel >= t.lv && oldLevel < t.lv);
+          if (newTitle) {
+              await createInAppNotification(userId, `Danh hiệu mới được khai phá! 🏆`, `Chúc mừng! Bạn đã đạt danh hiệu cao quý: "${newTitle.name}". Hãy tiếp tục tu luyện nhé! 🍀`, 'system', { titleName: newTitle.name });
+          }
+      }
+    } catch (e) {}
+
     return { success: true };
   } catch (error) {
     console.error('❌ Lỗi recordXpLogAction:', error.message);
@@ -469,6 +485,16 @@ export async function addReadXPAction(mangaId, chapterId) {
             const mTitle = dailyRead === 1 ? "Độc hành giả I" : "Độc hành giả II";
             await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
         }
+
+        // 6. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
+        await supabaseAdmin
+            .from('shiroi_notifications')
+            .update({ is_read: true })
+            .eq('user_id', userId)
+            .eq('type', 'chapter_update')
+            .eq('is_read', false)
+            .contains('data', { mangaId: mangaId });
+
     } catch (e) {}
 
     return { success: true, xpGain: 20, user: updatedUser };
@@ -546,12 +572,8 @@ export async function performCheckInAction() {
 
     if (updateError) throw updateError;
 
-    // 5. Gửi thông báo trong ứng dụng (Silent fail) 🔔🍀
-    try {
-        const title = `Điểm danh thành công! 🌸`;
-        const body = `Hôm nay bạn nhận được ${totalXP} XP (Chuỗi ${newStreak} ngày). Hãy giữ vững phong độ nhé! 🍀`;
-        await createInAppNotification(userId, title, body, 'system', { streak: newStreak, xp: totalXP });
-    } catch (e) {}
+    // 5. Ghi nhận nhật ký tu luyện (Không gửi thông báo XP đơn lẻ) 🍀
+    // createInAppNotification đã được gỡ bỏ theo yêu cầu để tránh làm loãng hộp thư.
 
     return { success: true, xpGain: totalXP, streak: newStreak, user: updatedUser };
   } catch (error) {
@@ -797,12 +819,7 @@ export async function performLuckyDrawAction() {
     }
 
     // Thành công! Trigger sẽ tự động cộng điểm vào bảng Users.
-    // 🔔 Gửi thông báo trong ứng dụng (Silent fail)
-    try {
-        const title = `Bốc Quà May Mắn! 🎁`;
-        const body = `Chúc mừng! Bạn vừa nhận được ${xpGain} XP từ Hộp Quà Shiroi. 🍀`;
-        await createInAppNotification(userId, title, body, 'system', { xpGain });
-    } catch (e) {}
+    // createInAppNotification cho XP đơn lẻ đã được gỡ bỏ. 🍀
 
     return { success: true, xpGain, user: updatedUser };
   } catch (error) {
@@ -828,6 +845,19 @@ export async function submitReportAction(reportData) {
       }]);
 
     if (error) throw error;
+
+    // 🔔 Thông báo cho Quản trị viên (Admin) 🛡️
+    try {
+        const adminIds = ['atheist1504']; // Có thể bổ sung thêm list admin ID hoặc query DB
+        const title = `Báo cáo mới từ User! 🚩`;
+        const body = `Có báo cáo lỗi mới cho bộ "${reportData.mangaTitle || 'Manga'}". Hãy kiểm tra ngay!`;
+        
+        // Gửi thông báo cho Admin chính hoặc tất cả admin
+        adminIds.forEach(adminId => {
+             createInAppNotification(adminId, title, body, 'system', { reportId: 'new' });
+        });
+    } catch (e) {}
+
     return { success: true };
   } catch (error) {
     console.error('Lỗi submitReportAction:', error);
@@ -875,6 +905,17 @@ export async function updateReportStatusAction(reportId, status) {
       .eq('id', reportId);
 
     if (error) throw error;
+    
+    // 🔔 Thông báo phản hồi cho người dùng 🍀
+    try {
+        const { data: report } = await client.from('shiroi_reports').select('user_id, description').eq('id', reportId).single();
+        if (report && report.user_id) {
+            const statusLabel = status === 'fixed' ? 'Đã khắc phục' : status === 'ignored' ? 'Đã xem' : status;
+            const title = `Cập nhật trạng thái báo cáo! 🛠️`;
+            const body = `Báo cáo "${report.description?.substring(0, 20)}..." của bạn đã được chuyển sang: ${statusLabel}. Cảm ơn bạn đã đóng góp! 🍀`;
+            await createInAppNotification(report.user_id, title, body, 'system', { reportId });
+        }
+    } catch (e) {}
     
     revalidatePath('/admin/reports');
     return { success: true };
@@ -972,11 +1013,20 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
 
-    // 5. Gửi thông báo trong ứng dụng (Silent fail) 🔔🍀
+    // 5. Gửi thông báo và TỰ ĐỘNG ĐÁNH DẤU ĐÃ ĐỌC thông báo cũ 🧹
     try {
         const title = `Nhận thưởng thành công! 💎`;
         const body = `Bạn vừa nhận được ${rewardXp} XP từ nhiệm vụ ${mission?.title || 'Chinh phục'}.`;
         await createInAppNotification(userId, title, body, 'system', { missionKey });
+
+        // Tìm và đánh dấu đã đọc cho thông báo nhắc nhở nhiệm vụ này
+        await supabaseAdmin
+            .from('shiroi_notifications')
+            .update({ is_read: true })
+            .eq('user_id', userId)
+            .eq('is_read', false)
+            .contains('data', { missionKey: missionKey });
+            
     } catch (e) {
         console.warn("⚠️ [Notification] Lỗi gửi thông báo nhận thưởng:", e.message);
     }
