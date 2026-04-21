@@ -130,4 +130,4 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Comment XP Recovery**: Sửa lỗi người dùng không được cộng XP khi bình luận. Khôi phục quy tắc: +10 XP cho lần đầu trong ngày, +5 XP cho các lần sau, kèm cơ chế chờ (Cooldown) 30 giây để chống spam. 💎💬
 - [x] **FCM Infrastructure Readiness**: Khởi tạo file Service Worker `firebase-messaging-sw.js` và cấu hình UI cho Push Notifications. (Sẵn sàng kích hoạt khi có Client Config). 🚀📲
 
-*Cập nhật lần cuối: 01:50 - 21/04/2026 (Multi-Dimensional Notifications & Smart Automation)*
+*Cập nhật lần cuối: 08:45 - 21/04/2026 (Ultimate Integration & Smart Automation)*
