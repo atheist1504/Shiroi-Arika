@@ -126,6 +126,7 @@ Dự án Manga Platform thế hệ mới.
     - **User Feedback**: Tự động thông báo cho người dùng khi báo cáo của họ được Admin cập nhật trạng thái (Sửa lỗi, Đã xem...). 🛠️✅
 - [x] **Title Unlock Recognition**: Tích hợp logic phát hiện thăng cấp danh hiệu. Khi người dùng vượt mốc tu vị để đạt danh hiệu mới, một thông báo vinh danh 🏆 sẽ được gửi đến ngay lập tức. 🥇🍀
 - [x] **Real-time Status Synchronization**: Nâng cấp `NotificationBell` để đồng bộ trạng thái "Đã đọc" theo thời gian thực trên mọi thiết bị và trình duyệt thông qua Supabase Real-time. 🟢⚡
+- [x] **Notification Pagination & Skeleton (Restored)**: Khôi phục tính năng phân trang (Xem thêm) và hiệu ứng Skeleton Loading cao cấp. Giúp tối ưu hiệu suất khi hộp thư có số lượng thông báo lớn và tạo cảm giác mượt mà khi tải dữ liệu. 🏗️🆕✨
 - [x] **Comment XP Recovery**: Sửa lỗi người dùng không được cộng XP khi bình luận. Khôi phục quy tắc: +10 XP cho lần đầu trong ngày, +5 XP cho các lần sau, kèm cơ chế chờ (Cooldown) 30 giây để chống spam. 💎💬
 - [x] **FCM Infrastructure Readiness**: Khởi tạo file Service Worker `firebase-messaging-sw.js` và cấu hình UI cho Push Notifications. (Sẵn sàng kích hoạt khi có Client Config). 🚀📲
 

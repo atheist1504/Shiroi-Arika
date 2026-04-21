@@ -27,7 +27,11 @@ export default function NotificationBell() {
     const dropdownRef = useRef(null);
     const [isMounted, setIsMounted] = useState(false);
     const [userId, setUserId] = useState(null);
-    const [connectionStatus, setConnectionStatus] = useState('disconnected'); // 'disconnected', 'connecting', 'connected', 'error'
+    const [connectionStatus, setConnectionStatus] = useState('disconnected');
+    const [isLoading, setIsLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
+    const LIMIT = 20;
 
     useEffect(() => {
         setIsMounted(true);
@@ -134,11 +138,26 @@ export default function NotificationBell() {
         };
     }, [isOpen]);
 
-    const fetchNotifications = async () => {
-        const res = await getNotificationsAction();
+    const fetchNotifications = async (offset = 0) => {
+        setIsLoading(true);
+        const res = await getNotificationsAction(LIMIT, offset);
         if (res.success) {
-            setNotifications(res.notifications);
-            setUnreadCount(res.notifications.filter(n => !n.is_read).length);
+            if (offset === 0) {
+                setNotifications(res.notifications);
+                setUnreadCount(res.notifications.filter(n => !n.is_read).length);
+            } else {
+                setNotifications(prev => [...prev, ...res.notifications]);
+            }
+            setHasMore(res.notifications.length === LIMIT);
+        }
+        setIsLoading(false);
+    };
+
+    const handleLoadMore = () => {
+        if (!isLoading && hasMore) {
+            const nextOffset = (page + 1) * LIMIT;
+            setPage(prev => prev + 1);
+            fetchNotifications(nextOffset);
         }
     };
 
@@ -248,51 +267,84 @@ export default function NotificationBell() {
                         </div>
 
                         <div className="max-h-[420px] overflow-y-auto custom-scrollbar">
-                            {notifications.length > 0 ? (
-                                notifications.map((notif) => (
-                                    <div 
-                                        key={notif.id}
-                                        className={`p-5 border-b border-[#2a332a]/40 hover:bg-white/[0.03] transition-all relative group ${
-                                            !notif.is_read ? 'bg-[#4caf50]/5' : ''
-                                        }`}
-                                    >
+                            {isLoading && page === 0 ? (
+                                // 🦴 SKELETON LOADING
+                                [...Array(5)].map((_, i) => (
+                                    <div key={i} className="p-5 border-b border-[#2a332a]/40 animate-pulse">
                                         <div className="flex gap-4">
-                                            <div className="mt-1 text-xl shrink-0 group-hover:scale-125 transition-transform duration-300">
-                                                {getIcon(notif.type, notif.title)}
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-1.5">
-                                                    <p className={`text-[11px] font-black uppercase tracking-wider leading-tight ${
-                                                        !notif.is_read ? 'text-[#4caf50]' : 'text-gray-300'
-                                                    }`}>
-                                                        {notif.title}
-                                                    </p>
-                                                    {!notif.is_read && <div className="w-2 h-2 bg-[#4caf50] rounded-full mt-1 shrink-0 shadow-[0_0_8px_rgba(76,175,80,0.6)]"></div>}
-                                                </div>
-                                                <p className="text-[11px] text-gray-400 font-medium leading-relaxed mb-3 line-clamp-2 italic opacity-80 group-hover:opacity-100 transition-opacity">
-                                                    {notif.body}
-                                                </p>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] text-gray-600 font-bold uppercase tracking-tight">
-                                                        {formatSafeDistance(notif.created_at)}
-                                                    </span>
-                                                    <Link 
-                                                        href={getLink(notif)}
-                                                        onClick={() => { handleMarkAsRead(notif.id); setIsOpen(false); }}
-                                                        className="text-[10px] font-black text-[#4caf50] hover:scale-105 transition-all uppercase tracking-tighter bg-[#4caf50]/10 hover:bg-[#4caf50]/20 px-3 py-1 rounded-lg border border-[#4caf50]/20"
-                                                    >
-                                                        {notif.type === 'reply' ? 'TRẢ LỜI' : 'CHI TIẾT'}
-                                                    </Link>
-                                                </div>
+                                            <div className="w-8 h-8 bg-white/5 rounded-lg shrink-0"></div>
+                                            <div className="flex-1 space-y-3">
+                                                <div className="h-2 w-1/3 bg-white/10 rounded"></div>
+                                                <div className="h-2 w-full bg-white/5 rounded"></div>
+                                                <div className="h-2 w-1/4 bg-white/5 rounded"></div>
                                             </div>
                                         </div>
                                     </div>
                                 ))
+                            ) : notifications.length > 0 ? (
+                                <>
+                                    {notifications.map((notif) => (
+                                        <div 
+                                            key={notif.id}
+                                            className={`p-5 border-b border-[#2a332a]/40 hover:bg-white/[0.03] transition-all relative group ${
+                                                !notif.is_read ? 'bg-[#4caf50]/5' : ''
+                                            }`}
+                                        >
+                                            <div className="flex gap-4">
+                                                <div className="mt-1 text-xl shrink-0 group-hover:scale-125 transition-transform duration-300">
+                                                    {getIcon(notif.type, notif.title)}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex justify-between items-start mb-1.5">
+                                                        <p className={`text-[11px] font-black uppercase tracking-wider leading-tight ${
+                                                            !notif.is_read ? 'text-[#4caf50]' : 'text-gray-300'
+                                                        }`}>
+                                                            {notif.title}
+                                                        </p>
+                                                        {!notif.is_read && <div className="w-2 h-2 bg-[#4caf50] rounded-full mt-1 shrink-0 shadow-[0_0_8px_rgba(76,175,80,0.6)]"></div>}
+                                                    </div>
+                                                    <p className="text-[11px] text-gray-400 font-medium leading-relaxed mb-3 line-clamp-2 italic opacity-80 group-hover:opacity-100 transition-opacity">
+                                                        {notif.body}
+                                                    </p>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] text-gray-600 font-bold uppercase tracking-tight">
+                                                            {formatSafeDistance(notif.created_at)}
+                                                        </span>
+                                                        <Link 
+                                                            href={getLink(notif)}
+                                                            onClick={() => { handleMarkAsRead(notif.id); setIsOpen(false); }}
+                                                            className="text-[10px] font-black text-[#4caf50] hover:scale-105 transition-all uppercase tracking-tighter bg-[#4caf50]/10 hover:bg-[#4caf50]/20 px-3 py-1 rounded-lg border border-[#4caf50]/20"
+                                                        >
+                                                            {notif.type === 'reply' ? 'TRẢ LỜI' : 'CHI TIẾT'}
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {/* Nút Xem thêm */}
+                                    {hasMore && (
+                                        <div className="p-4 flex justify-center bg-black/10">
+                                            <button 
+                                                onClick={handleLoadMore}
+                                                disabled={isLoading}
+                                                className={`text-[10px] font-black uppercase tracking-wider px-6 py-2 rounded-full border border-[#4caf50]/20 transition-all ${
+                                                    isLoading ? 'opacity-50 cursor-not-allowed' : 'text-[#4caf50] hover:bg-[#4caf50]/10 hover:border-[#4caf50]/40'
+                                                }`}
+                                            >
+                                                {isLoading ? 'Đang tải...' : 'Xem thêm thông báo cũ'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
-                                <div className="py-16 px-8 text-center bg-gradient-to-b from-transparent to-black/20">
-                                    <div className="text-5xl mb-5 grayscale opacity-20 group-hover:grayscale-0 transition-all">📭</div>
-                                    <p className="text-[11px] font-black text-gray-600 uppercase tracking-[0.3em]">Hộp thư đang trống</p>
-                                </div>
+                                !isLoading && (
+                                    <div className="py-16 px-8 text-center bg-gradient-to-b from-transparent to-black/20">
+                                        <div className="text-5xl mb-5 grayscale opacity-20 group-hover:grayscale-0 transition-all">📭</div>
+                                        <p className="text-[11px] font-black text-gray-600 uppercase tracking-[0.3em]">Hộp thư đang trống</p>
+                                    </div>
+                                )
                             )}
                         </div>
                         <div className="p-5 bg-black/40 border-t border-white/5 text-center">
