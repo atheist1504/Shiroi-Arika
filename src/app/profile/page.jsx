@@ -934,9 +934,16 @@ export default function ProfilePage() {
                 className="w-full bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
                 required
               />
-            </div>
-          </div>
 
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-6 border-t border-white/5">
+              {pwdMessage && <span className={`text-[10px] font-black uppercase tracking-tight ${pwdMessage.includes('LỖI') ? 'text-red-500' : 'text-[#4caf50]'}`}>{pwdMessage}</span>}
+              <button
+                disabled={pwdUpdating}
+                className="w-full md:w-auto px-16 py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase"
+              >
+                {pwdUpdating ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT MẬT KHẨU 🛡️'}
+              </button>
+            </div>
           </div>
         </form>
 
