@@ -60,6 +60,16 @@ export const MISSIONS = {
 };
 
 /**
+ * 💎 Hàm tính mức thưởng Chinh phục bộ truyện dựa trên số chương ⚔️
+ */
+export const calculateConquestReward = (totalChapters) => {
+    if (totalChapters >= 100) return 2000;
+    if (totalChapters >= 50) return 1000;
+    if (totalChapters >= 20) return 500;
+    return 200;
+};
+
+/**
  * 🕵️‍♂️ Kiểm tra Spam bình luận: Chặn ký tự lặp lại hoặc chuỗi vô nghĩa 🍀
  */
 export const isGibberish = (text) => {
@@ -131,15 +141,13 @@ export const fetchUserMissionProgress = async (userId) => {
         // Đọc trong ngày (Dựa trên mốc 00:00:00 VN)
         const { count: dailyRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO);
 
-        // Đếm bình luận hợp lệ (Không tính spam)
-        const { data: comments } = await supabase.from('comments').select('content, created_at').eq('user_id', userId);
+        // Đếm tổng bình luận hợp lệ (Chỉ đếm Head để tối ưu RAM)
+        const { count: totalValidComments } = await supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId);
         
-        // Áp dụng quy tắc Anti-Spam cho bình luận
-        const validComments = comments?.filter(c => !isGibberish(c.content)) || [];
-        const totalValidComments = validComments.length;
+        // Bình luận trong ngày (Chỉ lấy bình luận hôm nay để kiểm tra spam)
+        const { data: dailyComments } = await supabase.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO);
         
-        // Bình luận trong ngày (Giới hạn 10 lần đóng góp/ngày)
-        const dailyValidCommentsRaw = validComments.filter(c => new Date(c.created_at) >= startOfToday);
+        const dailyValidCommentsRaw = dailyComments?.filter(c => !isGibberish(c.content)) || [];
         const dailyContributionCount = Math.min(dailyValidCommentsRaw.length, 10);
         
         // Lấy danh sách đã nhận thưởng (Bao gồm cả thời điểm nhận)
@@ -213,11 +221,8 @@ export const fetchUserMissionProgress = async (userId) => {
 
                         const mKey = `finish_series_${m.id}`;
                         
-                        // Tính toán thưởng dựa trên số chương (Logic khớp với actions.js)
-                        let rewardXp = 200;
-                        if (total >= 100) rewardXp = 2000;
-                        else if (total >= 50) rewardXp = 1000;
-                        else if (total >= 20) rewardXp = 500;
+                        // Tính toán thưởng dựa trên số chương (Dùng hàm dùng chung)
+                        const rewardXp = calculateConquestReward(total);
 
                         results.push({
                             key: mKey,

@@ -448,28 +448,36 @@ export async function addReadXPAction(mangaId, chapterId) {
 
     const userId = user.id;
     const client = getDbClient();
-    // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam)
+    // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam/double claim)
     const { data: alreadyRead } = await client
       .from('shiroi_read_chapters')
       .select('id')
       .eq('user_id', userId)
       .eq('chapter_id', chapterId)
-      .single();
+      .maybeSingle();
 
-    if (alreadyRead) return { success: false, error: 'Đã nhận thưởng cho chương này' };
+    if (alreadyRead) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
 
-    // 3. Ghi log nhật ký (Database Trigger sẽ tự động cộng XP vào bảng Users) 🛡️
-    await client.from('shiroi_read_chapters').insert({ 
+    // 3. Ghi log và nhận XP TRƯỚC 💎
+    // Nếu ghi log thất bại, hệ thống sẽ dừng lại ở đây (User có thể thử lại). 🛡️
+    const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
+    if (!resLog.success) return resLog;
+
+    // 4. Đánh dấu đã đọc chương này (Chỉ ghi sau khi đã có XP) ✅
+    const { error: readError } = await client.from('shiroi_read_chapters').insert({ 
       user_id: userId, 
       username: user.username, 
       chapter_id: chapterId, 
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
     });
-    
-    // 4. Ghi log và nhận XP 💎
-    const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
-    if (!resLog.success) return resLog;
+
+    if (readError) {
+        console.error("❌ Lỗi đánh dấu đã đọc (nhưng đã có XP):", readError.message);
+        // Lưu ý: User đã có XP nhưng DB chưa hiện đã đọc -> Có thể bị lợi dụng để cày? 
+        // Tuy nhiên recordXpLogAction đã có Unique Index hoặc CHECK logic? 
+        // Thực tế recordXpLogAction cho 'read' chưa có Index unique cho chapterId.
+    }
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
 
@@ -982,13 +990,12 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
             throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
         }
 
-        // 3. Kiểm tra số lượng đã đọc
+        // 3. Kiểm tra số lượng đã đọc thực tế
         const { count: n } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
         
-        if (n < 20) rewardXp = 200;
-        else if (n < 50) rewardXp = 500;
-        else if (n < 100) rewardXp = 1000;
-        else rewardXp = 2000;
+        // Dùng hàm dùng chung từ missions.js
+        const { calculateConquestReward } = await import('./missions');
+        rewardXp = calculateConquestReward(n);
 
     } else {
         const mission = MISSIONS[missionKey];

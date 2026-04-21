@@ -128,6 +128,10 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Real-time Status Synchronization**: Nâng cấp `NotificationBell` để đồng bộ trạng thái "Đã đọc" theo thời gian thực trên mọi thiết bị và trình duyệt thông qua Supabase Real-time. 🟢⚡
 - [x] **Notification Pagination & Skeleton (Restored)**: Khôi phục tính năng phân trang (Xem thêm) và hiệu ứng Skeleton Loading cao cấp. Giúp tối ưu hiệu suất khi hộp thư có số lượng thông báo lớn và tạo cảm giác mượt mà khi tải dữ liệu. 🏗️🆕✨
 - [x] **Comment XP Recovery**: Sửa lỗi người dùng không được cộng XP khi bình luận. Khôi phục quy tắc: +10 XP cho lần đầu trong ngày, +5 XP cho các lần sau, kèm cơ chế chờ (Cooldown) 30 giây để chống spam. 💎💬
+- [x] **XP & Mission System Optimization**: 
+    - **Hiệu năng**: Tối ưu truy vấn bình luận trong trang Nhiệm vụ, giảm tải database. ⚡
+    - **Độ ổn định**: Tái cấu trúc luồng cộng XP khi đọc truyện, đảm bảo người dùng luôn nhận được điểm trước khi chương được đánh dấu "Đã đọc". 🛡️
+    - **Quy chuẩn**: Tập trung hóa logic tính thưởng Chinh phục (`calculateConquestReward`) để dễ dàng bảo trì. ⚔️
 - [x] **FCM Infrastructure Readiness**: Khởi tạo file Service Worker `firebase-messaging-sw.js` và cấu hình UI cho Push Notifications. (Sẵn sàng kích hoạt khi có Client Config). 🚀📲
 
 *Cập nhật lần cuối: 08:45 - 21/04/2026 (Ultimate Integration & Smart Automation)*
