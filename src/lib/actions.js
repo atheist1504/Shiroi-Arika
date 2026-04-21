@@ -1309,3 +1309,47 @@ export async function subscribeToTopicAction(token, topic = 'all_manga_updates')
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 🔐 SERVER ACTION: Đổi mật khẩu người dùng
+ * Yêu cầu xác thực mật khẩu cũ và mã hóa mật khẩu mới 🛡️
+ */
+export async function changePasswordAction(oldPassword, newPassword) {
+  try {
+    const userSession = await getAuthenticatedUser();
+    if (!userSession || !userSession.id) throw new Error('Cần đăng nhập để đổi mật mã! 🛡️');
+
+    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
+    const oldHashed = hashPassword(oldPassword);
+    const newHashed = hashPassword(newPassword);
+
+    const client = getDbClient();
+
+    // 1. Kiểm tra mật mã cũ có chính xác không
+    const { data: user, error: fetchError } = await client
+      .from('shiroi_users')
+      .select('password')
+      .eq('id', userSession.id)
+      .single();
+
+    if (fetchError || !user) throw new Error('Không thể xác thực tài khoản! 🆘');
+
+    // Hỗ trợ cả mật mã trơn (cho tài khoản cũ) và mật mã đã hash
+    if (user.password !== oldHashed && user.password !== oldPassword) {
+      throw new Error('Mật khẩu hiện tại chưa chính xác! 🔐');
+    }
+
+    // 2. Cập nhật mật mã mới
+    const { error: updateError } = await client
+      .from('shiroi_users')
+      .update({ password: newHashed })
+      .eq('id', userSession.id);
+
+    if (updateError) throw new Error('Cập nhật mật mã thất bại! 🛡️');
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Lỗi changePasswordAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}

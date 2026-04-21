@@ -31,6 +31,14 @@ export default function ProfilePage() {
   const [avatarLoading, setAvatarLoading] = useState(false); // TRẠNG THÁI RIÊNG CHO AVATAR 🍀
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // 🔐 STATE CHO ĐỔI MẬT KHẨU 🛡️
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwdUpdating, setPwdUpdating] = useState(false);
+  const [pwdMessage, setPwdMessage] = useState('');
+
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
   const [notifications, setNotifications] = useState([]); // 🔔 Lịch sử thông báo 🍀
@@ -300,6 +308,39 @@ export default function ProfilePage() {
       setMessage(`LỖI LƯU TRỮ: ${err.message}`);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      setPwdMessage('LỖI: MẬT KHẨU XÁC NHẬN KHÔNG KHỚP! 🆘');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPwdMessage('LỖI: MẬT KHẨU PHẢI CÓ ÍT NHẤT 6 KÝ TỰ! 🛡️');
+      return;
+    }
+
+    setPwdUpdating(true);
+    setPwdMessage('');
+
+    try {
+      const { changePasswordAction } = await import('@/lib/actions');
+      const res = await changePasswordAction(oldPassword, newPassword);
+
+      if (res.success) {
+        setPwdMessage('THÀNH CÔNG! MẬT MÃ ĐÃ ĐƯỢC THAY ĐỔI! 🔐✨');
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else {
+        setPwdMessage(`LỖI: ${res.error} 🆘`);
+      }
+    } catch (err) {
+      setPwdMessage(`LỖI HỆ THỐNG: ${err.message}`);
+    } finally {
+      setPwdUpdating(false);
     }
   };
 
@@ -799,6 +840,62 @@ export default function ProfilePage() {
               className="w-full md:w-auto px-16 py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase"
             >
               {updating ? 'ĐANG LƯU...' : 'XÁC NHẬN LƯU 🍀'}
+            </button>
+          </div>
+        </form>
+
+        {/* 🔐 SECTION: ĐỔI MẬT KHẨU (BẢO MẬT) 🛡️ */}
+        <form onSubmit={handlePasswordUpdate} className="bg-[#1a1f1a]/80 backdrop-blur-3xl border border-[#4caf50]/20 p-8 md:p-14 rounded-[64px] shadow-2xl relative space-y-10 mb-20">
+          <div className="flex items-center gap-4 mb-2">
+             <div className="w-10 h-10 bg-[#4caf50]/20 rounded-xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(76,175,80,0.2)]">🔐</div>
+             <h2 className="text-xl font-black uppercase tracking-tighter text-white">Bảo mật & Mật mã</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="w-full relative md:col-span-2">
+              <label className="block text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-3 ml-1">Mật khẩu hiện tại</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="w-full bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
+                required
+              />
+            </div>
+            
+            <div className="w-full relative">
+              <label className="block text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-3 ml-1">Mật khẩu mới</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
+                required
+              />
+            </div>
+
+            <div className="w-full relative">
+              <label className="block text-[10px] font-black text-[#4caf50] uppercase tracking-widest mb-3 ml-1">Xác nhận mật khẩu mới</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-6 border-t border-white/5">
+            {pwdMessage && <span className={`text-[10px] font-black uppercase tracking-tight ${pwdMessage.includes('LỖI') ? 'text-red-500' : 'text-[#4caf50]'}`}>{pwdMessage}</span>}
+            <button
+              disabled={pwdUpdating}
+              className="w-full md:w-auto px-16 py-5 bg-gradient-to-r from-[#4caf50] to-[#2e7d32] text-[#0a0c0a] font-black rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all text-xs uppercase tracking-widest"
+            >
+              {pwdUpdating ? 'ĐANG CẬP NHẬT...' : 'CẬP NHẬT MẬT MÃ 🛡️'}
             </button>
           </div>
         </form>
