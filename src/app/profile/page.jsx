@@ -598,6 +598,7 @@ export default function ProfilePage() {
                         'read': { label: 'Đọc truyện', icon: '📖', color: 'text-blue-400' },
                         'check_in': { label: 'Điểm danh', icon: '🗓️', color: 'text-amber-400' },
                         'comment': { label: 'Bình luận', icon: '💬', color: 'text-purple-400' },
+                        'first_comment': { label: 'Bình luận', icon: '💬', color: 'text-purple-400' },
                         'lucky_draw': { label: 'Bốc quà', icon: '🧧', color: 'text-[#4caf50]' },
                         'mission': { label: 'Nhiệm vụ', icon: '🎯', color: 'text-[#4caf50]' }
                      }[log.type] || { label: 'Khác', icon: '✨', color: 'text-gray-400' };

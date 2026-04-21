@@ -143,5 +143,6 @@ Dự án Manga Platform thế hệ mới.
     - **Dynamic Deep-linking**: Cập nhật `NotificationBell.js` và `Navbar.js` để hỗ trợ mở Modal nhiệm vụ và cuộn đến bình luận mượt mà thông qua tham số URL (`?tab=achievements`).
     - **Report Management Sync**: Liên kết báo cáo tự động chuyển hướng Admin đến bảng điều quản lý (`/admin/reports`) và User đến trang cá nhân.
     - **Noise Reduction**: Loại bỏ các thông báo XP "Nhận thưởng thành công!" sau khi claim nhiệm vụ để giảm loãng hộp thư, ưu tiên sử dụng "Nhật ký tu luyện" làm nguồn tra cứu chính. 🧹✨
+- [x] **XP Log Standardization**: Chuẩn hóa nhãn trong Nhật ký tu luyện. Chuyển đổi toàn bộ log loại `first_comment` từ "Khác" sang nhãn "Bình luận" đồng nhất. 🕰️💬
 
-*Cập nhật lần cuối: 09:30 - 21/04/2026 (Refinement & Optimization)*
+*Cập nhật lần cuối: 09:40 - 21/04/2026 (Consistency & UX Optimization)*
