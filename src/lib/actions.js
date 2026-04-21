@@ -1009,6 +1009,7 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
       .insert([{
         user_id: userId,
         mission_key: missionKey,
+        reward_xp: rewardXp,
         claimed_at: new Date().toISOString()
       }]);
 

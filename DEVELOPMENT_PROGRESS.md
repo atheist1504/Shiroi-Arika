@@ -139,5 +139,6 @@ Dự án Manga Platform thế hệ mới.
     - **Cross-Device Daily Status**: Đồng bộ tức thì nút Điểm danh và Bốc quà. Khi bấm ở Laptop, nút trên Điện thoại tự chuyển sang "Hẹn mai nhé" trong chưa đầy 1 giây.
     - **Live Missions & Compass**: Tiến độ nhiệm vụ (đọc truyện, bình luận) tự động nhảy số trong Modal mà không cần đóng mở lại.
     - **Live Leaderboard & History**: Bảng xếp hạng và Lịch sử đọc truyện luôn ở trạng thái "Live", phản ánh đúng thực tế tu vi của toàn bộ cộng đồng Shiroi.
+- [x] **Hotfix: Mission Claim Error**: Sửa lỗi sập hệ thống khi nhận thưởng nhiệm vụ do thiếu cột `reward_xp` trong câu lệnh Insert. 🛠️✅
 
-*Cập nhật lần cuối: 09:00 - 21/04/2026 (Ultimate Connectivity & Real-time Magic)*
+*Cập nhật lần cuối: 09:05 - 21/04/2026 (Ultimate Connectivity & Hotfix)*
