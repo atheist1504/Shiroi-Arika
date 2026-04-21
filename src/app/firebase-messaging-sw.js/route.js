@@ -21,25 +21,25 @@ export async function GET() {
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // 🔔 Xử lý thông báo khi tab đang đóng
+    // 🔔 Xử lý thông báo khi ứng dụng đang chạy ngầm hoặc đóng tab
     messaging.onBackgroundMessage((payload) => {
-        console.log('[firebase-messaging-sw.js] Received background message ', payload);
-        const notificationTitle = payload.notification.title;
+        console.log('[firebase-messaging-sw.js] Nhận thông báo ngầm:', payload);
+        
+        const notificationTitle = payload.notification?.title || 'Thông báo mới từ Shiroi Arika';
         const notificationOptions = {
-            body: payload.notification.body,
+            body: payload.notification?.body || 'Bạn có cập nhật mới!',
             icon: '/favicon.ico',
+            badge: '/favicon.ico',
             data: payload.data
         };
 
-        if (notificationTitle) {
-          self.registration.showNotification(notificationTitle, notificationOptions);
-        }
+        self.registration.showNotification(notificationTitle, notificationOptions);
     });
   `;
 
   return new NextResponse(script, {
     headers: {
-      'Content-Type': 'application/javascript',
+      'Content-Type': 'application/javascript; charset=utf-8',
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       'Pragma': 'no-cache',
       'Expires': '0',
