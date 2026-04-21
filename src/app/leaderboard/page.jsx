@@ -33,6 +33,21 @@ function LeaderboardContent() {
 
   useEffect(() => {
     fetchLeaderboard();
+    
+    // 🕵️‍♂️ REAL-TIME SYNC: Cập nhật BXH tức thì 🌍
+    const channel = supabase
+      .channel('leaderboard_live')
+      .on('postgres_changes', { 
+          event: 'UPDATE', 
+          schema: 'public', 
+          table: 'shiroi_users' 
+      }, (payload) => {
+          console.log("🏆 [Leaderboard] Có biến động thứ hạng, đang cập nhật...");
+          fetchLeaderboard();
+      })
+      .subscribe();
+      
+    return () => supabase.removeChannel(channel);
   }, [currentPage, query, activeTab]);
 
   const fetchAdmins = async () => {

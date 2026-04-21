@@ -10,6 +10,29 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchHistoryData();
+
+    // 🕵️‍♂️ REAL-TIME SYNC: Cập nhật lịch sử tức thì 🌍
+    let channel;
+    const storedUser = localStorage.getItem('shiroi_user');
+    if (storedUser) {
+        const user = JSON.parse(storedUser);
+        channel = supabase
+            .channel(`history_sync_${user.id}`)
+            .on('postgres_changes', { 
+                event: '*', 
+                schema: 'public', 
+                table: 'shiroi_history', 
+                filter: `user_id=eq.${user.id}` 
+            }, (payload) => {
+                console.log("♻️ [History] Lịch sử có thay đổi, đang đồng bộ...");
+                fetchHistoryData();
+            })
+            .subscribe();
+    }
+
+    return () => {
+        if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchHistoryData = async () => {

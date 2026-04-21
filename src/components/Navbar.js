@@ -85,16 +85,43 @@ export default function Navbar() {
       }
     };
 
+    const storedUser = localStorage.getItem('shiroi_user');
+    const initialUser = storedUser ? JSON.parse(storedUser) : null;
+
+    const setupUserSync = (userId) => {
+        if (!userId) return null;
+        const channel = supabase
+          .channel(`navbar_user_${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'shiroi_users',
+              filter: `id=eq.${userId}`
+            },
+            (payload) => {
+              console.log('✨ [Navbar] Đồng bộ Real-time:', payload.new);
+              localStorage.setItem('shiroi_user', JSON.stringify(payload.new));
+              setUser(payload.new);
+              window.dispatchEvent(new Event('storage'));
+            }
+          )
+          .subscribe();
+        
+        return () => supabase.removeChannel(channel);
+    };
+
+    const subCleanup = initialUser ? setupUserSync(initialUser.id) : null;
+
     checkUser();
     window.addEventListener('storage', checkUser);
     
-    // 🍀 KIỂM TRA URL ĐỂ MỞ NHIỆM VỤ (DÙNG WINDOW ĐỂ ỔN ĐỊNH) ✨
+    // 🍀 KIỂM TRA URL ĐỂ MỞ NHIỆM VỤ ✨
     if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const tab = params.get('tab');
-        if (tab === 'achievements' || tab === 'missions') {
-            setIsMissionsOpen(true);
-        }
+        if (tab === 'achievements' || tab === 'missions') setIsMissionsOpen(true);
     }
 
     setIsMounted(true);
@@ -108,6 +135,7 @@ export default function Navbar() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener('storage', checkUser);
+      if (subCleanup) subCleanup();
       document.body.style.overflow = 'unset';
     };
   }, [pathname]);

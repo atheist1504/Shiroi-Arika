@@ -21,8 +21,32 @@ export default function CheckIn() {
     fetchStatusFromDb();
     setIsMounted(true);
 
+    // 🕵️‍♂️ REAL-TIME SYNC: Đồng bộ đa thiết bị 🌍
+    let channel;
+    const storedUser = localStorage.getItem("shiroi_user");
+    if (storedUser) {
+        const u = JSON.parse(storedUser);
+        channel = supabase
+            .channel(`checkin_sync_${u.id}`)
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'shiroi_xp_logs', 
+                filter: `user_id=eq.${u.id}` 
+            }, (payload) => {
+                if (payload.new.type === 'check_in') {
+                    console.log("♻️ [CheckIn] Phát hiện điểm danh mới, đang đồng bộ...");
+                    fetchStatusFromDb();
+                }
+            })
+            .subscribe();
+    }
+
     window.addEventListener("storage", checkUserAndStatus);
-    return () => window.removeEventListener("storage", checkUserAndStatus);
+    return () => {
+        window.removeEventListener("storage", checkUserAndStatus);
+        if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchStatusFromDb = async () => {

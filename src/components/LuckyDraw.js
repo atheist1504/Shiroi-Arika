@@ -21,9 +21,31 @@ export default function LuckyDraw() {
     fetchStatusFromDb();
     setIsMounted(true);
 
+    // 🕵️‍♂️ REAL-TIME SYNC: Đồng bộ đa thiết bị 🌍
+    let channel;
+    const userStr = localStorage.getItem("shiroi_user");
+    if (userStr) {
+        const u = JSON.parse(userStr);
+        channel = supabase
+            .channel(`luckydraw_sync_${u.id}`)
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'shiroi_xp_logs', 
+                filter: `user_id=eq.${u.id}` 
+            }, (payload) => {
+                if (payload.new.type === 'lucky_draw') {
+                    console.log("♻️ [LuckyDraw] Phát hiện bốc quà mới, đang đồng bộ...");
+                    fetchStatusFromDb();
+                }
+            })
+            .subscribe();
+    }
+
     window.addEventListener("storage", checkStatus);
     return () => {
         window.removeEventListener("storage", checkStatus);
+        if (channel) supabase.removeChannel(channel);
         document.body.style.overflow = 'unset';
     };
   }, []);

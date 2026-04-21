@@ -17,6 +17,7 @@ export default function MissionsModal({ isOpen, onClose }) {
     const [compassData, setCompassData] = useState({ total: 0, finished: 0, pending: [] });
 
     useEffect(() => {
+        let channels = [];
         if (isOpen) {
             const raw = localStorage.getItem('shiroi_user');
             if (raw) {
@@ -24,8 +25,30 @@ export default function MissionsModal({ isOpen, onClose }) {
                 setUser(u);
                 loadProgress(u.id);
                 loadCompass(u.id);
+
+                // 🕵️‍♂️ REAL-TIME SYNC: Tự động cập nhật khi có hành động mới 🌍
+                const tables = ['shiroi_read_chapters', 'comments', 'shiroi_mission_claims'];
+                tables.forEach(table => {
+                    const channel = supabase
+                        .channel(`missions_${table}_${u.id}`)
+                        .on('postgres_changes', { 
+                            event: '*', 
+                            schema: 'public', 
+                            table: table, 
+                            filter: `user_id=eq.${u.id}` 
+                        }, (payload) => {
+                            console.log(`♻️ [Missions] Phát hiện thay đổi tại ${table}, đang cập nhật...`);
+                            loadProgress(u.id);
+                            if (table === 'shiroi_read_chapters') loadCompass(u.id);
+                        })
+                        .subscribe();
+                    channels.push(channel);
+                });
             }
         }
+        return () => {
+            channels.forEach(ch => supabase.removeChannel(ch));
+        };
     }, [isOpen]);
 
     useEffect(() => {
