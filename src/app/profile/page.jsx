@@ -934,8 +934,10 @@ export default function ProfilePage() {
                 className="w-full bg-black/40 border border-white/5 rounded-3xl py-5 px-8 text-sm focus:border-[#4caf50] outline-none transition-all text-white font-black"
                 required
               />
+            </div>
+          </div>
 
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-6 border-t border-white/5">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-6 border-t border-white/5">
               {pwdMessage && <span className={`text-[10px] font-black uppercase tracking-tight ${pwdMessage.includes('LỖI') ? 'text-red-500' : 'text-[#4caf50]'}`}>{pwdMessage}</span>}
               <button
                 disabled={pwdUpdating}
