@@ -47,6 +47,10 @@ export async function requestNotificationPermission() {
     if (permission === 'granted') {
       console.log('✅ Quyền thông báo đã được cấp!');
       
+      if (!app) {
+          console.warn("⚠️ [FCM] Không thể khởi tạo Messaging vì Firebase App bị lỗi.");
+          return null;
+      }
       const messaging = getMessaging(app);
       
       // Lấy Token từ Firebase

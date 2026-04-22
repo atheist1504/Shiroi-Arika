@@ -6,8 +6,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { calculateLevel, calculateProgress, calculateTitle } from '@/lib/xp';
 import Link from 'next/link';
 import { optimizeImage } from '@/lib/cloudinary';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { requestNotificationPermission } from '@/lib/fcmClient';
+import { useMemo } from 'react';
 
 export default function ProfileClient({ userId, initialUser, initialStats, initialXpLogs }) {
   const router = useRouter();
@@ -19,6 +20,11 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
   const [error, setError] = useState(null);
   
   const [sessionUser, setSessionUser] = useState(null);
+  
+  // 🛡️ Sử dụng useMemo để tính toán isOwner an toàn, tránh lỗi hoisting 🍀
+  const isOwner = useMemo(() => {
+    return sessionUser?.id === userId && !!userId;
+  }, [sessionUser, userId]);
 
   useEffect(() => {
     // Lấy thông tin session từ Cookie (Client-side)
@@ -42,8 +48,6 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       return () => clearTimeout(timer);
     }
   }, [isOwner]);
-
-  const isOwner = sessionUser?.id === userId && !!userId;
 
   useEffect(() => {
     if (!initialUser && userId) fetchUserData();

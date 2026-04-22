@@ -1443,6 +1443,27 @@ export async function searchUsersAction(query) {
 }
 
 /**
+ * 👑 SERVER ACTION: Lấy danh sách nhân sự (Staff & Admin) 🛡️
+ */
+export async function getPersonnelListAction() {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+    
+    const { data, error } = await client
+      .from('shiroi_users')
+      .select('id, username, display_name, role, avatar_url, created_at')
+      .in('role', ['admin', 'staff'])
+      .order('role', { ascending: true });
+      
+    if (error) throw error;
+    return { success: true, users: data };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 👑 SERVER ACTION: Cập nhật chức vụ người dùng (Chỉ dành cho Admin) 🛡️
  */
 export async function updateUserRoleAction(targetId, newRole) {

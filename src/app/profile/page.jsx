@@ -42,6 +42,7 @@ export default function ProfilePage() {
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ (CHỈ ADMIN) 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
+  const [personnelList, setPersonnelList] = useState([]); // 👑 DANH SÁCH NHÂN SỰ GỐC
   const [mgmtLoading, setMgmtLoading] = useState(false);
   const [mgmtMessage, setMgmtMessage] = useState('');
 
@@ -86,6 +87,10 @@ export default function ProfilePage() {
           fetchXpLogs(data.id);
           fetchNotifications();
           
+          if (data.role === 'admin') {
+            fetchPersonnel();
+          }
+
           // 🧹 TỰ ĐỘNG DỌN DẸP THÔNG BÁO CŨ HƠN 1 TUẦN 🛡️
           cleanupNotificationsAction().then(res => {
             if (res.success && res.deletedCount > 0) {
@@ -350,9 +355,28 @@ export default function ProfilePage() {
     }
   };
 
+  const fetchPersonnel = async () => {
+    try {
+      setMgmtLoading(true);
+      const { getPersonnelListAction } = await import('@/lib/actions');
+      const res = await getPersonnelListAction();
+      if (res.success) {
+        setPersonnelList(res.users);
+        setFoundUsers(res.users);
+      }
+    } catch (err) {
+      console.error("Lỗi lấy danh sách nhân sự:", err);
+    } finally {
+      setMgmtLoading(false);
+    }
+  };
+
   const handleSearchUsers = async (e) => {
     if (e) e.preventDefault();
-    if (!searchQuery.trim()) return;
+    if (!searchQuery.trim()) {
+      setFoundUsers(personnelList);
+      return;
+    }
 
     setMgmtLoading(true);
     setMgmtMessage('');
@@ -381,7 +405,7 @@ export default function ProfilePage() {
       const res = await updateUserRoleAction(targetUserId, newRole);
       if (res.success) {
         setMgmtMessage('ĐÃ CẬP NHẬT CHỨC VỤ THÀNH CÔNG! 👑');
-        handleSearchUsers(); // Refresh list
+        fetchPersonnel(); // Refresh list gốc
       } else {
         setMgmtMessage(`LỖI: ${res.error}`);
       }
