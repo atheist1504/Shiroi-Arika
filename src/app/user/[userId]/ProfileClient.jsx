@@ -15,7 +15,6 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
   
   const [targetUser, setTargetUser] = useState(initialUser);
   const [stats, setStats] = useState(initialStats || { total_mangas: 0, total_chapters: 0 });
-  const [xpLogs, setXpLogs] = useState(initialXpLogs || []);
   const [loading, setLoading] = useState(!initialUser);
   const [error, setError] = useState(null);
   
@@ -85,17 +84,6 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
         total_mangas: mangaCount || 0,
         total_chapters: chapterCount || 0
       });
-
-      // 3. Fetch Recent XP Logs (Công khai)
-      const { data: logs } = await supabase
-        .from('shiroi_xp_logs')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
-      setXpLogs(logs || []);
-
     } catch (err) {
       console.error("Lỗi tải hồ sơ:", err);
       setError('Lỗi kết nối hệ thống. Vui lòng thử lại sau.');
@@ -114,30 +102,6 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       </div>
     </div>
   );
-
-  const getXpIcon = (type) => {
-    switch (type) {
-      case 'check_in': return '🧧';
-      case 'read': return '📖';
-      case 'comment':
-      case 'first_comment': return '💬';
-      case 'lucky_draw': return '🎁';
-      case 'mission': return '🎯';
-      default: return '✨';
-    }
-  };
-
-  const getXpLabel = (type) => {
-    switch (type) {
-      case 'check_in': return 'Điểm danh';
-      case 'read': return 'Đọc truyện';
-      case 'comment':
-      case 'first_comment': return 'Bình luận';
-      case 'lucky_draw': return 'Cơ duyên';
-      case 'mission': return 'Nhiệm vụ';
-      default: return 'Tu luyện';
-    }
-  };
 
   if (error || !targetUser) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0c0a] text-center p-6">
@@ -242,48 +206,6 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                 </div>
             </div>
 
-            {/* XP HISTORY - NHẬT KÝ TU LUYỆN */}
-            <div className="space-y-6 flex-1">
-                <div className="flex items-center gap-3 px-2">
-                  <div className="w-10 h-1 bg-[#4caf50] rounded-full opacity-30"></div>
-                  <h2 className="text-[12px] font-black uppercase tracking-[0.4em] text-gray-500">Nhật ký tu luyện</h2>
-                </div>
-
-                <div className="bg-white/[0.02] backdrop-blur-2xl border border-white/5 rounded-[40px] overflow-hidden shadow-2xl">
-                   {xpLogs.length > 0 ? (
-                      <div className="divide-y divide-white/5">
-                        {xpLogs.map((log, idx) => (
-                           <motion.div 
-                              initial={{ opacity: 0, x: 20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                              key={log.id} 
-                              className="px-8 py-5 flex items-center justify-between group hover:bg-white/[0.02] transition-colors"
-                           >
-                              <div className="flex items-center gap-5">
-                                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-xl shadow-inner group-hover:scale-110 transition-transform bg-gradient-to-br from-white/5 to-transparent border border-white/5">
-                                    {getXpIcon(log.type)}
-                                 </div>
-                                 <div className="flex flex-col gap-1">
-                                    <span className="text-[11px] font-black uppercase tracking-widest text-[#4caf50] opacity-80 group-hover:opacity-100">{getXpLabel(log.type)}</span>
-                                    <span className="text-[10px] text-gray-500 font-bold italic">{log.reason || 'Cống hiến cho Shiroi Arika'}</span>
-                                 </div>
-                              </div>
-                              <div className="text-right flex flex-col gap-1">
-                                 <span className="text-lg font-black text-white tracking-tighter">+{log.amount} <span className="text-[10px] text-[#4caf50] ml-0.5">XP</span></span>
-                                 <span className="text-[9px] text-white/20 font-bold uppercase">{new Date(log.created_at).toLocaleDateString('vi-VN')}</span>
-                              </div>
-                           </motion.div>
-                        ))}
-                      </div>
-                   ) : (
-                      <div className="py-20 text-center flex flex-col items-center gap-4 opacity-30 grayscale active:grayscale-0 transition-all duration-700">
-                         <span className="text-5xl">📜</span>
-                         <p className="text-[10px] font-black uppercase tracking-[0.5em]">Ký ức tu luyện còn trống</p>
-                      </div>
-                   )}
-                </div>
-            </div>
 
             {/* ACTION BUTTONS */}
             <div className="flex items-center gap-4 pt-6">

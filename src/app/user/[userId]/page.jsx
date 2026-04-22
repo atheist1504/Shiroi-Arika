@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import ProfileClient from "./ProfileClient";
 import { notFound } from "next/navigation";
 
-export const revalidate = 600; // Cache hồ sơ trong 10 phút
+export const revalidate = 0; // Tắt cache để thấy thay đổi ngay lập tức 🍀
 
 // 🚀 TỐI ƯU SEO ĐỘNG CHO TRANG CÁ NHÂN THÀNH VIÊN 🍀
 export async function generateMetadata({ params }) {
@@ -76,13 +76,6 @@ export default async function PublicProfilePage({ params }) {
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId);
 
-  // 3. Fetch Recent XP Logs
-  const { data: logs } = await supabase
-    .from('shiroi_xp_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(10);
 
   const initialStats = {
     total_mangas: mangaCount || 0,
@@ -94,7 +87,6 @@ export default async function PublicProfilePage({ params }) {
       userId={userId}
       initialUser={userData} 
       initialStats={initialStats} 
-      initialXpLogs={logs || []} 
     />
   );
 }
