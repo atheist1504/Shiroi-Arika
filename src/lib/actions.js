@@ -1490,3 +1490,31 @@ export async function updateUserRoleAction(targetId, newRole) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 👤 SERVER ACTION: Cập nhật thông tin hồ sơ người dùng 🍀
+ */
+export async function updateUserProfileAction(userId, updateData) {
+  try {
+    const { data, error } = await supabase
+      .from('shiroi_users')
+      .update({
+        display_name: updateData.display_name,
+        bio: updateData.bio,
+        avatar_url: updateData.avatar_url
+      })
+      .eq('id', userId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    revalidatePath('/profile');
+    revalidatePath(`/user/${userId}`);
+    
+    return { success: true, user: data };
+  } catch (error) {
+    console.error("❌ Lỗi cập nhật hồ sơ:", error);
+    return { success: false, error: error.message };
+  }
+}
