@@ -24,6 +24,8 @@ export default function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const searchRef = useRef(null);
   const navRef = useRef(null);
+  const userMenuRef = useRef(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -141,7 +143,11 @@ export default function Navbar() {
     
     setIsMounted(true);
 
+
     const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSearch(false);
       }
@@ -259,20 +265,67 @@ export default function Navbar() {
                          </div>
                       </div>
 
-                      <div className="flex items-center gap-1 sm:gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 relative" ref={userMenuRef}>
                           <NotificationBell />
-                          <Link href="/profile" className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden border border-white/10 hover:border-[#4caf50]/50 transition-all bg-[#141814] shadow-xl">
-                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" alt="Avatar" />
-                          </Link>
-                      </div>
+                          
+                          <button 
+                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                            className={`w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden border transition-all bg-[#141814] shadow-xl relative group ${
+                                isUserMenuOpen ? 'border-[#4caf50] ring-4 ring-[#4caf50]/20' : 'border-white/10 hover:border-[#4caf50]/50'
+                            }`}
+                          >
+                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="Avatar" />
+                          </button>
 
-                      <button 
-                        onClick={handleLogout}
-                        className="hidden lg:flex p-2 text-gray-700 hover:text-red-500 transition-colors"
-                        title="Đăng xuất"
-                      >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                      </button>
+                          {/* 👤 USER DROPDOWN MENU 🍀 */}
+                          <AnimatePresence>
+                            {isUserMenuOpen && (
+                                <motion.div 
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 top-full mt-4 w-56 bg-[#0c0f0c]/95 backdrop-blur-2xl border border-white/5 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[2100] overflow-hidden"
+                                >
+                                    <div className="p-5 border-b border-white/5">
+                                        <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Thành viên</p>
+                                        <p className="text-[12px] font-black text-white truncate">{user.display_name || user.username}</p>
+                                    </div>
+                                    
+                                    <div className="p-2">
+                                        <Link 
+                                            href="/profile" 
+                                            onClick={() => setIsUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#4caf50]/10 text-gray-300 hover:text-[#4caf50] transition-all group"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#4caf50]/20">👤</div>
+                                            <span className="text-[11px] font-black uppercase tracking-wider">Trang cá nhân</span>
+                                        </Link>
+
+                                        <Link 
+                                            href="/profile?tab=settings" 
+                                            onClick={() => setIsUserMenuOpen(false)}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#4caf50]/10 text-gray-300 hover:text-[#4caf50] transition-all group"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-[#4caf50]/20">⚙️</div>
+                                            <span className="text-[11px] font-black uppercase tracking-wider">Cài đặt</span>
+                                        </Link>
+
+                                        <button 
+                                            onClick={() => { handleLogout(); setIsUserMenuOpen(false); }}
+                                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-gray-300 hover:text-red-500 transition-all group"
+                                        >
+                                            <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20">🚪</div>
+                                            <span className="text-[11px] font-black uppercase tracking-wider">Đăng xuất</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="p-3 bg-white/[0.02] text-center">
+                                        <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest italic">Shiroi Arika v3.0</span>
+                                    </div>
+                                </motion.div>
+                            )}
+                          </AnimatePresence>
+                      </div>
                     </div>
                  </div>
               ) : (
