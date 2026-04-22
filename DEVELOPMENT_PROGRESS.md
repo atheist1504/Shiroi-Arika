@@ -155,12 +155,17 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Multi-channel Sync (Push + In-app)**: Nâng cấp `notifyNewChapterAction` để kích hoạt đồng thời cả thông báo đẩy (FCM) và thông báo trong ứng dụng (Supabase) khi có chương mới. Đảm bảo độc giả không bao giờ bỏ lỡ cập nhật từ bộ truyện yêu thích. 📚🔔✨
 - [x] **Environment Infrastructure**: Thiết lập hệ thống biến môi trường bảo mật (VAPID, Service Account) cho cả môi trường Local và Production (Vercel). 🔐🏗️
 
+### 🚀 Giao Diện & Tiện Ích (v34 - User Control & Settings) ⚙️🛡️🍀
+- [x] **Notification Settings Integrated**: Triển khai mục "Cài đặt" ngay trong Dropdown thông báo. Cho phép người dùng chủ động Bật/Tắt thông báo đẩy (Push) một cách linh hoạt.
+- [x] **Smart Toggle Logic**: Tích hợp cơ chế tự động đăng ký/hủy đăng ký Topic Firebase (`all_manga_updates`) dựa trên lựa chọn của người dùng.
+- [x] **UI/UX Polish**: Thêm icon bánh răng ⚙️, màn hình cài đặt Glassmorphism và hiệu ứng chuyển cảnh mượt mà trong Notification Dropdown.
+- [x] **Server-side Cleanup**: Bổ sung hàm `unsubscribeTokenFromTopic` để xử lý hủy đăng ký thông báo đẩy bảo mật từ Server.
+
 ---
 
-## 📅 KẾ HOẠCH TIẾP THEO
+## 📅 KẾ HOẠCH TIẾP THEO
 1. **Kiểm thử thực tế (Test Flight)**: Chạy thử luồng gửi thông báo thực tế khi đăng chương mới trên môi trường Production.
-2. **UI Polish**: Hoàn thiện nút bật/tắt thông báo đẩy trong phần Cài đặt cá nhân hoặc Dropdown thông báo.
-3. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP.
+2. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP.
 
 ---
 

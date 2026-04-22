@@ -1365,6 +1365,19 @@ export async function subscribeToTopicAction(token, topic = 'all_manga_updates')
 }
 
 /**
+ * 🌩️ SERVER ACTION: Hủy đăng ký Topic cho FCM
+ */
+export async function unsubscribeFromTopicAction(token, topic = 'all_manga_updates') {
+  try {
+    const { unsubscribeTokenFromTopic } = await import('./notifications');
+    return await unsubscribeTokenFromTopic(token, topic);
+  } catch (error) {
+    console.error("❌ Lỗi unsubscribeFromTopicAction:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🔐 SERVER ACTION: Đổi mật khẩu người dùng
  * Yêu cầu xác thực mật khẩu cũ và mã hóa mật khẩu mới 🛡️
  */

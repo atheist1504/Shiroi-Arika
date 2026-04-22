@@ -69,6 +69,22 @@ export async function subscribeTokenToTopic(token, topic) {
 }
 
 /**
+ * 🔗 Hủy đăng ký Token khỏi một Topic
+ */
+export async function unsubscribeTokenFromTopic(token, topic) {
+  if (!admin.apps.length) return { success: false, error: 'Firebase not initialized' };
+
+  try {
+    const response = await admin.messaging().unsubscribeFromTopic(token, topic);
+    console.log(`✅ Successfully unsubscribed from topic ${topic}:`, response);
+    return { success: true };
+  } catch (error) {
+    console.error(`❌ Error unsubscribing from topic ${topic}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🔔 TẠO THÔNG BÁO TRONG ỨNG DỤNG (IN-APP)
  * Dành cho hệ thống Hộp thư thông báo trên Web 🍀
  */
