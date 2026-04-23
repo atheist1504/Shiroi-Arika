@@ -1638,6 +1638,11 @@ export async function handleTitleSuggestionAction(id, status) {
 
     if (fetchError || !suggestion) throw new Error("Không tìm thấy gợi ý!");
 
+    // 🛑 CHỐNG SPAM: Nếu đã duyệt hoặc từ chối rồi thì không xử lý nữa
+    if (suggestion.status !== 'pending') {
+        throw new Error("Gợi ý này đã được xử lý trước đó!");
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from('shiroi_title_suggestions')
       .update({ status: status })
