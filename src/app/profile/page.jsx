@@ -426,7 +426,7 @@ function ProfileContent() {
                     </div>
                     <div className="flex justify-between items-center text-[9px] font-black text-gray-600 uppercase">
                         <span>{user?.xp || 0} XP</span>
-                        <span>{XP_REWARDS.find(r => r.lvl === calculateLevel(user?.xp) + 1)?.xp || 'MAX'} XP</span>
+                        <span>{calculateLevel(user?.xp) * 100} XP</span>
                     </div>
                 </div>
              </div>
