@@ -272,6 +272,13 @@ function ProfileContent() {
     if (res.success) fetchTitleSuggestions();
   };
 
+  const handleDeleteOfficialTitle = async (id) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa danh hiệu này không? 🗑️")) return;
+    const { deleteOfficialTitleAction } = await import('@/lib/actions');
+    const res = await deleteOfficialTitleAction(id);
+    if (res.success) fetchDynamicTitles();
+  };
+
   const fetchPersonnel = async () => {
     const { getPersonnelListAction } = await import('@/lib/actions');
     const res = await getPersonnelListAction();
@@ -699,6 +706,30 @@ function ProfileContent() {
                        {titleSuggestions.filter(s => s.status === 'pending').length === 0 && (
                          <p className="text-center text-[10px] text-gray-700 py-6 italic">Hiện chưa có gợi ý nào đang chờ... ✨</p>
                        )}
+                    </div>
+                 </div>
+
+                 {/* 🏆 QUẢN LÝ TỔNG DANH HIỆU ⚔️ */}
+                 <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-xs font-black uppercase tracking-widest text-[#4caf50] flex items-center gap-2">🏆 Danh sách danh hiệu chính thức</h3>
+                        <span className="text-[10px] font-bold text-gray-600">{dynamicTitles.length} danh phẩm</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                        {dynamicTitles.map((t) => (
+                            <div key={t.id} className="p-4 bg-black/40 rounded-xl border border-white/5 flex justify-between items-center group">
+                                <div>
+                                    <p className="text-[10px] font-black text-[#4caf50] uppercase tracking-wide italic leading-none mb-1">{t.name}</p>
+                                    <p className="text-[8px] text-gray-600 font-bold">Yêu cầu: LVL {t.lv}</p>
+                                </div>
+                                <button 
+                                    onClick={() => handleDeleteOfficialTitle(t.id)}
+                                    className="p-2 text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        ))}
                     </div>
                  </div>
               </motion.div>

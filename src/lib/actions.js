@@ -1570,6 +1570,30 @@ export async function getOfficialTitlesAction() {
 }
 
 /**
+ * 🗑️ SERVER ACTION: Xóa danh hiệu chính thức (Chỉ Admin) 🍀
+ */
+export async function deleteOfficialTitleAction(id) {
+  try {
+    const sessionCookie = cookies().get('shiroi_session');
+    if (!sessionCookie) throw new Error("Chưa đăng nhập!");
+    
+    const session = JSON.parse(sessionCookie.value);
+    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+
+    const { error } = await supabaseAdmin
+      .from('shiroi_titles')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi xóa danh hiệu:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🕵️‍♂️ SERVER ACTION: Lấy danh sách gợi ý danh hiệu (Chỉ Admin/Staff) 🍀
  */
 export async function getTitleSuggestionsAction() {
