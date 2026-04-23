@@ -1720,3 +1720,29 @@ export async function createOfficialTitleAction(name, lv) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 🗑️ SERVER ACTION: Tự động dọn dẹp nhật ký tu luyện cũ (Quá 1 tuần) 🍀
+ */
+export async function cleanupXpLogsAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: false };
+
+        const user_id = user.id;
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+        const { error } = await supabaseAdmin
+            .from('shiroi_xp_logs')
+            .delete()
+            .eq('user_id', user_id)
+            .lt('created_at', oneWeekAgo.toISOString());
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Lỗi dọn dẹp nhật ký XP:", error);
+        return { success: false };
+    }
+}

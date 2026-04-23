@@ -9,6 +9,7 @@ import {
     getNotificationsAction, 
     markNotificationAsReadAction, 
     cleanupNotificationsAction, 
+    cleanupXpLogsAction,
     updateUserProfileAction,
     getOfficialTitlesAction,
     createOfficialTitleAction,
@@ -92,6 +93,9 @@ function ProfileContent() {
 
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
+  const [xpPage, setXpPage] = useState(0);
+  const [hasMoreXp, setHasMoreXp] = useState(true);
+  const [loadingMoreXp, setLoadingMoreXp] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [checkInDates, setCheckInDates] = useState([]);
   const [totalCheckIns, setTotalCheckIns] = useState(0);
@@ -125,9 +129,9 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           fetchStats(data.id);
-          fetchXpLogs(data.id);
           fetchNotifications();
           fetchDynamicTitles();
+          cleanupXpLogsAction(); // Tiền trảm hậu tấu: Dọn nhật ký cũ (> 1 tuần) 🧹
           
           if (data.role === 'admin' || data.role === 'staff') {
             fetchPersonnel();
@@ -150,6 +154,7 @@ function ProfileContent() {
             }
 
             cleanupNotificationsAction();
+            cleanupXpLogsAction(); // Dọn nhật ký cũ 🧹
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -167,17 +172,49 @@ function ProfileContent() {
     setStats({ total_mangas: mCount || 0, total_chapters: cCount || 0 });
   };
 
-  const fetchXpLogs = async (userId) => {
-    const { data } = await supabase.from('shiroi_xp_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20);
-    if (data) setXpLogs(data);
+  const fetchXpLogs = async (userId, page = 0) => {
+    if (page === 0) setLoading(true);
     
-    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-    const { data: ciData } = await supabase.from('shiroi_xp_logs').select('created_at').eq('user_id', userId).eq('type', 'check_in').gte('created_at', startOfMonth);
-    if (ciData) {
-        setCheckInDates(ciData.map(l => new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })));
+    const limit = 20;
+    const from = page * limit;
+    const to = from + limit - 1;
+
+    const { data, error } = await supabase
+      .from('shiroi_xp_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    
+    if (!error && data) {
+      if (page === 0) {
+        setXpLogs(data);
+      } else {
+        setXpLogs(prev => [...prev, ...data]);
+      }
+      setHasMoreXp(data.length === limit);
     }
-    const { count } = await supabase.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'check_in');
-    setTotalCheckIns(count || 0);
+
+    if (page === 0) {
+        // Chỉ lấy streak tháng 1 lần
+        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        const { data: ciData } = await supabase.from('shiroi_xp_logs').select('created_at').eq('user_id', userId).eq('type', 'check_in').gte('created_at', startOfMonth);
+        if (ciData) {
+            setCheckInDates(ciData.map(l => new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })));
+        }
+        const { count } = await supabase.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'check_in');
+        setTotalCheckIns(count || 0);
+        setLoading(false);
+    }
+  };
+
+  const handleLoadMoreXp = async () => {
+    if (loadingMoreXp || !hasMoreXp || !user) return;
+    setLoadingMoreXp(true);
+    const nextPage = xpPage + 1;
+    await fetchXpLogs(user.id, nextPage);
+    setXpPage(nextPage);
+    setLoadingMoreXp(false);
   };
 
   const fetchNotifications = async () => {
@@ -583,47 +620,54 @@ function ProfileContent() {
                         <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
 
-                   <div className="relative space-y-6 pl-4 border-l-2 border-white/5">
-                    {xpLogs.map((l, lIdx) => {
-                      const typeMap = {
-                        'read': { label: 'Đọc truyện', icon: '📖', color: '#4caf50' },
-                        'check_in': { label: 'Điểm danh', icon: '🔥', color: '#ff9800' },
-                        'comment': { label: 'Bình luận', icon: '💬', color: '#2196f3' },
-                        'first_comment': { label: 'Khai bút', icon: '✍️', color: '#9c27b0' },
-                        'lucky_draw': { label: 'Vận khí', icon: '🎁', color: '#4caf50' },
-                        'mission': { label: 'Nhiệm vụ', icon: '🎯', color: '#00bcd4' }
-                      };
-                      const info = typeMap[l.type] || { label: 'Khác', icon: '✨', color: '#999' };
-                      
-                      return (
-                        <motion.div 
-                            key={l.id} 
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: lIdx * 0.05 }}
-                            className="relative"
+                    <div className="relative space-y-4 pl-4 border-l-2 border-white/5 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                     {xpLogs.map((l, lIdx) => {
+                       const typeMap = {
+                         'read': { label: 'Đọc truyện', icon: '📖', color: '#4caf50' },
+                         'check_in': { label: 'Điểm danh', icon: '🔥', color: '#ff9800' },
+                         'comment': { label: 'Bình luận', icon: '💬', color: '#2196f3' },
+                         'first_comment': { label: 'Khai bút', icon: '✍️', color: '#9c27b0' },
+                         'lucky_draw': { label: 'Vận khí', icon: '🎁', color: '#4caf50' },
+                         'mission': { label: 'Nhiệm vụ', icon: '🎯', color: '#00bcd4' }
+                       };
+                       const info = typeMap[l.type] || { label: 'Khác', icon: '✨', color: '#999' };
+                       
+                       return (
+                         <motion.div 
+                             key={`${l.id}-${lIdx}`} 
+                             initial={{ opacity: 0, x: -10 }}
+                             animate={{ opacity: 1, x: 0 }}
+                             transition={{ delay: (lIdx % 20) * 0.05 }}
+                             className="relative"
+                         >
+                           <div className={`absolute -left-[23px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0a0c0a]`} style={{ backgroundColor: info.color }} />
+                           <div className="flex justify-between items-center p-4 bg-white/5 rounded-[24px] border border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
+                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                             <div className="flex items-center gap-3 relative z-10">
+                                 <span className="text-xl opacity-80 group-hover:scale-125 transition-transform duration-500">{info.icon}</span>
+                                 <div>
+                                     <div className="text-[10px] font-black uppercase tracking-widest text-white/90">{info.label}</div>
+                                     <div className="text-[8px] text-gray-500 mt-1 font-bold">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
+                                 </div>
+                             </div>
+                             <div className="text-base font-black text-[#4caf50] italic drop-shadow-glow relative z-10">+{l.amount} <span className="text-[9px] not-italic text-gray-500 uppercase">XP</span></div>
+                           </div>
+                         </motion.div>
+                       );
+                     })}
+
+                     {hasMoreXp && (
+                        <button 
+                            onClick={handleLoadMoreXp}
+                            disabled={loadingMoreXp}
+                            className="w-full py-6 mt-4 border border-dashed border-white/10 rounded-[24px] text-[10px] font-black uppercase tracking-[0.3em] text-gray-500 hover:text-[#4caf50] hover:border-[#4caf50]/30 transition-all bg-white/2"
                         >
-                          {/* Điểm nối timeline */}
-                          <div className={`absolute -left-[23px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0a0c0a]`} style={{ backgroundColor: info.color }} />
-                          
-                          <div className="flex justify-between items-center p-5 bg-white/5 rounded-[24px] border border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
-                            {/* Hiệu ứng tia sáng nhẹ khi hover */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            
-                            <div className="flex items-center gap-4 relative z-10">
-                                <span className="text-xl opacity-80 group-hover:scale-125 transition-transform duration-500">{info.icon}</span>
-                                <div>
-                                    <div className="text-[10px] font-black uppercase tracking-widest text-white/90">{info.label}</div>
-                                    <div className="text-[8px] text-gray-500 mt-1 font-bold">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
-                                </div>
-                            </div>
-                            <div className="text-base font-black text-[#4caf50] italic drop-shadow-glow relative z-10">+{l.amount} <span className="text-[9px] not-italic text-gray-500">XP</span></div>
-                          </div>
-                        </motion.div>
-                      );
-                    })}
-                    {xpLogs.length === 0 && <p className="text-center text-gray-700 py-20 italic">Bản đồ ký ức còn trống... ✨</p>}
-                   </div>
+                            {loadingMoreXp ? 'Đang triệu hồi...' : 'Xem thêm nhật ký tu hành 📜'}
+                        </button>
+                     )}
+
+                     {xpLogs.length === 0 && <p className="text-center text-gray-700 py-20 italic">Bản đồ ký ức còn trống... ✨</p>}
+                    </div>
                 </div>
 
                 {/* 💡 GỢI Ý DANH PHẨM (MỚI) */}
