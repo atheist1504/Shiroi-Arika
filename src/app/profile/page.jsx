@@ -493,6 +493,32 @@ function ProfileContent() {
                     </div>
                 </div>
 
+                {/* 📜 BÍ KÍP TU LUYỆN (XP GUIDE) 🍀 */}
+                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#4caf50]/5 blur-3xl rounded-full" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Bí kíp thăng cấp (Cách nhận XP)</h3>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {[
+                            { label: 'Điểm danh', xp: '+100', icon: '🔥' },
+                            { label: 'Đọc chương mới', xp: '+20', icon: '📖' },
+                            { label: 'Bình luận đầu', xp: '+10', icon: '💬' },
+                            { label: 'Bình luận tiếp', xp: '+5', icon: '✨' },
+                            { label: 'Gợi ý danh hiệu', xp: '+500', icon: '💡' },
+                            { label: 'Lên cấp chuỗi', xp: '+++', icon: '⚡' }
+                        ].map((item, idx) => (
+                            <div key={idx} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
+                                <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
+                                <span className="text-[8px] font-black text-gray-500 uppercase tracking-tighter">{item.label}</span>
+                                <span className="text-xs font-black text-[#4caf50] italic">{item.xp} XP</span>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-[8px] text-gray-600 italic text-center">"Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng Thánh Địa!" 🍀</p>
+                </div>
+
                 <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                   <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🕰️ Nhật ký tu luyện</h3>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
