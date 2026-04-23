@@ -59,9 +59,7 @@ function ProfileContent() {
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
-  const [personnelList, setPersonnelList] = useState([]);
   const [mgmtLoading, setMgmtLoading] = useState(false);
-  const [mgmtMessage, setMgmtMessage] = useState('');
 
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
@@ -167,7 +165,12 @@ function ProfileContent() {
     const { error } = await supabase.storage.from('avatars').upload(fileName, file);
     if (!error) {
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const res = await updateUserProfileAction(user.id, { display_name: displayName, bio: bio, avatar_url: publicUrl });
+      const res = await updateUserProfileAction(user.id, { 
+          display_name: displayName, 
+          bio: bio, 
+          avatar_url: publicUrl,
+          selected_badge: user.selected_badge 
+      });
       if (res.success) {
         setAvatarUrl(publicUrl);
         setUser(res.user);
@@ -181,7 +184,12 @@ function ProfileContent() {
     e.preventDefault();
     setUpdating(true);
     setMessage('');
-    const res = await updateUserProfileAction(user.id, { display_name: displayName, bio: bio, avatar_url: avatarUrl });
+    const res = await updateUserProfileAction(user.id, { 
+        display_name: displayName, 
+        bio: bio, 
+        avatar_url: avatarUrl,
+        selected_badge: user.selected_badge 
+    });
     if (res.success) {
         setUser(res.user);
         localStorage.setItem('shiroi_user', JSON.stringify(res.user));
@@ -231,16 +239,19 @@ function ProfileContent() {
       <div className="max-w-2xl mx-auto z-10 relative space-y-12">
         {/* TIÊU ĐỀ HỒ SƠ */}
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="relative group w-48 h-48 rounded-[48px] overflow-hidden border-4 border-[#141814] bg-[#0a0c0a] cursor-pointer" onClick={() => fileInputRef.current.click()}>
+          <div className="relative group w-48 h-48 rounded-[48px] overflow-hidden border-4 border-[#141814] bg-[#0a0c0a] cursor-pointer shadow-2xl" onClick={() => fileInputRef.current.click()}>
             <img src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" />
             {avatarLoading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#4caf50] border-t-transparent rounded-full animate-spin" /></div>}
           </div>
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black gradient-text uppercase">{user?.display_name || user?.username}</h1>
-            <span className="text-[10px] font-black px-4 py-1.5 rounded-lg border border-[#4caf50]/30 text-[#4caf50] uppercase tracking-widest bg-[#4caf50]/10">
-                {user?.selected_badge || calculateTitle(user?.xp).name}
-            </span>
+          
+          <div className="flex flex-col items-center gap-3">
+            <h1 className="text-4xl font-black gradient-text uppercase tracking-tight">{user?.display_name || user?.username}</h1>
+            <div className="px-5 py-2 rounded-2xl border border-[#4caf50]/30 text-[#4caf50] bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.1)]">
+                <span className="text-[11px] font-black uppercase tracking-[0.3em]">
+                    {user?.selected_badge || calculateTitle(user?.xp).name}
+                </span>
+            </div>
           </div>
         </div>
 
@@ -265,24 +276,48 @@ function ProfileContent() {
             {activeTab === 'profile' && (
               <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-10">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 flex flex-col items-center gap-4">
+                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 flex flex-col items-center gap-4 shadow-xl">
                     <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Phúc lành mỗi ngày (Điểm danh)</span>
                     <span className="text-5xl">🔥 {user?.check_in_streak || 0}</span>
                     <button onClick={handleCheckIn} disabled={checkInLoading || (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())} className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] font-black rounded-2xl text-[10px] uppercase tracking-widest disabled:opacity-20 hover:scale-105 transition-all">
                       {checkInLoading ? '...' : 'ĐIỂM DANH NGAY'}
                     </button>
                     <p className="text-[9px] text-gray-500 font-bold">Tổng tích lũy: {totalCheckIns} ngày ✨</p>
+
+                    {/* 📅 LỊCH ĐIỂM DANH THÁNG 🍀 */}
+                    <div className="w-full pt-4 border-t border-white/5 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Lịch tháng {new Date().getMonth() + 1}</span>
+                            <span className="text-[8px] font-black text-[#4caf50] uppercase tracking-widest">{checkInDates.length} ngày 🔥</span>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                            {(() => {
+                                const now = new Date();
+                                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+                                const calendar = [];
+                                const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+                                for (let i = 0; i < firstDay; i++) calendar.push(<div key={`e-${i}`} className="aspect-square opacity-0"></div>);
+                                for (let d = 1; d <= daysInMonth; d++) {
+                                    const dStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                                    const isChecked = checkInDates.includes(dStr);
+                                    calendar.push(<div key={`d-${d}`} className={`aspect-square rounded-md flex items-center justify-center text-[8px] font-black transition-all ${isChecked ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_0_10px_#4caf50]' : (dStr === todayStr ? 'border border-[#4caf50] text-[#4caf50] animate-pulse' : 'bg-white/5 text-gray-700')}`}>{d}</div>);
+                                }
+                                return calendar;
+                            })()}
+                        </div>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center">
+                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
                       <p className="text-[10px] text-gray-500 uppercase font-black">Bộ truyện</p>
                       <p className="text-3xl font-black">{stats.total_mangas}</p>
                     </div>
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center">
+                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
                       <p className="text-[10px] text-gray-500 uppercase font-black">Chương</p>
                       <p className="text-3xl font-black">{stats.total_chapters}</p>
                     </div>
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center col-span-2">
+                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center col-span-2 shadow-xl">
                        <p className="text-[10px] text-gray-500 uppercase font-black">Cấp độ tu luyện</p>
                        <p className="text-3xl font-black text-[#4caf50]">LVL {calculateLevel(user?.xp)}</p>
                        <div className="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
@@ -293,7 +328,7 @@ function ProfileContent() {
                   </div>
                 </div>
 
-                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6">
+                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                   <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🕰️ Nhật ký tu luyện</h3>
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                     {xpLogs.map(l => {
@@ -306,7 +341,7 @@ function ProfileContent() {
                         'mission': 'Nhiệm vụ'
                       };
                       return (
-                        <div key={l.id} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5">
+                        <div key={l.id} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5 hover:bg-black/60 transition-all">
                           <div>
                             <div className="text-[10px] font-black uppercase text-gray-400">{typeMap[l.type] || 'Khác'}</div>
                             <div className="text-[8px] text-gray-600 mt-1">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
@@ -323,7 +358,7 @@ function ProfileContent() {
 
             {activeTab === 'settings' && (
               <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-                <form onSubmit={handleUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6">
+                <form onSubmit={handleUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                   <h3 className="text-xs font-black uppercase tracking-widest">Cài đặt hồ sơ Shiroi</h3>
                   <div className="space-y-4">
                     <div className="space-y-1">
@@ -339,7 +374,63 @@ function ProfileContent() {
                   </div>
                 </form>
 
-                <form onSubmit={handlePasswordUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6">
+                {/* 🏆 HỆ THỐNG DANH HIỆU (BADGE SELECTION) 🍀 */}
+                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Thánh tích & Danh hiệu đã mở</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {TITLES.map((title) => {
+                            const isUnlocked = calculateLevel(user?.xp) >= title.lv;
+                            const isSelected = user?.selected_badge === title.name || (calculateTitle(user?.xp).name === title.name && !user?.selected_badge);
+                            
+                            return (
+                                <button
+                                    key={title.name}
+                                    type="button"
+                                    disabled={!isUnlocked || updating}
+                                    onClick={async () => {
+                                        if (isSelected) return;
+                                        setUpdating(true);
+                                        const res = await updateUserProfileAction(user.id, { 
+                                            display_name: displayName, 
+                                            bio: bio, 
+                                            avatar_url: avatarUrl,
+                                            selected_badge: title.name 
+                                        });
+                                        if (res.success) {
+                                            setUser(res.user);
+                                            localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+                                            setMessage(`Đã xưng danh: ${title.name}! ⚔️`);
+                                        }
+                                        setUpdating(false);
+                                    }}
+                                    className={`p-4 rounded-2xl border transition-all flex flex-col items-start gap-2 relative overflow-hidden group ${
+                                        isSelected 
+                                        ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' 
+                                        : isUnlocked 
+                                            ? 'bg-black/40 border-white/10 text-white hover:border-[#4caf50]/50 shadow-inner'
+                                            : 'bg-black/10 border-white/5 text-gray-700 opacity-60 grayscale'
+                                    }`}
+                                >
+                                    <div className="flex justify-between w-full items-center">
+                                         <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-[#0a0c0a]' : 'text-inherit'}`}>{title.name}</span>
+                                         {isSelected && <span className="text-xs">⚔️</span>}
+                                    </div>
+                                    <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-[#0a0c0a]/60' : 'text-gray-500'}`}>
+                                        Cấp độ yêu cầu: {title.lv}
+                                    </span>
+                                    {!isUnlocked && (
+                                        <div className="absolute top-2 right-2 text-[10px] opacity-40">🔒</div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <form onSubmit={handlePasswordUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                   <h3 className="text-xs font-black uppercase tracking-widest">Đổi mật mã bảo mật</h3>
                   <div className="space-y-4">
                     <input type="password" placeholder="Mật khẩu hiện tại" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" />
@@ -354,7 +445,7 @@ function ProfileContent() {
 
             {activeTab === 'notifications' && (
               <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6">
+                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                      <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🔔 Thông báo của bạn</h3>
                      <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                         {notifications.map(n => (
@@ -372,7 +463,7 @@ function ProfileContent() {
 
             {activeTab === 'admin' && (user?.role === 'admin' || user?.role === 'staff') && (
               <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-                 <div className="bg-[#141814] p-8 rounded-[40px] border border-red-500/10 space-y-6">
+                 <div className="bg-[#141814] p-8 rounded-[40px] border border-red-500/10 space-y-6 shadow-xl">
                     <h3 className="text-xs font-black uppercase tracking-widest text-red-500 flex items-center gap-2">🛡️ Quản lý nhân sự Thánh địa</h3>
                     <form onSubmit={handleSearchUsers} className="flex gap-2">
                        <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm tên người dùng..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-red-500/50" />
