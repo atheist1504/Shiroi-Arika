@@ -1525,14 +1525,17 @@ export async function updateUserProfileAction(userId, updateData) {
  */
 export async function suggestTitleAction(titleName, reason) {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Vui lòng đăng nhập để gửi gợi ý!");
+    const sessionCookie = cookies().get('shiroi_session');
+    if (!sessionCookie) throw new Error("Vui lòng đăng nhập để gửi gợi ý!");
+    
+    const session = JSON.parse(sessionCookie.value);
+    const userId = session.id;
 
     const { error } = await supabase
       .from('shiroi_title_suggestions')
       .insert([
         { 
-          user_id: user.id, 
+          user_id: userId, 
           title_name: titleName, 
           reason: reason,
           status: 'pending'
