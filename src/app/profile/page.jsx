@@ -63,6 +63,9 @@ function ProfileContent() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMessage, setSuggestMessage] = useState('');
 
+  // 🕵️‍♂️ STATE CHO QUẢN TRỊ DANH HIỆU 🛡️
+  const [titleSuggestions, setTitleSuggestions] = useState([]);
+
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
@@ -107,6 +110,7 @@ function ProfileContent() {
           
           if (data.role === 'admin' || data.role === 'staff') {
             fetchPersonnel();
+            fetchTitleSuggestions();
           }
 
           cleanupNotificationsAction();
@@ -232,6 +236,18 @@ function ProfileContent() {
         setSuggestMessage(`Lỗi: ${res.error}`);
     }
     setSuggesting(false);
+  };
+
+  const fetchTitleSuggestions = async () => {
+    const { getTitleSuggestionsAction } = await import('@/lib/actions');
+    const res = await getTitleSuggestionsAction();
+    if (res.success) setTitleSuggestions(res.suggestions);
+  };
+
+  const handleProcessSuggestion = async (id, status) => {
+    const { handleTitleSuggestionAction } = await import('@/lib/actions');
+    const res = await handleTitleSuggestionAction(id, status);
+    if (res.success) fetchTitleSuggestions();
   };
 
   const fetchPersonnel = async () => {
@@ -580,6 +596,32 @@ function ProfileContent() {
                          </div>
                        ))}
                        {foundUsers.length === 0 && searchQuery && <p className="text-center text-[10px] text-gray-600 italic">Không tìm thấy ai phù hợp... 🕵️‍♂️</p>}
+                    </div>
+                 </div>
+
+                 {/* 💡 QUẢN LÝ GỢI Ý DANH HIỆU 🍀 */}
+                 <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[#4caf50] flex items-center gap-2">💡 Gợi ý danh hiệu chưa duyệt</h3>
+                    <div className="space-y-4">
+                       {titleSuggestions.filter(s => s.status === 'pending').map(s => (
+                         <div key={s.id} className="p-5 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                            <div className="flex justify-between items-start">
+                               <div>
+                                  <p className="text-sm font-black text-[#4caf50] uppercase italic">"{s.title_name}"</p>
+                                  <p className="text-[10px] text-gray-500 mt-1">Gửi bởi: <span className="text-white">{s.shiroi_users?.display_name || s.shiroi_users?.username}</span></p>
+                               </div>
+                               <span className="text-[8px] text-gray-700 italic">{formatSafeDistance(s.created_at)}</span>
+                            </div>
+                            {s.reason && <p className="text-[10px] text-gray-400 bg-white/5 p-3 rounded-xl leading-relaxed italic">"{s.reason}"</p>}
+                            <div className="flex gap-2 pt-2">
+                               <button onClick={() => handleProcessSuggestion(s.id, 'approved')} className="flex-1 py-2 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all">CHẤP THUẬN ✅</button>
+                               <button onClick={() => handleProcessSuggestion(s.id, 'rejected')} className="flex-1 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">TỪ CHỐI ✕</button>
+                            </div>
+                         </div>
+                       ))}
+                       {titleSuggestions.filter(s => s.status === 'pending').length === 0 && (
+                         <p className="text-center text-[10px] text-gray-700 py-6 italic">Hiện chưa có gợi ý nào đang chờ... ✨</p>
+                       )}
                     </div>
                  </div>
               </motion.div>

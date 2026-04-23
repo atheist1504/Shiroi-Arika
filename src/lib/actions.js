@@ -1550,3 +1550,53 @@ export async function suggestTitleAction(titleName, reason) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 🕵️‍♂️ SERVER ACTION: Lấy danh sách gợi ý danh hiệu (Chỉ Admin/Staff) 🍀
+ */
+export async function getTitleSuggestionsAction() {
+  try {
+    const sessionCookie = cookies().get('shiroi_session');
+    if (!sessionCookie) throw new Error("Chưa đăng nhập!");
+    
+    const session = JSON.parse(sessionCookie.value);
+    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+
+    const { data, error } = await supabaseAdmin
+      .from('shiroi_title_suggestions')
+      .select('*, shiroi_users(username, display_name)')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    return { success: true, suggestions: data };
+  } catch (error) {
+    console.error("❌ Lỗi lấy gợi ý danh hiệu:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🛠️ SERVER ACTION: Duyệt/Từ chối gợi ý danh hiệu 🍀
+ */
+export async function handleTitleSuggestionAction(id, status) {
+  try {
+    const sessionCookie = cookies().get('shiroi_session');
+    if (!sessionCookie) throw new Error("Chưa đăng nhập!");
+    
+    const session = JSON.parse(sessionCookie.value);
+    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+
+    const { error } = await supabaseAdmin
+      .from('shiroi_title_suggestions')
+      .update({ status: status })
+      .eq('id', id);
+
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi xử lý gợi ý danh hiệu:", error);
+    return { success: false, error: error.message };
+  }
+}
