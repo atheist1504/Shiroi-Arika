@@ -37,10 +37,7 @@ function SearchContent() {
       const from = (currentPage - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      let supabaseQuery = supabase.from('mangas').select(`
-        *,
-        chapters(chapter_number)
-      `, { count: 'exact' });
+      let supabaseQuery = supabase.from('mangas').select('*', { count: 'exact' });
 
       if (query) {
         supabaseQuery = supabaseQuery.ilike('title', `%${query}%`);
@@ -64,7 +61,10 @@ function SearchContent() {
 
       const processed = data?.map(m => ({
         ...m,
-        latestChapter: m.chapters?.sort((a, b) => b.chapter_number - a.chapter_number)[0] || null
+        latestChapter: m.latest_chapter_id ? { 
+          id: m.latest_chapter_id, 
+          chapter_number: m.latest_chapter_number 
+        } : null
       })) || [];
 
       setMangas(processed);

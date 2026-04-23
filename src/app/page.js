@@ -22,14 +22,12 @@ export default async function Home({ searchParams }) {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  // 2. Lấy danh sách TRUYỆN MỚI CẬP NHẬT (Theo updated_at từ Trigger) 🕒
+  // 2. Lấy danh sách TRUYỆN MỚI CẬP NHẬT (Sử dụng Cache) 🕒
   const { data: latestMangas, error, count } = await supabase
     .from("mangas")
-    .select("id, title, cover_image, description, genres, updated_at, chapters(chapter_number, created_at)", { count: 'exact' })
+    .select("id, title, cover_image, description, genres, updated_at, total_chapters, latest_chapter_number", { count: 'exact' })
     .order("updated_at", { ascending: false })
-    .order("chapter_number", { foreignTable: "chapters", ascending: false })
-    .range(from, to)
-    .limit(1, { foreignTable: "chapters" });
+    .range(from, to);
 
   if (error) {
     console.error("Lỗi khi tải truyện mới:", error);

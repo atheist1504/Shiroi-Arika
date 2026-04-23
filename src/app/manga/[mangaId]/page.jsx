@@ -53,22 +53,18 @@ export async function generateMetadata({ params }) {
 export default async function MangaPage({ params }) {
   const { mangaId } = params;
 
-  // Fetch initial data on the server for speed and SEO
-  const { data: manga } = await supabase
-    .from("mangas")
-    .select("*")
-    .eq("id", mangaId)
-    .single();
+  // Fetch initial data in parallel ⚡
+  const [mangaRes, chaptersRes] = await Promise.all([
+    supabase.from("mangas").select("*").eq("id", mangaId).single(),
+    supabase.from("chapters").select("*").eq("manga_id", mangaId).order("chapter_number", { ascending: false })
+  ]);
 
-  if (!manga) {
+  if (mangaRes.error || !mangaRes.data) {
     notFound();
   }
 
-  const { data: chapters } = await supabase
-    .from("chapters")
-    .select("*, pages(*)")
-    .eq("manga_id", mangaId)
-    .order("chapter_number", { ascending: false });
+  const manga = mangaRes.data;
+  const chapters = chaptersRes.data;
 
   return (
     <MangaClient 

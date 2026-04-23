@@ -282,10 +282,10 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                           </div>
                         )}
                         
-                        {(manga.chapters || []).length > 0 && (
+                        {manga.latest_chapter_number && (
                           <div className="absolute top-2 right-2 z-20">
                             <div className="bg-[#4caf50] text-[#0a0c0a] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl border border-[#4caf50]/20">
-                              Ch. {Math.max(...manga.chapters.map(c => c.chapter_number))}
+                              Ch. {manga.latest_chapter_number}
                             </div>
                           </div>
                         )}

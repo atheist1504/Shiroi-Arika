@@ -143,23 +143,17 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   const fetchMangaDetails = async () => {
     try {
       setLoading(true);
-      const { data: mangaData, error: mangaError } = await supabase
-        .from("mangas")
-        .select("*")
-        .eq("id", mangaId)
-        .single();
+      
+      const [mangaRes, chaptersRes] = await Promise.all([
+        supabase.from("mangas").select("*").eq("id", mangaId).single(),
+        supabase.from("chapters").select("*").eq("manga_id", mangaId).order("chapter_number", { ascending: false })
+      ]);
 
-      if (mangaError) throw mangaError;
-      setManga(mangaData);
+      if (mangaRes.error) throw mangaRes.error;
+      if (chaptersRes.error) throw chaptersRes.error;
 
-      const { data: chaptersData, error: chaptersError } = await supabase
-        .from("chapters")
-        .select("*, pages(*)")
-        .eq("manga_id", mangaId)
-        .order("chapter_number", { ascending: false });
-
-      if (chaptersError) throw chaptersError;
-      setChapters(chaptersData);
+      setManga(mangaRes.data);
+      setChapters(chaptersRes.data);
     } catch (error) {
       console.error("Lỗi khi tải chi tiết truyện:", error);
     } finally {

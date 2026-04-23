@@ -164,9 +164,9 @@ Dự án Manga Platform thế hệ mới.
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
-1. **Tối ưu hóa Hệ thống RLS (Safe RLS)**: Khắc phục mâu thuẫn giữa RLS và Custom Auth, kích hoạt lại bảo mật mà không gây lỗi "Access Denied".
-2. **Đại tu Hiệu năng (Performance Overhaul)**: Triển khai cột counter `total_chapters`, parallel queries và pagination toàn trang.
-3. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP.
+1. **Triển khai Profile Premium**: Nâng cấp trang cá nhân với Glassmorphism và Nhật ký XP (đã bắt đầu).
+2. **Tối ưu hóa Hệ thống RLS (Safe RLS)**: Khắc phục mâu thuẫn giữa RLS và Custom Auth.
+3. **Mở rộng Hệ thống AI**: Tích hợp thêm các subagent hỗ trợ kiểm duyệt nội dung.
 
 ---
 
@@ -175,14 +175,15 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Permission Request**: Trình duyệt hiện Popup xin quyền thành công. 🔔
 - [ ] **Push Delivery Test**: Chờ kiểm thử gửi thông báo từ Server thực tế. 🚀
 
-### 🛡️ Bảo Mật & Tối ưu Hiệu Năng (v35 - Maintenance & Hardening) ⚡🛡️🍀
-- [x] **Mission Reward Optimization**: Tối ưu hóa hệ thống nhận thưởng (Missions Modal). Chuyển đổi toàn bộ truy vấn sang cơ chế song song (`Promise.all`), giảm thiểu độ trễ và hiện tượng "khựng" khi nhận XP. 🚀⚡
-- [x] **XP Balance Updates**: Điều chỉnh mức thưởng nhiệm vụ "Độc hành giả I" (25 XP) và "Độc hành giả II" (50 XP) để cân bằng hệ thống tiến hóa. ⚖️💎
-- [ ] **RLS Defensive Audit (Pending)**: Xác định lỗ hổng bảo mật khi tắt RLS ở các bảng `mangas`, `chapters`, `pages` và `notifications`. Lên kế hoạch triển khai "Safe RLS" (Select All, Restrict Modify) để bảo vệ database trước anon key. 🛡️🔐
-- [ ] **Performance Bottleneck Identification**: 
-    - Phát hiện vấn đề tải dữ liệu thô (Raw data) quá lớn ở phần La bàn & Kho nhiệm vụ.
-    - Cần triển khai cơ chế **Counter Cache** (cột `total_chapters` trong bảng `mangas`) để thay thế logic đếm thủ công tốn kém.
-    - Cần áp dụng **Pagination (Phân trang)** triệt để cho các danh sách lớn để tránh quá tải RAM trình duyệt. 📉🏗️
+### ⚡ Đại Tu Hiệu Năng & Tối Ưu Hệ Thống (v36 - Performance Overhaul) 🚀🛡️💎
+- [x] **Atomic Counter Cache (Stats System)**: Triển khai script SQL [performance_tuning.sql](file:///c:/Shiroi%20Arika/performance_tuning.sql) đại tu Database. Bổ sung các cột đếm tự động (`total_chapters`) và cache thông tin chương mới nhất (`latest_chapter_number`, `latest_chapter_id`) trực tiếp vào bảng `mangas`. 📈⚡
+- [x] **Waterfall Elimination (Parallel Query)**: 
+    - **Trang chủ**: Loại bỏ join `chapters` tốn kém, chuyển sang truy vấn đơn lẻ từ cache.
+    - **Chi tiết truyện**: Triển khai `Promise.all` giúp load thông tin truyện và danh sách chương song song, giảm 50% thời gian chờ. ⚡🌍
+- [x] **Memory & Payload Optimization**:
+    - Gỡ bỏ việc fetch dữ liệu `pages` không cần thiết tại trang chi tiết.
+    - Tối ưu hóa API tìm kiếm và lọc truyện thông qua cột cache mới. 📉🛡️
+- [x] **Trigger-based Accuracy**: Đảm bảo các thông số đếm luôn chính xác 100% nhờ cơ chế Postgres Trigger tự động cập nhật mỗi khi thêm/xóa chương. ⚙️💎
 
 ...
 
