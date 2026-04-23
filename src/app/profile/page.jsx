@@ -353,53 +353,55 @@ function ProfileContent() {
                         <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-white">Thánh tích & Danh hiệu đã mở</h3>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {TITLES.map((title) => {
-                            const isUnlocked = calculateLevel(user?.xp) >= title.lv;
-                            const isSelected = user?.selected_badge === title.name || (calculateTitle(user?.xp).name === title.name && !user?.selected_badge);
-                            
-                            return (
-                                <button
-                                    key={title.name}
-                                    type="button"
-                                    disabled={!isUnlocked || updating}
-                                    onClick={async () => {
-                                        if (isSelected) return;
-                                        setUpdating(true);
-                                        const res = await updateUserProfileAction(user.id, { 
-                                            display_name: displayName, 
-                                            bio: bio, 
-                                            avatar_url: avatarUrl,
-                                            selected_badge: title.name 
-                                        });
-                                        if (res.success) {
-                                            setUser(res.user);
-                                            localStorage.setItem('shiroi_user', JSON.stringify(res.user));
-                                            setMessage(`Đã xưng danh: ${title.name}! ⚔️`);
-                                        }
-                                        setUpdating(false);
-                                    }}
-                                    className={`p-4 rounded-2xl border transition-all flex flex-col items-start gap-2 relative overflow-hidden group ${
-                                        isSelected 
-                                        ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' 
-                                        : isUnlocked 
-                                            ? 'bg-black/40 border-white/10 text-white hover:border-[#4caf50]/50 shadow-inner'
-                                            : 'bg-black/10 border-white/5 text-gray-700 opacity-60 grayscale'
-                                    }`}
-                                >
-                                    <div className="flex justify-between w-full items-center">
-                                         <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-[#0a0c0a]' : 'text-inherit'}`}>{title.name}</span>
-                                         {isSelected && <span className="text-xs">⚔️</span>}
-                                    </div>
-                                    <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-[#0a0c0a]/60' : 'text-gray-500'}`}>
-                                        Cấp độ yêu cầu: {title.lv}
-                                    </span>
-                                    {!isUnlocked && (
-                                        <div className="absolute top-2 right-2 text-[10px] opacity-40">🔒</div>
-                                    )}
-                                </button>
-                            );
-                        })}
+                    <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {TITLES.map((title) => {
+                                const isUnlocked = calculateLevel(user?.xp) >= title.lv;
+                                const isSelected = user?.selected_badge === title.name || (calculateTitle(user?.xp).name === title.name && !user?.selected_badge);
+                                
+                                return (
+                                    <button
+                                        key={title.name}
+                                        type="button"
+                                        disabled={!isUnlocked || updating}
+                                        onClick={async () => {
+                                            if (isSelected) return;
+                                            setUpdating(true);
+                                            const res = await updateUserProfileAction(user.id, { 
+                                                display_name: displayName, 
+                                                bio: bio, 
+                                                avatar_url: avatarUrl,
+                                                selected_badge: title.name 
+                                            });
+                                            if (res.success) {
+                                                setUser(res.user);
+                                                localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+                                                setMessage(`Đã xưng danh: ${title.name}! ⚔️`);
+                                            }
+                                            setUpdating(false);
+                                        }}
+                                        className={`p-4 rounded-2xl border transition-all flex flex-col items-start gap-2 relative overflow-hidden group ${
+                                            isSelected 
+                                            ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' 
+                                            : isUnlocked 
+                                                ? 'bg-black/40 border-white/10 text-white hover:border-[#4caf50]/50 shadow-inner'
+                                                : 'bg-black/10 border-white/5 text-gray-700 opacity-60 grayscale'
+                                        }`}
+                                    >
+                                        <div className="flex justify-between w-full items-center">
+                                             <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-[#0a0c0a]' : 'text-inherit'}`}>{title.name}</span>
+                                             {isSelected && <span className="text-xs">⚔️</span>}
+                                        </div>
+                                        <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-[#0a0c0a]/60' : 'text-gray-500'}`}>
+                                            Cấp độ yêu cầu: {title.lv}
+                                        </span>
+                                        {!isUnlocked && (
+                                            <div className="absolute top-2 right-2 text-[10px] opacity-40">🔒</div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
 
