@@ -473,15 +473,6 @@ export default function Navbar() {
                   </div>
                   Trang cá nhân
                 </Link>
-
-                {user && (user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
-                  <Link href="/admin/create-manga" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-4 p-4 bg-orange-500/10 hover:bg-orange-500 hover:text-white rounded-2xl font-black text-orange-500 transition-all border border-orange-500/20">
-                     <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
-                     </div>
-                     Admin: Đăng Truyện
-                  </Link>
-                )}
               </div>
 
               <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0 flex flex-col gap-4">
