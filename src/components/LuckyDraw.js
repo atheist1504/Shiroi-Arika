@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { performLuckyDrawAction } from "@/lib/actions";
+import { createPortal } from "react-dom";
 
 export default function LuckyDraw() {
   const [user, setUser] = useState(null);
@@ -197,77 +198,77 @@ export default function LuckyDraw() {
         )}
       </button>
 
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4">
-            {/* Lớp phủ siêu mờ ảo 🌌 */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => { if (!isDrawing) { setShowModal(false); setModalResult(null); setErrorMessage(""); } }}
-              className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
-            />
+      {isMounted && typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+            {showModal && (
+            <div className="fixed inset-0 z-[10000000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto">
+                <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => { if (!isDrawing) { setShowModal(false); setModalResult(null); setErrorMessage(""); } }}
+                className="fixed inset-0 bg-black/95 backdrop-blur-2xl"
+                />
 
-            {/* Hộp quà Thượng phẩm 💎 */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 40, rotateX: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: -40, rotateX: -20 }}
-              className="relative w-full max-w-[360px] bg-[#141814] border-2 border-[#4caf50]/30 p-10 rounded-[48px] shadow-[0_50px_150px_rgba(0,0,0,0.8)] text-center overflow-hidden flex flex-col items-center"
-            >
-              {/* Hiệu ứng tia sáng Premium 🌟 */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-full bg-[radial-gradient(circle_at_50%_0%,rgba(76,175,80,0.15)_0%,transparent_70%)] pointer-events-none" />
-              
-              <motion.div 
-                animate={{ 
-                    y: [0, -10, 0],
-                    rotate: [0, 5, -5, 0]
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="relative mb-10"
-              >
-                 <div className="w-28 h-28 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[36px] flex items-center justify-center mx-auto border-2 border-[#4caf50]/30 shadow-[0_0_50px_rgba(76,175,80,0.2)] relative z-10 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    <span className="text-6xl">{modalResult ? "🧧" : "⚠️"}</span>
-                 </div>
-                 {modalResult && (
-                    <div className="absolute inset-0 bg-[#4caf50]/30 blur-[60px] rounded-full -z-10 animate-pulse"></div>
-                 )}
-              </motion.div>
+                <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: -40 }}
+                className="relative w-full max-w-[420px] bg-[#0f120f] border-2 border-[#4caf50]/30 p-8 sm:p-12 rounded-[56px] shadow-[0_50px_150px_rgba(0,0,0,0.9)] text-center overflow-hidden flex flex-col items-center"
+                >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-full bg-[radial-gradient(circle_at_50%_0%,rgba(76,175,80,0.2)_0%,transparent_70%)] pointer-events-none" />
+                
+                <motion.div 
+                    animate={{ 
+                        y: [0, -10, 0],
+                        rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="relative mb-10"
+                >
+                    <div className="w-28 h-28 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[36px] flex items-center justify-center mx-auto border-2 border-[#4caf50]/30 shadow-[0_0_50px_rgba(76,175,80,0.2)] relative z-10 overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                        <span className="text-6xl">{modalResult ? "🧧" : "⚠️"}</span>
+                    </div>
+                    {modalResult && (
+                        <div className="absolute inset-0 bg-[#4caf50]/30 blur-[60px] rounded-full -z-10 animate-pulse"></div>
+                    )}
+                </motion.div>
 
-              {modalResult ? (
-                <>
-                  <h3 className="text-[#4caf50] font-black text-3xl uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_15px_rgba(76,175,80,0.5)]">PHÚ QUÝ!</h3>
-                  <div className="flex flex-col items-center gap-2 mb-8">
-                     <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.5em]">TÀI SẢN NHẬN ĐƯỢC</span>
-                     <div className="text-white text-5xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-[#4caf50] drop-shadow-2xl">
-                        +{modalResult} XP
-                     </div>
-                  </div>
-                  
-                  <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.4em] leading-loose mb-10 max-w-[240px] mx-auto">
-                    Thánh tích của bạn <br/>đã được bồi đắp. <br/>
-                    <span className="text-[#4caf50]">Tiếp tục tu luyện nhé!</span> 🍀
-                  </p>
-                </>
-              ) : (
-                <>
-                  <h3 className="text-red-500 font-black text-xl uppercase tracking-[0.2em] mb-4">THÔNG BÁO</h3>
-                  <p className="text-gray-300 font-bold text-xs leading-relaxed mb-10 px-4">{errorMessage}</p>
-                </>
-              )}
+                {modalResult ? (
+                    <>
+                    <h3 className="text-[#4caf50] font-black text-3xl uppercase tracking-[0.3em] mb-4 drop-shadow-[0_0_15px_rgba(76,175,80,0.5)]">PHÚ QUÝ!</h3>
+                    <div className="flex flex-col items-center gap-2 mb-8">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.5em]">TÀI SẢN NHẬN ĐƯỢC</span>
+                        <div className="text-white text-5xl font-black italic tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-[#4caf50] drop-shadow-2xl">
+                            +{modalResult} XP
+                        </div>
+                    </div>
+                    
+                    <p className="text-gray-400 font-bold text-[11px] uppercase tracking-[0.2em] leading-loose mb-10 max-w-[280px] mx-auto">
+                        Thánh tích của bạn đã được bồi đắp. <br/>
+                        <span className="text-[#4caf50]">Tiếp tục tu luyện nhé!</span> 🍀
+                    </p>
+                    </>
+                ) : (
+                    <>
+                    <h3 className="text-red-500 font-black text-xl uppercase tracking-[0.2em] mb-4">THÔNG BÁO</h3>
+                    <p className="text-gray-300 font-bold text-xs leading-relaxed mb-10 px-4">{errorMessage}</p>
+                    </>
+                )}
 
-              <button
-                onClick={() => { setShowModal(false); setModalResult(null); setErrorMessage(""); }}
-                className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[#4caf50]/20 border-b-4 border-[#388e3c]"
-              >
-                XÁC NHẬN ✨
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                <button
+                    onClick={() => { setShowModal(false); setModalResult(null); setErrorMessage(""); }}
+                    className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[#4caf50]/20 border-b-4 border-[#388e3c]"
+                >
+                    XÁC NHẬN ✨
+                </button>
+                </motion.div>
+            </div>
+            )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

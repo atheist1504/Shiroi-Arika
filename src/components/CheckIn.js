@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 import { XP_REWARDS } from "@/lib/xp";
+import { createPortal } from "react-dom";
 
 export default function CheckIn() {
   const [user, setUser] = useState(null);
@@ -191,45 +192,45 @@ export default function CheckIn() {
       </button>
 
       {/* HIỆU ỨNG THÔNG BÁO MODAL TRUNG TÂM TUYỆT ĐỐI 💎 */}
-      <AnimatePresence>
-        {showModal && (
-          <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4">
-            {/* Lớp phủ siêu mờ ảo 🌌 */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowModal(false)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
-            />
-
-            {/* Hộp quà Thượng phẩm 💎 */}
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 40, rotateX: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: -40, rotateX: -20 }}
-              className="relative w-full max-w-[360px] bg-[#141814] border-2 border-[#4caf50]/30 p-10 rounded-[48px] shadow-[0_50px_150px_rgba(0,0,0,0.8)] text-center overflow-hidden flex flex-col items-center"
-            >
-              {/* Hiệu ứng tia sáng Premium 🌟 */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-full bg-[radial-gradient(circle_at_50%_0%,rgba(76,175,80,0.15)_0%,transparent_70%)] pointer-events-none" />
-              
-              <div className="w-24 h-24 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[32px] flex items-center justify-center mx-auto mb-8 border-2 border-[#4caf50]/30 shadow-[0_0_40px_rgba(76,175,80,0.2)]">
-                <span className="text-5xl">🎁</span>
-              </div>
-
-              <h3 className="text-[#4caf50] font-black text-2xl uppercase tracking-[0.4em] mb-4 drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">VINH DANH</h3>
-              <p className="text-gray-300 font-bold leading-relaxed mb-10 text-[10px] px-2 uppercase tracking-widest">{modalMessage}</p>
-
-              <button
+      {isMounted && typeof document !== 'undefined' && createPortal(
+        <AnimatePresence>
+            {showModal && (
+            <div className="fixed inset-0 z-[10000000] flex items-center justify-center p-4 overflow-x-hidden overflow-y-auto">
+                <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={() => setShowModal(false)}
-                className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[#4caf50]/20 border-b-4 border-[#388e3c]"
-              >
-                XÁC NHẬN ✨
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+                className="fixed inset-0 bg-black/95 backdrop-blur-2xl"
+                />
+
+                <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 40 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.8, opacity: 0, y: -40 }}
+                className="relative w-full max-w-[420px] bg-[#0f120f] border-2 border-[#4caf50]/30 p-8 sm:p-12 rounded-[56px] shadow-[0_50px_150px_rgba(0,0,0,0.9)] text-center overflow-hidden flex flex-col items-center"
+                >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-full bg-[radial-gradient(circle_at_50%_0%,rgba(76,175,80,0.2)_0%,transparent_70%)] pointer-events-none" />
+                
+                <div className="w-24 h-24 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[32px] flex items-center justify-center mx-auto mb-8 border-2 border-[#4caf50]/30 shadow-[0_0_40px_rgba(76,175,80,0.2)]">
+                    <span className="text-5xl">🎁</span>
+                </div>
+
+                <h3 className="text-[#4caf50] font-black text-2xl uppercase tracking-[0.4em] mb-4">VINH DANH</h3>
+                <p className="text-gray-300 font-bold leading-relaxed mb-10 text-[11px] px-2 uppercase tracking-[0.2em]">{modalMessage}</p>
+
+                <button
+                    onClick={() => setShowModal(false)}
+                    className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[#4caf50]/20 border-b-4 border-[#388e3c]"
+                >
+                    XÁC NHẬN ✨
+                </button>
+                </motion.div>
+            </div>
+            )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };
