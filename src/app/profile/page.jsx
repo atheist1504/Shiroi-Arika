@@ -522,7 +522,7 @@ function ProfileContent() {
                         {[
                             { title: 'Duyên phận mỗi ngày', desc: 'Điểm danh nhận ngay 100 XP. Chuỗi càng dài, phần thưởng càng lớn tại các mốc 3, 7, 30 ngày.' },
                             { title: 'Hành trình đọc truyện', desc: 'Mỗi chương truyện đọc xong sẽ giúp bạn tích lũy 20 XP tu luyện (Ghi nhận 1 chương/người).' },
-                            { title: 'Tương tác đàm đạo', desc: 'Bình luận đầu tiên nhận 10 XP, các lần tiếp theo nhận 5 XP. Hãy bình luận văn minh để tránh bị phạt nhé!' },
+                            { title: 'Tương tác đàm đạo', desc: 'Bình luận đầu tiên nhận 10 XP, các lần tiếp theo nhận 5 XP. Nhận tối đa 100 XP từ bình luận mỗi ngày.' },
                             { title: 'Vận khí may mắn', desc: 'Mỗi ngày bốc quà một lần để nhận thêm lượng kinh nghiệm ngẫu nhiên từ Thánh Địa.' },
                             { title: 'Cống hiến danh phẩm', desc: 'Đóng góp ý tưởng danh hiệu. Nếu được Admin duyệt, bạn nhận ngay 500 XP công đức.' }
                         ].map((rule, rIdx) => (
