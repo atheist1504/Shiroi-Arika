@@ -56,6 +56,13 @@ function ProfileContent() {
   const [pwdUpdating, setPwdUpdating] = useState(false);
   const [pwdMessage, setPwdMessage] = useState('');
 
+  // 🕵️‍♂️ STATE CHO GỢI Ý DANH HIỆU 💡
+  const [showSuggestForm, setShowSuggestForm] = useState(false);
+  const [suggestTitle, setSuggestTitle] = useState('');
+  const [suggestReason, setSuggestReason] = useState('');
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestMessage, setSuggestMessage] = useState('');
+
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
@@ -207,6 +214,24 @@ function ProfileContent() {
     const res = await changePasswordAction(oldPassword, newPassword);
     setPwdMessage(res.success ? 'Đã đổi mật mã! 🔐' : `Lỗi: ${res.error}`);
     setPwdUpdating(false);
+  };
+
+  const handleSuggestTitle = async (e) => {
+    e.preventDefault();
+    if (!suggestTitle.trim()) return;
+    setSuggesting(true);
+    setSuggestMessage('');
+    const { suggestTitleAction } = await import('@/lib/actions');
+    const res = await suggestTitleAction(suggestTitle, suggestReason);
+    if (res.success) {
+        setSuggestMessage('Cảm ơn đóng góp của bạn! Gợi ý đã được gửi tới Admin. ✨');
+        setSuggestTitle('');
+        setSuggestReason('');
+        setTimeout(() => setShowSuggestForm(false), 3000);
+    } else {
+        setSuggestMessage(`Lỗi: ${res.error}`);
+    }
+    setSuggesting(false);
   };
 
   const fetchPersonnel = async () => {
@@ -402,6 +427,53 @@ function ProfileContent() {
                                 );
                             })}
                         </div>
+                    </div>
+
+                    {/* 💡 FORM GỢI Ý DANH HIỆU 🍀 */}
+                    <div className="pt-6 border-t border-white/5">
+                        {!showSuggestForm ? (
+                            <button 
+                                onClick={() => setShowSuggestForm(true)}
+                                className="w-full py-4 border border-dashed border-[#4caf50]/30 rounded-2xl text-[#4caf50] font-black text-[10px] uppercase tracking-widest hover:bg-[#4caf50]/5 transition-all flex items-center justify-center gap-2"
+                            >
+                                <span>💡</span> Gợi ý danh hiệu mới cho Thánh địa
+                            </button>
+                        ) : (
+                            <motion.form 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                onSubmit={handleSuggestTitle}
+                                className="space-y-4 bg-black/40 p-6 rounded-3xl border border-[#4caf50]/20"
+                            >
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Đóng góp ý tưởng</h4>
+                                    <button type="button" onClick={() => setShowSuggestForm(false)} className="text-gray-600 hover:text-white">✕</button>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={suggestTitle}
+                                    onChange={e => setSuggestTitle(e.target.value)}
+                                    placeholder="Tên danh hiệu (VD: Độc Bộ Thiên Hạ...)"
+                                    className="w-full bg-[#141814] border border-white/5 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#4caf50]"
+                                    required
+                                />
+                                <textarea 
+                                    value={suggestReason}
+                                    onChange={e => setSuggestReason(e.target.value)}
+                                    placeholder="Lý do hoặc ý nghĩa (Không bắt buộc)"
+                                    className="w-full bg-[#141814] border border-white/5 rounded-xl px-4 py-3 text-[11px] outline-none focus:border-[#4caf50] resize-none"
+                                    rows="2"
+                                />
+                                <button 
+                                    type="submit" 
+                                    disabled={suggesting}
+                                    className="w-full py-3 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg shadow-[#4caf50]/20"
+                                >
+                                    {suggesting ? 'ĐANG GỬI...' : 'GỬI GỢI Ý ✨'}
+                                </button>
+                                {suggestMessage && <p className="text-center text-[9px] font-bold text-[#4caf50] animate-pulse">{suggestMessage}</p>}
+                            </motion.form>
+                        )}
                     </div>
                 </div>
 

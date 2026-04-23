@@ -1519,3 +1519,31 @@ export async function updateUserProfileAction(userId, updateData) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * 💡 SERVER ACTION: Gửi gợi ý danh hiệu mới 🍀
+ */
+export async function suggestTitleAction(titleName, reason) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Vui lòng đăng nhập để gửi gợi ý!");
+
+    const { error } = await supabase
+      .from('shiroi_title_suggestions')
+      .insert([
+        { 
+          user_id: user.id, 
+          title_name: titleName, 
+          reason: reason,
+          status: 'pending'
+        }
+      ]);
+
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi gửi gợi ý danh hiệu:", error);
+    return { success: false, error: error.message };
+  }
+}
