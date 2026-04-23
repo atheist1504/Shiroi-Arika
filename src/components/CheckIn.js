@@ -165,61 +165,64 @@ export default function CheckIn() {
       <button
         onClick={handleCheckIn}
         style={{ zIndex: 100001, pointerEvents: 'auto' }}
-        className={`transition-all flex items-center gap-2 group/btn active:scale-95 ${
+        className={`relative transition-all group/checkin active:scale-90 ${
           canCheckIn 
-          ? "text-[#4caf50] hover:brightness-125"
-          : "text-gray-500 cursor-default"
+          ? "cursor-pointer"
+          : "cursor-default opacity-60"
         }`}
       >
-        <div className="flex items-center gap-2 font-black text-[10px] uppercase tracking-[0.2em]">
-          <span className="text-sm opacity-80 group-hover/btn:scale-110 transition-transform">🔥</span>
-          <span className="opacity-80">{user?.check_in_streak || 0}</span>
-          <span>
-             {canCheckIn ? (checking ? "Đang gửi..." : "Nhận quà") : "Hẹn mai nhé"}
-          </span>
+        <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border transition-all duration-500 ${
+            canCheckIn 
+            ? "bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50] hover:bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.05)] hover:shadow-[0_0_25px_rgba(76,175,80,0.15)]" 
+            : "bg-white/5 border-white/5"
+        }`}>
+            <span className={`text-base transition-transform duration-500 ${canCheckIn ? 'group-hover/checkin:scale-125 group-hover/checkin:rotate-12' : ''}`}>
+                {canCheckIn ? (checking ? "🌀" : "🔥") : "📅"}
+            </span>
+            <div className="flex flex-col items-start leading-none">
+                <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 ${canCheckIn ? 'text-[#4caf50]' : 'text-gray-600'}`}>
+                    CHUỖI: {user?.check_in_streak || 0}
+                </span>
+                <span className={`text-[9px] font-black uppercase tracking-widest ${canCheckIn ? 'text-white' : 'text-gray-500'}`}>
+                    {canCheckIn ? (checking ? "ĐANG GỬI..." : "ĐIỂM DANH") : "HẸN MAI NHÉ"}
+                </span>
+            </div>
         </div>
       </button>
 
       {/* HIỆU ỨNG THÔNG BÁO MODAL TRUNG TÂM TUYỆT ĐỐI 💎 */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[9999999]">
-            {/* Lớp phủ mở 🕸️ */}
+          <div className="fixed inset-0 z-[9999999] flex items-center justify-center p-4">
+            {/* Lớp phủ siêu mờ ảo 🌌 */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowModal(false)}
-              className="absolute inset-0 bg-black/90 backdrop-blur-md"
+              className="absolute inset-0 bg-black/90 backdrop-blur-2xl"
             />
 
-            {/* Hộp thư quà tặng nhỏ gọn 🚀 */}
+            {/* Hộp quà Thượng phẩm 💎 */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              style={{ 
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                x: '-50%',
-                y: '-50%',
-              }}
-              className="w-[320px] bg-[#141814] border border-[#4caf50]/30 p-8 rounded-[32px] shadow-[0_30px_100px_rgba(0,0,0,0.8)] text-center overflow-hidden"
+              initial={{ scale: 0.8, opacity: 0, y: 40, rotateX: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: -40, rotateX: -20 }}
+              className="relative w-full max-w-[360px] bg-[#141814] border-2 border-[#4caf50]/30 p-10 rounded-[48px] shadow-[0_50px_150px_rgba(0,0,0,0.8)] text-center overflow-hidden flex flex-col items-center"
             >
-              {/* Hiệu ứng hào quang nhẹ 🍀 */}
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#4caf50]/5 to-transparent pointer-events-none" />
+              {/* Hiệu ứng tia sáng Premium 🌟 */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-full bg-[radial-gradient(circle_at_50%_0%,rgba(76,175,80,0.15)_0%,transparent_70%)] pointer-events-none" />
               
-              <div className="w-16 h-16 bg-[#4caf50]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#4caf50]/20 shadow-inner">
-                <span className="text-3xl">🎁</span>
+              <div className="w-24 h-24 bg-gradient-to-br from-[#4caf50]/20 to-transparent rounded-[32px] flex items-center justify-center mx-auto mb-8 border-2 border-[#4caf50]/30 shadow-[0_0_40px_rgba(76,175,80,0.2)]">
+                <span className="text-5xl">🎁</span>
               </div>
 
-              <h3 className="text-[#4caf50] font-black text-xl uppercase tracking-[0.2em] mb-4">VINH DANH</h3>
-              <p className="text-gray-300 font-bold leading-relaxed mb-8 text-sm px-2 uppercase tracking-wide">{modalMessage}</p>
+              <h3 className="text-[#4caf50] font-black text-2xl uppercase tracking-[0.4em] mb-4 drop-shadow-[0_0_10px_rgba(76,175,80,0.3)]">VINH DANH</h3>
+              <p className="text-gray-300 font-bold leading-relaxed mb-10 text-[10px] px-2 uppercase tracking-widest">{modalMessage}</p>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-[#4caf50]/20"
+                className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] rounded-[24px] font-black uppercase tracking-[0.3em] text-[11px] hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[#4caf50]/20 border-b-4 border-[#388e3c]"
               >
                 XÁC NHẬN ✨
               </button>

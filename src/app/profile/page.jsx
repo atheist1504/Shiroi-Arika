@@ -358,324 +358,389 @@ function ProfileContent() {
   if (!isMounted || loading) return <div className="min-h-screen bg-[#0a0c0a] flex items-center justify-center text-[#4caf50]">Đang tải...</div>;
 
   return (
-    <div className="min-h-screen bg-[#0a0c0a] text-white p-6 pt-24 relative overflow-x-hidden">
-      <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-[#4caf50]/5 rounded-full blur-[150px] pointer-events-none" />
+    <div className="min-h-screen bg-[#0a0c0a] text-white p-4 sm:p-8 pt-24 relative overflow-x-hidden">
+      {/* 🌌 HIỆU ỨNG NỀN THÁNH ĐỊA (PREMIUM BACKDROP) */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#4caf50]/10 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-[#2e7d32]/10 rounded-full blur-[100px]" />
+      </div>
 
-      <div className="max-w-2xl mx-auto z-10 relative space-y-12">
-        {/* TIÊU ĐỀ HỒ SƠ */}
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="relative group w-48 h-48 rounded-[48px] overflow-hidden border-4 border-[#141814] bg-[#0a0c0a] cursor-pointer shadow-2xl" onClick={() => fileInputRef.current.click()}>
-            <img src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover" />
-            {avatarLoading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#4caf50] border-t-transparent rounded-full animate-spin" /></div>}
-          </div>
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+      <div className="max-w-6xl mx-auto z-10 relative">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           
-          <div className="flex flex-col items-center gap-3">
-            <h1 className="text-4xl font-black gradient-text uppercase tracking-tight">{user?.display_name || user?.username}</h1>
-            <div className="px-5 py-2 rounded-2xl border border-[#4caf50]/30 text-[#4caf50] bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.1)]">
-                <span className="text-[11px] font-black uppercase tracking-[0.3em]">
-                    {user?.selected_badge || currentDynamicTitle?.name || calculateTitle(user?.xp).name}
-                </span>
-            </div>
-          </div>
-        </div>
+          {/* 👤 CỘT TRÁI: THÔNG TIN CỐT LÕI (GLOSSY SIDEBAR) */}
+          <aside className="w-full lg:w-[360px] flex-shrink-0 space-y-6">
+             <div className="glass-card rounded-[48px] p-10 flex flex-col items-center text-center relative overflow-hidden group border-white/5 shadow-2xl">
+                {/* Hào quang Avatar */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-[#4caf50]/20 to-transparent pointer-events-none opacity-50" />
+                
+                <div 
+                    className="relative w-44 h-44 rounded-[40px] overflow-hidden border-4 border-white/10 bg-black/40 cursor-pointer shadow-inner mb-6 group/avatar"
+                    onClick={() => fileInputRef.current.click()}
+                >
+                    <img 
+                        src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" 
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+                        <span className="text-[10px] font-black uppercase tracking-widest">Đổi ảnh 📷</span>
+                    </div>
+                    {avatarLoading && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                            <div className="w-10 h-10 border-4 border-[#4caf50] border-t-transparent rounded-full animate-spin" />
+                        </div>
+                    )}
+                </div>
+                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
 
-        {/* CÁC THẺ ĐIỀU HƯỚNG (TABS) */}
-        <div className="flex items-center justify-center gap-2 p-1.5 bg-[#141814]/80 rounded-2xl border border-white/5 sticky top-24 z-50">
-          {[
-            { id: 'profile', icon: '👤', label: 'Hồ sơ' },
-            { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
-            { id: 'notifications', icon: '🔔', label: 'Thông báo' },
-            ...(user?.role === 'admin' ? [{ id: 'admin', icon: '🛡️', label: 'Quản trị' }] : [])
-          ].map(t => (
-            <Link key={t.id} href={`/profile?tab=${t.id}`} className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all ${activeTab === t.id ? 'bg-[#4caf50] text-[#0a0c0a] font-black' : 'text-gray-500 hover:text-white'}`}>
-              <span>{t.icon}</span>
-              <span className="text-[10px] uppercase font-black tracking-widest hidden sm:block">{t.label}</span>
-            </Link>
-          ))}
-        </div>
+                <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 drop-shadow-lg">
+                    {user?.display_name || user?.username}
+                </h1>
+                
+                <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-[#4caf50]/20 blur-xl rounded-full" />
+                    <div className="relative px-6 py-2 rounded-full border border-[#4caf50]/40 bg-[#4caf50]/10 text-[#4caf50] shadow-glow">
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em] italic">
+                            {user?.selected_badge || currentDynamicTitle?.name || calculateTitle(user?.xp).name}
+                        </span>
+                    </div>
+                </div>
 
-        {/* NỘI DUNG CÁC TAB */}
-        <div className="mt-8 min-h-[400px]">
+                {/* Thanh XP Pha Lê */}
+                <div className="w-full space-y-3">
+                    <div className="flex justify-between items-end px-1">
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Tiến độ tu luyện</span>
+                        <div className="flex flex-col items-end">
+                            <span className="text-xl font-black italic tracking-tighter text-[#4caf50]">{calculateLevel(user?.xp)} <span className="text-[10px] uppercase font-bold text-gray-500 not-italic">LV</span></span>
+                        </div>
+                    </div>
+                    <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative p-[1px]">
+                        <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${calculateProgress(user?.xp)}%` }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                            className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] rounded-full relative"
+                        >
+                            <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] animate-loading-bar" />
+                        </motion.div>
+                    </div>
+                    <div className="flex justify-between items-center text-[9px] font-black text-gray-600 uppercase">
+                        <span>{user?.xp || 0} XP</span>
+                        <span>{XP_REWARDS.find(r => r.lvl === calculateLevel(user?.xp) + 1)?.xp || 'MAX'} XP</span>
+                    </div>
+                </div>
+             </div>
+
+             {/* Thống kê nhanh */}
+             <div className="grid grid-cols-2 gap-4">
+                <div className="glass-card p-6 rounded-[32px] border-white/5 text-center">
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Manga đã xem</span>
+                    <span className="text-3xl font-black italic">{stats.total_mangas}</span>
+                </div>
+                <div className="glass-card p-6 rounded-[32px] border-white/5 text-center">
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Gốc tích đã đọc</span>
+                    <span className="text-3xl font-black italic">{stats.total_chapters}</span>
+                </div>
+             </div>
+          </aside>
+
+          {/* 📝 CỘT PHẢI: NỘI DUNG CHI TIẾT */}
+          <main className="flex-1 w-full space-y-8 min-h-[600px]">
+            {/* TABS MENU PREMIUM */}
+            <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-24 z-[100]">
+              {[
+                { id: 'profile', icon: '💎', label: 'Thánh tích' },
+                { id: 'settings', icon: '⚙️', label: 'Cấu hiệu' },
+                { id: 'notifications', icon: '🔔', label: 'Hộp thư' },
+                ...(user?.role === 'admin' ? [{ id: 'admin', icon: '🛡️', label: 'Quản trị' }] : [])
+              ].map(t => (
+                <Link 
+                    key={t.id} 
+                    href={`/profile?tab=${t.id}`} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-[20px] transition-all duration-300 ${
+                        activeTab === t.id 
+                        ? 'bg-[#4caf50] text-[#0a0c0a] font-black shadow-[0_10px_25px_rgba(76,175,80,0.3)]' 
+                        : 'text-gray-500 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  <span className="text-base">{t.icon}</span>
+                  <span className="text-[10px] uppercase font-black tracking-widest hidden md:block">{t.label}</span>
+                </Link>
+              ))}
+            </nav>
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
-              <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 flex flex-col items-center gap-4 shadow-xl">
-                    <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Phúc lành mỗi ngày (Điểm danh)</span>
-                    <span className="text-5xl">🔥 {user?.check_in_streak || 0}</span>
-                    <button onClick={handleCheckIn} disabled={checkInLoading || (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())} className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] font-black rounded-2xl text-[10px] uppercase tracking-widest disabled:opacity-20 hover:scale-105 transition-all">
-                      {checkInLoading ? '...' : 'ĐIỂM DANH NGAY'}
-                    </button>
-                    <p className="text-[9px] text-gray-500 font-bold">Tổng tích lũy: {totalCheckIns} ngày ✨</p>
-
-                    {/* 📅 LỊCH ĐIỂM DANH THÁNG 🍀 */}
-                    <div className="w-full pt-4 border-t border-white/5 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[8px] font-black text-gray-500 uppercase tracking-widest">Lịch tháng {new Date().getMonth() + 1}</span>
-                            <span className="text-[8px] font-black text-[#4caf50] uppercase tracking-widest">{checkInDates.length} ngày 🔥</span>
+              <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                
+                {/* 🧧 TRẠNG THÁI TU LUYỆN HÀNG NGÀY */}
+                <div className="glass-card p-8 rounded-[48px] border-white/5 grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
+                    <div className="md:col-span-2 flex flex-col items-center gap-4 border-white/5 md:border-r pr-0 md:pr-8">
+                        <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.3em]">Duyên phận hôm nay</span>
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-orange-500/20 blur-3xl animate-pulse" />
+                            <span className="text-7xl relative z-10">🔥 {user?.check_in_streak || 0}</span>
                         </div>
-                        <div className="grid grid-cols-7 gap-1">
+                        <button 
+                            onClick={handleCheckIn} 
+                            disabled={checkInLoading || (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString())} 
+                            className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-2xl text-[11px] uppercase tracking-[0.2em] shadow-[0_8px_0_#2e7d32] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-30 disabled:grayscale"
+                        >
+                          {checkInLoading ? '...' : (user?.last_check_in && new Date(user.last_check_in).toDateString() === new Date().toDateString()) ? 'ĐÃ ĐIỂM DANH' : 'ĐIỂM DANH NGAY ✨'}
+                        </button>
+                    </div>
+                    
+                    <div className="md:col-span-3 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Lịch tháng {new Date().getMonth() + 1}</span>
+                            <span className="text-[10px] font-black text-[#4caf50]">{checkInDates.length} ngày tích tụ</span>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1.5">
                             {(() => {
                                 const now = new Date();
                                 const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
                                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
                                 const calendar = [];
                                 const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-                                for (let i = 0; i < firstDay; i++) calendar.push(<div key={`e-${i}`} className="aspect-square opacity-0"></div>);
+                                for (let i = 0; i < firstDay; i++) calendar.push(<div key={`e-${i}`} className="aspect-square"></div>);
                                 for (let d = 1; d <= daysInMonth; d++) {
                                     const dStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
                                     const isChecked = checkInDates.includes(dStr);
-                                    calendar.push(<div key={`d-${d}`} className={`aspect-square rounded-md flex items-center justify-center text-[8px] font-black transition-all ${isChecked ? 'bg-[#4caf50] text-[#0a0c0a] shadow-[0_0_10px_#4caf50]' : (dStr === todayStr ? 'border border-[#4caf50] text-[#4caf50] animate-pulse' : 'bg-white/5 text-gray-700')}`}>{d}</div>);
+                                    calendar.push(
+                                        <div 
+                                            key={`d-${d}`} 
+                                            className={`aspect-square rounded-lg flex items-center justify-center text-[9px] font-black transition-all ${
+                                                isChecked 
+                                                ? 'bg-gradient-to-br from-[#4caf50] to-[#2e7d32] text-[#0a0c0a] shadow-[0_0_15px_rgba(76,175,80,0.3)]' 
+                                                : (dStr === todayStr ? 'border-2 border-[#4caf50] text-[#4caf50] animate-pulse' : 'bg-white/5 text-gray-700')
+                                            }`}
+                                        >
+                                            {d}
+                                        </div>
+                                    );
                                 }
                                 return calendar;
                             })()}
                         </div>
                     </div>
-                  </div>
-
-                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 shadow-xl flex flex-col justify-between h-full">
-                    {/* ⬆️ CẤP ĐỘ TU LUYỆN (LÊN ĐẦU) 🍀 */}
-                    <div className="w-full text-center">
-                        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Cấp độ & Danh hiệu hiện tại</h2>
-                        <h1 className="text-2xl font-black text-[#4caf50] uppercase italic tracking-tighter leading-none">{currentDynamicTitle?.name || 'Đang tải...'}</h1>
-                       <div className="w-full h-1.5 bg-black/50 rounded-full mt-4 overflow-hidden border border-white/5 relative">
-                          <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_10px_#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
-                       </div>
-                       <div className="flex justify-between items-center mt-3 px-1">
-                         <span className="text-[8px] text-gray-600 font-black uppercase">Kinh nghiệm tích lũy</span>
-                         <span className="text-[9px] text-[#4caf50] font-black uppercase tracking-widest">{user?.xp || 0} XP</span>
-                       </div>
-                    </div>
-
-                    {/* 🏆 DANH HIỆU TRUNG TÂM 🍀 */}
-                    <div className="flex flex-col items-center py-4 relative">
-                        <div className="absolute inset-0 bg-[#4caf50]/5 blur-3xl rounded-full" />
-                        <span className="text-[8px] font-black text-gray-600 uppercase tracking-[0.4em] mb-3 relative z-10">Danh phẩm hiện tại</span>
-                        <div className="px-6 py-3 rounded-2xl bg-black/40 border border-[#4caf50]/20 relative z-10 shadow-inner group transition-all hover:border-[#4caf50]/50">
-                            <span className="text-sm font-black uppercase tracking-[0.1em] gradient-text italic">
-                                {user?.selected_badge || calculateTitle(user?.xp).name}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* ⬇️ THỐNG KÊ (XUỐNG DƯỚI) 🍀 */}
-                    <div className="grid grid-cols-2 gap-4 w-full pt-6 border-t border-white/5">
-                      <div className="text-center group cursor-default">
-                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-[#4caf50] transition-colors">Bộ truyện đã đọc</p>
-                        <p className="text-3xl font-black italic">{stats.total_mangas}</p>
-                      </div>
-                      <div className="text-center group cursor-default">
-                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-[#4caf50] transition-colors">Số chương đã đọc</p>
-                        <p className="text-3xl font-black italic">{stats.total_chapters}</p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* 🏆 HỆ THỐNG DANH HIỆU (BADGE SELECTION) 🍀 */}
-                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                    <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
-                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Thánh tích & Danh hiệu đã mở</h3>
+                {/* 🏆 DANH PHẨM ĐÃ MỞ (Tủ trưng bày) */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                    <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Thánh tích & Danh hiệu</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
-                    <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {[...dynamicTitles].reverse().map((title) => {
-                                const isUnlocked = calculateLevel(user?.xp) >= title.lv;
-                                const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
-                                
-                                return (
-                                    <button
-                                        key={title.name}
-                                        type="button"
-                                        disabled={!isUnlocked || updating}
-                                        onClick={async () => {
-                                            if (isSelected) return;
-                                            setUpdating(true);
-                                            const res = await updateUserProfileAction(user.id, { 
-                                                display_name: displayName, 
-                                                bio: bio, 
-                                                avatar_url: avatarUrl,
-                                                selected_badge: title.name 
-                                            });
-                                            if (res.success) {
-                                                setUser(res.user);
-                                                localStorage.setItem('shiroi_user', JSON.stringify(res.user));
-                                                setMessage(`Đã xưng danh: ${title.name}! ⚔️`);
-                                            }
-                                            setUpdating(false);
-                                        }}
-                                        className={`p-4 rounded-2xl border transition-all flex flex-col items-start gap-2 relative overflow-hidden group ${
-                                            isSelected 
-                                            ? 'bg-[#4caf50] border-[#4caf50] text-[#0a0c0a]' 
-                                            : isUnlocked 
-                                                ? 'bg-black/40 border-white/10 text-white hover:border-[#4caf50]/50 shadow-inner'
-                                                : 'bg-black/10 border-white/5 text-gray-700 opacity-60 grayscale'
-                                        }`}
-                                    >
-                                        <div className="flex justify-between w-full items-center">
-                                             <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-[#0a0c0a]' : 'text-inherit'}`}>{title.name}</span>
-                                             {isSelected && <span className="text-xs">⚔️</span>}
-                                        </div>
-                                        <span className={`text-[8px] font-bold uppercase tracking-widest ${isSelected ? 'text-[#0a0c0a]/60' : 'text-gray-500'}`}>
-                                            Cấp độ yêu cầu: {title.lv}
-                                        </span>
-                                        {!isUnlocked && (
-                                            <div className="absolute top-2 right-2 text-[10px] opacity-40">🔒</div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-4 custom-scrollbar">
+                        {[...dynamicTitles].reverse().map((title) => {
+                            const isUnlocked = calculateLevel(user?.xp) >= title.lv;
+                            const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
+                            
+                            return (
+                                <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    key={title.name}
+                                    type="button"
+                                    disabled={!isUnlocked || updating}
+                                    onClick={async () => {
+                                        if (isSelected) return;
+                                        setUpdating(true);
+                                        const res = await updateUserProfileAction(user.id, { selected_badge: title.name });
+                                        if (res.success) {
+                                            setUser(res.user);
+                                            localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+                                        }
+                                        setUpdating(false);
+                                    }}
+                                    className={`p-5 rounded-3xl border text-left relative overflow-hidden transition-all duration-500 flex flex-col gap-1.5 ${
+                                        isSelected 
+                                        ? 'bg-gradient-to-br from-[#4caf50] to-[#2e7d32] border-[#4caf50] text-[#0a0c0a] shadow-[0_15px_30px_rgba(76,175,80,0.2)]' 
+                                        : isUnlocked 
+                                            ? 'bg-white/5 border-white/10 text-white hover:border-[#4caf50]/50'
+                                            : 'bg-black/20 border-white/5 text-gray-700 opacity-40'
+                                    }`}
+                                >
+                                    {isSelected && <div className="absolute top-0 right-0 w-12 h-12 bg-white/20 blur-2xl rounded-full" />}
+                                    <div className="flex justify-between items-center relative z-10">
+                                        <span className="text-xs font-black uppercase tracking-wide">{title.name}</span>
+                                        {isSelected && <span className="text-xs">⚔️</span>}
+                                        {!isUnlocked && <span className="text-[10px]">🔒</span>}
+                                    </div>
+                                    <span className={`text-[8px] font-bold uppercase tracking-widest relative z-10 ${isSelected ? 'text-[#0a0c0a]/60' : 'text-gray-500'}`}>
+                                        YÊU CẦU CẤP ĐỘ {title.lv}
+                                    </span>
+                                </motion.button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* 🕰️ NHẬT KÝ TU LUYỆN (TIMELINE STYLE) */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                   <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Nhật ký tu hành</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
 
-                    {/* 💡 FORM GỢI Ý DANH HIỆU 🍀 */}
-                    <div className="pt-6 border-t border-white/5">
-                        {!showSuggestForm ? (
-                            <button 
-                                onClick={() => setShowSuggestForm(true)}
-                                className="w-full py-4 border border-dashed border-[#4caf50]/30 rounded-2xl text-[#4caf50] font-black text-[10px] uppercase tracking-widest hover:bg-[#4caf50]/5 transition-all flex items-center justify-center gap-2"
-                            >
-                                <span>💡</span> Gợi ý danh hiệu mới cho Thánh địa
-                            </button>
-                        ) : (
-                            <motion.form 
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                onSubmit={handleSuggestTitle}
-                                className="space-y-4 bg-black/40 p-6 rounded-3xl border border-[#4caf50]/20"
-                            >
-                                <div className="flex items-center justify-between mb-2">
-                                    <h4 className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Đóng góp ý tưởng</h4>
-                                    <button type="button" onClick={() => setShowSuggestForm(false)} className="text-gray-600 hover:text-white">✕</button>
+                   <div className="relative space-y-6 pl-4 border-l-2 border-white/5">
+                    {xpLogs.map((l, lIdx) => {
+                      const typeMap = {
+                        'read': { label: 'Đọc truyện', icon: '📖', color: '#4caf50' },
+                        'check_in': { label: 'Điểm danh', icon: '🔥', color: '#ff9800' },
+                        'comment': { label: 'Bình luận', icon: '💬', color: '#2196f3' },
+                        'first_comment': { label: 'Khai bút', icon: '✍️', color: '#9c27b0' },
+                        'lucky_draw': { label: 'Vận khí', icon: '🎁', color: '#4caf50' },
+                        'mission': { label: 'Nhiệm vụ', icon: '🎯', color: '#00bcd4' }
+                      };
+                      const info = typeMap[l.type] || { label: 'Khác', icon: '✨', color: '#999' };
+                      
+                      return (
+                        <motion.div 
+                            key={l.id} 
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: lIdx * 0.05 }}
+                            className="relative"
+                        >
+                          {/* Điểm nối timeline */}
+                          <div className={`absolute -left-[23px] top-1.5 w-2.5 h-2.5 rounded-full border-2 border-[#0a0c0a]`} style={{ backgroundColor: info.color }} />
+                          
+                          <div className="flex justify-between items-center p-5 bg-white/5 rounded-[24px] border border-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
+                            {/* Hiệu ứng tia sáng nhẹ khi hover */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            
+                            <div className="flex items-center gap-4 relative z-10">
+                                <span className="text-xl opacity-80 group-hover:scale-125 transition-transform duration-500">{info.icon}</span>
+                                <div>
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-white/90">{info.label}</div>
+                                    <div className="text-[8px] text-gray-500 mt-1 font-bold">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
                                 </div>
-                                <input 
-                                    type="text" 
-                                    value={suggestTitle}
-                                    onChange={e => setSuggestTitle(e.target.value)}
-                                    placeholder="Tên danh hiệu (VD: Độc Bộ Thiên Hạ...)"
-                                    className="w-full bg-[#141814] border border-white/5 rounded-xl px-4 py-3 text-sm outline-none focus:border-[#4caf50]"
-                                    required
-                                />
-                                <textarea 
-                                    value={suggestReason}
-                                    onChange={e => setSuggestReason(e.target.value)}
-                                    placeholder="Lý do hoặc ý nghĩa (Không bắt buộc)"
-                                    className="w-full bg-[#141814] border border-white/5 rounded-xl px-4 py-3 text-[11px] outline-none focus:border-[#4caf50] resize-none"
-                                    rows="2"
-                                />
+                            </div>
+                            <div className="text-base font-black text-[#4caf50] italic drop-shadow-glow relative z-10">+{l.amount} <span className="text-[9px] not-italic text-gray-500">XP</span></div>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                    {xpLogs.length === 0 && <p className="text-center text-gray-700 py-20 italic">Bản đồ ký ức còn trống... ✨</p>}
+                   </div>
+                </div>
+
+                {/* 💡 GỢI Ý DANH PHẨM (MỚI) */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Gợi ý danh hiệu mới</h3>
+                    </div>
+                    
+                    {!showSuggestForm ? (
+                        <button 
+                            onClick={() => setShowSuggestForm(true)}
+                            className="w-full py-6 border border-dashed border-[#4caf50]/30 rounded-[32px] text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#4caf50]/5 transition-all flex items-center justify-center gap-3"
+                        >
+                            <span className="text-xl">💡</span> Hiến kế danh xưng cho Thánh địa
+                        </button>
+                    ) : (
+                        <motion.form 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            onSubmit={handleSuggestTitle}
+                            className="space-y-4 bg-white/5 p-8 rounded-[40px] border border-[#4caf50]/20"
+                        >
+                            <input 
+                                type="text" 
+                                value={suggestTitle}
+                                onChange={e => setSuggestTitle(e.target.value)}
+                                placeholder="Tên danh hiệu (VD: Độc Bộ Thiên Hạ...)"
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm outline-none focus:border-[#4caf50]"
+                                required
+                            />
+                            <textarea 
+                                value={suggestReason}
+                                onChange={e => setSuggestReason(e.target.value)}
+                                placeholder="Ý nghĩa hoặc lý do đề xuất..."
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-[11px] outline-none focus:border-[#4caf50] resize-none"
+                                rows="2"
+                            />
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => setShowSuggestForm(false)} className="px-6 py-4 bg-white/5 text-gray-500 rounded-2xl font-black text-[10px] uppercase">Hủy</button>
                                 <button 
                                     type="submit" 
                                     disabled={suggesting}
-                                    className="w-full py-3 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg shadow-[#4caf50]/20"
+                                    className="flex-1 py-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20"
                                 >
-                                    {suggesting ? 'ĐANG GỬI...' : 'GỬI GỢI Ý ✨'}
+                                    {suggesting ? 'ĐANG GỬI...' : 'GỬI ĐỀ XUẤT ✨'}
                                 </button>
-                                {suggestMessage && <p className="text-center text-[9px] font-bold text-[#4caf50] animate-pulse">{suggestMessage}</p>}
-                            </motion.form>
-                        )}
-                    </div>
+                            </div>
+                            {suggestMessage && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{suggestMessage}</p>}
+                        </motion.form>
+                    )}
                 </div>
 
-                {/* 📜 BÍ KÍP TU LUYỆN (XP GUIDE) 🍀 */}
-                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#4caf50]/5 blur-3xl rounded-full" />
-                    <div className="flex items-center gap-2">
+                {/* 📜 BÍ KÍP THĂNG CẤP (XP GUIDE) */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-[#4caf50]/5 blur-3xl rounded-full" />
+                    
+                    <div className="flex items-center gap-3">
                         <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
                         <h3 className="text-xs font-black uppercase tracking-widest text-white">Bí kíp thăng cấp (Cách nhận XP)</h3>
                     </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                             { label: 'Điểm danh', xp: '+100', icon: '🔥' },
-                            { label: 'Đọc chương mới', xp: '+20', icon: '📖' },
+                            { label: 'Đọc chương', xp: '+20', icon: '📖' },
                             { label: 'Bình luận', xp: '+5~10', icon: '💬' },
-                            { label: 'Bốc quà', xp: 'Random', icon: '🎁' },
-                            { label: 'Nhiệm vụ', xp: 'Variable', icon: '🎯' },
-                            { label: 'Gợi ý danh hiệu', xp: '+500', icon: '💡' }
+                            { label: 'Bốc quà', xp: 'Random', icon: '🎁' }
                         ].map((item, idx) => (
-                            <div key={idx} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
-                                <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
-                                <span className="text-[8px] font-black text-gray-500 uppercase tracking-tighter">{item.label}</span>
-                                <span className="text-xs font-black text-[#4caf50] italic">{item.xp} XP</span>
+                            <div key={idx} className="p-6 bg-black/20 border border-white/5 rounded-[32px] flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
+                                <span className="text-2xl mb-1 group-hover:scale-125 transition-transform duration-500">{item.icon}</span>
+                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">{item.label}</span>
+                                <span className="text-sm font-black text-[#4caf50] italic">{item.xp} XP</span>
                             </div>
                         ))}
                     </div>
-
-                    {/* 📖 DIỄN GIẢI CHI TIẾT 🍀 */}
-                    <div className="mt-6 p-5 bg-black/20 rounded-3xl border border-white/5 space-y-4">
-                        {[
-                            { title: 'Duyên phận mỗi ngày', desc: 'Điểm danh nhận ngay 100 XP. Chuỗi càng dài, phần thưởng càng lớn tại các mốc 3, 7, 30 ngày.' },
-                            { title: 'Hành trình đọc truyện', desc: 'Mỗi chương truyện đọc xong sẽ giúp bạn tích lũy 20 XP tu luyện (Ghi nhận 1 chương/người).' },
-                            { title: 'Tương tác đàm đạo', desc: 'Bình luận đầu tiên nhận 10 XP, các lần tiếp theo nhận 5 XP. Nhận tối đa 100 XP từ bình luận mỗi ngày.' },
-                            { title: 'Vận khí may mắn', desc: 'Mỗi ngày bốc quà một lần để nhận thêm lượng kinh nghiệm ngẫu nhiên từ Thánh Địa.' },
-                            { title: 'Cống hiến danh phẩm', desc: 'Đóng góp ý tưởng danh hiệu. Nếu được Admin duyệt, bạn nhận ngay 500 XP công đức.' }
-                        ].map((rule, rIdx) => (
-                            <div key={rIdx} className="flex gap-3 items-start">
-                                <div className="w-1 h-1 rounded-full bg-[#4caf50] mt-1.5 shrink-0" />
-                                <div>
-                                    <p className="text-[9px] font-black uppercase text-[#4caf50] tracking-widest">{rule.title}</p>
-                                    <p className="text-[10px] text-gray-400 leading-relaxed">{rule.desc}</p>
-                                </div>
-                            </div>
-                        ))}
+                    
+                    <div className="p-6 bg-white/5 rounded-[32px] border border-white/5">
+                        <p className="text-[10px] text-gray-400 leading-relaxed italic text-center">
+                            "Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng tại Shiroi Arika." 🍀
+                        </p>
                     </div>
-                    <p className="text-[8px] text-gray-600 italic text-center">"Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng Thánh Địa!" 🍀</p>
-                </div>
-
-                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🕰️ Nhật ký tu luyện</h3>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                    {xpLogs.map(l => {
-                      const typeMap = {
-                        'read': 'Đọc truyện',
-                        'check_in': 'Điểm danh',
-                        'comment': 'Bình luận',
-                        'first_comment': 'Lần đầu bình luận',
-                        'lucky_draw': 'Bốc quà',
-                        'mission': 'Nhiệm vụ'
-                      };
-                      return (
-                        <div key={l.id} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5 hover:bg-black/60 transition-all">
-                          <div>
-                            <div className="text-[10px] font-black uppercase text-gray-400">{typeMap[l.type] || 'Khác'}</div>
-                            <div className="text-[8px] text-gray-600 mt-1">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
-                          </div>
-                          <div className="text-xs font-black text-[#4caf50]">+{l.amount} XP</div>
-                        </div>
-                      );
-                    })}
-                    {xpLogs.length === 0 && <p className="text-center text-gray-700 py-10 italic">Chưa có dấu ấn tu luyện... ✨</p>}
-                  </div>
                 </div>
               </motion.div>
             )}
 
             {activeTab === 'settings' && (
-              <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-                <form onSubmit={handleUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest">Cài đặt hồ sơ Shiroi</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Tên hiển thị</label>
-                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" placeholder="Nhập tên hiển thị..." />
+              <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                <form onSubmit={handleUpdate} className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                  <div className="flex items-baseline gap-3">
+                      <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Cấu hiệu hồ sơ</h3>
+                      <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-500 uppercase ml-4 tracking-widest">Tên hiển thị công khai</label>
+                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full bg-black/60 border border-white/5 rounded-[24px] px-6 py-4 outline-none focus:border-[#4caf50] transition-all" placeholder="Nhập tên hiển thị..." />
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Giới thiệu bản thân (Bio)</label>
-                      <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50] resize-none" rows="3" placeholder="Viết vài dòng giới thiệu về mình..." />
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-gray-500 uppercase ml-4 tracking-widest">Lời tự thuật (Bio)</label>
+                      <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-black/60 border border-white/5 rounded-[24px] px-6 py-4 outline-none focus:border-[#4caf50] resize-none transition-all" rows="3" placeholder="Viết vài dòng giới thiệu về mình..." />
                     </div>
-                    <button type="submit" disabled={updating} className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl text-[10px] uppercase shadow-lg disabled:opacity-20 transition-all hover:brightness-110">Lưu thay đổi hồ sơ 💾</button>
+                    <button type="submit" disabled={updating} className="w-full py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-[24px] text-[11px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20 disabled:opacity-20 transition-all hover:scale-[1.02]">Lưu thay đổi hồ sơ ✨</button>
                     {message && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{message}</p>}
                   </div>
                 </form>
 
-                <form onSubmit={handlePasswordUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest">Đổi mật mã bảo mật</h3>
+                <form onSubmit={handlePasswordUpdate} className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                  <div className="flex items-baseline gap-3">
+                      <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Mật mã bảo mật</h3>
+                      <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  </div>
                   <div className="space-y-4">
-                    <input type="password" placeholder="Mật khẩu hiện tại" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" />
-                    <input type="password" placeholder="Mật khẩu mới" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" />
-                    <input type="password" placeholder="Xác nhận mật khẩu mới" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" />
-                    <button type="submit" disabled={pwdUpdating} className="w-full py-4 bg-white/5 text-white font-black rounded-xl text-[10px] uppercase border border-white/10 hover:bg-white/10 transition-all disabled:opacity-20">Cập nhật mật mã 🔐</button>
+                    <input type="password" placeholder="Mật khẩu hiện tại" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="w-full bg-black/60 border border-white/5 rounded-[24px] px-6 py-4 outline-none focus:border-[#4caf50]" />
+                    <input type="password" placeholder="Mật khẩu mới" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-black/60 border border-white/5 rounded-[24px] px-6 py-4 outline-none focus:border-[#4caf50]" />
+                    <input type="password" placeholder="Xác nhận mật khẩu mới" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="w-full bg-black/60 border border-white/5 rounded-[24px] px-6 py-4 outline-none focus:border-[#4caf50]" />
+                    <button type="submit" disabled={pwdUpdating} className="w-full py-5 bg-white/5 text-white font-black rounded-[24px] text-[11px] uppercase border border-white/10 hover:bg-white/10 transition-all disabled:opacity-20">Cập nhật mật mã 🔐</button>
                     {pwdMessage && <p className="text-center text-[10px] font-black text-[#4caf50]">{pwdMessage}</p>}
                   </div>
                 </form>
@@ -683,162 +748,192 @@ function ProfileContent() {
             )}
 
             {activeTab === 'notifications' && (
-              <motion.div key="notifications" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-4">
-                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                     <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🔔 Thông báo của bạn</h3>
-                     <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {notifications.map(n => (
-                          <div key={n.id} onClick={() => !n.is_read && handleMarkAsRead(n.id)} className={`p-5 rounded-2xl border transition-all cursor-pointer ${!n.is_read ? 'bg-[#4caf50]/5 border-[#4caf50]/20' : 'bg-black/20 border-white/5'}`}>
-                            <p className={`text-[11px] font-black uppercase mb-1 ${!n.is_read ? 'text-[#4caf50]' : 'text-white'}`}>{n.title}</p>
-                            <p className="text-[10px] text-gray-500 leading-relaxed">{n.body}</p>
-                            <p className="text-[8px] text-gray-700 mt-2 italic">{formatSafeDistance(n.created_at)}</p>
-                          </div>
-                        ))}
-                        <div className="pt-2">
-                             <p className="text-[10px] text-gray-500 italic">"Ghi lục lại tất cả các cột mốc tu luyện quan trọng của bạn tại Thánh địa." 🍀</p>
-                        </div>
-                    </div>
-
-                    {/* 🔔 CÀI ĐẶT THÔNG BÁO ĐẨY 🚀 */}
-                    <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#4caf50]/5 blur-3xl rounded-full" />
-                        <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">🔔 Thông báo đẩy (Web Push)</h3>
-                        
-                        <div className="space-y-4">
-                            <p className="text-[10px] text-gray-400 leading-relaxed">
-                                Nhận thông báo ngay lập tức về **Truyện mới cập nhật**, **Nhiệm vụ xong**, hoặc **Thông báo từ Admin** ngay cả khi bạn không mở web. 🚀
-                            </p>
-                            
-                            <div className="p-5 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between">
-                                <div>
-                                    <p className="text-[11px] font-black text-[#4caf50] uppercase tracking-wider">Trạng thái thông báo</p>
-                                    <p className={`text-[10px] font-bold ${fcmEnabled ? 'text-green-500' : 'text-gray-600 italic'}`}>
-                                        {fcmEnabled ? '● Đã kích hoạt (Sẵn sàng nhận tin)' : '○ Chưa kích hoạt'}
-                                    </p>
-                                </div>
-                                <button 
-                                    onClick={handleEnableNotifications}
-                                    disabled={fcmLoading || fcmEnabled}
-                                    className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${
-                                        fcmEnabled 
-                                        ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5' 
-                                        : 'bg-[#4caf50] text-[#0a0c0a] hover:scale-105 shadow-lg shadow-[#4caf50]/20'
-                                    }`}
-                                >
-                                    {fcmLoading ? 'Đang xử lý...' : fcmEnabled ? 'Đã bật ✅' : 'Kích hoạt ngay ⚡'}
-                                </button>
+              <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                     <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Hộp thư Thánh địa</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                     </div>
+                     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                        {notifications.map((n, nIdx) => (
+                          <motion.div 
+                            key={n.id} 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: nIdx * 0.05 }}
+                            onClick={() => !n.is_read && handleMarkAsRead(n.id)} 
+                            className={`p-6 rounded-[32px] border transition-all cursor-pointer relative overflow-hidden group ${
+                                !n.is_read 
+                                ? 'bg-gradient-to-br from-[#4caf50]/10 to-transparent border-[#4caf50]/20' 
+                                : 'bg-white/5 border-white/5 opacity-80'
+                            }`}
+                          >
+                            {!n.is_read && <div className="absolute top-4 right-4 w-2 h-2 bg-[#4caf50] rounded-full animate-pulse" />}
+                            <p className={`text-xs font-black uppercase mb-1 tracking-tight ${!n.is_read ? 'text-[#4caf50]' : 'text-white/80'}`}>{n.title}</p>
+                            <p className="text-[10px] text-gray-500 leading-relaxed group-hover:text-gray-300 transition-colors">{n.body}</p>
+                            <div className="flex justify-between items-center mt-4">
+                                <span className="text-[8px] text-gray-700 font-bold uppercase tracking-widest">{formatSafeDistance(n.created_at)}</span>
+                                <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">✨</span>
                             </div>
-
-                            <p className="text-[8px] text-gray-700 italic">
-                                * Lưu ý: Bạn cần đồng ý cấp quyền khi trình duyệt yêu cầu. Tính năng này hoạt động tốt nhất trên Chrome, Edge và Android.
-                            </p>
-                        </div>
+                          </motion.div>
+                        ))}
+                        {notifications.length === 0 && <p className="text-center text-gray-700 py-20 italic">Hộp thư đang vắng lặng... 🍃</p>}
                     </div>
-                 </div>
+                  </div>
+
+                  {/* 🔔 CÀI ĐẶT THÔNG BÁO ĐẨY */}
+                  <div className="glass-card p-10 rounded-[48px] border-[#4caf50]/10 space-y-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-48 h-48 bg-[#4caf50]/5 blur-3xl rounded-full" />
+                      <div className="flex items-baseline gap-3 relative z-10">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-[#4caf50] italic">Thông báo đẩy (Push)</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-[#4caf50]/10 to-transparent" />
+                      </div>
+                      
+                      <div className="space-y-6 relative z-10">
+                          <p className="text-[10px] text-gray-400 leading-relaxed">
+                              Kết nối trực tiếp với Thánh địa. Nhận tin tức **Cập nhật chương mới**, **Nhiệm vụ** hoặc **Tin nhắn khẩn** ngay cả khi bạn đang bế quan (đóng trình duyệt). 🚀
+                          </p>
+                          
+                          <div className="p-8 bg-black/40 rounded-[32px] border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                              <div className="text-center sm:text-left">
+                                  <p className="text-xs font-black text-[#4caf50] uppercase tracking-wider mb-1">Trạng thái kết nối</p>
+                                  <div className="flex items-center gap-2 justify-center sm:justify-start">
+                                    <div className={`w-2 h-2 rounded-full ${fcmEnabled ? 'bg-green-500 shadow-[0_0_10px_#4caf50]' : 'bg-gray-700'}`} />
+                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${fcmEnabled ? 'text-green-500' : 'text-gray-600 italic'}`}>
+                                        {fcmEnabled ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
+                                    </p>
+                                  </div>
+                              </div>
+                              <button 
+                                  onClick={handleEnableNotifications}
+                                  disabled={fcmLoading || fcmEnabled}
+                                  className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
+                                      fcmEnabled 
+                                      ? 'bg-white/5 text-gray-600 border border-white/5' 
+                                      : 'bg-[#4caf50] text-[#0a0c0a] hover:scale-105 shadow-2xl shadow-[#4caf50]/30'
+                                  }`}
+                              >
+                                  {fcmLoading ? '...' : fcmEnabled ? 'ĐÃ KÍCH HOẠT ✅' : 'KÍCH HOẠT NGAY ⚡'}
+                              </button>
+                          </div>
+                      </div>
+                  </div>
               </motion.div>
             )}
 
             {activeTab === 'admin' && (user?.role === 'admin' || user?.role === 'staff') && (
-              <motion.div key="admin" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-                 <div className="bg-[#141814] p-8 rounded-[40px] border border-red-500/10 space-y-6 shadow-xl">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-red-500 flex items-center gap-2">🛡️ Quản lý nhân sự Thánh địa</h3>
-                    <form onSubmit={handleSearchUsers} className="flex gap-2">
-                       <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm tên người dùng..." className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm outline-none focus:border-red-500/50" />
-                       <button className="bg-red-500 text-white px-6 rounded-xl font-black text-[10px] uppercase tracking-widest">TÌM</button>
+              <motion.div key="admin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                 <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                    <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-red-500 italic">Quản lý nhân sự</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-red-500/10 to-transparent" />
+                    </div>
+                    <form onSubmit={handleSearchUsers} className="flex gap-3">
+                       <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Tìm tên người dùng..." className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm outline-none focus:border-red-500/50 transition-all" />
+                       <button className="bg-red-500 text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">TÌM</button>
                     </form>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 gap-3">
                        {foundUsers.map(u => (
-                         <div key={u.id} className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                               <img src={u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-9 h-9 rounded-full object-cover border border-white/10" alt=""/>
+                         <div key={u.id} className="p-6 bg-white/5 rounded-[32px] border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                               <img src={u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-12 h-12 rounded-2xl object-cover border-2 border-white/10 shadow-lg" alt=""/>
                                <div>
-                                  <p className="text-[10px] font-black">{u.username}</p>
-                                  <p className="text-[8px] text-gray-500 uppercase font-black">{u.role === 'admin' ? 'Quản trị viên' : u.role === 'staff' ? 'Nhân sự' : 'Thành viên'}</p>
+                                  <p className="text-sm font-black text-white">{u.username}</p>
+                                  <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">{u.role === 'admin' ? 'Quản trị viên' : u.role === 'staff' ? 'Nhân sự' : 'Thành viên'}</p>
                                </div>
                             </div>
-                            <div className="flex gap-1">
-                               <button onClick={() => handleUpdateRole(u.id, 'staff')} className="text-[7px] px-2 py-1 bg-blue-500/10 text-blue-500 rounded border border-blue-500/20 font-black uppercase">STAFF</button>
-                               <button onClick={() => handleUpdateRole(u.id, 'admin')} className="text-[7px] px-2 py-1 bg-red-500/10 text-red-500 rounded border border-red-500/20 font-black uppercase">ADMIN</button>
-                               <button onClick={() => handleUpdateRole(u.id, 'user')} className="text-[7px] px-2 py-1 bg-gray-500/10 text-gray-500 rounded border border-gray-500/20 font-black uppercase">USER</button>
+                            <div className="flex gap-2">
+                               <button onClick={() => handleUpdateRole(u.id, 'staff')} className="px-4 py-2 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all">STAFF</button>
+                               <button onClick={() => handleUpdateRole(u.id, 'admin')} className="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">ADMIN</button>
+                               <button onClick={() => handleUpdateRole(u.id, 'user')} className="px-4 py-2 bg-gray-500/10 text-gray-500 rounded-xl border border-gray-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-gray-500 hover:text-white transition-all">USER</button>
                             </div>
                          </div>
                        ))}
-                       {foundUsers.length === 0 && searchQuery && <p className="text-center text-[10px] text-gray-600 italic">Không tìm thấy ai phù hợp... 🕵️‍♂️</p>}
+                       {foundUsers.length === 0 && searchQuery && <p className="text-center text-[10px] text-gray-600 italic py-10">Không tìm thấy ai phù hợp... 🕵️‍♂️</p>}
                     </div>
                  </div>
 
-                 {/* 💡 QUẢN LÝ GỢI Ý DANH HIỆU 🍀 */}
-                 <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-[#4caf50] flex items-center gap-2">💡 Gợi ý danh hiệu chưa duyệt</h3>
-                    <div className="space-y-4">
+                 {/* 💡 QUẢN LÝ GỢI Ý DANH HIỆU */}
+                 <div className="glass-card p-10 rounded-[48px] border-[#4caf50]/10 space-y-8">
+                    <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-[#4caf50] italic">Đề xuất danh xưng</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-[#4caf50]/10 to-transparent" />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
                        {titleSuggestions.filter(s => s.status === 'pending').map(s => (
-                         <div key={s.id} className="p-5 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                         <div key={s.id} className="p-8 bg-black/40 rounded-[40px] border border-white/5 space-y-4">
                             <div className="flex justify-between items-start">
                                <div>
-                                  <p className="text-sm font-black text-[#4caf50] uppercase italic">"{s.title_name}"</p>
-                                  <p className="text-[10px] text-gray-500 mt-1">Gửi bởi: <span className="text-white">{s.shiroi_users?.display_name || s.shiroi_users?.username}</span></p>
-                               </div>
-                               <span className="text-[8px] text-gray-700 italic">{formatSafeDistance(s.created_at)}</span>
+                                  <p className="text-lg font-black text-[#4caf50] uppercase italic tracking-tight">"{s.title_name}"</p>
+                                  <p className="text-[10px] text-gray-500 mt-1 uppercase font-black">Bởi: <span className="text-white">{s.shiroi_users?.display_name || s.shiroi_users?.username}</span></p>
+                                </div>
+                                <span className="text-[9px] text-gray-700 font-bold">{formatSafeDistance(s.created_at)}</span>
                             </div>
-                            {s.reason && <p className="text-[10px] text-gray-400 bg-white/5 p-3 rounded-xl leading-relaxed italic">"{s.reason}"</p>}
-                            <div className="flex gap-2 pt-2">
-                               <button onClick={() => handleProcessSuggestion(s.id, 'approved')} className="flex-1 py-2 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all">CHẤP THUẬN ✅</button>
-                               <button onClick={() => handleProcessSuggestion(s.id, 'rejected')} className="flex-1 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-black text-[8px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">TỪ CHỐI ✕</button>
+                            {s.reason && <p className="text-[11px] text-gray-400 bg-white/5 p-5 rounded-2xl leading-relaxed italic border border-white/5">"{s.reason}"</p>}
+                            <div className="flex gap-3 pt-2">
+                               <button onClick={() => handleProcessSuggestion(s.id, 'approved')} className="flex-1 py-4 bg-[#4caf50]/10 text-[#4caf50] border border-[#4caf50]/20 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all">CHẤP THUẬN ✅</button>
+                               <button onClick={() => handleProcessSuggestion(s.id, 'rejected')} className="flex-1 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-black text-[9px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">TỪ CHỐI ✕</button>
                             </div>
                          </div>
                        ))}
                        {titleSuggestions.filter(s => s.status === 'pending').length === 0 && (
-                         <p className="text-center text-[10px] text-gray-700 py-6 italic">Hiện chưa có gợi ý nào đang chờ... ✨</p>
+                         <p className="text-center text-[10px] text-gray-700 py-10 italic">Hiện chưa có gợi ý nào đang chờ... ✨</p>
                        )}
                     </div>
                  </div>
 
-                 {/* 🏆 QUẢN LÝ TỔNG DANH HIỆU ⚔️ */}
-                 <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl">
-                    <div className="flex justify-between items-center">
-                        <h3 className="text-xs font-black uppercase tracking-widest text-[#4caf50] flex items-center gap-2">🏆 Danh sách danh hiệu chính thức</h3>
-                        <span className="text-[10px] font-bold text-gray-600">{dynamicTitles.length} danh phẩm</span>
+                 {/* 🏆 DANH SÁCH DANH HIỆU CHÍNH THỨC */}
+                 <div className="glass-card p-10 rounded-[48px] border-[#4caf50]/10 space-y-8">
+                    <div className="flex justify-between items-baseline gap-3">
+                         <h3 className="text-lg font-black uppercase tracking-tighter text-[#4caf50] italic">Danh sách chính thức</h3>
+                         <div className="h-[2px] flex-1 bg-gradient-to-r from-[#4caf50]/10 to-transparent" />
+                         <span className="text-[10px] font-black text-gray-600">{dynamicTitles.length} DANH PHẨM</span>
                     </div>
 
-                    {/* ✨ FORM THÊM NHANH 🚀 */}
-                    <form onSubmit={handleCreateOfficialTitle} className="p-4 bg-[#4caf50]/5 border border-dashed border-[#4caf50]/30 rounded-2xl flex flex-wrap gap-3">
-                        <input 
-                            type="text" 
-                            value={newTitleName}
-                            onChange={e => setNewTitleName(e.target.value)}
-                            placeholder="Tên danh phẩm mới..."
-                            className="flex-1 min-w-[150px] bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-[11px] outline-none focus:border-[#4caf50]"
-                            required
-                        />
-                        <input 
-                            type="number" 
-                            value={newTitleLv}
-                            onChange={e => setNewTitleLv(e.target.value)}
-                            placeholder="Cấp LVL..."
-                            className="w-24 bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-[11px] outline-none focus:border-[#4caf50]"
-                            required
-                        />
+                    <form onSubmit={handleCreateOfficialTitle} className="p-6 bg-[#4caf50]/5 border border-dashed border-[#4caf50]/30 rounded-[32px] flex flex-wrap gap-4 items-end">
+                        <div className="flex-1 min-w-[200px] space-y-2">
+                            <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Tên danh phẩm mới</label>
+                            <input 
+                                type="text" 
+                                value={newTitleName}
+                                onChange={e => setNewTitleName(e.target.value)}
+                                placeholder="VD: Thần Giới Chí Tôn..."
+                                className="w-full bg-black/60 border border-white/5 rounded-2xl px-5 py-3 text-sm outline-none focus:border-[#4caf50]"
+                                required
+                            />
+                        </div>
+                        <div className="w-24 space-y-2">
+                            <label className="text-[9px] font-black text-gray-500 uppercase ml-2">Cấp độ</label>
+                            <input 
+                                type="number" 
+                                value={newTitleLv}
+                                onChange={e => setNewTitleLv(e.target.value)}
+                                placeholder="LVL"
+                                className="w-full bg-black/60 border border-white/5 rounded-2xl px-5 py-3 text-sm outline-none focus:border-[#4caf50]"
+                                required
+                            />
+                        </div>
                         <button 
                             type="submit" 
                             disabled={addingTitle}
-                            className="px-6 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-wider hover:scale-105 transition-all"
+                            className="px-8 py-3 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-[#4caf50]/20 hover:scale-105 active:scale-95 transition-all"
                         >
                             {addingTitle ? '...' : 'THÊM ➕'}
                         </button>
                     </form>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
                         {dynamicTitles.map((t) => (
-                            <div key={t.id} className="p-4 bg-black/40 rounded-xl border border-white/5 flex justify-between items-center group">
+                            <div key={t.id} className="p-6 bg-white/5 rounded-[32px] border border-white/5 flex justify-between items-center group hover:border-[#4caf50]/20 transition-all">
                                 <div>
-                                    <p className="text-[10px] font-black text-[#4caf50] uppercase tracking-wide italic leading-none mb-1">{t.name}</p>
-                                    <p className="text-[8px] text-gray-600 font-bold">Yêu cầu: LVL {t.lv}</p>
+                                    <p className="text-xs font-black text-[#4caf50] uppercase tracking-tight italic leading-none mb-1">{t.name}</p>
+                                    <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest">Yêu cầu: LVL {t.lv}</p>
                                 </div>
                                 <button 
                                     onClick={() => handleDeleteOfficialTitle(t.id)}
-                                    className="p-2 text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                    className="p-3 text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
                         ))}
@@ -847,8 +942,9 @@ function ProfileContent() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </main>
       </div>
     </div>
-  );
+  </div>
+);
 }
