@@ -82,6 +82,10 @@ function ProfileContent() {
   const [newTitleLv, setNewTitleLv] = useState('');
   const [addingTitle, setAddingTitle] = useState(false);
 
+  // 🕵️‍♂️ STATE CHO THÔNG BÁO ĐẨY 🔔
+  const [fcmEnabled, setFcmEnabled] = useState(false);
+  const [fcmLoading, setFcmLoading] = useState(false);
+
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
@@ -131,6 +135,11 @@ function ProfileContent() {
           }
 
           cleanupNotificationsAction();
+          
+          // Kiểm tra quyền thông báo hiện tại
+          if (typeof window !== 'undefined' && 'Notification' in window) {
+            setFcmEnabled(Notification.permission === 'granted');
+          }
         } else {
             const data = JSON.parse(storedUser);
             setUser(data);
@@ -301,6 +310,19 @@ function ProfileContent() {
         alert(`Lỗi: ${res.error}`);
     }
     setAddingTitle(false);
+  };
+
+  const handleEnableNotifications = async () => {
+    setFcmLoading(true);
+    const { requestNotificationPermission } = await import('@/lib/fcmClient');
+    const token = await requestNotificationPermission();
+    if (token) {
+        setFcmEnabled(true);
+        alert("✅ Đã kích hoạt thông báo đẩy thành công! Bạn sẽ nhận được tin nhắn khi có truyện mới hoặc thông báo hệ thống. 🍀");
+    } else {
+        alert("❌ Kích hoạt thất bại. Vui lòng kiểm tra lại quyền thông báo trong cài đặt trình duyệt của bạn.");
+    }
+    setFcmLoading(false);
   };
 
   const fetchPersonnel = async () => {
@@ -672,9 +694,47 @@ function ProfileContent() {
                             <p className="text-[8px] text-gray-700 mt-2 italic">{formatSafeDistance(n.created_at)}</p>
                           </div>
                         ))}
-                        {notifications.length === 0 && <p className="text-center text-gray-600 py-10 italic">Hiện chưa có thông báo nào mới ✨</p>}
-                     </div>
-                  </div>
+                        <div className="pt-2">
+                             <p className="text-[10px] text-gray-500 italic">"Ghi lục lại tất cả các cột mốc tu luyện quan trọng của bạn tại Thánh địa." 🍀</p>
+                        </div>
+                    </div>
+
+                    {/* 🔔 CÀI ĐẶT THÔNG BÁO ĐẨY 🚀 */}
+                    <div className="bg-[#141814] p-8 rounded-[40px] border border-[#4caf50]/10 space-y-6 shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#4caf50]/5 blur-3xl rounded-full" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">🔔 Thông báo đẩy (Web Push)</h3>
+                        
+                        <div className="space-y-4">
+                            <p className="text-[10px] text-gray-400 leading-relaxed">
+                                Nhận thông báo ngay lập tức về **Truyện mới cập nhật**, **Nhiệm vụ xong**, hoặc **Thông báo từ Admin** ngay cả khi bạn không mở web. 🚀
+                            </p>
+                            
+                            <div className="p-5 bg-black/40 rounded-2xl border border-white/5 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[11px] font-black text-[#4caf50] uppercase tracking-wider">Trạng thái thông báo</p>
+                                    <p className={`text-[10px] font-bold ${fcmEnabled ? 'text-green-500' : 'text-gray-600 italic'}`}>
+                                        {fcmEnabled ? '● Đã kích hoạt (Sẵn sàng nhận tin)' : '○ Chưa kích hoạt'}
+                                    </p>
+                                </div>
+                                <button 
+                                    onClick={handleEnableNotifications}
+                                    disabled={fcmLoading || fcmEnabled}
+                                    className={`px-6 py-2 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${
+                                        fcmEnabled 
+                                        ? 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5' 
+                                        : 'bg-[#4caf50] text-[#0a0c0a] hover:scale-105 shadow-lg shadow-[#4caf50]/20'
+                                    }`}
+                                >
+                                    {fcmLoading ? 'Đang xử lý...' : fcmEnabled ? 'Đã bật ✅' : 'Kích hoạt ngay ⚡'}
+                                </button>
+                            </div>
+
+                            <p className="text-[8px] text-gray-700 italic">
+                                * Lưu ý: Bạn cần đồng ý cấp quyền khi trình duyệt yêu cầu. Tính năng này hoạt động tốt nhất trên Chrome, Edge và Android.
+                            </p>
+                        </div>
+                    </div>
+                 </div>
               </motion.div>
             )}
 
