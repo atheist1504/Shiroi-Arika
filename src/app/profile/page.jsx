@@ -504,10 +504,10 @@ function ProfileContent() {
                         {[
                             { label: 'Điểm danh', xp: '+100', icon: '🔥' },
                             { label: 'Đọc chương mới', xp: '+20', icon: '📖' },
-                            { label: 'Bình luận đầu', xp: '+10', icon: '💬' },
-                            { label: 'Bình luận tiếp', xp: '+5', icon: '✨' },
-                            { label: 'Gợi ý danh hiệu', xp: '+500', icon: '💡' },
-                            { label: 'Lên cấp chuỗi', xp: '+++', icon: '⚡' }
+                            { label: 'Bình luận', xp: '+5~10', icon: '💬' },
+                            { label: 'Bốc quà', xp: 'Random', icon: '🎁' },
+                            { label: 'Nhiệm vụ', xp: 'Variable', icon: '🎯' },
+                            { label: 'Gợi ý danh hiệu', xp: '+500', icon: '💡' }
                         ].map((item, idx) => (
                             <div key={idx} className="p-4 bg-black/40 border border-white/5 rounded-2xl flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
                                 <span className="text-xl mb-1 group-hover:scale-110 transition-transform">{item.icon}</span>
