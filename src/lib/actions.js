@@ -1587,12 +1587,47 @@ export async function handleTitleSuggestionAction(id, status) {
     const session = JSON.parse(sessionCookie.value);
     if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
 
-    const { error } = await supabaseAdmin
+    // 🕵️‍♂️ LẤY THÔNG TIN GỢI Ý TRƯỚC KHI CẬP NHẬT 🍀
+    const { data: suggestion, error: fetchError } = await supabaseAdmin
+      .from('shiroi_title_suggestions')
+      .select('*, shiroi_users(id, username, xp)')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !suggestion) throw new Error("Không tìm thấy gợi ý!");
+
+    const { error: updateError } = await supabaseAdmin
       .from('shiroi_title_suggestions')
       .update({ status: status })
       .eq('id', id);
 
-    if (error) throw error;
+    if (updateError) throw updateError;
+
+    // 💎 NẾU CHẤP THUẬN -> THƯỞNG 500 XP CHO NGƯỜI GỢI Ý 🎁
+    if (status === 'approved') {
+        const userId = suggestion.user_id;
+        const currentXp = suggestion.shiroi_users?.xp || 0;
+        const rewardXp = 500;
+
+        // 1. Cập nhật XP 🛡️
+        await supabaseAdmin
+            .from('shiroi_users')
+            .update({ xp: currentXp + rewardXp })
+            .eq('id', userId);
+
+        // 2. Ghi nhật ký XP 🕰️
+        await supabaseAdmin
+            .from('shiroi_xp_logs')
+            .insert([{ 
+                user_id: userId, 
+                amount: rewardXp, 
+                type: 'mission', 
+                reason: `Được chấp nhận gợi ý danh hiệu: ${suggestion.title_name}` 
+            }]);
+
+        // 3. Gửi thông báo cho người dùng 🔔
+        await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +500 XP thưởng! 🍀`);
+    }
     
     return { success: true };
   } catch (error) {
