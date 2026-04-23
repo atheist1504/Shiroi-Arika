@@ -5,7 +5,17 @@ import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { calculateLevel, calculateProgress, calculateTitle, TITLES, XP_REWARDS, getStreakBonus, recordXpLog } from '@/lib/xp';
-import { getNotificationsAction, markNotificationAsReadAction, cleanupNotificationsAction, updateUserProfileAction } from '@/lib/actions';
+import { 
+    getNotificationsAction, 
+    markNotificationAsReadAction, 
+    cleanupNotificationsAction, 
+    updateUserProfileAction,
+    getOfficialTitlesAction,
+    createOfficialTitleAction,
+    getTitleSuggestionsAction,
+    handleTitleSuggestionAction,
+    deleteOfficialTitleAction
+} from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -256,7 +266,6 @@ function ProfileContent() {
   };
 
   const fetchDynamicTitles = async () => {
-    const { getOfficialTitlesAction } = await import('@/lib/actions');
     const res = await getOfficialTitlesAction();
     if (res.success && res.titles?.length > 0) {
         setDynamicTitles(res.titles);
@@ -264,20 +273,17 @@ function ProfileContent() {
   };
 
   const fetchTitleSuggestions = async () => {
-    const { getTitleSuggestionsAction } = await import('@/lib/actions');
     const res = await getTitleSuggestionsAction();
     if (res.success) setTitleSuggestions(res.suggestions);
   };
 
   const handleProcessSuggestion = async (id, status) => {
-    const { handleTitleSuggestionAction } = await import('@/lib/actions');
     const res = await handleTitleSuggestionAction(id, status);
     if (res.success) fetchTitleSuggestions();
   };
 
   const handleDeleteOfficialTitle = async (id) => {
     if (!confirm("Bạn có chắc chắn muốn xóa danh hiệu này không? 🗑️")) return;
-    const { deleteOfficialTitleAction } = await import('@/lib/actions');
     const res = await deleteOfficialTitleAction(id);
     if (res.success) fetchDynamicTitles();
   };
@@ -286,7 +292,6 @@ function ProfileContent() {
     e.preventDefault();
     if (!newTitleName || !newTitleLv) return;
     setAddingTitle(true);
-    const { createOfficialTitleAction } = await import('@/lib/actions');
     const res = await createOfficialTitleAction(newTitleName, parseInt(newTitleLv));
     if (res.success) {
         setNewTitleName('');
