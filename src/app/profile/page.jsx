@@ -63,6 +63,9 @@ function ProfileContent() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggestMessage, setSuggestMessage] = useState('');
 
+  // 🕵️‍♂️ STATE CHO DANH HIỆU DYNAMIC 🏆
+  const [dynamicTitles, setDynamicTitles] = useState(TITLES); // Mặc định dùng TITLES từ xp.js
+
   // 🕵️‍♂️ STATE CHO QUẢN TRỊ DANH HIỆU 🛡️
   const [titleSuggestions, setTitleSuggestions] = useState([]);
 
@@ -107,6 +110,7 @@ function ProfileContent() {
           fetchStats(data.id);
           fetchXpLogs(data.id);
           fetchNotifications();
+          fetchDynamicTitles();
           
           if (data.role === 'admin' || data.role === 'staff') {
             fetchPersonnel();
@@ -114,6 +118,16 @@ function ProfileContent() {
           }
 
           cleanupNotificationsAction();
+        } else {
+            const data = JSON.parse(storedUser);
+            setUser(data);
+            fetchDynamicTitles();
+            if (data.role === 'admin' || data.role === 'staff') {
+                fetchPersonnel();
+                fetchTitleSuggestions();
+            }
+
+            cleanupNotificationsAction();
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -238,6 +252,14 @@ function ProfileContent() {
     setSuggesting(false);
   };
 
+  const fetchDynamicTitles = async () => {
+    const { getOfficialTitlesAction } = await import('@/lib/actions');
+    const res = await getOfficialTitlesAction();
+    if (res.success && res.titles?.length > 0) {
+        setDynamicTitles(res.titles);
+    }
+  };
+
   const fetchTitleSuggestions = async () => {
     const { getTitleSuggestionsAction } = await import('@/lib/actions');
     const res = await getTitleSuggestionsAction();
@@ -270,6 +292,16 @@ function ProfileContent() {
     if (res.success) fetchPersonnel();
   };
 
+  const currentDynamicTitle = user ? (() => {
+    const lvl = calculateLevel(user.xp);
+    const unlocked = dynamicTitles.filter(t => lvl >= t.lv);
+    if (user.selected_badge) {
+        const selected = dynamicTitles.find(t => t.name.toUpperCase() === user.selected_badge.toUpperCase());
+        if (selected && lvl >= selected.lv) return selected;
+    }
+    return unlocked[0] || dynamicTitles[dynamicTitles.length - 1];
+  })() : null;
+
   if (!isMounted || loading) return <div className="min-h-screen bg-[#0a0c0a] flex items-center justify-center text-[#4caf50]">Đang tải...</div>;
 
   return (
@@ -289,7 +321,7 @@ function ProfileContent() {
             <h1 className="text-4xl font-black gradient-text uppercase tracking-tight">{user?.display_name || user?.username}</h1>
             <div className="px-5 py-2 rounded-2xl border border-[#4caf50]/30 text-[#4caf50] bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.1)]">
                 <span className="text-[11px] font-black uppercase tracking-[0.3em]">
-                    {user?.selected_badge || calculateTitle(user?.xp).name}
+                    {user?.selected_badge || currentDynamicTitle?.name || calculateTitle(user?.xp).name}
                 </span>
             </div>
           </div>
@@ -352,8 +384,8 @@ function ProfileContent() {
                   <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 shadow-xl flex flex-col justify-between h-full">
                     {/* ⬆️ CẤP ĐỘ TU LUYỆN (LÊN ĐẦU) 🍀 */}
                     <div className="w-full text-center">
-                       <p className="text-[10px] text-gray-500 uppercase font-black mb-1">Cấp độ tu luyện</p>
-                       <p className="text-5xl font-black text-[#4caf50] italic drop-shadow-[0_0_20px_rgba(76,175,80,0.2)]">LVL {calculateLevel(user?.xp)}</p>
+                        <h2 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Cấp độ & Danh hiệu hiện tại</h2>
+                        <h1 className="text-2xl font-black text-[#4caf50] uppercase italic tracking-tighter leading-none">{currentDynamicTitle?.name || 'Đang tải...'}</h1>
                        <div className="w-full h-1.5 bg-black/50 rounded-full mt-4 overflow-hidden border border-white/5 relative">
                           <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_10px_#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
                        </div>
@@ -396,9 +428,9 @@ function ProfileContent() {
                     </div>
                     <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {[...TITLES].reverse().map((title) => {
+                            {[...dynamicTitles].reverse().map((title) => {
                                 const isUnlocked = calculateLevel(user?.xp) >= title.lv;
-                                const isSelected = user?.selected_badge === title.name || (calculateTitle(user?.xp).name === title.name && !user?.selected_badge);
+                                const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
                                 
                                 return (
                                     <button

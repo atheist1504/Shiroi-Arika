@@ -1552,6 +1552,24 @@ export async function suggestTitleAction(titleName, reason) {
 }
 
 /**
+ * 🕵️‍♂️ SERVER ACTION: Lấy danh sách danh hiệu chính thức (Từ Database) 🍀
+ */
+export async function getOfficialTitlesAction() {
+  try {
+    const { data, error } = await supabase
+      .from('shiroi_titles')
+      .select('*')
+      .order('lv', { ascending: false });
+
+    if (error) throw error;
+    return { success: true, titles: data };
+  } catch (error) {
+    console.error("❌ Lỗi lấy danh sách danh hiệu:", error);
+    return { success: true, titles: [] };
+  }
+}
+
+/**
  * 🕵️‍♂️ SERVER ACTION: Lấy danh sách gợi ý danh hiệu (Chỉ Admin/Staff) 🍀
  */
 export async function getTitleSuggestionsAction() {
@@ -1627,6 +1645,21 @@ export async function handleTitleSuggestionAction(id, status) {
 
         // 3. Gửi thông báo cho người dùng 🔔
         await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +500 XP thưởng! 🍀`);
+
+        // 🚀 4. TỰ ĐỘNG THÊM VÀO DANH SÁCH CHÍNH THỨC ✨
+        // Tìm cấp độ cao nhất hiện tại
+        const { data: maxLevelTitle } = await supabaseAdmin
+            .from('shiroi_titles')
+            .select('lv')
+            .order('lv', { ascending: false })
+            .limit(1)
+            .single();
+        
+        const nextLv = (maxLevelTitle?.lv || 0) + 5;
+
+        await supabaseAdmin
+            .from('shiroi_titles')
+            .insert([{ name: suggestion.title_name, lv: nextLv }]);
     }
     
     return { success: true };
