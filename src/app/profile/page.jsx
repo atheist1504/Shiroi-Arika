@@ -307,22 +307,28 @@ function ProfileContent() {
                         </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Bộ truyện đã đọc</p>
-                      <p className="text-3xl font-black">{stats.total_mangas}</p>
+                  <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 shadow-xl flex flex-col justify-between gap-8">
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="text-center">
+                        <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Bộ truyện đã đọc</p>
+                        <p className="text-4xl font-black italic">{stats.total_mangas}</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Số chương đã đọc</p>
+                        <p className="text-4xl font-black italic">{stats.total_chapters}</p>
+                      </div>
                     </div>
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Số chương đã đọc</p>
-                      <p className="text-3xl font-black">{stats.total_chapters}</p>
-                    </div>
-                    <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center col-span-2 shadow-xl">
-                       <p className="text-[10px] text-gray-500 uppercase font-black">Cấp độ tu luyện</p>
-                       <p className="text-3xl font-black text-[#4caf50]">LVL {calculateLevel(user?.xp)}</p>
-                       <div className="w-full h-1 bg-white/5 rounded-full mt-2 overflow-hidden">
-                          <div className="h-full bg-[#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
+                    
+                    <div className="pt-8 border-t border-white/5 w-full text-center">
+                       <p className="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Cấp độ tu luyện</p>
+                       <p className="text-5xl font-black text-[#4caf50] italic drop-shadow-[0_0_20px_rgba(76,175,80,0.2)]">LVL {calculateLevel(user?.xp)}</p>
+                       <div className="w-full h-1.5 bg-black/40 rounded-full mt-4 overflow-hidden border border-white/5">
+                          <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
                        </div>
-                       <p className="text-[8px] text-gray-600 mt-1 uppercase tracking-widest">Kinh nghiệm: {user?.xp || 0} XP</p>
+                       <div className="flex justify-between items-center mt-2 px-1">
+                         <span className="text-[8px] text-gray-600 font-black uppercase">Kinh nghiệm tích lũy</span>
+                         <span className="text-[8px] text-[#4caf50] font-black uppercase tracking-widest">{user?.xp || 0} XP</span>
+                       </div>
                     </div>
                   </div>
                 </div>
