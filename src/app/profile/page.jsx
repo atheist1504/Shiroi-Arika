@@ -516,6 +516,25 @@ function ProfileContent() {
                             </div>
                         ))}
                     </div>
+
+                    {/* 📖 DIỄN GIẢI CHI TIẾT 🍀 */}
+                    <div className="mt-6 p-5 bg-black/20 rounded-3xl border border-white/5 space-y-4">
+                        {[
+                            { title: 'Duyên phận mỗi ngày', desc: 'Điểm danh nhận ngay 100 XP. Chuỗi càng dài, phần thưởng càng lớn tại các mốc 3, 7, 30 ngày.' },
+                            { title: 'Hành trình đọc truyện', desc: 'Mỗi chương truyện đọc xong sẽ giúp bạn tích lũy 20 XP tu luyện (Ghi nhận 1 chương/người).' },
+                            { title: 'Tương tác đàm đạo', desc: 'Bình luận đầu tiên nhận 10 XP, các lần tiếp theo nhận 5 XP. Hãy bình luận văn minh để tránh bị phạt nhé!' },
+                            { title: 'Vận khí may mắn', desc: 'Mỗi ngày bốc quà một lần để nhận thêm lượng kinh nghiệm ngẫu nhiên từ Thánh Địa.' },
+                            { title: 'Cống hiến danh phẩm', desc: 'Đóng góp ý tưởng danh hiệu. Nếu được Admin duyệt, bạn nhận ngay 500 XP công đức.' }
+                        ].map((rule, rIdx) => (
+                            <div key={rIdx} className="flex gap-3 items-start">
+                                <div className="w-1 h-1 rounded-full bg-[#4caf50] mt-1.5 shrink-0" />
+                                <div>
+                                    <p className="text-[9px] font-black uppercase text-[#4caf50] tracking-widest">{rule.title}</p>
+                                    <p className="text-[10px] text-gray-400 leading-relaxed">{rule.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                     <p className="text-[8px] text-gray-600 italic text-center">"Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng Thánh Địa!" 🍀</p>
                 </div>
 
