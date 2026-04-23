@@ -59,7 +59,6 @@ function ProfileContent() {
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
-  const [mgmtLoading, setMgmtLoading] = useState(false);
 
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
@@ -310,11 +309,11 @@ function ProfileContent() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                      <p className="text-[10px] text-gray-500 uppercase font-black">Bộ truyện</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Bộ truyện đã đọc</p>
                       <p className="text-3xl font-black">{stats.total_mangas}</p>
                     </div>
                     <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center shadow-xl">
-                      <p className="text-[10px] text-gray-500 uppercase font-black">Chương</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">Số chương đã đọc</p>
                       <p className="text-3xl font-black">{stats.total_chapters}</p>
                     </div>
                     <div className="bg-[#141814] p-6 rounded-3xl border border-white/5 text-center col-span-2 shadow-xl">
@@ -327,52 +326,6 @@ function ProfileContent() {
                     </div>
                   </div>
                 </div>
-
-                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🕰️ Nhật ký tu luyện</h3>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                    {xpLogs.map(l => {
-                      const typeMap = {
-                        'read': 'Đọc truyện',
-                        'check_in': 'Điểm danh',
-                        'comment': 'Bình luận',
-                        'first_comment': 'Lần đầu bình luận',
-                        'lucky_draw': 'Bốc quà',
-                        'mission': 'Nhiệm vụ'
-                      };
-                      return (
-                        <div key={l.id} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5 hover:bg-black/60 transition-all">
-                          <div>
-                            <div className="text-[10px] font-black uppercase text-gray-400">{typeMap[l.type] || 'Khác'}</div>
-                            <div className="text-[8px] text-gray-600 mt-1">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
-                          </div>
-                          <div className="text-xs font-black text-[#4caf50]">+{l.amount} XP</div>
-                        </div>
-                      );
-                    })}
-                    {xpLogs.length === 0 && <p className="text-center text-gray-700 py-10 italic">Chưa có dấu ấn tu luyện... ✨</p>}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeTab === 'settings' && (
-              <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
-                <form onSubmit={handleUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest">Cài đặt hồ sơ Shiroi</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Tên hiển thị</label>
-                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" placeholder="Nhập tên hiển thị..." />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Giới thiệu bản thân (Bio)</label>
-                      <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50] resize-none" rows="3" placeholder="Viết vài dòng giới thiệu về mình..." />
-                    </div>
-                    <button type="submit" disabled={updating} className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl text-[10px] uppercase shadow-lg disabled:opacity-20 transition-all hover:brightness-110">Lưu thay đổi hồ sơ 💾</button>
-                    {message && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{message}</p>}
-                  </div>
-                </form>
 
                 {/* 🏆 HỆ THỐNG DANH HIỆU (BADGE SELECTION) 🍀 */}
                 <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
@@ -429,6 +382,52 @@ function ProfileContent() {
                         })}
                     </div>
                 </div>
+
+                <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
+                  <h3 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">🕰️ Nhật ký tu luyện</h3>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {xpLogs.map(l => {
+                      const typeMap = {
+                        'read': 'Đọc truyện',
+                        'check_in': 'Điểm danh',
+                        'comment': 'Bình luận',
+                        'first_comment': 'Lần đầu bình luận',
+                        'lucky_draw': 'Bốc quà',
+                        'mission': 'Nhiệm vụ'
+                      };
+                      return (
+                        <div key={l.id} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5 hover:bg-black/60 transition-all">
+                          <div>
+                            <div className="text-[10px] font-black uppercase text-gray-400">{typeMap[l.type] || 'Khác'}</div>
+                            <div className="text-[8px] text-gray-600 mt-1">{new Date(l.created_at).toLocaleString('vi-VN')}</div>
+                          </div>
+                          <div className="text-xs font-black text-[#4caf50]">+{l.amount} XP</div>
+                        </div>
+                      );
+                    })}
+                    {xpLogs.length === 0 && <p className="text-center text-gray-700 py-10 italic">Chưa có dấu ấn tu luyện... ✨</p>}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'settings' && (
+              <motion.div key="settings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+                <form onSubmit={handleUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
+                  <h3 className="text-xs font-black uppercase tracking-widest">Cài đặt hồ sơ Shiroi</h3>
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Tên hiển thị</label>
+                      <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50]" placeholder="Nhập tên hiển thị..." />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-black text-gray-500 uppercase ml-2">Giới thiệu bản thân (Bio)</label>
+                      <textarea value={bio} onChange={e => setBio(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 outline-none focus:border-[#4caf50] resize-none" rows="3" placeholder="Viết vài dòng giới thiệu về mình..." />
+                    </div>
+                    <button type="submit" disabled={updating} className="w-full py-4 bg-[#4caf50] text-[#0a0c0a] font-black rounded-xl text-[10px] uppercase shadow-lg disabled:opacity-20 transition-all hover:brightness-110">Lưu thay đổi hồ sơ 💾</button>
+                    {message && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{message}</p>}
+                  </div>
+                </form>
 
                 <form onSubmit={handlePasswordUpdate} className="bg-[#141814] p-8 rounded-[40px] border border-white/5 space-y-6 shadow-xl">
                   <h3 className="text-xs font-black uppercase tracking-widest">Đổi mật mã bảo mật</h3>
