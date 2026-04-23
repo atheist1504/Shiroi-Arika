@@ -1531,7 +1531,7 @@ export async function suggestTitleAction(titleName, reason) {
     const session = JSON.parse(sessionCookie.value);
     const userId = session.id;
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('shiroi_title_suggestions')
       .insert([
         { 
