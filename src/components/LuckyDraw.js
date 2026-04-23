@@ -182,7 +182,7 @@ export default function LuckyDraw() {
       {/* MODAL KẾT QUẢ 🧧 */}
       <AnimatePresence>
         {showModal && (
-          <div className="fixed inset-0 z-[1000000]">
+          <div className="fixed inset-0 z-[1000000] flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -195,7 +195,7 @@ export default function LuckyDraw() {
               initial={{ scale: 0.5, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 1.1, opacity: 0 }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] bg-[#141814] border border-[#4caf50]/30 p-10 rounded-[40px] shadow-[0_50px_150px_rgba(0,0,0,1)] text-center overflow-hidden"
+              className="relative w-full max-w-[340px] bg-[#141814] border border-[#4caf50]/30 p-10 rounded-[40px] shadow-[0_50px_150px_rgba(0,0,0,1)] text-center overflow-hidden"
             >
               {/* Hiệu ứng tia sáng 🌟 */}
               <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[#4caf50]/10 to-transparent pointer-events-none" />
