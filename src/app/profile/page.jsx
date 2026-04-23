@@ -121,7 +121,7 @@ function ProfileContent() {
   };
 
   const fetchXpLogs = async (userId) => {
-    const { data } = await supabase.from('shiroi_xp_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(50);
+    const { data } = await supabase.from('shiroi_xp_logs').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(20);
     if (data) setXpLogs(data);
     
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
@@ -134,7 +134,7 @@ function ProfileContent() {
   };
 
   const fetchNotifications = async () => {
-    const res = await getNotificationsAction(50, 0);
+    const res = await getNotificationsAction(20, 0);
     if (res.success) setNotifications(res.notifications);
   };
 
