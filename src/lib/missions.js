@@ -17,7 +17,7 @@ export const MISSIONS = {
         description: 'Đọc 1 chương truyện trong ngày',
         category: MISSION_CATEGORIES.DAILY,
         target: 1,
-        xp: 50,
+        xp: 25,
         type: 'daily'
     },
     daily_read_3: {
@@ -26,7 +26,7 @@ export const MISSIONS = {
         description: 'Đọc 3 chương truyện trong ngày',
         category: MISSION_CATEGORIES.DAILY,
         target: 3,
-        xp: 100,
+        xp: 50,
         type: 'daily'
     },
     daily_comment_1: {
@@ -135,23 +135,23 @@ export const fetchUserMissionProgress = async (userId) => {
         const startOfToday = getStartOfVNDay();
         const startOfTodayISO = startOfToday.toISOString();
 
-        // Đếm tổng chương đã đọc
-        const { count: totalRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-        
-        // Đọc trong ngày (Dựa trên mốc 00:00:00 VN)
-        const { count: dailyRead } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO);
-
-        // Đếm tổng bình luận hợp lệ (Chỉ đếm Head để tối ưu RAM)
-        const { count: totalValidComments } = await supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-        
-        // Bình luận trong ngày (Chỉ lấy bình luận hôm nay để kiểm tra spam)
-        const { data: dailyComments } = await supabase.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO);
+        // Chạy song song các truy vấn cơ bản để tối ưu tốc độ 🚀
+        const [
+            { count: totalRead },
+            { count: dailyRead },
+            { count: totalValidComments },
+            { data: dailyComments },
+            { data: claims }
+        ] = await Promise.all([
+            supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO),
+            supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            supabase.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO),
+            supabase.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId)
+        ]);
         
         const dailyValidCommentsRaw = dailyComments?.filter(c => !isGibberish(c.content)) || [];
         const dailyContributionCount = Math.min(dailyValidCommentsRaw.length, 10);
-        
-        // Lấy danh sách đã nhận thưởng (Bao gồm cả thời điểm nhận)
-        const { data: claims } = await supabase.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId);
         
         // Phân loại Claim thành 2 loại: Hàng ngày và Trọn đời
         const lifetimeClaimedKeys = new Set();
@@ -192,15 +192,20 @@ export const fetchUserMissionProgress = async (userId) => {
             if (completedMangas && completedMangas.length > 0) {
                 const mangaIds = completedMangas.map(m => m.id);
                 
-                // Lấy tổng số chương của các bộ này (Tăng giới hạn lên 10,000 để tránh mất dữ liệu)
-                const { data: chapterCounts } = await supabase.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000);
+                // Lấy tổng số chương và số lượng đã đọc song song 🚀
+                const [
+                    { data: chapterCounts },
+                    { data: userReadCounts }
+                ] = await Promise.all([
+                    supabase.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000),
+                    supabase.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds)
+                ]);
+
                 const totalMap = {};
                 chapterCounts?.forEach(c => {
                     totalMap[c.manga_id] = (totalMap[c.manga_id] || 0) + 1;
                 });
 
-                // Lấy số lượng user đã đọc trong các bộ này
-                const { data: userReadCounts } = await supabase.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds);
                 const userMap = {};
                 userReadCounts?.forEach(c => {
                     userMap[c.manga_id] = (userMap[c.manga_id] || 0) + 1;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { fetchUserMissionProgress } from '@/lib/missions';
@@ -13,6 +13,7 @@ export default function MissionsModal({ isOpen, onClose }) {
     const [missions, setMissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [claimingKey, setClaimingKey] = useState(null);
+    const lastClaimRef = useRef(null); // Để bỏ qua reload thừa 🛡️
     const [user, setUser] = useState(null);
     const [compassData, setCompassData] = useState({ total: 0, finished: 0, pending: [] });
 
@@ -37,6 +38,13 @@ export default function MissionsModal({ isOpen, onClose }) {
                             table: table, 
                             filter: `user_id=eq.${u.id}` 
                         }, (payload) => {
+                            // Nếu vừa tự nhấn nhận thưởng, bỏ qua reload này vì state đã update rồi 🚀
+                            if (table === 'shiroi_mission_claims' && lastClaimRef.current === payload.new?.mission_key) {
+                                console.log("⏩ [Missions] Bỏ qua reload thừa sau khi nhận thưởng.");
+                                lastClaimRef.current = null;
+                                return;
+                            }
+
                             console.log(`♻️ [Missions] Phát hiện thay đổi tại ${table}, đang cập nhật...`);
                             loadProgress(u.id);
                             if (table === 'shiroi_read_chapters') loadCompass(u.id);
@@ -74,9 +82,16 @@ export default function MissionsModal({ isOpen, onClose }) {
 
     const loadCompass = async (userId) => {
         try {
-            const { data: allManga, error: mangaErr } = await supabase.from('mangas').select('id, title, cover_image, status');
-            const { data: readLogs, error: logsErr } = await supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId);
-            const { data: allChapters, error: chapErr } = await supabase.from('chapters').select('id, manga_id');
+            // Chạy song song 🚀
+            const [
+                { data: allManga, error: mangaErr },
+                { data: readLogs },
+                { data: allChapters }
+            ] = await Promise.all([
+                supabase.from('mangas').select('id, title, cover_image, status'),
+                supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId),
+                supabase.from('chapters').select('id, manga_id')
+            ]);
 
             if (mangaErr || !allManga) return;
 
@@ -116,6 +131,8 @@ export default function MissionsModal({ isOpen, onClose }) {
         try {
             const res = await claimMissionRewardAction(missionKey);
             if (res.success) {
+                lastClaimRef.current = missionKey; // Đánh dấu để bỏ qua realtime reload 🛡️
+                
                 // Update local missions state 🚀
                 setMissions(prev => prev.map(m => m.key === missionKey ? { ...m, isClaimed: true } : m));
                 
