@@ -68,6 +68,9 @@ function ProfileContent() {
 
   // 🕵️‍♂️ STATE CHO QUẢN TRỊ DANH HIỆU 🛡️
   const [titleSuggestions, setTitleSuggestions] = useState([]);
+  const [newTitleName, setNewTitleName] = useState('');
+  const [newTitleLv, setNewTitleLv] = useState('');
+  const [addingTitle, setAddingTitle] = useState(false);
 
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
@@ -277,6 +280,22 @@ function ProfileContent() {
     const { deleteOfficialTitleAction } = await import('@/lib/actions');
     const res = await deleteOfficialTitleAction(id);
     if (res.success) fetchDynamicTitles();
+  };
+
+  const handleCreateOfficialTitle = async (e) => {
+    e.preventDefault();
+    if (!newTitleName || !newTitleLv) return;
+    setAddingTitle(true);
+    const { createOfficialTitleAction } = await import('@/lib/actions');
+    const res = await createOfficialTitleAction(newTitleName, parseInt(newTitleLv));
+    if (res.success) {
+        setNewTitleName('');
+        setNewTitleLv('');
+        fetchDynamicTitles();
+    } else {
+        alert(`Lỗi: ${res.error}`);
+    }
+    setAddingTitle(false);
   };
 
   const fetchPersonnel = async () => {
@@ -715,6 +734,34 @@ function ProfileContent() {
                         <h3 className="text-xs font-black uppercase tracking-widest text-[#4caf50] flex items-center gap-2">🏆 Danh sách danh hiệu chính thức</h3>
                         <span className="text-[10px] font-bold text-gray-600">{dynamicTitles.length} danh phẩm</span>
                     </div>
+
+                    {/* ✨ FORM THÊM NHANH 🚀 */}
+                    <form onSubmit={handleCreateOfficialTitle} className="p-4 bg-[#4caf50]/5 border border-dashed border-[#4caf50]/30 rounded-2xl flex flex-wrap gap-3">
+                        <input 
+                            type="text" 
+                            value={newTitleName}
+                            onChange={e => setNewTitleName(e.target.value)}
+                            placeholder="Tên danh phẩm mới..."
+                            className="flex-1 min-w-[150px] bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-[11px] outline-none focus:border-[#4caf50]"
+                            required
+                        />
+                        <input 
+                            type="number" 
+                            value={newTitleLv}
+                            onChange={e => setNewTitleLv(e.target.value)}
+                            placeholder="Cấp LVL..."
+                            className="w-24 bg-black/40 border border-white/5 rounded-xl px-4 py-2 text-[11px] outline-none focus:border-[#4caf50]"
+                            required
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={addingTitle}
+                            className="px-6 py-2 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[9px] uppercase tracking-wider hover:scale-105 transition-all"
+                        >
+                            {addingTitle ? '...' : 'THÊM ➕'}
+                        </button>
+                    </form>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                         {dynamicTitles.map((t) => (
                             <div key={t.id} className="p-4 bg-black/40 rounded-xl border border-white/5 flex justify-between items-center group">
