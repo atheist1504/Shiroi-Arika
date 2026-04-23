@@ -1501,7 +1501,8 @@ export async function updateUserProfileAction(userId, updateData) {
       .update({
         display_name: updateData.display_name,
         bio: updateData.bio,
-        avatar_url: updateData.avatar_url
+        avatar_url: updateData.avatar_url,
+        selected_badge: updateData.selected_badge
       })
       .eq('id', userId)
       .select()
