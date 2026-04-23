@@ -307,18 +307,21 @@ function ProfileContent() {
                         </div>
                     </div>
                   </div>
+
                   <div className="bg-[#141814] p-8 rounded-[40px] border border-white/5 shadow-xl flex flex-col justify-between h-full">
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                      <div className="text-center group cursor-default">
-                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-2 group-hover:text-[#4caf50] transition-colors">Bộ truyện đã đọc</p>
-                        <p className="text-4xl font-black italic">{stats.total_mangas}</p>
-                      </div>
-                      <div className="text-center group cursor-default">
-                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-2 group-hover:text-[#4caf50] transition-colors">Số chương đã đọc</p>
-                        <p className="text-4xl font-black italic">{stats.total_chapters}</p>
-                      </div>
+                    {/* ⬆️ CẤP ĐỘ TU LUYỆN (LÊN ĐẦU) 🍀 */}
+                    <div className="w-full text-center">
+                       <p className="text-[10px] text-gray-500 uppercase font-black mb-1">Cấp độ tu luyện</p>
+                       <p className="text-5xl font-black text-[#4caf50] italic drop-shadow-[0_0_20px_rgba(76,175,80,0.2)]">LVL {calculateLevel(user?.xp)}</p>
+                       <div className="w-full h-1.5 bg-black/50 rounded-full mt-4 overflow-hidden border border-white/5 relative">
+                          <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_10px_#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
+                       </div>
+                       <div className="flex justify-between items-center mt-3 px-1">
+                         <span className="text-[8px] text-gray-600 font-black uppercase">Kinh nghiệm tích lũy</span>
+                         <span className="text-[9px] text-[#4caf50] font-black uppercase tracking-widest">{user?.xp || 0} XP</span>
+                       </div>
                     </div>
-                    
+
                     {/* 🏆 DANH HIỆU TRUNG TÂM 🍀 */}
                     <div className="flex flex-col items-center py-4 relative">
                         <div className="absolute inset-0 bg-[#4caf50]/5 blur-3xl rounded-full" />
@@ -330,16 +333,16 @@ function ProfileContent() {
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-white/5 w-full text-center">
-                       <p className="text-[10px] text-gray-500 uppercase font-bold mb-1">Cấp độ tu luyện</p>
-                       <p className="text-5xl font-black text-[#4caf50] italic drop-shadow-[0_0_20px_rgba(76,175,80,0.2)]">LVL {calculateLevel(user?.xp)}</p>
-                       <div className="w-full h-1.5 bg-black/50 rounded-full mt-4 overflow-hidden border border-white/5 relative">
-                          <div className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_10px_#4caf50]" style={{ width: `${calculateProgress(user?.xp)}%` }} />
-                       </div>
-                       <div className="flex justify-between items-center mt-3 px-1">
-                         <span className="text-[8px] text-gray-600 font-black uppercase">Kinh nghiệm tích lũy</span>
-                         <span className="text-[9px] text-[#4caf50] font-black uppercase tracking-widest">{user?.xp || 0} XP</span>
-                       </div>
+                    {/* ⬇️ THỐNG KÊ (XUỐNG DƯỚI) 🍀 */}
+                    <div className="grid grid-cols-2 gap-4 w-full pt-6 border-t border-white/5">
+                      <div className="text-center group cursor-default">
+                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-[#4caf50] transition-colors">Bộ truyện đã đọc</p>
+                        <p className="text-3xl font-black italic">{stats.total_mangas}</p>
+                      </div>
+                      <div className="text-center group cursor-default">
+                        <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-[#4caf50] transition-colors">Số chương đã đọc</p>
+                        <p className="text-3xl font-black italic">{stats.total_chapters}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
