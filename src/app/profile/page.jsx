@@ -355,7 +355,7 @@ function ProfileContent() {
                     </div>
                     <div className="max-h-[420px] overflow-y-auto pr-2 custom-scrollbar">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {TITLES.map((title) => {
+                            {[...TITLES].reverse().map((title) => {
                                 const isUnlocked = calculateLevel(user?.xp) >= title.lv;
                                 const isSelected = user?.selected_badge === title.name || (calculateTitle(user?.xp).name === title.name && !user?.selected_badge);
                                 
