@@ -1692,3 +1692,26 @@ export async function handleTitleSuggestionAction(id, status) {
     return { success: false, error: error.message };
   }
 }
+
+/**
+ * ✨ SERVER ACTION: Thêm danh hiệu chính thức thủ công (Chỉ Admin) 🍀
+ */
+export async function createOfficialTitleAction(name, lv) {
+  try {
+    const sessionCookie = cookies().get('shiroi_session');
+    if (!sessionCookie) throw new Error("Chưa đăng nhập!");
+    
+    const session = JSON.parse(sessionCookie.value);
+    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+
+    const { error } = await supabaseAdmin
+      .from('shiroi_titles')
+      .insert([{ name, lv }]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi thêm danh hiệu:", error);
+    return { success: false, error: error.message };
+  }
+}
