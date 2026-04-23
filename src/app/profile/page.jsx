@@ -475,7 +475,7 @@ function ProfileContent() {
                     <span className="text-3xl font-black italic">{stats.total_mangas}</span>
                 </div>
                 <div className="glass-card p-6 rounded-[32px] border-white/5 text-center">
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Gốc tích đã đọc</span>
+                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Số chương đã đọc</span>
                     <span className="text-3xl font-black italic">{stats.total_chapters}</span>
                 </div>
              </div>
@@ -564,7 +564,7 @@ function ProfileContent() {
                 {/* 🏆 DANH PHẨM ĐÃ MỞ (Tủ trưng bày) */}
                 <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
                     <div className="flex items-baseline gap-3">
-                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Thánh tích & Danh hiệu</h3>
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Danh hiệu giang hồ</h3>
                         <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
                     
@@ -611,6 +611,57 @@ function ProfileContent() {
                             );
                         })}
                     </div>
+                </div>
+
+                {/* 💡 GỢI Ý DANH PHẨM (MỚI) */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Gợi ý danh hiệu mới</h3>
+                    </div>
+                    
+                    {!showSuggestForm ? (
+                        <button 
+                            onClick={() => setShowSuggestForm(true)}
+                            className="w-full py-6 border border-dashed border-[#4caf50]/30 rounded-[32px] text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#4caf50]/5 transition-all flex items-center justify-center gap-3"
+                        >
+                            <span className="text-xl">💡</span> Hiến kế danh xưng cho Thánh địa
+                        </button>
+                    ) : (
+                        <motion.form 
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            onSubmit={handleSuggestTitle}
+                            className="space-y-4 bg-white/5 p-8 rounded-[40px] border border-[#4caf50]/20"
+                        >
+                            <input 
+                                type="text" 
+                                value={suggestTitle}
+                                onChange={e => setSuggestTitle(e.target.value)}
+                                placeholder="Tên danh hiệu (VD: Độc Bộ Thiên Hạ...)"
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm outline-none focus:border-[#4caf50]"
+                                required
+                            />
+                            <textarea 
+                                value={suggestReason}
+                                onChange={e => setSuggestReason(e.target.value)}
+                                placeholder="Ý nghĩa hoặc lý do đề xuất..."
+                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-[11px] outline-none focus:border-[#4caf50] resize-none"
+                                rows="2"
+                            />
+                            <div className="flex gap-2">
+                                <button type="button" onClick={() => setShowSuggestForm(false)} className="px-6 py-4 bg-white/5 text-gray-500 rounded-2xl font-black text-[10px] uppercase">Hủy</button>
+                                <button 
+                                    type="submit" 
+                                    disabled={suggesting}
+                                    className="flex-1 py-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20"
+                                >
+                                    {suggesting ? 'ĐANG GỬI...' : 'GỬI ĐỀ XUẤT ✨'}
+                                </button>
+                            </div>
+                            {suggestMessage && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{suggestMessage}</p>}
+                        </motion.form>
+                    )}
                 </div>
 
                 {/* 🕰️ NHẬT KÝ TU LUYỆN (TIMELINE STYLE) */}
@@ -668,57 +719,6 @@ function ProfileContent() {
 
                      {xpLogs.length === 0 && <p className="text-center text-gray-700 py-20 italic">Bản đồ ký ức còn trống... ✨</p>}
                     </div>
-                </div>
-
-                {/* 💡 GỢI Ý DANH PHẨM (MỚI) */}
-                <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-6">
-                    <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
-                        <h3 className="text-xs font-black uppercase tracking-widest text-white">Gợi ý danh hiệu mới</h3>
-                    </div>
-                    
-                    {!showSuggestForm ? (
-                        <button 
-                            onClick={() => setShowSuggestForm(true)}
-                            className="w-full py-6 border border-dashed border-[#4caf50]/30 rounded-[32px] text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em] hover:bg-[#4caf50]/5 transition-all flex items-center justify-center gap-3"
-                        >
-                            <span className="text-xl">💡</span> Hiến kế danh xưng cho Thánh địa
-                        </button>
-                    ) : (
-                        <motion.form 
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            onSubmit={handleSuggestTitle}
-                            className="space-y-4 bg-white/5 p-8 rounded-[40px] border border-[#4caf50]/20"
-                        >
-                            <input 
-                                type="text" 
-                                value={suggestTitle}
-                                onChange={e => setSuggestTitle(e.target.value)}
-                                placeholder="Tên danh hiệu (VD: Độc Bộ Thiên Hạ...)"
-                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm outline-none focus:border-[#4caf50]"
-                                required
-                            />
-                            <textarea 
-                                value={suggestReason}
-                                onChange={e => setSuggestReason(e.target.value)}
-                                placeholder="Ý nghĩa hoặc lý do đề xuất..."
-                                className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-[11px] outline-none focus:border-[#4caf50] resize-none"
-                                rows="2"
-                            />
-                            <div className="flex gap-2">
-                                <button type="button" onClick={() => setShowSuggestForm(false)} className="px-6 py-4 bg-white/5 text-gray-500 rounded-2xl font-black text-[10px] uppercase">Hủy</button>
-                                <button 
-                                    type="submit" 
-                                    disabled={suggesting}
-                                    className="flex-1 py-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20"
-                                >
-                                    {suggesting ? 'ĐANG GỬI...' : 'GỬI ĐỀ XUẤT ✨'}
-                                </button>
-                            </div>
-                            {suggestMessage && <p className="text-center text-[10px] font-black text-[#4caf50] animate-pulse">{suggestMessage}</p>}
-                        </motion.form>
-                    )}
                 </div>
 
                 {/* 📜 BÍ KÍP THĂNG CẤP (XP GUIDE) */}
