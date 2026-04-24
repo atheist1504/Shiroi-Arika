@@ -42,38 +42,46 @@ export async function requestNotificationPermission() {
   }
 
   try {
+    console.log('📡 [FCM] Đang yêu cầu quyền thông báo...');
     const permission = await Notification.requestPermission();
     
     if (permission === 'granted') {
-      console.log('✅ Quyền thông báo đã được cấp!');
+      console.log('✅ [FCM] Quyền thông báo đã được cấp!');
       
       if (!app) {
-          console.warn("⚠️ [FCM] Không thể khởi tạo Messaging vì Firebase App bị lỗi.");
+          console.warn("⚠️ [FCM] Không thể khởi tạo Messaging vì Firebase App bị lỗi cấu hình.");
           return null;
       }
       const messaging = getMessaging(app);
       
+      console.log('🎫 [FCM] Đang lấy Token từ Firebase...');
       // Lấy Token từ Firebase
-      // VAPID KEY: Lấy từ Firebase Console -> Project Settings -> Cloud Messaging -> Web Configuration
       const token = await getToken(messaging, {
         vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+      }).catch(err => {
+          console.error("❌ [FCM] Lỗi getToken:", err);
+          return null;
       });
 
       if (token) {
-        console.log('🎫 FCM Token:', token);
+        console.log('🎫 [FCM] Token đã sẵn sàng:', token);
         // Lưu token lên Server
-        await registerFcmTokenAction(token);
+        const regRes = await registerFcmTokenAction(token);
+        if (!regRes.success) console.warn("⚠️ [FCM] Không thể lưu token lên server:", regRes.error);
+        
         // Đăng ký Topic để nhận thông báo khi có truyện mới 📚
-        await subscribeToTopicAction(token, 'all_manga_updates');
+        const subRes = await subscribeToTopicAction(token, 'all_manga_updates');
+        if (!subRes.success) console.warn("⚠️ [FCM] Không thể đăng ký topic:", subRes.error);
+        
         return token;
       } else {
-        console.warn('⚠️ Không thể lấy được FCM Token.');
+        console.warn('⚠️ [FCM] Không lấy được Token (vui lòng kiểm tra VAPID KEY trong .env).');
       }
     } else {
-      console.warn('❌ Quyền thông báo bị từ chối.');
+      console.warn('❌ [FCM] Quyền thông báo bị từ chối.');
     }
   } catch (error) {
-    console.error('❌ Lỗi yêu cầu quyền thông báo:', error);
+    console.error('❌ [FCM] Lỗi nghiêm trọng khi yêu cầu quyền:', error);
   }
   return null;
 }

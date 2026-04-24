@@ -5,14 +5,14 @@ importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
 // 🔐 KHỞI TẠO FIREBASE TRONG SERVICE WORKER
-// Chú ý: Các giá trị này phải khớp với Firebase App của bạn
+// Chú ý: Các giá trị này khớp với cấu hình Firebase (v7+)
 firebase.initializeApp({
-    apiKey: "YOUR_API_KEY",
+    apiKey: "AIzaSyBzPZfQdLgWvcNF5Ph63bf7jrTn2vcgWVA",
     authDomain: "shiroi-arika.firebaseapp.com",
     projectId: "shiroi-arika",
-    storageBucket: "shiroi-arika.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    storageBucket: "shiroi-arika.firebasestorage.app",
+    messagingSenderId: "101708955054",
+    appId: "1:101708955054:web:e6968c5ac2d0d9b6f61c3f"
 });
 
 const messaging = firebase.messaging();
@@ -21,11 +21,13 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Đã nhận thông báo Background 🍀:', payload);
 
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.notification?.title || "Thông báo mới từ Shiroi Arika";
   const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/og-banner-v8.png', // Hoặc icon mặc định của bạn
-    data: payload.data
+    body: payload.notification?.body || "Bạn có tin nhắn mới đang chờ! ✨",
+    icon: '/og-banner-v8.png', 
+    data: payload.data,
+    badge: '/og-banner-v8.png',
+    tag: payload.data?.tag || 'shiroi-notification'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);
@@ -42,7 +44,8 @@ self.addEventListener('notificationclick', (event) => {
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
             for (let i = 0; i < windowClients.length; i++) {
                 const client = windowClients[i];
-                if (client.url === urlToOpen && 'focus' in client) {
+                // So sánh URL linh hoạt hơn (loại bỏ query params/hash nếu cần)
+                if (client.url.includes(urlToOpen) && 'focus' in client) {
                     return client.focus();
                 }
             }
