@@ -76,15 +76,14 @@ export const TITLES = [
 // Hàm tính danh xưng (Title) chuẩn Shiroi ✨
 export const calculateTitle = (xp, selectedBadge = null) => {
     const lvl = calculateLevel(xp);
-    const unlockedTitles = TITLES.filter(t => lvl >= t.lv);
-    
-    // Nếu có chọn danh hiệu và danh hiệu đó đã mở khóa -> Ưu tiên dùng 🍀
-    if (selectedBadge && typeof selectedBadge === 'string') {
-        const selected = TITLES.find(t => t.name.toUpperCase() === selectedBadge.toUpperCase());
-        if (selected && lvl >= selected.lv) return selected;
+    // 🚀 ƯU TIÊN 1: Nếu người dùng đã chủ động chọn một danh hiệu (Badge) -> Hiển thị nó 🍀
+    // (Bao gồm cả danh hiệu cứng và danh hiệu động từ Database)
+    if (selectedBadge && typeof selectedBadge === 'string' && selectedBadge.trim()) {
+        return { name: selectedBadge, lv: 0 };
     }
 
-    // Mặc định: Trả về danh hiệu cao nhất đã mở khóa
+    // 🚀 ƯU TIÊN 2: Nếu không chọn, trả về danh hiệu cao nhất đã mở khóa theo Level
+    const unlockedTitles = TITLES.filter(t => lvl >= t.lv);
     return unlockedTitles[0] || TITLES[TITLES.length - 1];
 };
 

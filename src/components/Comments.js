@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { calculateLevel } from '@/lib/xp';
+import { calculateLevel, calculateTitle } from '@/lib/xp';
 import { fixR2Url } from '@/lib/cloudinary';
 import Link from 'next/link';
 import { addCommentAction } from '@/lib/actions';
@@ -263,7 +263,11 @@ export default function Comments({ mangaId, chapterId }) {
       const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
 
       uData?.forEach(u => {
-         const info = {  avatar: u.avatar_url, badge: u.selected_badge || 'Vô danh tiểu tốt', level: calculateLevel(u.xp) };
+         const info = {  
+            avatar: u.avatar_url, 
+            badge: calculateTitle(u.xp, u.selected_badge).name, 
+            level: calculateLevel(u.xp) 
+         };
          if (u.id) uMap[u.id] = info;
          const nameKey = cK(u.username);
          if (!uMap[nameKey]) uMap[nameKey] = info;
