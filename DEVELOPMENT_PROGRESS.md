@@ -32,6 +32,7 @@ Dự án Manga Platform thế hệ mới.
     - **Server Action Robustness**: Khắc phục triệt để lỗi sập (ReferenceError) trong `recordXpLogAction`. Hệ thống hiện đã tự động truy vấn lại dữ liệu người dùng từ DB trước khi tính toán thăng cấp, đảm bảo tính ổn định tuyệt đối.
     - **Detailed XP Guide**: Khôi phục bảng "Bí kíp thăng cấp" với đầy đủ 5 hạng mục nhận điểm và bảng tra cứu **Thưởng chuỗi (Streak Bonus)** chi tiết.
     - **Navigation UX Polish**: Nâng cấp vị trí thanh Tab Menu (từ `top-24` lên `top-6`) và tăng khoảng cách đệm để loại bỏ tình trạng che mất tiêu đề nội dung khi cuộn trang. 📌✨🍀
+    - **UI Wording & XP Guide Enrichment**: Đổi tên "Cấu hiệu hồ sơ" thành **"Thông tin hồ sơ"** cho gần gũi hơn. Mở rộng mục "Bí kíp thăng cấp" với thông tin chi tiết về thời gian Reset (00:00) và cảnh báo về **"Nghiệp lực"** (trừ XP khi spam) để định hướng hành vi người dùng. 📜🛡️💎
 
 ### 🎨 Giao Diện & Trải Nghiệm (v15 - UI Polish) 🎀
 - [x] **Compact Filter System**: Thiết kế lại bộ lọc tại Kho Truyện và Tìm Kiếm theo phong cách "ô nhỏ" gọn gàng. Hợp nhất thanh tìm kiếm và trạng thái, tối ưu không gian hiển thị trên cả Mobile và Desktop. 🔍✨
@@ -204,4 +205,4 @@ Dự án Manga Platform thế hệ mới.
 
 ...
 
-*Cập nhật lần cuối: 07:10 - 24/04/2026 (Profile UI Stabilization & XP Fixes)*
+*Cập nhật lần cuối: 07:15 - 24/04/2026 (Wording Updates & XP Guide Enrichment)*
