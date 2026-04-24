@@ -441,11 +441,11 @@ function ProfileContent() {
         <div className="absolute bottom-[-5%] left-[-5%] w-[40%] h-[40%] bg-[#2e7d32]/10 rounded-full blur-[100px]" />
       </div>
 
-      <div className="max-w-6xl mx-auto z-10 relative">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
+      <div className="max-w-5xl mx-auto z-10 relative">
+        <div className="flex flex-col gap-12 items-center">
           
-          {/* 👤 CỘT TRÁI: THÔNG TIN CỐT LÕI (GLOSSY SIDEBAR) */}
-          <aside className="w-full lg:w-[360px] flex-shrink-0 space-y-6">
+          {/* 👤 CỘT TRÊN: THÔNG TIN CỐT LÕI (GLOSSY SIDEBAR) */}
+          <aside className="w-full max-w-[450px] space-y-6">
              <div className="glass-card rounded-[48px] p-10 flex flex-col items-center text-center relative overflow-hidden group border-white/5 shadow-2xl">
                 {/* Hào quang Avatar */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-[#4caf50]/20 to-transparent pointer-events-none opacity-50" />
@@ -520,8 +520,8 @@ function ProfileContent() {
              </div>
           </aside>
 
-          {/* 📝 CỘT PHẢI: NỘI DUNG CHI TIẾT */}
-          <main className="flex-1 w-full space-y-8 min-h-[600px]">
+          {/* 📝 CỘT DƯỚI: NỘI DUNG CHI TIẾT */}
+          <main className="w-full max-w-[900px] space-y-8 min-h-[600px]">
             {/* TABS MENU PREMIUM */}
             <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-6 z-[100] mb-6">
               {[
