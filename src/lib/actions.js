@@ -161,8 +161,8 @@ export async function getAuthenticatedUser() {
       }
     }
 
-    // 🔍 Đảm bảo role luôn mới nhất nếu đang là Admin/Staff (Tránh session stale) 🩹
-    if (user.id && (user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504')) {
+    // 🔍 LUÔN CẬP NHẬT ROLE TỪ DB: Đảm bảo phân quyền chính xác nhất (Tránh session stale khi vừa được nâng cấp) 🩹
+    if (user.id) {
         const client = getDbClient();
         const { data } = await client.from('shiroi_users').select('role').eq('id', user.id).single();
         if (data) user.role = data.role;
@@ -330,7 +330,7 @@ export async function deleteMangaAction(mangaId) {
  */
 export async function getUploadUrlAction(fileName) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     if (!fileName) throw new Error('Thiếu tên tệp!');
     const data = await getPresignedUploadUrl(fileName);
     return { success: true, ...data };
@@ -346,7 +346,7 @@ export async function getUploadUrlAction(fileName) {
  */
 export async function uploadChapterPageAction(formData) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
 
     const file = formData.get('file');
     const fileName = formData.get('fileName');
@@ -368,7 +368,7 @@ export async function uploadChapterPageAction(formData) {
  */
 export async function uploadImageAction(formData) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const file = formData.get('file');
     if (!file) throw new Error("Không tìm thấy file ảnh!");
     
