@@ -86,6 +86,7 @@ function ProfileContent() {
   // 🕵️‍♂️ STATE CHO THÔNG BÁO ĐẨY 🔔
   const [fcmEnabled, setFcmEnabled] = useState(false);
   const [fcmLoading, setFcmLoading] = useState(false);
+  const [showFcmGuide, setShowFcmGuide] = useState(false);
 
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
@@ -905,18 +906,84 @@ function ProfileContent() {
                                     </p>
                                   </div>
                               </div>
-                              <button 
-                                  onClick={fcmEnabled ? handleDisableNotifications : handleEnableNotifications}
-                                  disabled={fcmLoading}
-                                  className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 ${
-                                      fcmEnabled 
-                                      ? 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-xl shadow-red-500/10' 
-                                      : 'bg-[#4caf50] text-[#0a0c0a] shadow-2xl shadow-[#4caf50]/30'
-                                  }`}
-                              >
-                                  {fcmLoading ? '...' : fcmEnabled ? 'HỦY KÍCH HOẠT ✕' : 'KÍCH HOẠT NGAY ⚡'}
-                              </button>
+                              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                <button 
+                                    onClick={() => setShowFcmGuide(!showFcmGuide)}
+                                    className="px-6 py-5 rounded-2xl font-black text-[9px] uppercase tracking-widest bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-all"
+                                >
+                                    HƯỚNG DẪN 💡
+                                </button>
+                                <button 
+                                    onClick={fcmEnabled ? handleDisableNotifications : handleEnableNotifications}
+                                    disabled={fcmLoading}
+                                    className={`flex-1 sm:flex-none px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 ${
+                                        fcmEnabled 
+                                        ? 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-xl shadow-red-500/10' 
+                                        : 'bg-[#4caf50] text-[#0a0c0a] shadow-2xl shadow-[#4caf50]/30'
+                                    }`}
+                                >
+                                    {fcmLoading ? '...' : fcmEnabled ? 'HỦY KÍCH HOẠT ✕' : 'KÍCH HOẠT NGAY ⚡'}
+                                </button>
+                              </div>
                           </div>
+
+                          {/* 💡 HƯỚNG DẪN CẤP QUYỀN CHI TIẾT */}
+                          <AnimatePresence>
+                            {showFcmGuide && (
+                              <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="p-8 bg-[#4caf50]/5 border border-[#4caf50]/20 rounded-[32px] space-y-6 mt-4">
+                                  <div className="flex items-center gap-3">
+                                      <div className="w-1.5 h-4 bg-[#4caf50] rounded-full"></div>
+                                      <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Cách bật quyền thông báo</h4>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                      <div className="space-y-3">
+                                          <div className="flex items-center gap-3">
+                                              <span className="w-6 h-6 rounded-lg bg-[#4caf50]/20 text-[#4caf50] flex items-center justify-center text-[10px] font-black">01</span>
+                                              <p className="text-[10px] font-black text-white uppercase tracking-tighter">Mở cài đặt</p>
+                                          </div>
+                                          <p className="text-[9px] text-gray-500 leading-relaxed ml-9">
+                                              Nhấn vào biểu tượng **Ổ khóa** 🔒 hoặc **Cài đặt** ở đầu thanh địa chỉ trình duyệt.
+                                          </p>
+                                      </div>
+                                      
+                                      <div className="space-y-3">
+                                          <div className="flex items-center gap-3">
+                                              <span className="w-6 h-6 rounded-lg bg-[#4caf50]/20 text-[#4caf50] flex items-center justify-center text-[10px] font-black">02</span>
+                                              <p className="text-[10px] font-black text-white uppercase tracking-tighter">Cho phép</p>
+                                          </div>
+                                          <p className="text-[9px] text-gray-500 leading-relaxed ml-9">
+                                              Tìm mục **Thông báo** (Notifications) và gạt sang trạng thái **Cho phép** (Allow).
+                                          </p>
+                                      </div>
+                                      
+                                      <div className="space-y-3">
+                                          <div className="flex items-center gap-3">
+                                              <span className="w-6 h-6 rounded-lg bg-[#4caf50]/20 text-[#4caf50] flex items-center justify-center text-[10px] font-black">03</span>
+                                              <p className="text-[10px] font-black text-white uppercase tracking-tighter">Hoàn tất</p>
+                                          </div>
+                                          <p className="text-[9px] text-gray-500 leading-relaxed ml-9">
+                                              Tải lại (F5) trang web và nhấn **Kích hoạt ngay** để bắt đầu nhận tin từ Thánh địa.
+                                          </p>
+                                      </div>
+                                  </div>
+
+                                  <div className="pt-4 border-t border-white/5 flex items-center gap-3">
+                                      <span className="text-orange-500 text-xs">⚠️</span>
+                                      <p className="text-[8px] text-gray-600 italic font-medium">
+                                          Lưu ý: Thông báo đẩy không hoạt động ở chế độ Ẩn danh (Incognito).
+                                      </p>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                       </div>
                   </div>
               </motion.div>

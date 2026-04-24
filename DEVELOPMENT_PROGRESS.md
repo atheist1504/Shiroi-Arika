@@ -210,6 +210,11 @@ Dự án Manga Platform thế hệ mới.
     - **Full Deactivation Flow**: Khi người dùng nhấn "Hủy kích hoạt", hệ thống thực hiện đồng bộ 3 bước: Hủy đăng ký Topic FCM, Xóa Token trong Database và Cập nhật trạng thái máy cục bộ.
     - **Cross-Component Sync**: Đảm bảo trạng thái thông báo luôn đồng bộ 100% giữa trang Hồ sơ và Dropdown thông báo ở Navbar. 🍀✨
 
+- [x] **User Guidance & Accessibility (v43 - UX Support)**: 💡🔔🛡️
+    - **Notification Permission Guide**: Tích hợp khối hướng dẫn chi tiết (Step-by-step) ngay trong trang Hồ sơ. Giúp người dùng biết cách nhấn vào "Ổ khóa" trình duyệt để cấp quyền thông báo nếu bị chặn.
+    - **Animated Instructions**: Sử dụng `Framer Motion` để tạo hiệu ứng đóng/mở hướng dẫn mượt mà, giữ cho giao diện luôn tinh gọn nhưng vẫn đầy đủ hỗ trợ.
+    - **Mobile-Responsive Guide**: Tối ưu hiển thị hướng dẫn trên cả Mobile và Desktop, đảm bảo ai cũng có thể kích hoạt thông báo dễ dàng. 📱💻🍀
+
 ...
 
-*Cập nhật lần cuối: 08:20 - 24/04/2026 (Notification Toggle Reliability Fix)*
+*Cập nhật lần cuối: 12:20 - 24/04/2026 (Notification Permission Guide Integration)*
