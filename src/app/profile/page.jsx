@@ -513,17 +513,6 @@ function ProfileContent() {
                 </div>
              </div>
 
-             {/* Thống kê nhanh */}
-             <div className="grid grid-cols-2 gap-4">
-                <div className="glass-card p-6 rounded-[32px] border-white/5 text-center">
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Manga đã xem</span>
-                    <span className="text-3xl font-black italic">{stats.total_mangas}</span>
-                </div>
-                <div className="glass-card p-6 rounded-[32px] border-white/5 text-center">
-                    <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest block mb-1">Số chương đã đọc</span>
-                    <span className="text-3xl font-black italic">{stats.total_chapters}</span>
-                </div>
-             </div>
           </aside>
 
           {/* 📝 CỘT DƯỚI: NỘI DUNG CHI TIẾT */}
@@ -553,6 +542,20 @@ function ProfileContent() {
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
               <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                
+                {/* 📊 THỐNG KÊ NHANH (Compact) */}
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="glass-card p-8 rounded-[40px] border-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-[#4caf50]/5 blur-2xl rounded-full" />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 relative z-10">Manga đã xem</span>
+                        <span className="text-4xl font-black italic text-white relative z-10">{stats.total_mangas}</span>
+                    </div>
+                    <div className="glass-card p-8 rounded-[40px] border-white/5 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-[#4caf50]/5 blur-2xl rounded-full" />
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2 relative z-10">Số chương đã đọc</span>
+                        <span className="text-4xl font-black italic text-white relative z-10">{stats.total_chapters}</span>
+                    </div>
+                </div>
                 
                 {/* 🧧 TRẠNG THÁI TU LUYỆN HÀNG NGÀY */}
                 <div className="glass-card p-8 rounded-[48px] border-white/5 grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
