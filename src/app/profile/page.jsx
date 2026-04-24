@@ -525,8 +525,8 @@ function ProfileContent() {
             {/* TABS MENU PREMIUM */}
             <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-6 z-[100] mb-6">
               {[
-                { id: 'profile', icon: '💎', label: 'Thánh tích' },
-                { id: 'settings', icon: '⚙️', label: 'Cấu hiệu' },
+                { id: 'profile', icon: '💎', label: 'Hồ sơ' },
+                { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
                 { id: 'notifications', icon: '🔔', label: 'Hộp thư' },
                 ...(user?.role === 'admin' ? [{ id: 'admin', icon: '🛡️', label: 'Quản trị' }] : [])
               ].map(t => (
@@ -769,12 +769,13 @@ function ProfileContent() {
                         <h3 className="text-xs font-black uppercase tracking-widest text-white">Bí kíp thăng cấp (Cách nhận XP)</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {[
                             { label: 'Điểm danh', xp: '+100', icon: '🔥', detail: 'Reset 0h sáng' },
                             { label: 'Đọc chương', xp: '+20', icon: '📖', detail: 'Mỗi chương truyện' },
                             { label: 'Bình luận', xp: '+5~10', icon: '💬', detail: 'Tăng tương tác' },
                             { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯', detail: 'Kho thành tích' },
+                            { label: 'Gợi ý danh phẩm', xp: '+500', icon: '💡', detail: 'Khi Admin duyệt' },
                             { label: 'Bốc quà', xp: 'May rủi', icon: '🎁', detail: 'Vận khí mỗi ngày' }
                         ].map((item, idx) => (
                             <div key={idx} className="p-6 bg-black/20 border border-white/5 rounded-[32px] flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
