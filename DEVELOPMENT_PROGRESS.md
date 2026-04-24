@@ -27,13 +27,14 @@ Dự án Manga Platform thế hệ mới.
     - **Glassmorphism Buttons**: Nâng cấp nút Điểm danh và Bốc quà thành các khối pha lê phát sáng với hiệu ứng Glow và Micro-interactions cực kỳ mượt mà.
     - **3D Result Modal**: Thiết kế lại Modal nhận quà với hiệu ứng xuất hiện 3D, định tâm tuyệt đối và `backdrop-blur-2xl` sang trọng, loại bỏ hoàn toàn lỗi "Skinny layout".
     - **Responsive Polish**: Đảm bảo trải nghiệm nhất quán 100% giữa Mobile và Desktop cho các tương tác nhận XP hàng ngày. 📱💻💎
-- [x] **Profile UI & XP System Stabilization (v39 - Quality of Life)**: 💎🛡️🚀
-    - **XP Journal Auto-Load**: Đã sửa lỗi nhật ký trống khi vào trang Profile. Hệ thống tự động kích hoạt `fetchXpLogs` ngay khi phiên làm việc được xác thực.
-    - **Server Action Robustness**: Khắc phục triệt để lỗi sập (ReferenceError) trong `recordXpLogAction`. Hệ thống hiện đã tự động truy vấn lại dữ liệu người dùng từ DB trước khi tính toán thăng cấp, đảm bảo tính ổn định tuyệt đối.
-    - **Detailed XP Guide**: Khôi phục bảng "Bí kíp thăng cấp" với đầy đủ 5 hạng mục nhận điểm và bảng tra cứu **Thưởng chuỗi (Streak Bonus)** chi tiết.
-    - **Navigation UX Polish**: Nâng cấp vị trí thanh Tab Menu (từ `top-24` lên `top-6`) và tăng khoảng cách đệm để loại bỏ tình trạng che mất tiêu đề nội dung khi cuộn trang. 📌✨🍀
-    - **UI Wording & XP Guide Enrichment**: Đổi tên "Cấu hiệu hồ sơ" thành **"Thông tin hồ sơ"** cho gần gũi hơn. Mở rộng mục "Bí kíp thăng cấp" với thông tin chi tiết về thời gian Reset (00:00) và cảnh báo về **"Nghiệp lực"** (trừ XP khi spam) để định hướng hành vi người dùng. 📜🛡️💎
-    - **Competitive Leaderboard (Fixed)**: Cưỡng bức Bảng xếp hạng luôn hiển thị **Danh hiệu cao nhất đạt được** dựa trên XP thực tế, thay vì hiển thị danh hiệu người dùng tự chọn. Đảm bảo tính công bằng và thể hiện chính xác đẳng cấp của các cao thủ trên BXH. 🏆⚔️💎
+- [x] **Notification & Synchronization Overhaul (v40 - Real-time Connected)**: 🔔🛰️🚀
+    - **Real-time Profile Inbox**: Tích hợp cơ chế lắng nghe Postgres Changes trực tiếp vào trang Profile. Hộp thư hiện đã tự động nhảy số thông báo mới tức thì mà không cần F5.
+    - **Smart Tab Sync**: Tự động kích hoạt `fetchNotifications` mỗi khi người dùng chuyển sang tab "Hộp thư", đảm bảo dữ liệu luôn tươi mới nhất từ Thánh địa.
+    - **FCM Production Fix**: Khắc phục lỗi "Kích hoạt thất bại" bằng cách nạp cấu hình thực tế vào `firebase-messaging-sw.js`. Thêm diagnostic logs giúp theo dõi và khắc phục lỗi đăng ký Token ngay trên Console. 🛡️📱
+- [x] **Gamification Persona & Personalization (v41 - Identity Focus)**: 🏆💎✨
+    - **Leaderboard Personalization**: Cập nhật logic BXH để hiển thị **Danh hiệu người dùng tự chọn** (Selected Badge) thay vì cưỡng bức danh hiệu cao nhất. Phục hồi quyền tự do thể hiện cá tính cho các lãng khách trên BXH.
+    - **Extended XP Guide**: Bổ sung hạng mục **"Gợi ý danh phẩm" (+500 XP)** vào Bí kíp thăng cấp. Đồng thời nâng cấp Grid Layout lên 6 cột (Landscape) và 2 hàng (Tablet) để hiển thị đầy đủ, cân đối các cách kiếm XP.
+    - **Natural UI Wording**: Đổi tên các Tab Profile sang ngôn ngữ phổ thông: **Hồ sơ** (thay cho Thánh tích/Hồ sơ) và **Cài đặt** (thay cho Cấu hiệu/Cài đặt) để tối ưu trải nghiệm người dùng mới. 💎⚙️🍀
 
 ### 🎨 Giao Diện & Trải Nghiệm (v15 - UI Polish) 🎀
 - [x] **Compact Filter System**: Thiết kế lại bộ lọc tại Kho Truyện và Tìm Kiếm theo phong cách "ô nhỏ" gọn gàng. Hợp nhất thanh tìm kiếm và trạng thái, tối ưu không gian hiển thị trên cả Mobile và Desktop. 🔍✨
