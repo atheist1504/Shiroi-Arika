@@ -25,6 +25,7 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Truy vấn song song (`Promise.all`) hoạt động ổn định trên trang chi tiết, giảm độ trễ tối đa. 🚀
 - [x] **Resilience Guard**: Xác thực **Global Error Boundary** đã sẵn sàng "đỡ" mọi lỗi kết nối, mang lại trải nghiệm Premium ngay cả trong tình huống xấu nhất. 🛡️
 - [x] **Notification Ecosystem**: Đồng bộ hóa hoàn hảo 3 lớp: Thông báo đẩy (FCM), Thông báo ứng dụng (Real-time) và Nhật ký tu luyện (XP Logs). 🔔
+- [x] **State Sync Fix**: Khắc phục triệt để lỗi flicker (hiện nút Bốc quà/Điểm danh rồi mới hiện Hết lượt) bằng cơ chế `isSyncing` mới. 🔄🛡️
 - [x] **SEO & Social Identity**: Metadata động và OG Image API hoạt động chuẩn xác, tối ưu hóa hiển thị khi chia sẻ trên MXH (Facebook, Zalo, Discord). 🔍✨
 - [x] **Staff Workflow**: Xác nhận Admin/Staff (`atheist1504` và các cộng tác viên) đã có thể thực hiện toàn bộ quy trình đăng truyện, quản lý chương và báo cáo một cách trơn tru. 🎨
 

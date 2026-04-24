@@ -15,10 +15,14 @@ export default function LuckyDraw() {
   const [modalResult, setModalResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(true); // 🚀 Trạng thái đồng bộ ban đầu
 
   useEffect(() => {
-    checkStatus();
-    // 🚀 ĐỒNG BỘ THỰC TẾ: Kiểm tra thêm từ DB để tránh dữ liệu LocalStorage bị cũ (Stale)
+    // 🚀 CHỈ KIỂM TRA LOCAL ĐỂ LẤY THÔNG TIN USER, KHÔNG SET canDraw TẠI ĐÂY ĐỂ TRÁNH FLICKER
+    const storedUser = localStorage.getItem("shiroi_user");
+    if (storedUser) setUser(JSON.parse(storedUser));
+
+    // 🕵️‍♂️ ƯU TIÊN KIỂM TRA TỪ DB ĐỂ ĐẢM BẢO CHÍNH XÁC TUYỆT ĐỐI
     fetchStatusFromDb();
     setIsMounted(true);
 
@@ -101,6 +105,8 @@ export default function LuckyDraw() {
       }
     } catch (err) {
       console.warn("Lỗi đồng bộ LuckyDraw từ Nhật ký:", err);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -177,23 +183,23 @@ export default function LuckyDraw() {
         }`}
       >
         <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border transition-all duration-500 ${
-            canDraw 
+            canDraw && !isSyncing
             ? "bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50] hover:bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.05)] hover:shadow-[0_0_25px_rgba(76,175,80,0.15)]" 
             : "bg-white/5 border-white/5"
         }`}>
-            <span className={`text-base transition-transform duration-500 ${canDraw ? 'group-hover/luckydraw:scale-125 group-hover/luckydraw:rotate-12' : ''}`}>
-                {canDraw ? (isDrawing ? "🌀" : "🎁") : "💮"}
+            <span className={`text-base transition-transform duration-500 ${canDraw && !isSyncing ? 'group-hover/luckydraw:scale-125 group-hover/luckydraw:rotate-12' : ''}`}>
+                {isSyncing ? "🌀" : (canDraw ? (isDrawing ? "🌀" : "🎁") : "💮")}
             </span>
             <div className="flex flex-col items-start leading-none">
-                <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 ${canDraw ? 'text-[#4caf50]' : 'text-gray-600'}`}>
-                    {canDraw ? "Vận khí" : "Hết lượt"}
+                <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 ${canDraw && !isSyncing ? 'text-[#4caf50]' : 'text-gray-600'}`}>
+                    {isSyncing ? "Đang check" : (canDraw ? "Vận khí" : "Hết lượt")}
                 </span>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${canDraw ? 'text-white' : 'text-gray-500'}`}>
-                    {canDraw ? (isDrawing ? "Đang chiêu..." : "BỐC QUÀ") : "HẸN MAI NHÉ"}
+                <span className={`text-[9px] font-black uppercase tracking-widest ${canDraw && !isSyncing ? 'text-white' : 'text-gray-500'}`}>
+                    {isSyncing ? "XIN ĐỢI..." : (canDraw ? (isDrawing ? "Đang chiêu..." : "BỐC QUÀ") : "HẸN MAI NHÉ")}
                 </span>
             </div>
         </div>
-        {canDraw && !isDrawing && (
+        {canDraw && !isSyncing && !isDrawing && (
             <div className="absolute -top-1 -right-1 w-2 h-2 bg-[#4caf50] rounded-full animate-ping"></div>
         )}
       </button>
