@@ -58,6 +58,14 @@ export async function loginAction(username, password) {
 }
 
 /**
+ * 🚪 SERVER ACTION: Đăng xuất và xóa Session (Cookie) 🛡️
+ */
+export async function logoutAction() {
+  cookies().delete('shiroi_session');
+  return { success: true };
+}
+
+/**
  * 📝 SERVER ACTION: Đăng ký tài khoản mới và cấp Session
  * Đồng bộ hóa LocalStorage và Cookie ngay lập tức 🚀
  */

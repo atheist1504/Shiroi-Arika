@@ -197,7 +197,13 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { logoutAction } = await import('@/lib/actions');
+      await logoutAction();
+    } catch (err) {
+      console.error("Lỗi xóa session cookie:", err);
+    }
     localStorage.removeItem('shiroi_user');
     setUser(null);
     router.push('/');
