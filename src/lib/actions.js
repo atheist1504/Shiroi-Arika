@@ -1771,23 +1771,10 @@ export async function createOfficialTitleAction(name, lv) {
  */
 export async function cleanupXpLogsAction() {
     try {
-        const user = await getAuthenticatedUser();
-        if (!user || !user.id) return { success: false };
-
-        const user_id = user.id;
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-        const { error } = await supabaseAdmin
-            .from('shiroi_xp_logs')
-            .delete()
-            .eq('user_id', user_id)
-            .lt('created_at', oneWeekAgo.toISOString());
-
-        if (error) throw error;
-        return { success: true };
+        // 🚨 DỪNG KHẨN CẤP: Không được xóa nhật ký vì Trigger Database sẽ trừ XP của người dùng! 🛡️
+        // Chúng ta sẽ tìm giải pháp dọn dẹp mà không ảnh hưởng đến tổng điểm sau.
+        return { success: true, message: "Cleanup paused for safety." };
     } catch (error) {
-        console.error("❌ Lỗi dọn dẹp nhật ký XP:", error);
         return { success: false };
     }
 }

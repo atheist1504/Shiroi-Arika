@@ -315,13 +315,14 @@ export default function Navbar() {
                                             <span className="text-[11px] font-black uppercase tracking-wider">Cài đặt</span>
                                         </Link>
 
-                                        <button 
-                                            onClick={() => { handleLogout(); setIsUserMenuOpen(false); }}
+                                        <a 
+                                            href="/api/logout"
+                                            onClick={() => { localStorage.removeItem('shiroi_user'); }}
                                             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-gray-300 hover:text-red-500 transition-all group"
                                         >
                                             <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center group-hover:bg-red-500/20">🚪</div>
                                             <span className="text-[11px] font-black uppercase tracking-wider">Đăng xuất</span>
-                                        </button>
+                                        </a>
                                     </div>
                                     
                                     <div className="p-3 bg-white/[0.02] text-center">
@@ -483,13 +484,14 @@ export default function Navbar() {
               <div className="mt-auto pt-6 border-t border-white/5 bg-[#0a0c0a] pb-8 md:pb-0 flex flex-col gap-4">
                 {isMounted ? (
                   user ? (
-                   <button 
-                     onClick={() => { handleLogout(); setIsMobileMenuOpen(false); }}
-                     className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg"
-                   >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                      Đăng xuất
-                   </button>
+                    <a 
+                      href="/api/logout"
+                      onClick={() => { localStorage.removeItem('shiroi_user'); }}
+                      className="w-full flex items-center justify-center gap-3 p-4 bg-red-500/10 text-red-500 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all shadow-lg"
+                    >
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                       Đăng xuất
+                    </a>
                 ) : (
                   <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} className="w-full flex items-center justify-center p-4 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-bold">
                     Đăng nhập ngay
