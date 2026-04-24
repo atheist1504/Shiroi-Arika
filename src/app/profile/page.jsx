@@ -769,7 +769,7 @@ function ProfileContent() {
                         <h3 className="text-xs font-black uppercase tracking-widest text-white">Bí kíp thăng cấp (Cách nhận XP)</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {[
                             { label: 'Điểm danh', xp: '+100', icon: '🔥', detail: 'Reset 0h sáng' },
                             { label: 'Đọc chương', xp: '+20', icon: '📖', detail: 'Mỗi chương truyện' },
