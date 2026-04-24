@@ -28,9 +28,8 @@ export default function LuckyDraw() {
 
     // 🕵️‍♂️ REAL-TIME SYNC: Đồng bộ đa thiết bị 🌍
     let channel;
-    const userStr = localStorage.getItem("shiroi_user");
-    if (userStr) {
-        const u = JSON.parse(userStr);
+    if (storedUser) {
+        const u = JSON.parse(storedUser);
         channel = supabase
             .channel(`luckydraw_sync_${u.id}_${Math.random().toString(36).substring(7)}`)
             .on('postgres_changes', { 

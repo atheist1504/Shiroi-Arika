@@ -28,7 +28,6 @@ export default function CheckIn() {
 
     // 🕵️‍♂️ REAL-TIME SYNC: Đồng bộ đa thiết bị 🌍
     let channel;
-    const storedUser = localStorage.getItem("shiroi_user");
     if (storedUser) {
         const u = JSON.parse(storedUser);
         channel = supabase
