@@ -12,6 +12,7 @@ import NotificationBell from "./NotificationBell";
 import { calculateLevel, calculateProgress } from '@/lib/xp';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCallback } from 'react';
+import { logoutAction } from '@/lib/actions';
 
 
 export default function Navbar() {
@@ -197,21 +198,13 @@ export default function Navbar() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     // 1. Xóa ngay ở Client để UI phản hồi lập tức ⚡
     localStorage.removeItem('shiroi_user');
     setUser(null);
     
-    try {
-      // 2. Gọi Server Action để xóa Cookie 🛡️
-      const { logoutAction } = await import('@/lib/actions');
-      await logoutAction();
-    } catch (err) {
-      console.error("Lỗi xóa session cookie:", err);
-    }
-    
-    // 3. Buộc tải lại toàn bộ trang để xóa sạch cache server-side 🚀
-    window.location.href = '/';
+    // 2. Chuyển hướng đến API Logout để xóa Cookie trên Server và quay về Home 🏠
+    window.location.href = '/api/logout';
   };
 
   const handleSearchSubmit = (e) => {

@@ -223,11 +223,10 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Personnel Search Logic Enhancement (v43.3 - Admin Tools)**: 🕵️‍♂️🔍
     - **Multi-field Search**: Cập nhật `searchUsersAction` để tìm kiếm đồng thời trên cả `username` và `display_name`. Khắc phục lỗi không tìm thấy người dùng khi Admin tìm theo tên hiển thị (như "Cá muối").
 
-- [x] **Staff Permission & Admin UI Refinement (v43.6)**: 🛡️⚙️
-    - **Session Auto-Refresh**: Cập nhật `getAuthenticatedUser` để tự động kiểm tra role mới nhất từ Database cho các quyền hạn đặc biệt (Admin/Staff). Khắc phục lỗi session bị cũ (stale) khiến Admin/Staff bị chặn dù đã được cấp quyền.
-    - **Staff Access**: Cho phép tài khoản Staff xem danh sách đội ngũ nhân sự để thuận tiện phối hợp.
-    - **Personnel UI Highlighting**: Làm nổi bật nút chức vụ hiện tại trong bảng quản lý nhân sự.
+- [x] **Logout System Overhaul (v43.9)**: 🚪🧹
+    - **Reliable Redirection**: Chuyển sang sử dụng `/api/logout` Route Handler để xóa Cookie trên server và thực hiện redirect đồng bộ. Loại bỏ hoàn toàn lỗi race condition hoặc cache khiến người dùng bị "auto-login" lại sau khi đăng xuất.
+    - **UI Immediate Response**: Xóa LocalStorage trước khi chuyển hướng để đảm bảo giao diện biến mất ngay lập tức.
 
 ...
 
-*Cập nhật lần cuối: 13:00 - 24/04/2026 (Personnel List Restoration)*
+*Cập nhật lần cuối: 13:05 - 24/04/2026 (Logout Fix & UI Refinement)*
