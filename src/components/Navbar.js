@@ -198,16 +198,20 @@ export default function Navbar() {
   };
 
   const handleLogout = async () => {
+    // 1. Xóa ngay ở Client để UI phản hồi lập tức ⚡
+    localStorage.removeItem('shiroi_user');
+    setUser(null);
+    
     try {
+      // 2. Gọi Server Action để xóa Cookie 🛡️
       const { logoutAction } = await import('@/lib/actions');
       await logoutAction();
     } catch (err) {
       console.error("Lỗi xóa session cookie:", err);
     }
-    localStorage.removeItem('shiroi_user');
-    setUser(null);
-    router.push('/');
-    router.refresh();
+    
+    // 3. Buộc tải lại toàn bộ trang để xóa sạch cache server-side 🚀
+    window.location.href = '/';
   };
 
   const handleSearchSubmit = (e) => {
