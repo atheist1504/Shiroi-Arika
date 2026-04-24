@@ -366,7 +366,7 @@ export default function Navbar() {
                   Nhiệm vụ
                 </button>
 
-                {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
+                {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
                   <>
                     <div className="w-[1px] h-3 bg-white/10"></div>
                     <Link href="/admin/reports" className="text-gray-500 hover:text-red-500 transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2">
@@ -435,7 +435,7 @@ export default function Navbar() {
                    >
                       <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
                    </button>
-                   {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
+                   {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
                       <Link 
                         href="/admin/reports" 
                         onClick={() => setIsMobileMenuOpen(false)}
