@@ -220,6 +220,9 @@ Dự án Manga Platform thế hệ mới.
     - **Layout Consolidation**: Chuyển đổi sang bố cục Single Column trung tâm, loại bỏ sidebar trống để tối ưu hóa không gian hiển thị và sự tập trung của người dùng.
     - **Interactive Avatar**: Tích hợp nút đổi ảnh đại diện trực tiếp trên Avatar với hiệu ứng hover mượt mà.
 
+- [x] **Personnel Search Logic Enhancement (v43.3 - Admin Tools)**: 🕵️‍♂️🔍
+    - **Multi-field Search**: Cập nhật `searchUsersAction` để tìm kiếm đồng thời trên cả `username` và `display_name`. Khắc phục lỗi không tìm thấy người dùng khi Admin tìm theo tên hiển thị (như "Cá muối").
+
 ...
 
-*Cập nhật lần cuối: 12:35 - 24/04/2026 (User Identity Card Restoration)*
+*Cập nhật lần cuối: 12:40 - 24/04/2026 (Personnel Search Enhancement)*

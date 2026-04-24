@@ -1471,7 +1471,7 @@ export async function searchUsersAction(query) {
     const { data, error } = await client
       .from('shiroi_users')
       .select('id, username, display_name, role, avatar_url, created_at')
-      .ilike('username', `%${query}%`)
+      .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
       .limit(10);
       
     if (error) throw error;
