@@ -182,10 +182,9 @@ Dự án Manga Platform thế hệ mới.
 ---
 
 ## 📅 KẾ HOẠCH TIẾP THEO
-1. **Triển khai Profile Premium**: Hoàn thiện các phân mục con trong trang cá nhân (Đang thực hiện - Polish stage).
-2. **Hệ Thống Nhật ký XP**: Hoàn thiện hiển thị chi tiết cho tất cả loại hành động tu luyện.
-3. **Bảo Mật Hệ Thống**: Tiếp tục rà soát các bảng dữ liệu nhạy cảm khác để áp dụng RLS chuẩn xác.
-4. **Master Database Schema**: Duy trì và cập nhật `database_master.sql` làm nguồn database gốc duy nhất. 📁🛡️
+1. **Tối ưu hóa hình ảnh**: Triển khai WebP tự động và Lazy Loading cho toàn bộ các trang manga (Đang hoàn thiện). 🖼️⚡
+2. **Hệ thống Nhật ký XP**: Hoàn thiện hiển thị chi tiết cho tất cả loại hành động tu luyện.
+3. **Master Database Schema**: Duy trì và cập nhật `database_master.sql` làm nguồn database gốc duy nhất. 📁🛡️
 
 ---
 
@@ -227,6 +226,20 @@ Dự án Manga Platform thế hệ mới.
     - **Safe Subscriptions**: Khắc phục lỗi `cannot add postgres_changes after subscribe` trong `NotificationBell`. Đảm bảo các kênh Realtime được khởi tạo và giải phóng đúng cách, ngăn chặn xung đột khi React re-render nhanh.
     - **Robust Cleanup**: Chuyển sang sử dụng `supabase.removeChannel` để dọn dẹp triệt để các kết nối cũ trước khi tạo kết nối mới.
 
+### 🛡️ Bảo Mật Toàn Diện & Chống Sập Hệ Thống (v44 - Security Overhaul) 🛡️⚡💎
+- [x] **Database Hardening (RLS & RBAC)**:
+    - Kích hoạt **Row Level Security (RLS)** trên toàn bộ các bảng hạt nhân.
+    - **Chặn rò rỉ mật khẩu**: Sử dụng `REVOKE/GRANT` để ẩn tuyệt đối cột `password` khỏi Anon/Authenticated key. Chỉ cho phép truy cập các cột công khai (id, tên, xp, avatar).
+    - **Write Lockout**: Khóa toàn bộ quyền `INSERT/UPDATE/DELETE` từ Client. Mọi thay đổi dữ liệu hiện nay PHẢI đi qua Server Actions (Service Role) để đảm bảo tính toàn vẹn. 🔐🛡️
+- [x] **Next-Gen Password Hashing (SHA-256)**:
+    - Thay thế cơ chế Base64 cũ bằng thuật toán **SHA-256 + Salt** bảo mật cao.
+    - **Lazy Migration**: Triển khai cơ chế tự động nâng cấp mật khẩu của người dùng lên chuẩn mới ngay khi họ đăng nhập thành công. 🚀🔐
+- [x] **Anti-Crash Infrastructure (Error Boundary)**:
+    - Triển khai **Global Error Handling (`error.js`)** chuẩn Next.js. Nếu Supabase hoặc Firebase bị gián đoạn, hệ thống sẽ hiện trang lỗi Premium kèm nút "Thử lại" thay vì bị sập trắng trang. 🛡️🚑
+- [x] **Staff Permission Restoration**: Khắc phục lỗi Staff bị chặn đăng truyện. Đã mở khóa quyền tải ảnh (`uploadImageAction`, `getUploadUrlAction`) cho nhóm Staff để họ thực hiện đầy đủ chức năng quản trị. 🛠️✅
+- [x] **Identity Enforcement (Auth Healing v2)**: Cập nhật `getAuthenticatedUser` để luôn truy vấn Role mới nhất từ Database, đảm bảo các quyền hạn Admin/Staff được cập nhật tức thì mà không cần Log out. 🔐✨
+- [x] **UI Security Audit**: Cập nhật toàn bộ các query `select(*)` sang danh sách cột cụ thể tại trang Profile và BXH để tương thích với chính sách bảo mật mới, khôi phục hiển thị Avatar và số liệu bị mất. 🖼️📈
+
 ...
 
-*Cập nhật lần cuối: 13:15 - 24/04/2026 (Realtime Fix & Logout System)*
+*Cập nhật lần cuối: 20:30 - 24/04/2026 (Security Overhaul & Resilience)*
