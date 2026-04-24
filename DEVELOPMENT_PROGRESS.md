@@ -27,6 +27,9 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Notification Ecosystem**: Đồng bộ hóa hoàn hảo 3 lớp: Thông báo đẩy (FCM), Thông báo ứng dụng (Real-time) và Nhật ký tu luyện (XP Logs). 🔔
 - [x] **State Sync Fix**: Khắc phục triệt để lỗi flicker (hiện nút Bốc quà/Điểm danh rồi mới hiện Hết lượt) bằng cơ chế `isSyncing` mới. 🔄🛡️
 - [x] **CDN Optimization**: Cấu hình `Cache-Control: immutable` cho R2, giúp ảnh manga được cache vĩnh viễn, tăng tốc độ load trang Reader lên 200%. 🚀🖼️
+- [x] **Database Performance Audit**: 
+    - Triển khai **Monthly XP Cache Table** (`shiroi_monthly_stats`) giúp gỡ bỏ "bom hẹn giờ" hiệu năng của BXH tháng. 💣🛡️
+    - Tối ưu hóa **Indexing** cho các trường: `xp`, `status`, `genres` và `created_at`.
 - [x] **SEO & Social Identity**: Metadata động và OG Image API hoạt động chuẩn xác, tối ưu hóa hiển thị khi chia sẻ trên MXH (Facebook, Zalo, Discord). 🔍✨
 - [x] **Staff Workflow**: Xác nhận Admin/Staff (`atheist1504` và các cộng tác viên) đã có thể thực hiện toàn bộ quy trình đăng truyện, quản lý chương và báo cáo một cách trơn tru. 🎨
 

@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS public.mangas (
     description TEXT,
     author TEXT DEFAULT 'Khuyết danh',
     cover_image TEXT,
+    genres TEXT[], -- Mảng các thể loại như ['Action', 'Romance', ...]
     status TEXT DEFAULT 'ONGOING' CHECK (status IN ('ONGOING', 'COMPLETED')),
     is_featured BOOLEAN DEFAULT false,
     default_reading_mode TEXT DEFAULT 'scroll',
@@ -166,21 +167,18 @@ CREATE TRIGGER trg_sync_user_xp AFTER INSERT OR DELETE ON public.shiroi_xp_logs
 FOR EACH ROW EXECUTE FUNCTION fn_sync_user_xp_on_log();
 
 -- 4. BẢO MẬT & TRUY CẬP (RLS) 🔓
--- Tắt RLS để đạt hiệu năng tối đa cho các tác vụ công khai (theo yêu cầu)
-ALTER TABLE public.mangas DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.chapters DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.pages DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.shiroi_users DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.comments DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.shiroi_xp_logs DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.shiroi_notifications DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.shiroi_read_chapters DISABLE ROW LEVEL SECURITY;
+-- RLS được quản lý thông qua file security_overhaul.sql
+
 
 -- 5. CHỈ MỤC TỐI ƯU (INDEXES) 🚀
 CREATE INDEX IF NOT EXISTS idx_manga_updated ON public.mangas(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mangas_status ON public.mangas(status);
+CREATE INDEX IF NOT EXISTS idx_mangas_genres ON public.mangas USING GIN (genres);
 CREATE INDEX IF NOT EXISTS idx_chapters_manga ON public.chapters(manga_id, chapter_number DESC);
 CREATE INDEX IF NOT EXISTS idx_pages_chapter ON public.pages(chapter_id, page_number);
+CREATE INDEX IF NOT EXISTS idx_users_xp_desc ON public.shiroi_users(xp DESC);
 CREATE INDEX IF NOT EXISTS idx_xp_logs_user_date ON public.shiroi_xp_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_xp_logs_created_at ON public.shiroi_xp_logs(created_at DESC);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_checkin_per_day ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)) WHERE type = 'check_in';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_lucky_draw_per_day ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)) WHERE type = 'lucky_draw';
 
