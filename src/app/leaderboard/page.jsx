@@ -206,7 +206,7 @@ function LeaderboardContent() {
                                         <img src={optimizeImage(admin.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png', 100)} className="w-10 h-10 rounded-xl object-cover" alt="" />
                                         <div className="text-left">
                                             <div className="text-white font-black text-sm uppercase">{admin.display_name || admin.username}</div>
-                                            <div className="text-[#4caf50] font-black text-[10px]">LV.{calculateLevel(admin.xp)} - {calculateTitle(admin.xp, admin.selected_badge).name}</div>
+                                            <div className="text-[#4caf50] font-black text-[10px]">LV.{calculateLevel(admin.xp)} - {calculateTitle(admin.xp).name}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -225,7 +225,7 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-gray-400 text-black text-[10px] font-black rounded-full uppercase">Á QUÂN 🥈</div>
                                         <h3 className="text-xl font-black text-white mb-1 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[1].display_name || top3[1].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[1].total_xp || top3[1].xp)} - {calculateTitle(top3[1].total_xp || top3[1].xp, top3[1].selected_badge).name}</p>
+                                        <p className="text-[#4caf50] font-black text-[9px] tracking-widest">LV.{calculateLevel(top3[1].total_xp || top3[1].xp)} - {calculateTitle(top3[1].total_xp || top3[1].xp).name}</p>
                                         <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[1].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
                                     </Link>
                                 </motion.div>
@@ -239,7 +239,7 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-14 mb-5 inline-block px-6 py-2 bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-black text-xs font-black rounded-full uppercase shadow-lg animate-pulse">QUÁN QUÂN 🥇</div>
                                         <h3 className="text-3xl font-black text-white mb-2 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[0].display_name || top3[0].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[10px] uppercase tracking-[0.2em]">CẤP {calculateLevel(top3[0].total_xp || top3[0].xp)} - {calculateTitle(top3[0].total_xp || top3[0].xp, top3[0].selected_badge).name}</p>
+                                        <p className="text-[#4caf50] font-black text-[10px] tracking-[0.2em]">CẤP {calculateLevel(top3[0].total_xp || top3[0].xp)} - {calculateTitle(top3[0].total_xp || top3[0].xp).name}</p>
                                         <div className="mt-8">
                                             <div className="inline-block px-5 py-2 bg-black/40 rounded-2xl border border-white/5">
                                                 <span className="text-lg font-black text-white">{(top3[0].ranking_xp || 0).toLocaleString()}</span>
@@ -258,7 +258,7 @@ function LeaderboardContent() {
                                         </div>
                                         <div className="mt-10 mb-4 inline-block px-4 py-1 bg-orange-700 text-white text-[10px] font-black rounded-full uppercase">HẠNG 3 🥉</div>
                                         <h3 className="text-xl font-black text-white mb-1 truncate group-hover/top:text-[#4caf50] transition-colors">{top3[2].display_name || top3[2].username}</h3>
-                                        <p className="text-[#4caf50] font-black text-[9px] uppercase tracking-widest">LV.{calculateLevel(top3[2].total_xp || top3[2].xp)} - {calculateTitle(top3[2].total_xp || top3[2].xp, top3[2].selected_badge).name}</p>
+                                        <p className="text-[#4caf50] font-black text-[9px] tracking-widest">LV.{calculateLevel(top3[2].total_xp || top3[2].xp)} - {calculateTitle(top3[2].total_xp || top3[2].xp).name}</p>
                                         <div className="mt-6 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">{(top3[2].ranking_xp || 0).toLocaleString()} <span className="text-[#4caf50]/60">XP</span></div>
                                     </Link>
                                 </motion.div>
@@ -313,7 +313,7 @@ function LeaderboardContent() {
                                                     </div>
                                                     <div>
                                                         <div className="text-white font-black text-sm group-hover/user:text-[#4caf50] transition-colors">{u.display_name || u.username}</div>
-                                                        <div className="text-[9px] font-black uppercase text-[#4caf50]/80">{calculateTitle(txp, u.selected_badge).name}</div>
+                                                        <div className="text-[9px] font-black text-[#4caf50]/80">{calculateTitle(txp).name}</div>
                                                     </div>
                                                 </Link>
                                             </td>
