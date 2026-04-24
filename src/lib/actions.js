@@ -137,17 +137,15 @@ export async function getAuthenticatedUser() {
       
       if (!error && data) {
         user.id = data.id;
-        user.role = data.role || 'admin';
-        console.log(`✅ [Auth] Khôi phục ID thành công: ${user.id}`);
-        
-        cookies().set('shiroi_session', JSON.stringify(user), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60 * 24 * 7,
-          path: '/',
-          sameSite: 'lax'
-        });
+        user.role = data.role || 'user';
       }
+    }
+
+    // 🔍 Đảm bảo role luôn mới nhất nếu đang là Admin/Staff (Tránh session stale) 🩹
+    if (user.id && (user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504')) {
+        const client = getDbClient();
+        const { data } = await client.from('shiroi_users').select('role').eq('id', user.id).single();
+        if (data) user.role = data.role;
     }
 
     return user.id ? user : null;
@@ -1486,7 +1484,7 @@ export async function searchUsersAction(query) {
  */
 export async function getPersonnelListAction() {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const client = getDbClient();
     
     const { data, error } = await client
