@@ -1075,9 +1075,36 @@ function ProfileContent() {
                                </div>
                             </div>
                             <div className="flex gap-2">
-                               <button onClick={() => handleUpdateRole(u.id, 'staff')} className="px-4 py-2 bg-blue-500/10 text-blue-500 rounded-xl border border-blue-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all">STAFF</button>
-                               <button onClick={() => handleUpdateRole(u.id, 'admin')} className="px-4 py-2 bg-red-500/10 text-red-500 rounded-xl border border-red-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">ADMIN</button>
-                               <button onClick={() => handleUpdateRole(u.id, 'user')} className="px-4 py-2 bg-gray-500/10 text-gray-500 rounded-xl border border-gray-500/20 font-black text-[8px] uppercase tracking-widest hover:bg-gray-500 hover:text-white transition-all">USER</button>
+                               <button 
+                                 onClick={() => handleUpdateRole(u.id, 'staff')} 
+                                 className={`px-4 py-2 rounded-xl border font-black text-[8px] uppercase tracking-widest transition-all ${
+                                     u.role === 'staff' 
+                                     ? 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/20' 
+                                     : 'bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500 hover:text-white'
+                                 }`}
+                               >
+                                 STAFF
+                               </button>
+                               <button 
+                                 onClick={() => handleUpdateRole(u.id, 'admin')} 
+                                 className={`px-4 py-2 rounded-xl border font-black text-[8px] uppercase tracking-widest transition-all ${
+                                     u.role === 'admin' 
+                                     ? 'bg-red-500 text-white border-red-500 shadow-lg shadow-red-500/20' 
+                                     : 'bg-red-500/10 text-red-500 border-red-500/20 hover:bg-red-500 hover:text-white'
+                                 }`}
+                               >
+                                 ADMIN
+                               </button>
+                               <button 
+                                 onClick={() => handleUpdateRole(u.id, 'user')} 
+                                 className={`px-4 py-2 rounded-xl border font-black text-[8px] uppercase tracking-widest transition-all ${
+                                     u.role === 'user' || (!u.role)
+                                     ? 'bg-gray-500 text-white border-gray-500 shadow-lg shadow-gray-500/20' 
+                                     : 'bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500 hover:text-white'
+                                 }`}
+                               >
+                                 USER
+                               </button>
                             </div>
                          </div>
                        ))}

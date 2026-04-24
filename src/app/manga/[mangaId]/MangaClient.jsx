@@ -230,7 +230,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 relative -mt-[80px] md:-mt-[160px] z-10 transition-all duration-700">
         
         {/* THANH CÔNG CỤ QUẢN TRỊ VIÊN 🍀 (Full Width) */}
-        {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+        {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
            <div className="flex flex-wrap items-center gap-3 mb-10 p-5 bg-[#141814]/80 backdrop-blur-3xl border border-[#4caf50]/30 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in relative overflow-hidden group/admin">
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#4caf50]/30 to-transparent"></div>
               <div className="flex items-center gap-2 pr-5 border-r border-white/5 mr-1">
@@ -454,7 +454,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                           </div>
                           </Link>
                           
-                          {(user?.username?.toLowerCase().includes('admin') || user?.display_name?.toLowerCase().includes('quản trị')) && (
+                          {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                           <Link 
                               href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
                               className="flex items-center justify-center w-14 bg-[#141814] border border-white/5 rounded-2xl text-gray-700 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-xl"
