@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { sendMangaNotification, createInAppNotification } from './notifications';
 import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
 import { getStartOfVNDay } from './missions';
+import { hashPassword, verifyPassword } from './crypto';
 
 /**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
@@ -23,10 +24,8 @@ const getVietnamTime = () => {
  */
 export async function loginAction(username, password) {
   try {
-    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
-    const hashed = hashPassword(password);
-
-    const { data: user, error } = await supabase
+    const client = getDbClient(); // Sử dụng Admin Client để có quyền xem cột password 🛡️
+    const { data: user, error } = await client
       .from('shiroi_users')
       .select('*')
       .ilike('username', username.trim())
@@ -34,8 +33,22 @@ export async function loginAction(username, password) {
 
     if (error || !user) throw new Error('Không tìm thấy tài khoản Shiroi này!');
     
-    if (user.password !== hashed && user.password !== password) {
+    // 🛡️ XÁC THỰC MẬT KHẨU (Hỗ trợ đa thế hệ) 🍀
+    const authResult = verifyPassword(password, user.password);
+    
+    if (!authResult.valid) {
        throw new Error('Mật khẩu chưa chính xác! 🔐');
+    }
+
+    // 🚀 TỰ ĐỘNG NÂNG CẤP BẢO MẬT (MIGRATION) 🩹
+    // Nếu user đang dùng pass cũ hoặc plain, hãy cập nhật lên SHA-256 ngay lập tức
+    if (authResult.version !== 'new') {
+        console.log(`🛡️ [Security] Đang nâng cấp bảo mật mật mã cho user: ${username}`);
+        const newSecureHash = hashPassword(password);
+        await supabaseAdmin
+            .from('shiroi_users')
+            .update({ password: newSecureHash })
+            .eq('id', user.id);
     }
 
     // 🍪 TẠO SESSION BẰNG COOKIE (Hết hạn sau 7 ngày)
@@ -72,7 +85,6 @@ export async function logoutAction() {
 export async function signupAction(userData) {
   try {
     const { username, password } = userData;
-    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
     const hashed = hashPassword(password);
 
     const client = getDbClient();
@@ -82,7 +94,7 @@ export async function signupAction(userData) {
       .from('shiroi_users')
       .select('username')
       .ilike('username', username.trim())
-      .single();
+      .maybeSingle();
     
     if (existing) throw new Error('Tên này đã có chủ nhân sở hữu rồi! 👤');
 
@@ -413,19 +425,34 @@ export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, 
 /**
  * 📊 SERVER ACTION: Ghi Log XP Bảo Mật
  */
-export async function recordXpLogAction(userId, amount, type, reason = null) {
+export async function recordXpLogAction(amount, type, reason = null, targetUserId = null) {
   try {
-    if (!userId || userId === 'undefined' || !amount) {
-      return { success: false, error: 'Thiếu định danh người dùng (User ID) hoặc thông số XP' };
+    const user = await getAuthenticatedUser();
+    if (!user && !targetUserId) {
+        return { success: false, error: 'Cần đăng nhập để thực hiện hành động này! 🛡️' };
+    }
+
+    // Nếu không có targetUserId, mặc định là người dùng hiện tại
+    // Nếu có targetUserId, yêu cầu quyền Admin/Staff để ghi log cho người khác
+    let finalUserId = targetUserId || user?.id;
+
+    if (targetUserId && user?.id !== targetUserId) {
+        const isAdmin = await checkAdminAuth();
+        const isStaff = await checkStaffAuth();
+        if (!isAdmin && !isStaff) throw new Error("Bạn không có quyền ghi nhật ký cho người khác! 🛡️");
+    }
+
+    if (!finalUserId || !amount) {
+      return { success: false, error: 'Thiếu định danh người dùng hoặc thông số XP' };
     }
     
     const client = getDbClient();
 
-    // 🛡️ LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI ĐỂ KIỂM TRA LV 🍀
+    // 🛡️ LẤY THÔNG TIN NGƯỜI DÙNG ĐỂ KIỂM TRA LV 🍀
     const { data: userData } = await client
         .from('shiroi_users')
         .select('xp, username')
-        .eq('id', userId)
+        .eq('id', finalUserId)
         .single();
 
     // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
@@ -435,13 +462,13 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
         const { data: todayLogs, error: logError } = await client
             .from('shiroi_xp_logs')
             .select('amount')
-            .eq('user_id', userId)
+            .eq('user_id', finalUserId)
             .in('type', ['comment', 'first_comment'])
             .gte('created_at', startOfTodayISO);
 
         if (!logError && todayLogs) {
             const totalToday = todayLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
-            const MAX_COMMENT_XP = 100; // Khớp với xp.js
+            const MAX_COMMENT_XP = 100; 
             
             if (totalToday + amount > MAX_COMMENT_XP) {
                 return { success: false, error: 'Đã đạt giới hạn XP bình luận trong ngày (100 XP)! 🛡️' };
@@ -452,7 +479,7 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
     const { error } = await client
       .from('shiroi_xp_logs')
       .insert({
-        user_id: userId,
+        user_id: finalUserId,
         amount: amount,
         type: type,
         reason: reason
@@ -468,10 +495,9 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
         const newLevel = calculateLevel(newXp);
 
         if (newLevel > oldLevel) {
-            // Tìm xem có danh hiệu nào nằm trong dải level vừa vượt qua không
             const newTitle = TITLES.find(t => newLevel >= t.lv && oldLevel < t.lv);
             if (newTitle) {
-                await createInAppNotification(userId, `Danh hiệu mới được khai phá! 🏆`, `Chúc mừng! Bạn đã đạt danh hiệu cao quý: "${newTitle.name}". Hãy tiếp tục tu luyện nhé! 🍀`, 'system', { titleName: newTitle.name });
+                await createInAppNotification(finalUserId, `Danh hiệu mới được khai phá! 🏆`, `Chúc mừng! Bạn đã đạt danh hiệu cao quý: "${newTitle.name}". Hãy tiếp tục tu luyện nhé! 🍀`, 'system', { titleName: newTitle.name });
             }
         }
       } catch (e) {
@@ -511,7 +537,7 @@ export async function addReadXPAction(mangaId, chapterId) {
 
     // 3. Ghi log và nhận XP TRƯỚC 💎
     // Nếu ghi log thất bại, hệ thống sẽ dừng lại ở đây (User có thể thử lại). 🛡️
-    const resLog = await recordXpLogAction(userId, 20, 'read', chapterId);
+    const resLog = await recordXpLogAction(20, 'read', chapterId);
     if (!resLog.success) return resLog;
 
     // 4. Đánh dấu đã đọc chương này (Chỉ ghi sau khi đã có XP) ✅
@@ -616,7 +642,7 @@ export async function performCheckInAction() {
     const totalXP = baseXP + bonusXP;
 
     // 4. Cập nhật Database (Dùng log và update user) 🛡️
-    const resLog = await recordXpLogAction(userId, totalXP, 'check_in', `Điểm danh (Chuỗi ${newStreak} ngày)`);
+    const resLog = await recordXpLogAction(totalXP, 'check_in', `Điểm danh (Chuỗi ${newStreak} ngày)`);
     if (!resLog.success) throw new Error(resLog.error);
 
     const { data: updatedUser, error: updateError } = await client
@@ -876,7 +902,7 @@ export async function performLuckyDrawAction() {
     }
 
     // 2. Ghi vào Nhật ký (Database Unique Index sẽ chặn nếu bốc lần 2)
-    const resLog = await recordXpLogAction(userId, xpGain, 'lucky_draw', `May mắn hàng ngày: +${xpGain} XP`);
+    const resLog = await recordXpLogAction(xpGain, 'lucky_draw', `May mắn hàng ngày: +${xpGain} XP`);
     
     if (!resLog.success) {
       if (resLog.error?.includes('duplicate key') || resLog.error?.includes('23505')) {
@@ -1087,7 +1113,7 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     if (claimError) throw claimError;
 
     // 4. Cộng XP và log nhật ký
-    const resLog = await recordXpLogAction(userId, rewardXp, 'mission', missionKey);
+    const resLog = await recordXpLogAction(rewardXp, 'mission', missionKey);
     if (!resLog.success) throw new Error(resLog.error);
 
     const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
@@ -1200,7 +1226,7 @@ export async function addCommentAction(commentData) {
 
           if (canReceiveXp) {
               const type = amount === XP_REWARDS.FIRST_COMMENT ? 'first_comment' : 'comment';
-              await recordXpLogAction(userId, amount, type, `Bình luận tại chương: ${c_id || 'Manga'}`);
+              await recordXpLogAction(amount, type, `Bình luận tại chương: ${c_id || 'Manga'}`);
           }
 
           // 🏆 Kiểm tra nhiệm vụ tuần (Thành tựu)
@@ -1431,10 +1457,6 @@ export async function changePasswordAction(oldPassword, newPassword) {
     const userSession = await getAuthenticatedUser();
     if (!userSession || !userSession.id) throw new Error('Cần đăng nhập để đổi mật mã! 🛡️');
 
-    const hashPassword = (pwd) => btoa(pwd + "shiroi-secret-salt").split('').reverse().join('');
-    const oldHashed = hashPassword(oldPassword);
-    const newHashed = hashPassword(newPassword);
-
     const client = getDbClient();
 
     // 1. Kiểm tra mật mã cũ có chính xác không
@@ -1446,15 +1468,16 @@ export async function changePasswordAction(oldPassword, newPassword) {
 
     if (fetchError || !user) throw new Error('Không thể xác thực tài khoản! 🆘');
 
-    // Hỗ trợ cả mật mã trơn (cho tài khoản cũ) và mật mã đã hash
-    if (user.password !== oldHashed && user.password !== oldPassword) {
+    const authResult = verifyPassword(oldPassword, user.password);
+    if (!authResult.valid) {
       throw new Error('Mật khẩu hiện tại chưa chính xác! 🔐');
     }
 
     // 2. Cập nhật mật mã mới
+    const newSecureHash = hashPassword(newPassword);
     const { error: updateError } = await client
       .from('shiroi_users')
-      .update({ password: newHashed })
+      .update({ password: newSecureHash })
       .eq('id', userSession.id);
 
     if (updateError) throw new Error('Cập nhật mật mã thất bại! 🛡️');
@@ -1539,9 +1562,13 @@ export async function updateUserRoleAction(targetId, newRole) {
 /**
  * 👤 SERVER ACTION: Cập nhật thông tin hồ sơ người dùng 🍀
  */
-export async function updateUserProfileAction(userId, updateData) {
+export async function updateUserProfileAction(updateData) {
   try {
-    const { data, error } = await supabase
+    const user = await getAuthenticatedUser();
+    if (!user) throw new Error("Bạn cần đăng nhập để thực hiện việc này! 🛡️");
+
+    const client = getDbClient();
+    const { data, error } = await client
       .from('shiroi_users')
       .update({
         display_name: updateData.display_name,
@@ -1549,14 +1576,14 @@ export async function updateUserProfileAction(userId, updateData) {
         avatar_url: updateData.avatar_url,
         selected_badge: updateData.selected_badge
       })
-      .eq('id', userId)
+      .eq('id', user.id)
       .select()
       .single();
 
     if (error) throw error;
 
     revalidatePath('/profile');
-    revalidatePath(`/user/${userId}`);
+    revalidatePath(`/user/${user.id}`);
     
     return { success: true, user: data };
   } catch (error) {
@@ -1570,11 +1597,10 @@ export async function updateUserProfileAction(userId, updateData) {
  */
 export async function suggestTitleAction(titleName, reason) {
   try {
-    const sessionCookie = cookies().get('shiroi_session');
-    if (!sessionCookie) throw new Error("Vui lòng đăng nhập để gửi gợi ý!");
+    const user = await getAuthenticatedUser();
+    if (!user) throw new Error("Vui lòng đăng nhập để gửi gợi ý!");
     
-    const session = JSON.parse(sessionCookie.value);
-    const userId = session.id;
+    const userId = user.id;
 
     const { error } = await supabaseAdmin
       .from('shiroi_title_suggestions')

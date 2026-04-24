@@ -54,7 +54,7 @@ function LeaderboardContent() {
     try {
         const { data } = await supabase
             .from('shiroi_users')
-            .select('*')
+            .select('id, username, display_name, avatar_url, role, xp, selected_badge')
             .or('username.ilike.%admin%,display_name.ilike.%quản trị%');
         if (data) setAdminUsers(data);
     } catch (err) {
@@ -72,7 +72,7 @@ function LeaderboardContent() {
 
       if (activeTab === 'total') {
           // 🏆 BXH TỔNG (Logic cũ)
-          let baseQuery = supabase.from('shiroi_users').select('*', { count: 'exact' });
+          let baseQuery = supabase.from('shiroi_users').select('id, username, display_name, avatar_url, role, xp, selected_badge', { count: 'exact' });
           baseQuery = baseQuery.not('username', 'ilike', '%admin%').not('display_name', 'ilike', '%quản trị%');
           if (query) baseQuery = baseQuery.or(`username.ilike.%${query}%,display_name.ilike.%${query}%`);
           

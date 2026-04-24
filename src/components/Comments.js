@@ -258,7 +258,7 @@ export default function Comments({ mangaId, chapterId }) {
       if (chapterId) query = query.eq('chapter_id', chapterId);
       else if (mangaId) query = query.eq('manga_id', mangaId);
       const { data: cData } = await query.order('created_at', { ascending: false });
-      const { data: uData } = await supabase.from('shiroi_users').select('*');
+      const { data: uData } = await supabase.from('shiroi_users').select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge');
       const uMap = {};
       const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
 

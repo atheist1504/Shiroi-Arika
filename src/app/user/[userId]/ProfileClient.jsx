@@ -58,7 +58,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       // 1. Fetch User Info
       const { data: userData, error: userError } = await supabase
         .from('shiroi_users')
-        .select('*')
+        .select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge')
         .eq('id', userId)
         .single();
 
