@@ -205,6 +205,11 @@ Dự án Manga Platform thế hệ mới.
 - [x] **Trigger-based Accuracy**: Đảm bảo các thông số đếm luôn chính xác 100% nhờ cơ chế Postgres Trigger tự động cập nhật mỗi khi thêm/xóa chương. ⚙️💎
 - [x] **Database Master Consolidation**: Hợp nhất toàn bộ cấu trúc Database vào file `database_master.sql`. Đây là tài liệu bảo mật và tài liệu gốc duy nhất để quản lý schema Shiroi Arika. 📂🛡️
 
+- [x] **Notification Persistence & Sync Fix (v42 - Reliability Update)**: 🔔🛡️🚀
+    - **Toggle Logic Overhaul**: Khắc phục triệt để lỗi nút thông báo tự động bật lại sau khi làm mới trang. Hiện tại hệ thống sẽ kiểm tra cả quyền trình duyệt và lựa chọn thực tế của người dùng (lưu trong LocalStorage & DB).
+    - **Full Deactivation Flow**: Khi người dùng nhấn "Hủy kích hoạt", hệ thống thực hiện đồng bộ 3 bước: Hủy đăng ký Topic FCM, Xóa Token trong Database và Cập nhật trạng thái máy cục bộ.
+    - **Cross-Component Sync**: Đảm bảo trạng thái thông báo luôn đồng bộ 100% giữa trang Hồ sơ và Dropdown thông báo ở Navbar. 🍀✨
+
 ...
 
-*Cập nhật lần cuối: 07:20 - 24/04/2026 (Leaderboard Title Logic & Enforcement)*
+*Cập nhật lần cuối: 08:20 - 24/04/2026 (Notification Toggle Reliability Fix)*
