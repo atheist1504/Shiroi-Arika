@@ -132,7 +132,7 @@ function ProfileContent() {
           fetchXpLogs(data.id); // Tải 20 nhật ký đầu tiên 📜
           fetchNotifications();
           fetchDynamicTitles();
-          cleanupXpLogsAction(); // Tiền trảm hậu tấu: Dọn nhật ký cũ (> 1 tuần) 🧹
+          cleanupXpLogsAction(); 
           
           if (data.role === 'admin' || data.role === 'staff') {
             fetchPersonnel();
@@ -140,7 +140,8 @@ function ProfileContent() {
           }
 
           cleanupNotificationsAction();
-          
+
+
           // Kiểm tra quyền thông báo hiện tại
           if (typeof window !== 'undefined' && 'Notification' in window) {
             setFcmEnabled(Notification.permission === 'granted');
@@ -220,9 +221,45 @@ function ProfileContent() {
   };
 
   const fetchNotifications = async () => {
+    console.log("📡 [Profile] Đang triệu hồi thông báo từ Thánh địa...");
     const res = await getNotificationsAction(20, 0);
-    if (res.success) setNotifications(res.notifications);
+    if (res.success) {
+        console.log(`✅ [Profile] Đã nhận ${res.notifications?.length} thông báo.`);
+        setNotifications(res.notifications);
+    } else {
+        console.error("❌ [Profile] Lỗi fetch thông báo:", res.error);
+    }
   };
+
+  // 🔥 ĐỒNG BỘ KHI CHUYỂN TAB 🔄
+  useEffect(() => {
+    if (activeTab === 'notifications' && user) {
+        fetchNotifications();
+    }
+  }, [activeTab]);
+
+  // 🛰️ REAL-TIME SYNC & CLEANUP: Thông báo Thánh địa 🔔
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`profile-notif-${user.id}`)
+      .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'shiroi_notifications',
+          filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+          console.log("🔔 [Profile] Có biến động thông báo, đang đồng bộ...");
+          fetchNotifications();
+      })
+      .subscribe();
+
+    return () => {
+        console.log("🔌 [Profile] Ngắt kết nối Realtime...");
+        supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   const handleMarkAsRead = async (id) => {
     const res = await markNotificationAsReadAction(id);
