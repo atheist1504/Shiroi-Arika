@@ -119,7 +119,7 @@ function ProfileContent() {
         const userData = JSON.parse(storedUser);
         const { data, error } = await supabase
           .from('shiroi_users')
-          .select('*')
+          .select('id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, check_in_streak, selected_badge')
           .eq('id', userData.id)
           .single();
 
@@ -187,7 +187,7 @@ function ProfileContent() {
 
     const { data, error } = await supabase
       .from('shiroi_xp_logs')
-      .select('*')
+      .select('id, amount, type, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .range(from, to);
@@ -208,7 +208,7 @@ function ProfileContent() {
         if (ciData) {
             setCheckInDates(ciData.map(l => new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })));
         }
-        const { count } = await supabase.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'check_in');
+        const { count } = await supabase.from('shiroi_xp_logs').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'check_in');
         setTotalCheckIns(count || 0);
         setLoading(false);
     }

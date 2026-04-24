@@ -44,6 +44,9 @@ CREATE POLICY "Public SELECT read_chapters" ON public.shiroi_read_chapters FOR S
 DROP POLICY IF EXISTS "Public SELECT follows" ON public.shiroi_follows;
 CREATE POLICY "Public SELECT follows" ON public.shiroi_follows FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Public SELECT xp_logs" ON public.shiroi_xp_logs;
+CREATE POLICY "Public SELECT xp_logs" ON public.shiroi_xp_logs FOR SELECT USING (true);
+
 -- 3. KHÓA CHẶT MỌI QUYỀN THAY ĐỔI DỮ LIỆU TỪ CLIENT (ANON/AUTH) 🔐
 -- Mọi thay đổi PHẢI đi qua Server Action (Service Role)
 DROP POLICY IF EXISTS "Lock INSERT/UPDATE/DELETE mangas" ON public.mangas;
