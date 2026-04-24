@@ -78,6 +78,9 @@ export default function NotificationBell() {
         };
 
         const setupRealtime = (uid) => {
+            // 🧹 Hủy channel cũ nếu tồn tại để tránh xung đột 🍀
+            supabase.removeChannel(supabase.channel(`notif-${uid}`));
+
             const channel = supabase
                 .channel(`notif-${uid}`)
                 .on('postgres_changes', { 
@@ -101,19 +104,26 @@ export default function NotificationBell() {
                             return updated;
                         });
                     }
-                })
-                .subscribe((status) => {
-                    if (status === 'SUBSCRIBED') {
-                        setConnectionStatus('connected');
-                    } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                        setConnectionStatus('error');
-                    }
                 });
+
+            // 🚀 Đăng ký lắng nghe sau khi đã định nghĩa các callback 🛡️
+            channel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    setConnectionStatus('connected');
+                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                    setConnectionStatus('error');
+                }
+            });
 
             return channel;
         };
 
-        const channelPromise = initAuth();
+        let activeChannel = null;
+
+        initAuth().then(channel => {
+            activeChannel = channel;
+        });
+
         fetchNotifications();
 
         const handleClickOutside = (e) => {
@@ -123,14 +133,12 @@ export default function NotificationBell() {
             }
         };
 
-        // Đã đồng bộ trong initAuth 🍀
-
         document.addEventListener('mousedown', handleClickOutside);
         
         return () => {
-            channelPromise.then(channel => {
-                 if (channel && typeof channel.unsubscribe === 'function') channel.unsubscribe();
-            });
+            if (activeChannel) {
+                supabase.removeChannel(activeChannel);
+            }
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
