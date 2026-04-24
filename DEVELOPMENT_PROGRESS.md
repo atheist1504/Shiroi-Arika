@@ -215,6 +215,11 @@ Dự án Manga Platform thế hệ mới.
     - **Animated Instructions**: Sử dụng `Framer Motion` để tạo hiệu ứng đóng/mở hướng dẫn mượt mà, giữ cho giao diện luôn tinh gọn nhưng vẫn đầy đủ hỗ trợ.
     - **Mobile-Responsive Guide**: Tối ưu hiển thị hướng dẫn trên cả Mobile và Desktop, đảm bảo ai cũng có thể kích hoạt thông báo dễ dàng. 📱💻🍀
 
+- [x] **Profile Identity Card Restoration (v43.2 - UI Refinement)**: 💎👤✨
+    - **Integrated Identity Header**: Khôi phục Thẻ danh tính (Avatar, Bio, Level, XP Bar) trực tiếp vào tab Hồ sơ. Thiết kế theo phong cách Glassmorphism đồng nhất với hệ thống.
+    - **Layout Consolidation**: Chuyển đổi sang bố cục Single Column trung tâm, loại bỏ sidebar trống để tối ưu hóa không gian hiển thị và sự tập trung của người dùng.
+    - **Interactive Avatar**: Tích hợp nút đổi ảnh đại diện trực tiếp trên Avatar với hiệu ứng hover mượt mà.
+
 ...
 
-*Cập nhật lần cuối: 12:25 - 24/04/2026 (Refined Notification Guide Icons)*
+*Cập nhật lần cuối: 12:35 - 24/04/2026 (User Identity Card Restoration)*

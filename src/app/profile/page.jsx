@@ -486,13 +486,8 @@ function ProfileContent() {
       <div className="max-w-5xl mx-auto z-10 relative">
         <div className="flex flex-col gap-12 items-center">
           
-          {/* 👤 CỘT TRÊN: ĐÃ DỌN DẸP (CLEANED) */}
-          <aside className="w-full max-w-[450px] space-y-6 hidden lg:block">
-             {/* Cột trái để trống để giữ layout cân đối 🍀 */}
-          </aside>
-
-          {/* 📝 CỘT DƯỚI: NỘI DUNG CHI TIẾT */}
-          <main className="w-full max-w-[900px] space-y-8 min-h-[600px]">
+          {/* 📝 CỘT CHÍNH: NỘI DUNG CHI TIẾT */}
+          <main className="w-full max-w-[900px] space-y-8 min-h-[600px] relative z-10">
             {/* TABS MENU PREMIUM */}
             <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-6 z-[100] mb-6">
               {[
@@ -518,6 +513,75 @@ function ProfileContent() {
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
               <motion.div key="profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                
+                {/* 👤 THẺ DANH TÍNH (Avatar, Cấp độ, XP) - PREMIUM INTEGRATION 💎 */}
+                <div className="glass-card p-10 rounded-[48px] border-white/5 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-[#4caf50]/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-[#4caf50]/10 transition-colors duration-700" />
+                    
+                    <div className="flex flex-col md:flex-row gap-10 items-center relative z-10">
+                        {/* Avatar Section */}
+                        <div className="relative group/avatar">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[#4caf50] to-[#2e7d32] rounded-[40px] blur-2xl opacity-20 group-hover/avatar:opacity-40 transition-opacity" />
+                            <div className="relative w-40 h-40 rounded-[36px] overflow-hidden border-2 border-white/10 shadow-2xl">
+                                {avatarLoading ? (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-md z-20">
+                                        <div className="w-8 h-8 border-2 border-[#4caf50] border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                ) : null}
+                                <img 
+                                    src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
+                                    className="w-full h-full object-cover group-hover/avatar:scale-110 transition-transform duration-700" 
+                                    alt="Avatar" 
+                                />
+                                <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-all cursor-pointer backdrop-blur-sm z-10">
+                                    <span className="text-2xl mb-1">📸</span>
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-white">Đổi ảnh</span>
+                                    <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*" />
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Info Section */}
+                        <div className="flex-1 space-y-6 text-center md:text-left w-full">
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                                    <h2 className="text-3xl font-black italic tracking-tighter text-white">{user?.display_name || user?.username}</h2>
+                                    {currentDynamicTitle && (
+                                        <span className="px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-[#4caf50] shadow-[0_0_15px_rgba(76,175,80,0.1)]">
+                                            {currentDynamicTitle.name}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.4em]">{user?.username}</p>
+                            </div>
+
+                            {user?.bio && (
+                                <p className="text-xs text-gray-400 italic max-w-xl leading-relaxed mx-auto md:mx-0">"{user.bio}"</p>
+                            )}
+
+                            {/* Level & XP Progress */}
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-end">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Cấp độ</span>
+                                        <span className="text-2xl font-black italic text-[#4caf50]">{calculateLevel(user?.xp)}</span>
+                                    </div>
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                        {user?.xp || 0} / {calculateProgress(user?.xp).nextXp} XP
+                                    </span>
+                                </div>
+                                <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
+                                    <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${calculateProgress(user?.xp).percent}%` }}
+                                        transition={{ duration: 1.5, ease: "easeOut" }}
+                                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#4caf50] to-[#81c784] shadow-[0_0_20px_rgba(76,175,80,0.4)]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 {/* 📊 THỐNG KÊ NHANH (Compact) */}
                 <div className="grid grid-cols-2 gap-6">
