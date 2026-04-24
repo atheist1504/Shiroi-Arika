@@ -129,6 +129,7 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           fetchStats(data.id);
+          fetchXpLogs(data.id); // Tải 20 nhật ký đầu tiên 📜
           fetchNotifications();
           fetchDynamicTitles();
           cleanupXpLogsAction(); // Tiền trảm hậu tấu: Dọn nhật ký cũ (> 1 tuần) 🧹
@@ -155,6 +156,7 @@ function ProfileContent() {
 
             cleanupNotificationsAction();
             cleanupXpLogsAction(); // Dọn nhật ký cũ 🧹
+            fetchXpLogs(data.id); // Tải nhật ký 📜
         }
       } catch (err) {
         console.error("Lỗi đồng bộ:", err);
@@ -484,7 +486,7 @@ function ProfileContent() {
           {/* 📝 CỘT PHẢI: NỘI DUNG CHI TIẾT */}
           <main className="flex-1 w-full space-y-8 min-h-[600px]">
             {/* TABS MENU PREMIUM */}
-            <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-24 z-[100]">
+            <nav className="glass-card p-2 rounded-[28px] border-white/5 flex gap-1 sticky top-6 z-[100] mb-6">
               {[
                 { id: 'profile', icon: '💎', label: 'Thánh tích' },
                 { id: 'settings', icon: '⚙️', label: 'Cấu hiệu' },
@@ -730,12 +732,13 @@ function ProfileContent() {
                         <h3 className="text-xs font-black uppercase tracking-widest text-white">Bí kíp thăng cấp (Cách nhận XP)</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         {[
                             { label: 'Điểm danh', xp: '+100', icon: '🔥' },
                             { label: 'Đọc chương', xp: '+20', icon: '📖' },
                             { label: 'Bình luận', xp: '+5~10', icon: '💬' },
-                            { label: 'Bốc quà', xp: 'Random', icon: '🎁' }
+                            { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯' },
+                            { label: 'Bốc quà', xp: 'May rủi', icon: '🎁' }
                         ].map((item, idx) => (
                             <div key={idx} className="p-6 bg-black/20 border border-white/5 rounded-[32px] flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
                                 <span className="text-2xl mb-1 group-hover:scale-125 transition-transform duration-500">{item.icon}</span>
@@ -744,10 +747,32 @@ function ProfileContent() {
                             </div>
                         ))}
                     </div>
+
+                    <div className="p-8 bg-white/5 rounded-[40px] border border-white/5 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="text-orange-500 text-xs">⚡</span>
+                            <span className="text-[10px] font-black text-white uppercase tracking-widest">Phần thưởng chuỗi ngày (Streak)</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            {[
+                                { day: '3 ngày', bonus: '+100' },
+                                { day: '7 ngày', bonus: '+200' },
+                                { day: '14 ngày', bonus: '+500' },
+                                { day: '21 ngày', bonus: '+500' },
+                                { day: '30 ngày', bonus: '+1000' }
+                            ].map((s, i) => (
+                                <div key={i} className="px-4 py-3 bg-black/30 rounded-2xl border border-white/5 text-center">
+                                    <div className="text-[8px] font-bold text-gray-500 uppercase">{s.day}</div>
+                                    <div className="text-[11px] font-black text-[#4caf50]">{s.bonus} XP</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                     
-                    <div className="p-6 bg-white/5 rounded-[32px] border border-white/5">
-                        <p className="text-[10px] text-gray-400 leading-relaxed italic text-center">
-                            "Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng tại Shiroi Arika." 🍀
+                    <div className="p-6 bg-[#4caf50]/5 rounded-[32px] border border-[#4caf50]/10">
+                        <p className="text-[9px] text-gray-400 leading-relaxed italic text-center">
+                            "Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng tại Shiroi Arika. <br/>
+                            Lưu ý: XP bình luận giới hạn tối đa 100 XP mỗi ngày để tránh tẩu hỏa nhập ma." 🍀
                         </p>
                     </div>
                 </div>

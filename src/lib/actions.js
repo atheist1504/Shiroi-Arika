@@ -415,6 +415,13 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
     
     const client = getDbClient();
 
+    // 🛡️ LẤY THÔNG TIN NGƯỜI DÙNG HIỆN TẠI ĐỂ KIỂM TRA LV 🍀
+    const { data: userData } = await client
+        .from('shiroi_users')
+        .select('xp, username')
+        .eq('id', userId)
+        .single();
+
     // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
     if (type === 'comment' || type === 'first_comment') {
         const startOfTodayISO = getStartOfVNDay().toISOString();
@@ -448,19 +455,23 @@ export async function recordXpLogAction(userId, amount, type, reason = null) {
     if (error) throw error;
 
     // 🔔 KIỂM TRA ĐẠT DANH HIỆU MỚI (TITLE UNLOCK) 🏆
-    try {
-      const oldLevel = calculateLevel(user?.xp || 0);
-      const newXp = (user?.xp || 0) + amount;
-      const newLevel = calculateLevel(newXp);
+    if (userData) {
+      try {
+        const oldLevel = calculateLevel(userData.xp || 0);
+        const newXp = (userData.xp || 0) + amount;
+        const newLevel = calculateLevel(newXp);
 
-      if (newLevel > oldLevel) {
-          // Tìm xem có danh hiệu nào nằm trong dải level vừa vượt qua không
-          const newTitle = TITLES.find(t => newLevel >= t.lv && oldLevel < t.lv);
-          if (newTitle) {
-              await createInAppNotification(userId, `Danh hiệu mới được khai phá! 🏆`, `Chúc mừng! Bạn đã đạt danh hiệu cao quý: "${newTitle.name}". Hãy tiếp tục tu luyện nhé! 🍀`, 'system', { titleName: newTitle.name });
-          }
+        if (newLevel > oldLevel) {
+            // Tìm xem có danh hiệu nào nằm trong dải level vừa vượt qua không
+            const newTitle = TITLES.find(t => newLevel >= t.lv && oldLevel < t.lv);
+            if (newTitle) {
+                await createInAppNotification(userId, `Danh hiệu mới được khai phá! 🏆`, `Chúc mừng! Bạn đã đạt danh hiệu cao quý: "${newTitle.name}". Hãy tiếp tục tu luyện nhé! 🍀`, 'system', { titleName: newTitle.name });
+            }
+        }
+      } catch (e) {
+        console.warn("⚠️ [LevelUp] Lỗi kiểm tra thăng cấp:", e.message);
       }
-    } catch (e) {}
+    }
 
     return { success: true };
   } catch (error) {
