@@ -1355,11 +1355,39 @@ export async function registerFcmTokenAction(token) {
       return { success: false, error: error.message };
     }
 
-    return { success: true };
-  } catch (error) {
-    console.error("❌ Lỗi registerFcmTokenAction:", error.message);
-    return { success: false, error: error.message };
-  }
+      return { success: true };
+    } catch (error) {
+      console.error("❌ Lỗi registerFcmTokenAction:", error.message);
+      return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🌩️ SERVER ACTION: Hủy đăng ký FCM Token (Dừng nhận thông báo) 🚫
+ */
+export async function unregisterFcmTokenAction() {
+    try {
+      const user = await getAuthenticatedUser();
+      if (!user || !user.id) return { success: false, error: 'Chưa đăng nhập' };
+  
+      const client = getDbClient();
+      
+      // Xóa fcm_token của người dùng
+      const { error } = await client
+        .from('shiroi_users')
+        .update({ fcm_token: null })
+        .eq('id', user.id);
+  
+      if (error) {
+        console.error("❌ Lỗi xóa FCM Token:", error.message);
+        return { success: false, error: error.message };
+      }
+  
+      return { success: true };
+    } catch (error) {
+      console.error("❌ Lỗi unregisterFcmTokenAction:", error.message);
+      return { success: false, error: error.message };
+    }
 }
 
 /**

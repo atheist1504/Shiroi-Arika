@@ -111,3 +111,19 @@ export function onMessageListener() {
     });
   });
 }
+
+/**
+ * 🚫 HỦY KÍCH HOẠT THÔNG BÁO
+ */
+export async function disableNotifications() {
+    if (typeof window === 'undefined') return { success: false };
+
+    try {
+        const { unregisterFcmTokenAction } = await import('./actions');
+        const res = await unregisterFcmTokenAction();
+        return res;
+    } catch (error) {
+        console.error("❌ [FCM] Lỗi khi hủy kích hoạt:", error);
+        return { success: false, error: error.message };
+    }
+}

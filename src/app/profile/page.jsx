@@ -142,9 +142,11 @@ function ProfileContent() {
           cleanupNotificationsAction();
 
 
-          // Kiểm tra quyền thông báo hiện tại
+          // 🔔 Kiểm tra trạng thái thông báo đẩy (Push) 🍀
           if (typeof window !== 'undefined' && 'Notification' in window) {
-            setFcmEnabled(Notification.permission === 'granted');
+            const isPushActive = localStorage.getItem('shiroi_push_enabled') === 'true';
+            // Chỉ coi là đã kích hoạt nếu: Trình duyệt cho phép VÀ (Đã lưu preference HOẶC có token trong DB)
+            setFcmEnabled(Notification.permission === 'granted' && (isPushActive || !!data.fcm_token));
           }
         } else {
             const data = JSON.parse(storedUser);
@@ -395,6 +397,9 @@ function ProfileContent() {
         const token = await requestNotificationPermission();
         if (token) {
             setFcmEnabled(true);
+            localStorage.setItem('shiroi_push_enabled', 'true');
+            // Cập nhật token vào state user để đồng bộ local
+            setUser(prev => ({ ...prev, fcm_token: token }));
             alert("✅ Đã kích hoạt thông báo đẩy thành công! Bạn sẽ nhận được tin nhắn khi có truyện mới hoặc thông báo hệ thống. 🍀");
         } else {
             // Hiển thị thông báo chi tiết hơn để debug 🕵️‍♂️
@@ -403,6 +408,36 @@ function ProfileContent() {
     } catch (err) {
         console.error("❌ Lỗi kích hoạt FCM:", err);
         alert("❌ Có lỗi xảy ra trong quá trình kích hoạt: " + err.message);
+    }
+    setFcmLoading(false);
+  };
+
+  const handleDisableNotifications = async () => {
+    if (!confirm("Bạn có chắc chắn muốn hủy nhận thông báo đẩy không? 🕵️‍♂️")) return;
+    setFcmLoading(true);
+    try {
+        // 1. Hủy đăng ký Topic trên Server trước (Nếu có token) 🌩️
+        if (user?.fcm_token) {
+            const { unsubscribeFromTopicAction } = await import('@/lib/actions');
+            await unsubscribeFromTopicAction(user.fcm_token);
+        }
+
+        // 2. Xóa Token trong DB 🗑️
+        const { disableNotifications } = await import('@/lib/fcmClient');
+        const res = await disableNotifications();
+
+        if (res.success) {
+            setFcmEnabled(false);
+            localStorage.setItem('shiroi_push_enabled', 'false');
+            // Cập nhật state user
+            setUser(prev => ({ ...prev, fcm_token: null }));
+            alert("❌ Đã hủy kích hoạt thông báo đẩy. Bạn sẽ không nhận được thông báo khi có truyện mới nữa.");
+        } else {
+            alert(`Lỗi: ${res.error}`);
+        }
+    } catch (err) {
+        console.error("❌ Lỗi hủy kích hoạt FCM:", err);
+        alert("❌ Có lỗi xảy ra trong quá trình hủy kích hoạt.");
     }
     setFcmLoading(false);
   };
@@ -450,69 +485,9 @@ function ProfileContent() {
       <div className="max-w-5xl mx-auto z-10 relative">
         <div className="flex flex-col gap-12 items-center">
           
-          {/* 👤 CỘT TRÊN: THÔNG TIN CỐT LÕI (GLOSSY SIDEBAR) */}
-          <aside className="w-full max-w-[450px] space-y-6">
-             <div className="glass-card rounded-[48px] p-10 flex flex-col items-center text-center relative overflow-hidden group border-white/5 shadow-2xl">
-                {/* Hào quang Avatar */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-[#4caf50]/20 to-transparent pointer-events-none opacity-50" />
-                
-                <div 
-                    className="relative w-44 h-44 rounded-[40px] overflow-hidden border-4 border-white/10 bg-black/40 cursor-pointer shadow-inner mb-6 group/avatar"
-                    onClick={() => fileInputRef.current.click()}
-                >
-                    <img 
-                        src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110" 
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="text-[10px] font-black uppercase tracking-widest">Đổi ảnh 📷</span>
-                    </div>
-                    {avatarLoading && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                            <div className="w-10 h-10 border-4 border-[#4caf50] border-t-transparent rounded-full animate-spin" />
-                        </div>
-                    )}
-                </div>
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-
-                <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 drop-shadow-lg">
-                    {user?.display_name || user?.username}
-                </h1>
-                
-                <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-[#4caf50]/20 blur-xl rounded-full" />
-                    <div className="relative px-6 py-2 rounded-full border border-[#4caf50]/40 bg-[#4caf50]/10 text-[#4caf50] shadow-glow">
-                        <span className="text-[10px] font-black uppercase tracking-[0.4em] italic">
-                            {user?.selected_badge || currentDynamicTitle?.name || calculateTitle(user?.xp).name}
-                        </span>
-                    </div>
-                </div>
-
-                {/* Thanh XP Pha Lê */}
-                <div className="w-full space-y-3">
-                    <div className="flex justify-between items-end px-1">
-                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Tiến độ tu luyện</span>
-                        <div className="flex flex-col items-end">
-                            <span className="text-xl font-black italic tracking-tighter text-[#4caf50]">{calculateLevel(user?.xp)} <span className="text-[10px] uppercase font-bold text-gray-500 not-italic">LV</span></span>
-                        </div>
-                    </div>
-                    <div className="w-full h-2.5 bg-black/60 rounded-full overflow-hidden border border-white/5 relative p-[1px]">
-                        <motion.div 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${calculateProgress(user?.xp)}%` }}
-                            transition={{ duration: 1.5, ease: "easeOut" }}
-                            className="h-full bg-gradient-to-r from-[#4caf50] to-[#81c784] rounded-full relative"
-                        >
-                            <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.3)_50%,transparent_100%)] animate-loading-bar" />
-                        </motion.div>
-                    </div>
-                    <div className="flex justify-between items-center text-[9px] font-black text-gray-600 uppercase">
-                        <span>{user?.xp || 0} XP</span>
-                        <span>{calculateLevel(user?.xp) * 100} XP</span>
-                    </div>
-                </div>
-             </div>
-
+          {/* 👤 CỘT TRÊN: ĐÃ DỌN DẸP (CLEANED) */}
+          <aside className="w-full max-w-[450px] space-y-6 hidden lg:block">
+             {/* Cột trái để trống để giữ layout cân đối 🍀 */}
           </aside>
 
           {/* 📝 CỘT DƯỚI: NỘI DUNG CHI TIẾT */}
@@ -931,15 +906,15 @@ function ProfileContent() {
                                   </div>
                               </div>
                               <button 
-                                  onClick={handleEnableNotifications}
-                                  disabled={fcmLoading || fcmEnabled}
-                                  className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all ${
+                                  onClick={fcmEnabled ? handleDisableNotifications : handleEnableNotifications}
+                                  disabled={fcmLoading}
+                                  className={`px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-105 active:scale-95 ${
                                       fcmEnabled 
-                                      ? 'bg-white/5 text-gray-600 border border-white/5' 
-                                      : 'bg-[#4caf50] text-[#0a0c0a] hover:scale-105 shadow-2xl shadow-[#4caf50]/30'
+                                      ? 'bg-red-500/10 text-red-500 border border-red-500/20 shadow-xl shadow-red-500/10' 
+                                      : 'bg-[#4caf50] text-[#0a0c0a] shadow-2xl shadow-[#4caf50]/30'
                                   }`}
                               >
-                                  {fcmLoading ? '...' : fcmEnabled ? 'ĐÃ KÍCH HOẠT ✅' : 'KÍCH HOẠT NGAY ⚡'}
+                                  {fcmLoading ? '...' : fcmEnabled ? 'HỦY KÍCH HOẠT ✕' : 'KÍCH HOẠT NGAY ⚡'}
                               </button>
                           </div>
                       </div>

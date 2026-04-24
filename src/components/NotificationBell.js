@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { supabase } from '@/lib/supabase';
-import { requestNotificationPermission } from '@/lib/fcmClient';
+import { requestNotificationPermission, disableNotifications } from '@/lib/fcmClient';
 
 // 🛡️ HÀM HELPER: Kiểm tra và định dạng thời gian an toàn 🍀
 const formatSafeDistance = (dateStr) => {
@@ -63,6 +63,14 @@ export default function NotificationBell() {
             if (u && u.id) {
                 setUserId(u.id);
                 setUser(u);
+                
+                // 🔔 Đồng bộ trạng thái Push từ DB/Local 🍀
+                const storedPush = localStorage.getItem('shiroi_push_enabled');
+                if (storedPush === 'true' || !!u.fcm_token) {
+                    setPushEnabled(true);
+                    if (storedPush !== 'true') localStorage.setItem('shiroi_push_enabled', 'true');
+                }
+
                 return setupRealtime(u.id);
             }
             setConnectionStatus('disconnected');
@@ -115,8 +123,7 @@ export default function NotificationBell() {
             }
         };
 
-        const storedPush = localStorage.getItem('shiroi_push_enabled');
-        if (storedPush === 'true') setPushEnabled(true);
+        // Đã đồng bộ trong initAuth 🍀
 
         document.addEventListener('mousedown', handleClickOutside);
         
@@ -189,11 +196,14 @@ export default function NotificationBell() {
                     localStorage.setItem('shiroi_push_enabled', 'false');
                 }
             } else {
+                // 1. Hủy Topic 🌩️
                 const storedUser = localStorage.getItem('shiroi_user');
                 const u = storedUser ? JSON.parse(storedUser) : null;
                 if (u?.fcm_token) {
                     await unsubscribeFromTopicAction(u.fcm_token);
                 }
+                // 2. Xóa Token trong DB 🗑️
+                await disableNotifications();
             }
         } catch (err) {
             console.error("❌ Lỗi chuyển đổi Push:", err);
