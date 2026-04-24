@@ -391,12 +391,18 @@ function ProfileContent() {
   const handleEnableNotifications = async () => {
     setFcmLoading(true);
     const { requestNotificationPermission } = await import('@/lib/fcmClient');
-    const token = await requestNotificationPermission();
-    if (token) {
-        setFcmEnabled(true);
-        alert("✅ Đã kích hoạt thông báo đẩy thành công! Bạn sẽ nhận được tin nhắn khi có truyện mới hoặc thông báo hệ thống. 🍀");
-    } else {
-        alert("❌ Kích hoạt thất bại. Vui lòng kiểm tra lại quyền thông báo trong cài đặt trình duyệt của bạn.");
+    try {
+        const token = await requestNotificationPermission();
+        if (token) {
+            setFcmEnabled(true);
+            alert("✅ Đã kích hoạt thông báo đẩy thành công! Bạn sẽ nhận được tin nhắn khi có truyện mới hoặc thông báo hệ thống. 🍀");
+        } else {
+            // Hiển thị thông báo chi tiết hơn để debug 🕵️‍♂️
+            alert("❌ Kích hoạt thất bại. Hãy kiểm tra:\n1. Bạn đã 'Cho phép' (Allow) thông báo trên trình duyệt chưa?\n2. Trình duyệt có đang ở chế độ Ẩn danh (Incognito) không? (FCM không chạy ở ẩn danh)\n3. Kết nối mạng có ổn định không?");
+        }
+    } catch (err) {
+        console.error("❌ Lỗi kích hoạt FCM:", err);
+        alert("❌ Có lỗi xảy ra trong quá trình kích hoạt: " + err.message);
     }
     setFcmLoading(false);
   };

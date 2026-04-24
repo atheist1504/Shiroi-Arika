@@ -54,12 +54,23 @@ export async function requestNotificationPermission() {
       }
       const messaging = getMessaging(app);
       
-      console.log('🎫 [FCM] Đang lấy Token từ Firebase...');
+      const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
+      if (!vapidKey) {
+        console.error("❌ [FCM] Thiếu NEXT_PUBLIC_FIREBASE_VAPID_KEY trong .env");
+        return null;
+      }
+
+      console.log('🎫 [FCM] Đang lấy Token từ Firebase với VAPID Key:', vapidKey.substring(0, 10) + '...');
       // Lấy Token từ Firebase
       const token = await getToken(messaging, {
-        vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
+        vapidKey: vapidKey
       }).catch(err => {
-          console.error("❌ [FCM] Lỗi getToken:", err);
+          console.error("❌ [FCM] Lỗi getToken (Chi tiết):", err);
+          if (err.code === 'messaging/permission-blocked') {
+              console.warn("🚫 [FCM] Người dùng đã chặn quyền thông báo.");
+          } else if (err.code === 'messaging/failed-serviceworker-registration') {
+              console.error("🛠️ [FCM] Lỗi đăng ký Service Worker. Kiểm tra file public/firebase-messaging-sw.js");
+          }
           return null;
       });
 
