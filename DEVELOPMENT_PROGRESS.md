@@ -217,4 +217,4 @@ Dự án Manga Platform thế hệ mới.
 
 ...
 
-*Cập nhật lần cuối: 12:20 - 24/04/2026 (Notification Permission Guide Integration)*
+*Cập nhật lần cuối: 12:25 - 24/04/2026 (Refined Notification Guide Icons)*

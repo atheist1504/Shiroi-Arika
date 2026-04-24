@@ -949,7 +949,7 @@ function ProfileContent() {
                                               <p className="text-[10px] font-black text-white uppercase tracking-tighter">Mở cài đặt</p>
                                           </div>
                                           <p className="text-[9px] text-gray-500 leading-relaxed ml-9">
-                                              Nhấn vào biểu tượng **Ổ khóa** 🔒 hoặc **Cài đặt** ở đầu thanh địa chỉ trình duyệt.
+                                              Nhấn vào biểu tượng **Cài đặt** (hình 🔒 hoặc biểu tượng **Tùy chỉnh** ⚙️/⊶) ở bên trái thanh địa chỉ.
                                           </p>
                                       </div>
                                       
