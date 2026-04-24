@@ -734,16 +734,17 @@ function ProfileContent() {
 
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                         {[
-                            { label: 'Điểm danh', xp: '+100', icon: '🔥' },
-                            { label: 'Đọc chương', xp: '+20', icon: '📖' },
-                            { label: 'Bình luận', xp: '+5~10', icon: '💬' },
-                            { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯' },
-                            { label: 'Bốc quà', xp: 'May rủi', icon: '🎁' }
+                            { label: 'Điểm danh', xp: '+100', icon: '🔥', detail: 'Reset 0h sáng' },
+                            { label: 'Đọc chương', xp: '+20', icon: '📖', detail: 'Mỗi chương truyện' },
+                            { label: 'Bình luận', xp: '+5~10', icon: '💬', detail: 'Tăng tương tác' },
+                            { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯', detail: 'Kho thành tích' },
+                            { label: 'Bốc quà', xp: 'May rủi', icon: '🎁', detail: 'Vận khí mỗi ngày' }
                         ].map((item, idx) => (
                             <div key={idx} className="p-6 bg-black/20 border border-white/5 rounded-[32px] flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
                                 <span className="text-2xl mb-1 group-hover:scale-125 transition-transform duration-500">{item.icon}</span>
                                 <span className="text-[9px] font-black text-gray-500 uppercase tracking-tighter">{item.label}</span>
                                 <span className="text-sm font-black text-[#4caf50] italic">{item.xp} XP</span>
+                                <span className="text-[7px] text-gray-700 font-bold uppercase tracking-tight">{item.detail}</span>
                             </div>
                         ))}
                     </div>
@@ -769,11 +770,20 @@ function ProfileContent() {
                         </div>
                     </div>
                     
-                    <div className="p-6 bg-[#4caf50]/5 rounded-[32px] border border-[#4caf50]/10">
-                        <p className="text-[9px] text-gray-400 leading-relaxed italic text-center">
-                            "Cần cù bù thông minh, tu luyện mỗi ngày để thăng hạng tại Shiroi Arika. <br/>
-                            Lưu ý: XP bình luận giới hạn tối đa 100 XP mỗi ngày để tránh tẩu hỏa nhập ma." 🍀
-                        </p>
+                    <div className="p-8 bg-[#4caf50]/5 rounded-[40px] border border-[#4caf50]/10 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <p className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Lưu ý tu luyện 🛡️</p>
+                            <ul className="text-[9px] text-gray-500 space-y-1 ml-4 list-disc italic">
+                                <li><strong>Hạn mức:</strong> XP bình luận giới hạn tối đa 100 XP mỗi ngày.</li>
+                                <li><strong>Nghiệp lực:</strong> Bình luận rác, spam bị xóa sẽ bị trừ gấp đôi số XP đã nhận.</li>
+                                <li><strong>Thời mốc:</strong> Điểm danh và làm mới nhiệm vụ vào 00:00 hàng ngày (Giờ VN).</li>
+                            </ul>
+                        </div>
+                        <div className="flex items-center justify-center border-l border-white/5 pl-6 italic">
+                             <p className="text-[10px] text-gray-400 text-center leading-relaxed">
+                                "Cần cù bù thông minh, tu luyện mỗi ngày để sớm ngày đắc đạo tại Shiroi Arika." 🍀
+                            </p>
+                        </div>
                     </div>
                 </div>
               </motion.div>
@@ -783,7 +793,7 @@ function ProfileContent() {
               <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <form onSubmit={handleUpdate} className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
                   <div className="flex items-baseline gap-3">
-                      <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Cấu hiệu hồ sơ</h3>
+                      <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Thông tin hồ sơ</h3>
                       <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                   </div>
                   <div className="space-y-6">
