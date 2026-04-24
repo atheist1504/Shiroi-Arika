@@ -43,6 +43,7 @@ export const uploadToR2 = async (file, fileName) => {
       Key: fileName,
       Body: bodyValue,
       ContentType: "image/webp",
+      CacheControl: "public, max-age=31536000, immutable",
     });
 
     await S3.send(command);
@@ -78,6 +79,7 @@ export const getPresignedUploadUrl = async (fileName) => {
     Bucket: bucketName,
     Key: fileName,
     ContentType: "image/webp",
+    CacheControl: "public, max-age=31536000, immutable",
   });
 
   // Vé có hiệu lực trong 5 phút (300 giây)
