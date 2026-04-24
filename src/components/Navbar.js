@@ -73,7 +73,9 @@ export default function Navbar() {
         const parsed = JSON.parse(storedUser);
         setUser(parsed);
 
-        if (parsed.id && (parsed.xp === undefined || parsed.xp === null || !parsed.display_name)) {
+        // 🔄 LUÔN ĐỒNG BỘ DỮ LIỆU MỚI NHẤT TỪ DATABASE KHI MOUNT 🍀
+        // Điều này đảm bảo khi Admin cấp quyền Staff, người dùng sẽ thấy nút ngay mà không cần Logout
+        if (parsed.id) {
             refreshUserData(parsed.id);
         }
       } else {
