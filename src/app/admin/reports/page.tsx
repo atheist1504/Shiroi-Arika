@@ -17,6 +17,7 @@ export default function AdminReportsPage() {
   const [newChatMsg, setNewChatMsg] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,8 +25,12 @@ export default function AdminReportsPage() {
   }, [chatMessages, selectedReport]);
 
   useEffect(() => {
+    const stored = localStorage.getItem('shiroi_user');
+    if (stored) setUser(JSON.parse(stored));
     fetchReports();
   }, []);
+
+  const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
 
   const fetchReports = async () => {
     setLoading(true);
@@ -164,33 +169,33 @@ export default function AdminReportsPage() {
                         </td>
                         <td className="py-5 px-2 text-center">
                            <div className="flex items-center justify-center gap-2">
-                              {report.status !== 'fixed' && (
-                                <button 
-                                  onClick={() => handleUpdateStatus(report.id, 'fixed')}
-                                  disabled={!!updatingId}
-                                  className="p-2 bg-[#4caf50]/10 text-[#4caf50] hover:bg-[#4caf50] hover:text-black rounded-lg transition-all"
-                                  title="Đã sửa"
-                                >
-                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
-                                </button>
-                              )}
-                              {report.status === 'pending' && (
-                                <button 
-                                  onClick={() => handleUpdateStatus(report.id, 'ignored')}
-                                  disabled={!!updatingId}
-                                  className="p-2 bg-gray-500/10 text-gray-500 hover:bg-gray-500 hover:text-white rounded-lg transition-all"
-                                  title="Bỏ qua"
-                                >
-                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => openChat(report)}
-                                className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
-                                title="Chat hỗ trợ"
-                              >
-                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                              </button>
+                               {isAdmin && report.status !== 'fixed' && (
+                                 <button 
+                                   onClick={() => handleUpdateStatus(report.id, 'fixed')}
+                                   disabled={!!updatingId}
+                                   className="p-2 bg-[#4caf50]/10 text-[#4caf50] hover:bg-[#4caf50] hover:text-black rounded-lg transition-all"
+                                   title="Đã sửa"
+                                 >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
+                                 </button>
+                               )}
+                               {isAdmin && report.status === 'pending' && (
+                                 <button 
+                                   onClick={() => handleUpdateStatus(report.id, 'ignored')}
+                                   disabled={!!updatingId}
+                                   className="p-2 bg-gray-500/10 text-gray-500 hover:bg-gray-500 hover:text-white rounded-lg transition-all"
+                                   title="Bỏ qua"
+                                 >
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                 </button>
+                               )}
+                               <button 
+                                 onClick={() => openChat(report)}
+                                 className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
+                                 title="Chat hỗ trợ"
+                               >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                               </button>
                            </div>
                         </td>
                       </tr>
