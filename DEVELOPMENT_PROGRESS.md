@@ -44,14 +44,20 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Triển khai **Indexing** cho bảng `shiroi_reports`, giúp trang quản trị load nhanh gấp 3 lần.
     - **Smart Navbar**: Hợp nhất nút "Báo cáo" và "Quản lý" thành một mục duy nhất, tự động nhận diện Admin/User để dẫn tới trang phù hợp. 🚩🛡️
     - **Client-side Caching**: Tích hợp cơ chế cache dữ liệu báo cáo tại trang Profile, giúp chuyển đổi tab mượt mà không cần chờ tải lại. 🔄⚡
+    - **UI Simplification**: Ẩn mục "Báo cáo" cho Admin để tinh gọn giao diện, tập trung vào công cụ quản trị chuyên dụng. 🧹
 - [x] **Rewards & Missions Performance**:
     - **Raw Latency Audit**: Kiểm tra và tối ưu hóa độ trễ DB cho các thao tác Điểm danh, Bốc quà và Nhận thưởng.
     - **Parallel Processing**: Sử dụng `Promise.all` cho các truy vấn kiểm tra nhiệm vụ, rút ngắn thời gian phản hồi server. ⚡🚀
     - **Mission Indexing**: Bổ sung chỉ mục cho `shiroi_xp_logs` và `shiroi_mission_claims` để đảm bảo hệ thống mở rộng tốt khi số lượng bản ghi tăng cao. 📈
+- [x] **Security & Integrity (v47 - Hardening)**:
+    - **Server-side Middleware**: Triển khai `src/middleware.js` bảo vệ toàn bộ route `/admin` ở tầng Edge/Server, chặn truy cập trái phép ngay cả khi tắt JS. 🛡️🔐
+    - **Idempotent SQL**: Cập nhật các script RLS thành chuẩn idempotent (`DROP IF EXISTS`), đảm bảo vận hành ổn định trên mọi môi trường. 🛠️
 - [x] **Admin Special Privileges**:
     - **All-Access Badges**: Cấp quyền cho Admin (`atheist1504`) truy cập và sử dụng TOÀN BỘ danh hiệu trong "Kho Thành Tựu" mà không cần điều kiện Level. 🏆💎
     - **Enhanced Reporting Feedback**: Cập nhật trạng thái "Bỏ qua" thành "Đã kiểm tra không lỗi" trong thông báo gửi tới người dùng, tăng tính chuyên nghiệp trong phản hồi. 🛠️🍀
-- [x] **System Stability (TS Fix)**: Khắc phục các lỗi định nghĩa kiểu (TypeScript) và lỗi thiếu biến tại trang Quản lý báo cáo, đảm bảo hệ thống build ổn định trên Production. 🏗️✅
+- [x] **System Stability (TS & Logic Fix)**: 
+    - Khắc phục triệt để lỗi logic trong `updateUserProfileAction` gây hỏng tính năng đổi Avatar/Danh hiệu.
+    - Sửa các lỗi TypeScript (missing variables) tại trang quản trị. 🏗️✅
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
@@ -82,4 +88,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 11:15 - 25/04/2026 (Performance & UX Final Polish - v47)*
+*Cập nhật lần cuối: 11:45 - 25/04/2026 (Performance & UX Final Polish - v47)*
