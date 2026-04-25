@@ -541,7 +541,7 @@ function ProfileContent() {
                 { id: 'profile', icon: '💎', label: 'Hồ sơ' },
                 { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
                 { id: 'notifications', icon: '🔔', label: 'Hộp thư' },
-                { id: 'reports', icon: '🚩', label: 'Báo cáo' },
+                ...(!(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') ? [{ id: 'reports', icon: '🚩', label: 'Báo cáo' }] : []),
                 ...(user?.role === 'admin' ? [{ id: 'admin', icon: '🛡️', label: 'Quản trị' }] : [])
               ].map(t => (
                 <Link 

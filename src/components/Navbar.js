@@ -379,14 +379,18 @@ export default function Navbar() {
                       Nhiệm vụ
                     </button>
     
-                    <div className="w-[1px] h-3 bg-white/10"></div>
-                    <Link 
-                      href={(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') ? "/admin/reports" : "/profile?tab=reports"} 
-                      className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
-                    >
-                        <span className="text-sm opacity-80">🚩</span>
-                        Báo cáo
-                    </Link>
+                    {!(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
+                      <>
+                        <div className="w-[1px] h-3 bg-white/10"></div>
+                        <Link 
+                          href="/profile?tab=reports" 
+                          className="text-gray-500 hover:text-[#4caf50] transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
+                        >
+                            <span className="text-sm opacity-80">🚩</span>
+                            Báo cáo
+                        </Link>
+                      </>
+                    )}
 
                   </>
                 )}
@@ -448,13 +452,15 @@ export default function Navbar() {
                    >
                       <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
                    </button>
-                   <Link 
-                        href={(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') ? "/admin/reports" : "/profile?tab=reports"} 
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center justify-center gap-3 py-3 bg-white/5 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-white/5 active:scale-95 transition-all"
-                   >
-                        <span className="text-sm">🚩</span> {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') ? 'DANH SÁCH BÁO CÁO' : 'BÁO CÁO CỦA BẠN'}
-                   </Link>
+                   {!(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
+                     <Link 
+                          href="/profile?tab=reports" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center justify-center gap-3 py-3 bg-white/5 text-gray-400 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-white/5 active:scale-95 transition-all"
+                     >
+                          <span className="text-sm">🚩</span> BÁO CÁO CỦA BẠN
+                     </Link>
+                   )}
 
                 </div>
                 
