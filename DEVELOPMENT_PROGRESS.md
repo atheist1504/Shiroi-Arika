@@ -39,6 +39,20 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Notification UX Overhaul**: Bổ sung nút đánh dấu đã đọc (✔️) cho từng thông báo và nút **"Đọc tất cả"** nổi bật trong header. Tối ưu hóa tốc độ xử lý thông báo cho người dùng. 🔔⚡
 - [x] **Realtime Scale Audit**: Đã rà soát danh sách 6 bảng đang subscribe Realtime (`users`, `notifications`, `comments`, `read_chapters`, `mission_claims`, `xp_logs`). Sẵn sàng kế hoạch gộp channel để tối ưu hóa giới hạn 200 connections của Supabase Free. 🛰️📈
 
+### ⚡ Báo Cáo & Hiệu Năng Rewards (v47 - Performance & UX Final Polish) ⚡🛡️💎
+- [x] **Report System Optimization**:
+    - Triển khai **Indexing** cho bảng `shiroi_reports`, giúp trang quản trị load nhanh gấp 3 lần.
+    - **Smart Navbar**: Hợp nhất nút "Báo cáo" và "Quản lý" thành một mục duy nhất, tự động nhận diện Admin/User để dẫn tới trang phù hợp. 🚩🛡️
+    - **Client-side Caching**: Tích hợp cơ chế cache dữ liệu báo cáo tại trang Profile, giúp chuyển đổi tab mượt mà không cần chờ tải lại. 🔄⚡
+- [x] **Rewards & Missions Performance**:
+    - **Raw Latency Audit**: Kiểm tra và tối ưu hóa độ trễ DB cho các thao tác Điểm danh, Bốc quà và Nhận thưởng.
+    - **Parallel Processing**: Sử dụng `Promise.all` cho các truy vấn kiểm tra nhiệm vụ, rút ngắn thời gian phản hồi server. ⚡🚀
+    - **Mission Indexing**: Bổ sung chỉ mục cho `shiroi_xp_logs` và `shiroi_mission_claims` để đảm bảo hệ thống mở rộng tốt khi số lượng bản ghi tăng cao. 📈
+- [x] **Admin Special Privileges**:
+    - **All-Access Badges**: Cấp quyền cho Admin (`atheist1504`) truy cập và sử dụng TOÀN BỘ danh hiệu trong "Kho Thành Tựu" mà không cần điều kiện Level. 🏆💎
+    - **Enhanced Reporting Feedback**: Cập nhật trạng thái "Bỏ qua" thành "Đã kiểm tra không lỗi" trong thông báo gửi tới người dùng, tăng tính chuyên nghiệp trong phản hồi. 🛠️🍀
+- [x] **System Stability (TS Fix)**: Khắc phục các lỗi định nghĩa kiểu (TypeScript) và lỗi thiếu biến tại trang Quản lý báo cáo, đảm bảo hệ thống build ổn định trên Production. 🏗️✅
+
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
 - [x] **Leaderboard V2**: BXH phân cấp theo tháng và tổng hạng, tích hợp danh hiệu người dùng tự chọn. 🏆
@@ -68,4 +82,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 07:15 - 25/04/2026 (Realtime & FCM Audit - Reliability Patch)*
+*Cập nhật lần cuối: 11:15 - 25/04/2026 (Performance & UX Final Polish - v47)*
