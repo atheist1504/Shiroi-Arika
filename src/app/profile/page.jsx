@@ -336,7 +336,7 @@ function ProfileContent() {
     const { error } = await supabase.storage.from('avatars').upload(fileName, file);
     if (!error) {
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
-      const res = await updateUserProfileAction(user.id, { 
+      const res = await updateUserProfileAction({ 
           display_name: displayName, 
           bio: bio, 
           avatar_url: publicUrl,
@@ -355,7 +355,7 @@ function ProfileContent() {
     e.preventDefault();
     setUpdating(true);
     setMessage('');
-    const res = await updateUserProfileAction(user.id, { 
+    const res = await updateUserProfileAction({ 
         display_name: displayName, 
         bio: bio, 
         avatar_url: avatarUrl,
@@ -720,7 +720,7 @@ function ProfileContent() {
                                     onClick={async () => {
                                         if (isSelected) return;
                                         setUpdating(true);
-                                        const res = await updateUserProfileAction(user.id, { selected_badge: title.name });
+                                        const res = await updateUserProfileAction({ selected_badge: title.name });
                                         if (res.success) {
                                             setUser(res.user);
                                             localStorage.setItem('shiroi_user', JSON.stringify(res.user));
