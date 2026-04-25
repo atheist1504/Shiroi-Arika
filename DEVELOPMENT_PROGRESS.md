@@ -36,7 +36,7 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 ### 🛰️ Realtime & FCM Integrity Audit (v46 - Reliability Patch) 🛰️⚡🔔
 - [x] **Memory Leak Fix (NotificationBell)**: Khắc phục triệt để lỗi "đứt gánh" subscription khi unmount bằng cơ chế `useRef` cho Channel reference. Đảm bảo 100% channel được cleanup sạch sẽ. 🧹🛡️
 - [x] **FCM Auto-sync (Anti-expiration)**: Triển khai cơ chế tự động đồng bộ Token tại `Navbar.js`. Hệ thống sẽ tự động cập nhật token mới lên DB nếu token cũ hết hạn hoặc thay đổi, đảm bảo không mất liên lạc với người dùng. ⚡📱
-- [x] **Individual "Mark as Read"**: Bổ sung nút đánh dấu đã đọc (✔️) cho từng thông báo và nhãn **"ĐÃ XEM"** trên thẻ truyện tại trang chủ. Cải thiện trải nghiệm theo dõi tiến độ đọc của người dùng. 📖✅
+- [x] **Notification UX Overhaul**: Bổ sung nút đánh dấu đã đọc (✔️) cho từng thông báo và nút **"Đọc tất cả"** nổi bật trong header. Tối ưu hóa tốc độ xử lý thông báo cho người dùng. 🔔⚡
 - [x] **Realtime Scale Audit**: Đã rà soát danh sách 6 bảng đang subscribe Realtime (`users`, `notifications`, `comments`, `read_chapters`, `mission_claims`, `xp_logs`). Sẵn sàng kế hoạch gộp channel để tối ưu hóa giới hạn 200 connections của Supabase Free. 🛰️📈
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
