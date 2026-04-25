@@ -1101,7 +1101,7 @@ function ProfileContent() {
                       </div>
 
                       {!selectedReport ? (
-                        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                        <div className="space-y-4 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
                            {userReports.map((r, rIdx) => (
                              <motion.div 
                                key={r.id} 

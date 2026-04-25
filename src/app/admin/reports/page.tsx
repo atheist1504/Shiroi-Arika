@@ -88,7 +88,7 @@ export default function AdminReportsPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0c0a] text-white p-4 sm:p-8 font-sans">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         
         <div className="flex items-center justify-between mb-10">
            <h1 className="text-2xl font-black uppercase tracking-[0.3em] flex items-center gap-3">
@@ -107,7 +107,7 @@ export default function AdminReportsPage() {
         )}
 
         <AdminCard title="Danh sách báo cáo" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4"/></svg>}>
-          <div className="overflow-x-auto max-h-[650px] overflow-y-auto custom-scrollbar">
+          <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#2a332a]">
