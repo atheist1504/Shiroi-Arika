@@ -11,6 +11,12 @@ import { getStartOfVNDay } from './missions';
 import { hashPassword, verifyPassword } from './crypto';
 
 /**
+ * 🛡️ HẰNG SỐ BẢO MẬT: Các trường dữ liệu người dùng an toàn được phép trả về Client 🍀
+ * Tuyệt đối không bao gồm cột 'password'.
+ */
+export const SAFE_USER_FIELDS = 'id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at';
+
+/**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
  */
 const getVietnamTime = () => {
@@ -27,7 +33,7 @@ export async function loginAction(username, password) {
     const client = getDbClient(); // Sử dụng Admin Client để có quyền xem cột password 🛡️
     const { data: user, error } = await client
       .from('shiroi_users')
-      .select('*')
+      .select(`password, ${SAFE_USER_FIELDS}`)
       .ilike('username', username.trim())
       .single();
 
@@ -64,7 +70,10 @@ export async function loginAction(username, password) {
       sameSite: 'lax'
     });
 
-    return { success: true, user };
+    // 🛡️ BẢO VỆ: Loại bỏ mật mã trước khi trả về Client
+    const { password: _, ...safeUser } = user;
+
+    return { success: true, user: safeUser };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -110,7 +119,7 @@ export async function signupAction(userData) {
         level: 1,
         check_in_streak: 0
       }])
-      .select()
+      .select(SAFE_USER_FIELDS)
       .single();
 
     if (signupError) throw signupError;
@@ -557,7 +566,7 @@ export async function addReadXPAction(mangaId, chapterId) {
         // Thực tế recordXpLogAction cho 'read' chưa có Index unique cho chapterId.
     }
 
-    const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+    const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
     // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
     try {
@@ -653,7 +662,7 @@ export async function performCheckInAction() {
         last_check_in: new Date().toISOString()
       })
       .eq('id', userId)
-      .select()
+      .select(SAFE_USER_FIELDS)
       .single();
 
     if (updateError) throw updateError;
@@ -917,7 +926,7 @@ export async function performLuckyDrawAction() {
       .from('shiroi_users')
       .update({ last_lucky_draw: new Date().toISOString() })
       .eq('id', userId)
-      .select()
+      .select(SAFE_USER_FIELDS)
       .single();
 
     if (upError) {
@@ -1182,7 +1191,7 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     const resLog = await recordXpLogAction(rewardXp, 'mission', missionKey);
     if (!resLog.success) throw new Error(resLog.error);
 
-    const { data: updatedUser } = await client.from('shiroi_users').select('*').eq('id', userId).single();
+    const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
     // 5. TỰ ĐỘNG ĐÁNH DẤU ĐÃ ĐỌC thông báo nhắc nhở cũ 🧹
     try {
@@ -1643,7 +1652,7 @@ export async function updateUserProfileAction(updateData) {
         selected_badge: updateData.selected_badge
       })
       .eq('id', user.id)
-      .select()
+      .select(SAFE_USER_FIELDS)
       .single();
 
     if (error) throw error;

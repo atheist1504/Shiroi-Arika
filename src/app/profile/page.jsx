@@ -60,7 +60,8 @@ function ProfileContent() {
   const [message, setMessage] = useState('');
   
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'profile';
+  const rawTab = searchParams.get('tab') || 'profile';
+  const activeTab = (rawTab === 'achievements' || rawTab === 'missions') ? 'profile' : rawTab;
   const router = useRouter();
 
   // 🔐 STATE CHO ĐỔI MẬT KHẨU 🛡️

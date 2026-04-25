@@ -19,10 +19,10 @@ export function middleware(request) {
     try {
       // 3. Giải mã session từ cookie
       const user = JSON.parse(session.value);
-      const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
+      const isAdminOrStaff = user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504';
 
-      // 4. Nếu không phải Admin -> Đá về trang chủ
-      if (!isAdmin) {
+      // 4. Nếu không phải Admin/Staff -> Đá về trang chủ
+      if (!isAdminOrStaff) {
         return NextResponse.redirect(new URL('/', request.url));
       }
     } catch (e) {
