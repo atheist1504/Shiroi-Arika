@@ -107,7 +107,7 @@ export default function AdminReportsPage() {
         )}
 
         <AdminCard title="Danh sách báo cáo" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4"/></svg>}>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[650px] overflow-y-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#2a332a]">
@@ -201,7 +201,7 @@ export default function AdminReportsPage() {
         {selectedReport && (
             <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 pointer-events-none">
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedReport(null)} />
-                <div className="w-full sm:w-[450px] h-full sm:h-[90%] bg-[#0c0f0c] border-l sm:border border-white/10 sm:rounded-[32px] shadow-2xl flex flex-col relative z-10 pointer-events-auto animate-in slide-in-from-right duration-300">
+                <div className="w-full sm:w-[450px] h-full sm:h-[80vh] bg-[#0c0f0c] border-l sm:border border-white/10 sm:rounded-[32px] shadow-2xl flex flex-col relative z-10 pointer-events-auto animate-in slide-in-from-right duration-300">
                     
                     {/* Header */}
                     <div className="p-6 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-transparent">
