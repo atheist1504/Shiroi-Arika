@@ -26,7 +26,7 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
-    const channelRef = useRef(null); // 🛡️ Fix memory leak race condition 🍀
+    const channelRef = useRef(null);
     const [isMounted, setIsMounted] = useState(false);
     const [user, setUser] = useState(null);
     const [userId, setUserId] = useState(null);
@@ -38,48 +38,73 @@ export default function NotificationBell() {
     const [pushEnabled, setPushEnabled] = useState(false);
     const LIMIT = 20;
 
-    useEffect(() => {
-        setIsMounted(true);
+    // 🕵️‍♂️ SYNC USER STATE 🍀
+    const checkUser = async () => {
+        const storedUser = localStorage.getItem('shiroi_user');
+        let u = storedUser ? JSON.parse(storedUser) : null;
         
-        const initAuth = async () => {
-            setConnectionStatus('connecting');
-            const storedUser = localStorage.getItem('shiroi_user');
-            let u = storedUser ? JSON.parse(storedUser) : null;
-            
-            if (!u || !u.id) {
-                try {
-                    const res = await fetch('/api/user');
-                    const data = await res.json();
-                    if (data.success && data.user) {
-                        u = data.user;
-                        localStorage.setItem('shiroi_user', JSON.stringify(u));
-                    }
-                } catch (e) {
-                    console.error("❌ Không thể đồng bộ User ID từ API");
-                    setConnectionStatus('error');
-                    return null;
+        if (!u || !u.id) {
+            try {
+                const res = await fetch('/api/user');
+                const data = await res.json();
+                if (data.success && data.user) {
+                    u = data.user;
+                    localStorage.setItem('shiroi_user', JSON.stringify(u));
                 }
+            } catch (e) {
+                console.warn("❌ Không thể đồng bộ User ID từ API");
             }
+        }
 
-            if (u && u.id) {
+        if (u && u.id) {
+            if (u.id !== userId) {
+                console.log("👤 [Notification] Cập nhật User ID:", u.id);
                 setUserId(u.id);
                 setUser(u);
                 
-                // 🔔 Đồng bộ trạng thái Push từ DB/Local 🍀
                 const storedPush = localStorage.getItem('shiroi_push_enabled');
                 if (storedPush === 'true' || !!u.fcm_token) {
                     setPushEnabled(true);
-                    if (storedPush !== 'true') localStorage.setItem('shiroi_push_enabled', 'true');
                 }
-
-                return setupRealtime(u.id);
             }
+        } else {
+            setUserId(null);
+            setUser(null);
             setConnectionStatus('disconnected');
-            return null;
+        }
+    };
+
+    // 🚀 INITIAL MOUNT 🍀
+    useEffect(() => {
+        setIsMounted(true);
+        checkUser();
+        fetchNotifications();
+
+        window.addEventListener('storage', checkUser);
+        // Lắng nghe cả custom event nếu Navbar cập nhật user
+        window.addEventListener('userChanged', checkUser);
+        
+        return () => {
+            window.removeEventListener('storage', checkUser);
+            window.removeEventListener('userChanged', checkUser);
         };
+    }, []);
+
+    // 🛰️ REAL-TIME SUBSCRIPTION (Reactive to userId) 🍀
+    useEffect(() => {
+        if (!userId) {
+            if (channelRef.current) {
+                console.log("🔌 [Notification] Đóng channel do logout");
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
+            }
+            return;
+        }
 
         const setupRealtime = (uid) => {
-            // 🧹 Hủy channel cũ nếu tồn tại để tránh xung đột 🍀
+            setConnectionStatus('connecting');
+            
+            // Dọn dẹp channel cũ nếu có
             if (channelRef.current) {
                 supabase.removeChannel(channelRef.current);
             }
@@ -91,13 +116,14 @@ export default function NotificationBell() {
                     table: 'shiroi_notifications',
                     filter: `user_id=eq.${uid}`
                 }, (payload) => {
+                    console.log('🔔 [Real-time Notif]:', payload.eventType);
                     if (payload.eventType === 'INSERT') {
                         setNotifications(prev => [payload.new, ...prev]);
                         setUnreadCount(prev => prev + 1);
                         try {
                             const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
                             audio.volume = 0.15;
-                            audio.play();
+                            audio.play().catch(() => {});
                         } catch (e) {}
                     } else if (payload.eventType === 'UPDATE') {
                         setNotifications(current => {
@@ -105,43 +131,51 @@ export default function NotificationBell() {
                             setUnreadCount(updated.filter(n => !n.is_read).length);
                             return updated;
                         });
+                    } else if (payload.eventType === 'DELETE') {
+                        setNotifications(current => {
+                            const updated = current.filter(n => n.id !== payload.old.id);
+                            setUnreadCount(updated.filter(n => !n.is_read).length);
+                            return updated;
+                        });
                     }
                 });
 
-            // 🚀 Đăng ký lắng nghe sau khi đã định nghĩa các callback 🛡️
             channel.subscribe((status) => {
+                console.log(`📡 [Notification] Trạng thái: ${status}`);
                 if (status === 'SUBSCRIBED') {
                     setConnectionStatus('connected');
                 } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
                     setConnectionStatus('error');
+                    // Thử kết nối lại sau 5s nếu lỗi
+                    setTimeout(() => { if (userId) setupRealtime(userId); }, 5000);
                 }
             });
 
+            channelRef.current = channel;
             return channel;
         };
 
-        initAuth().then(channel => {
-            channelRef.current = channel;
-        });
+        setupRealtime(userId);
 
-        fetchNotifications();
+        return () => {
+            if (channelRef.current) {
+                console.log("🔌 [Notification] Cleanup Real-time");
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
+            }
+        };
+    }, [userId]);
 
+    // 🔒 CLICK OUTSIDE 🍀
+    useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setIsOpen(false);
                 setIsSettingsOpen(false);
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
-        
-        return () => {
-            if (channelRef.current) {
-                supabase.removeChannel(channelRef.current);
-                channelRef.current = null;
-            }
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -205,13 +239,11 @@ export default function NotificationBell() {
                     localStorage.setItem('shiroi_push_enabled', 'false');
                 }
             } else {
-                // 1. Hủy Topic 🌩️
                 const storedUser = localStorage.getItem('shiroi_user');
                 const u = storedUser ? JSON.parse(storedUser) : null;
                 if (u?.fcm_token) {
                     await unsubscribeFromTopicAction(u.fcm_token);
                 }
-                // 2. Xóa Token trong DB 🗑️
                 await disableNotifications();
             }
         } catch (err) {
@@ -245,7 +277,7 @@ export default function NotificationBell() {
             return `/profile?tab=achievements`;
         }
         if (notif.type === 'system' || notif.title?.includes('Báo cáo')) {
-            if (data.reportId === 'new' || user?.username?.toLowerCase().includes('admin')) return '/admin/reports';
+            if (data.reportId === 'new' || user?.role === 'admin' || user?.role === 'staff') return '/admin/reports';
             return '/profile?tab=reports';
         }
         if (data.mangaId) return `/manga/${data.mangaId}`;
