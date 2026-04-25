@@ -295,14 +295,18 @@ export default function NotificationBell() {
                                     </span>
                                 </div>
                             </div>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                     {!isSettingsOpen && (
                                         <button 
                                             onClick={handleMarkAllRead} 
                                             disabled={unreadCount === 0}
-                                            className={`text-[10px] font-black uppercase transition-all ${unreadCount > 0 ? 'text-[#4caf50] hover:scale-105' : 'text-gray-600 opacity-50 cursor-not-allowed'}`}
+                                            className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all border ${
+                                                unreadCount > 0 
+                                                ? 'bg-[#4caf50]/10 border-[#4caf50]/20 text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] cursor-pointer' 
+                                                : 'bg-white/5 border-white/5 text-gray-600 opacity-50 cursor-not-allowed'
+                                            }`}
                                         >
-                                            {unreadCount > 0 ? 'Đọc tất cả' : 'Đã đọc hết'}
+                                            Đọc tất cả
                                         </button>
                                     )}
                                     <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`p-2 rounded-lg transition-all ${isSettingsOpen ? 'bg-[#4caf50] text-[#0a0c0a]' : 'text-gray-400 hover:bg-[#4caf50]/10'}`}>
