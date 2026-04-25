@@ -132,6 +132,8 @@ export default function AdminReportsPage() {
       setIsSending(false);
   };
 
+  const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
+
   return (
     <div className="min-h-screen bg-[#0a0c0a] text-white p-4 sm:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
