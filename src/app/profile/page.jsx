@@ -256,7 +256,7 @@ function ProfileContent() {
     if (activeTab === 'notifications' && user) {
         fetchNotifications();
     }
-    if (activeTab === 'reports' && user) {
+    if (activeTab === 'reports' && user && userReports.length === 0) {
         fetchUserReports();
     }
   }, [activeTab, user]);

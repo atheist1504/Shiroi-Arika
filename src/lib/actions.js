@@ -981,23 +981,26 @@ export async function getReportsAction(all = false) {
     const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
     const client = getDbClient();
 
-    let query = client
-      .from('shiroi_reports')
-      .select(`
+    let selectStr = `
         *,
         mangas(title),
-        chapters(chapter_number),
-        shiroi_users(username)
-      `);
+        chapters(chapter_number)
+    `;
+    
+    if (all && isAdmin) {
+        selectStr += `, shiroi_users(username)`;
+    }
+
+    let query = client
+      .from('shiroi_reports')
+      .select(selectStr);
 
     if (!all || !isAdmin) {
         query = query.eq('user_id', user.id);
     }
 
 
-    console.time('⏱️ [DB] getReportsAction');
     const { data, error } = await query.order('created_at', { ascending: false });
-    console.timeEnd('⏱️ [DB] getReportsAction');
 
     if (error) throw error;
     return { success: true, reports: data };
