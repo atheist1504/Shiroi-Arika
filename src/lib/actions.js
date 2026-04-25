@@ -480,9 +480,10 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
       .from('shiroi_xp_logs')
       .insert({
         user_id: finalUserId,
-        amount: amount,
-        type: type,
-        reason: reason
+        amount,
+        type,
+        reason,
+        created_at: new Date().toISOString()
       });
 
     if (error) throw error;
@@ -1136,13 +1137,14 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
         // Phân loại Tier cho bộ truyện đã hoàn thành
         const mangaIdFromKey = missionKey.replace('finish_series_', '');
         
-        // 1. Kiểm tra số chương thực tế
-        const { count } = await client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey);
-        const total = count || 0;
+        // 1 & 2. Chạy song song kiểm tra số chương và thể loại One-shot ⚡
+        const [chapterRes, mangaRes] = await Promise.all([
+            client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey),
+            client.from('mangas').select('genres').eq('id', mangaIdFromKey).single()
+        ]);
 
-        // 2. Kiểm tra thể loại One-shot
-        const { data: manga } = await client.from('mangas').select('genres').eq('id', mangaIdFromKey).single();
-        const isOneShotGenre = manga?.genres?.some(g => {
+        const total = chapterRes.count || 0;
+        const isOneShotGenre = mangaRes.data?.genres?.some(g => {
             const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
             return normalized.includes('oneshot');
         });

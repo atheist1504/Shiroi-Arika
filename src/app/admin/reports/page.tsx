@@ -68,7 +68,7 @@ export default function AdminReportsPage() {
     setLoading(true);
     const res = await getReportsAction(true);
     if (res.success) {
-      setReports(res.reports || []);
+      setReports((res.reports as any) || []);
     } else {
       setMessage({ type: 'error', text: `LỖI TẢI BÁO CÁO: ${res.error}` });
       // Nếu Server trả về lỗi chưa đăng nhập hoặc không có quyền, đá về Home
