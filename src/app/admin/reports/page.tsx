@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
 import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction } from "@/lib/actions";
@@ -17,6 +17,11 @@ export default function AdminReportsPage() {
   const [newChatMsg, setNewChatMsg] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages, selectedReport]);
 
   useEffect(() => {
     fetchReports();
@@ -238,6 +243,7 @@ export default function AdminReportsPage() {
                             </div>
                         ))}
                         {loadingChat && <p className="text-center py-4 text-[9px] font-black text-blue-500 animate-pulse uppercase">Đang triệu hồi tin nhắn...</p>}
+                        <div ref={chatEndRef} />
                     </div>
 
                     {/* Footer */}

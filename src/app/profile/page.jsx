@@ -110,6 +110,13 @@ function ProfileContent() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const fileInputRef = useRef(null);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (selectedReport) {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [reportMessages, selectedReport]);
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -1177,6 +1184,7 @@ function ProfileContent() {
                                     </div>
                                 ))}
                                 {isLoadingMessages && <p className="text-center text-[10px] text-gray-700 animate-pulse uppercase font-black">Đang đồng bộ dữ liệu...</p>}
+                                <div ref={chatEndRef} />
                             </div>
 
                             {/* Ô nhập liệu */}
