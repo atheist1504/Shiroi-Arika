@@ -167,6 +167,19 @@ export default function Navbar() {
     };
   }, [pathname, isMobileMenuOpen]);
 
+  // ⚡ FCM AUTO-SYNC TOKEN (Anti-expiration) 🍀
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user && 'Notification' in window && Notification.permission === 'granted') {
+        const { requestNotificationPermission } = require('@/lib/fcmClient');
+        requestNotificationPermission().then(newToken => {
+            if (newToken && newToken !== user.fcm_token) {
+                console.log("♻️ [FCM] Token đã thay đổi, đang đồng bộ với DB...");
+                // Note: registerFcmTokenAction is already called inside requestNotificationPermission
+            }
+        }).catch(() => {});
+    }
+  }, [user?.id]);
+
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';

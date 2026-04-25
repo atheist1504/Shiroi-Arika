@@ -26,6 +26,7 @@ export default function NotificationBell() {
     const [isOpen, setIsOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef(null);
+    const channelRef = useRef(null); // 🛡️ Fix memory leak race condition 🍀
     const [isMounted, setIsMounted] = useState(false);
     const [user, setUser] = useState(null);
     const [userId, setUserId] = useState(null);
@@ -79,10 +80,11 @@ export default function NotificationBell() {
 
         const setupRealtime = (uid) => {
             // 🧹 Hủy channel cũ nếu tồn tại để tránh xung đột 🍀
-            supabase.removeChannel(supabase.channel(`notif-${uid}`));
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+            }
 
-            const channel = supabase
-                .channel(`notif-${uid}`)
+            const channel = supabase.channel(`notif-${uid}`)
                 .on('postgres_changes', { 
                     event: '*', 
                     schema: 'public', 
@@ -118,10 +120,8 @@ export default function NotificationBell() {
             return channel;
         };
 
-        let activeChannel = null;
-
         initAuth().then(channel => {
-            activeChannel = channel;
+            channelRef.current = channel;
         });
 
         fetchNotifications();
@@ -136,8 +136,9 @@ export default function NotificationBell() {
         document.addEventListener('mousedown', handleClickOutside);
         
         return () => {
-            if (activeChannel) {
-                supabase.removeChannel(activeChannel);
+            if (channelRef.current) {
+                supabase.removeChannel(channelRef.current);
+                channelRef.current = null;
             }
             document.removeEventListener('mousedown', handleClickOutside);
         };
@@ -294,14 +295,20 @@ export default function NotificationBell() {
                                     </span>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                                {!isSettingsOpen && unreadCount > 0 && (
-                                    <button onClick={handleMarkAllRead} className="text-[10px] font-black text-[#4caf50] uppercase">Đọc tất cả</button>
-                                )}
-                                <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`p-2 rounded-lg transition-all ${isSettingsOpen ? 'bg-[#4caf50] text-[#0a0c0a]' : 'text-gray-400 hover:bg-[#4caf50]/10'}`}>
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                </button>
-                            </div>
+                                <div className="flex items-center gap-3">
+                                    {!isSettingsOpen && (
+                                        <button 
+                                            onClick={handleMarkAllRead} 
+                                            disabled={unreadCount === 0}
+                                            className={`text-[10px] font-black uppercase transition-all ${unreadCount > 0 ? 'text-[#4caf50] hover:scale-105' : 'text-gray-600 opacity-50 cursor-not-allowed'}`}
+                                        >
+                                            {unreadCount > 0 ? 'Đọc tất cả' : 'Đã đọc hết'}
+                                        </button>
+                                    )}
+                                    <button onClick={() => setIsSettingsOpen(!isSettingsOpen)} className={`p-2 rounded-lg transition-all ${isSettingsOpen ? 'bg-[#4caf50] text-[#0a0c0a]' : 'text-gray-400 hover:bg-[#4caf50]/10'}`}>
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                    </button>
+                                </div>
                         </div>
 
                         <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -333,9 +340,20 @@ export default function NotificationBell() {
                                                         <p className="text-[10px] text-gray-500 leading-relaxed mb-3 line-clamp-2">{n.body}</p>
                                                         <div className="flex justify-between items-center">
                                                             <span className="text-[9px] text-gray-600 font-bold uppercase">{formatSafeDistance(n.created_at)}</span>
-                                                            <Link href={getLink(n)} onClick={() => { handleMarkAsRead(n.id); setIsOpen(false); }} className="text-[9px] font-black text-[#4caf50] uppercase px-3 py-1 rounded-lg border border-[#4caf50]/20 hover:bg-[#4caf50]/10 transition-all">
-                                                                {n.type === 'reply' ? 'Trả lời' : 'Chi tiết'}
-                                                            </Link>
+                                                            <div className="flex items-center gap-2">
+                                                                {!n.is_read && (
+                                                                    <button 
+                                                                        onClick={() => handleMarkAsRead(n.id)}
+                                                                        className="p-1.5 rounded-lg bg-[#4caf50]/10 text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] transition-all"
+                                                                        title="Đánh dấu đã đọc"
+                                                                    >
+                                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                                                    </button>
+                                                                )}
+                                                                <Link href={getLink(n)} onClick={() => { handleMarkAsRead(n.id); setIsOpen(false); }} className={`text-[9px] font-black uppercase px-3 py-1 rounded-lg border transition-all ${n.is_read ? 'text-gray-500 border-white/10 hover:bg-white/5' : 'text-[#4caf50] border-[#4caf50]/20 hover:bg-[#4caf50]/10'}`}>
+                                                                    {n.type === 'reply' ? (n.is_read ? 'ĐÃ TRẢ LỜI' : 'Trả lời') : (n.is_read ? 'ĐÃ XEM' : 'Chi tiết')}
+                                                                </Link>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>

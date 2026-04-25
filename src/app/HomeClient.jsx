@@ -16,6 +16,7 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [readMangaIds, setReadMangaIds] = useState(new Set());
   const searchRef = useRef(null);
 
   // Tự động chuyển slide sau mỗi 5 giây
@@ -51,6 +52,27 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
+
+  // 🕵️‍♂️ FETCH READ STATUS 🍀
+  useEffect(() => {
+    const fetchReadStatus = async () => {
+      const storedUser = localStorage.getItem('shiroi_user');
+      if (!storedUser) return;
+      const user = JSON.parse(storedUser);
+      
+      const { data, error } = await supabase
+        .from('shiroi_read_chapters')
+        .select('manga_id')
+        .eq('user_id', user.id);
+      
+      if (!error && data) {
+        setReadMangaIds(new Set(data.map(item => item.manga_id)));
+      }
+    };
+    fetchReadStatus();
+    window.addEventListener('storage', fetchReadStatus);
+    return () => window.removeEventListener('storage', fetchReadStatus);
+  }, []);
 
   const performSearch = async () => {
     setIsSearching(true);
@@ -139,8 +161,14 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                                     <p className="text-gray-400 text-xs md:text-sm font-medium line-clamp-3 md:line-clamp-2 max-w-xl">
                                         {featured[activeSlide].description || "Đang cập nhật nội dung cho bộ truyện này. Shiroi Arika hứa hẹn mang lại trải nghiệm đọc tốt nhất cho bạn."}
                                     </p>
-                                    <div className="flex justify-center md:justify-start pt-4">
+                                    <div className="flex justify-center md:justify-start pt-4 items-center gap-4">
                                         <Link href={`/manga/${featured[activeSlide].id}`} className="px-10 py-3.5 bg-[#4caf50] text-[#0a0c0a] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(76,175,80,0.3)] hover:scale-105 active:scale-95 transition-all">ĐỌC NGAY 🍀</Link>
+                                        {readMangaIds.has(featured[activeSlide].id) && (
+                                            <span className="text-[9px] font-black text-[#4caf50] uppercase tracking-widest bg-[#4caf50]/10 px-3 py-1.5 rounded-lg border border-[#4caf50]/20 flex items-center gap-1.5 shadow-lg shadow-[#4caf50]/5">
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                                ĐÃ XEM
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -282,13 +310,19 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                           </div>
                         )}
                         
-                        {manga.latest_chapter_number && (
-                          <div className="absolute top-2 right-2 z-20">
-                            <div className="bg-[#4caf50] text-[#0a0c0a] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl border border-[#4caf50]/20">
-                              Ch. {manga.latest_chapter_number}
-                            </div>
-                          </div>
-                        )}
+                         {manga.latest_chapter_number && (
+                           <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1.5">
+                             <div className="bg-[#4caf50] text-[#0a0c0a] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl border border-[#4caf50]/20">
+                               Ch. {manga.latest_chapter_number}
+                             </div>
+                             {readMangaIds.has(manga.id) && (
+                               <div className="bg-black/60 backdrop-blur-md text-[#4caf50] px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border border-[#4caf50]/20 flex items-center gap-1 shadow-2xl">
+                                 <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                 ĐÃ XEM
+                               </div>
+                             )}
+                           </div>
+                         )}
 
                         <div className="absolute -inset-[1px] bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500 z-10" />
                         
