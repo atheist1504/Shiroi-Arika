@@ -277,9 +277,10 @@ export default function NotificationBell() {
             return `/profile?tab=achievements`;
         }
         if (notif.type === 'system' || notif.title?.includes('Báo cáo') || notif.title?.includes('khắc phục')) {
-            if (data.reportId === 'new') return '/admin/reports';
+            const isActualAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
+            if (data.reportId === 'new' && isActualAdmin) return '/admin/reports';
             if (data.reportId) return '/profile?tab=reports';
-            if (user?.role === 'admin' || user?.role === 'staff') return '/admin/reports';
+            if (isActualAdmin) return '/admin/reports';
             return '/profile?tab=reports';
         }
         if (data.mangaId) return `/manga/${data.mangaId}`;

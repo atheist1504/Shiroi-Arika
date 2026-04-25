@@ -978,7 +978,7 @@ export async function getReportsAction() {
     const user = await getAuthenticatedUser();
     if (!user) throw new Error("Chưa đăng nhập!");
 
-    const isAdmin = user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504';
+    const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
     const client = getDbClient();
 
     let query = client
@@ -1025,7 +1025,7 @@ export async function getReportByIdAction(reportId) {
 
         if (error) throw error;
         
-        const isAdmin = user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504';
+        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
         if (!isAdmin && data.user_id !== user.id) {
             throw new Error("Không có quyền xem báo cáo này! 🛡️");
         }
@@ -1896,7 +1896,7 @@ export async function sendReportMessageAction(reportId, message) {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        const isAdmin = user.role === 'admin' || user.role === 'staff';
+        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
 
         // 1. Lưu tin nhắn
         const { data: newMessage, error } = await supabaseAdmin
