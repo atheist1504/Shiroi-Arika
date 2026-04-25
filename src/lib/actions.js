@@ -1045,6 +1045,9 @@ export async function updateReportStatusAction(reportId, status) {
     if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const client = getDbClient();
 
+    // 🕵️‍♂️ Lấy thông tin báo cáo trước khi cập nhật
+    const { data: report } = await client.from('shiroi_reports').select('user_id, description, status').eq('id', reportId).single();
+
     const { error } = await client
       .from('shiroi_reports')
       .update({ status })
@@ -1052,16 +1055,30 @@ export async function updateReportStatusAction(reportId, status) {
 
     if (error) throw error;
     
-    // 🔔 Thông báo phản hồi cho người dùng 🍀
+    // 🔔 Thông báo phản hồi & Cộng điểm thưởng 🍀
     try {
-        const { data: report } = await client.from('shiroi_reports').select('user_id, description').eq('id', reportId).single();
         if (report && report.user_id) {
+            // 💎 THƯỞNG 100 XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
+            if (status === 'fixed' && report.status !== 'fixed') {
+                await recordXpLogAction(100, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
+                
+                // Thông báo thưởng riêng cho User
+                await createInAppNotification(
+                    report.user_id, 
+                    "Phần thưởng báo cáo lỗi! 💎", 
+                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +100 XP thưởng! 🍀`,
+                    'system'
+                );
+            }
+
             const statusLabel = status === 'fixed' ? 'Đã khắc phục' : status === 'ignored' ? 'Đã xem' : status;
             const title = `Cập nhật trạng thái báo cáo! 🛠️`;
             const body = `Báo cáo "${report.description?.substring(0, 20)}..." của bạn đã được chuyển sang: ${statusLabel}. Cảm ơn bạn đã đóng góp! 🍀`;
             await createInAppNotification(report.user_id, title, body, 'system', { reportId });
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn("⚠️ Lỗi hậu xử lý báo cáo:", e.message);
+    }
     
     revalidatePath('/admin/reports');
     return { success: true };
