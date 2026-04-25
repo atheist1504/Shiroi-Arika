@@ -510,11 +510,12 @@ function ProfileContent() {
   };
 
   const currentDynamicTitle = user ? (() => {
+    const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
     const lvl = calculateLevel(user.xp);
-    const unlocked = dynamicTitles.filter(t => lvl >= t.lv);
+    const unlocked = isAdmin ? dynamicTitles : dynamicTitles.filter(t => lvl >= t.lv);
     if (user.selected_badge) {
         const selected = dynamicTitles.find(t => t.name.toUpperCase() === user.selected_badge.toUpperCase());
-        if (selected && lvl >= selected.lv) return selected;
+        if (selected && (lvl >= selected.lv || isAdmin)) return selected;
     }
     return unlocked[0] || dynamicTitles[dynamicTitles.length - 1];
   })() : null;
@@ -705,7 +706,8 @@ function ProfileContent() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-4 custom-scrollbar">
                         {[...dynamicTitles].reverse().map((title) => {
-                            const isUnlocked = calculateLevel(user?.xp) >= title.lv;
+                            const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
+                            const isUnlocked = isAdmin || (calculateLevel(user?.xp) >= title.lv);
                             const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
                             
                             return (
