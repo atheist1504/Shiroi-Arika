@@ -276,8 +276,10 @@ export default function NotificationBell() {
         if (data.missionKey || notif.title?.includes('nhiệm vụ') || notif.title?.includes('Thưởng')) {
             return `/profile?tab=achievements`;
         }
-        if (notif.type === 'system' || notif.title?.includes('Báo cáo')) {
-            if (data.reportId === 'new' || user?.role === 'admin' || user?.role === 'staff') return '/admin/reports';
+        if (notif.type === 'system' || notif.title?.includes('Báo cáo') || notif.title?.includes('khắc phục')) {
+            if (data.reportId === 'new') return '/admin/reports';
+            if (data.reportId) return '/profile?tab=reports';
+            if (user?.role === 'admin' || user?.role === 'staff') return '/admin/reports';
             return '/profile?tab=reports';
         }
         if (data.mangaId) return `/manga/${data.mangaId}`;
