@@ -33,6 +33,12 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **SEO & Social Identity**: Metadata động và OG Image API hoạt động chuẩn xác, tối ưu hóa hiển thị khi chia sẻ trên MXH (Facebook, Zalo, Discord). 🔍✨
 - [x] **Staff Workflow**: Xác nhận Admin/Staff (`atheist1504` và các cộng tác viên) đã có thể thực hiện toàn bộ quy trình đăng truyện, quản lý chương và báo cáo một cách trơn tru. 🎨
 
+### 🛰️ Realtime & FCM Integrity Audit (v46 - Reliability Patch) 🛰️⚡🔔
+- [x] **Memory Leak Fix (NotificationBell)**: Khắc phục triệt để lỗi "đứt gánh" subscription khi unmount bằng cơ chế `useRef` cho Channel reference. Đảm bảo 100% channel được cleanup sạch sẽ. 🧹🛡️
+- [x] **FCM Auto-sync (Anti-expiration)**: Triển khai cơ chế tự động đồng bộ Token tại `Navbar.js`. Hệ thống sẽ tự động cập nhật token mới lên DB nếu token cũ hết hạn hoặc thay đổi, đảm bảo không mất liên lạc với người dùng. ⚡📱
+- [x] **Individual "Mark as Read"**: Bổ sung nút đánh dấu đã đọc (✔️) cho từng thông báo và nhãn **"ĐÃ XEM"** trên thẻ truyện tại trang chủ. Cải thiện trải nghiệm theo dõi tiến độ đọc của người dùng. 📖✅
+- [x] **Realtime Scale Audit**: Đã rà soát danh sách 6 bảng đang subscribe Realtime (`users`, `notifications`, `comments`, `read_chapters`, `mission_claims`, `xp_logs`). Sẵn sàng kế hoạch gộp channel để tối ưu hóa giới hạn 200 connections của Supabase Free. 🛰️📈
+
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
 - [x] **Leaderboard V2**: BXH phân cấp theo tháng và tổng hạng, tích hợp danh hiệu người dùng tự chọn. 🏆
@@ -62,4 +68,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 20:30 - 24/04/2026 (Audit Toàn diện & Stabilization)*
+*Cập nhật lần cuối: 07:15 - 25/04/2026 (Realtime & FCM Audit - Reliability Patch)*
