@@ -971,22 +971,30 @@ export async function submitReportAction(reportData) {
 }
 
 /**
- * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Chỉ Admin)
+ * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Admin xem hết, User xem của mình) 🍀
  */
 export async function getReportsAction() {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const user = await getAuthenticatedUser();
+    if (!user) throw new Error("Chưa đăng nhập!");
+
+    const isAdmin = user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504';
     const client = getDbClient();
 
-    const { data, error } = await client
+    let query = client
       .from('shiroi_reports')
       .select(`
         *,
         mangas(title),
         chapters(chapter_number),
         shiroi_users(username)
-      `)
-      .order('created_at', { ascending: false });
+      `);
+
+    if (!isAdmin) {
+        query = query.eq('user_id', user.id);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
     return { success: true, reports: data };
@@ -994,6 +1002,39 @@ export async function getReportsAction() {
     console.error('Lỗi getReportsAction:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🕵️‍♂️ SERVER ACTION: Lấy chi tiết một báo cáo 🍀
+ */
+export async function getReportByIdAction(reportId) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) throw new Error("Chưa đăng nhập!");
+
+        const { data, error } = await supabaseAdmin
+            .from('shiroi_reports')
+            .select(`
+                *,
+                mangas(title, cover_url),
+                chapters(chapter_number),
+                shiroi_users(username, avatar_url)
+            `)
+            .eq('id', reportId)
+            .single();
+
+        if (error) throw error;
+        
+        const isAdmin = user.role === 'admin' || user.role === 'staff' || user.username?.toLowerCase() === 'atheist1504';
+        if (!isAdmin && data.user_id !== user.id) {
+            throw new Error("Không có quyền xem báo cáo này! 🛡️");
+        }
+
+        return { success: true, report: data };
+    } catch (error) {
+        console.error('❌ Lỗi getReportByIdAction:', error.message);
+        return { success: false, error: error.message };
+    }
 }
 
 /**
@@ -1802,5 +1843,85 @@ export async function cleanupXpLogsAction() {
         return { success: true, message: "Cleanup paused for safety." };
     } catch (error) {
         return { success: false };
+    }
+}
+
+/**
+ * 💬 SERVER ACTION: Lấy lịch sử trao đổi của một báo cáo 🍀
+ */
+export async function getReportMessagesAction(reportId) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const { data, error } = await supabaseAdmin
+            .from('shiroi_report_messages')
+            .select(`
+                *,
+                sender:shiroi_users(username, avatar_url, role)
+            `)
+            .eq('report_id', reportId)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return { success: true, messages: data };
+    } catch (error) {
+        console.error("❌ Lỗi lấy tin nhắn báo cáo:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 💬 SERVER ACTION: Gửi tin nhắn phản hồi báo cáo 🍀
+ */
+export async function sendReportMessageAction(reportId, message) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: 'Chưa đăng nhập' };
+
+        const isAdmin = user.role === 'admin' || user.role === 'staff';
+
+        // 1. Lưu tin nhắn
+        const { data: newMessage, error } = await supabaseAdmin
+            .from('shiroi_report_messages')
+            .insert([{
+                report_id: reportId,
+                sender_id: user.id,
+                message,
+                is_admin_reply: isAdmin
+            }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // 2. Thông báo cho bên còn lại
+        const { data: report } = await supabaseAdmin
+            .from('shiroi_reports')
+            .select('user_id, description')
+            .eq('id', reportId)
+            .single();
+
+        if (report) {
+            const { createInAppNotification } = await import('./notifications');
+            if (isAdmin) {
+                // Nếu Admin trả lời -> Thông báo cho User
+                await createInAppNotification(
+                    report.user_id,
+                    'Phản hồi từ Ban quản trị 🛡️',
+                    `Admin đã trả lời báo cáo của bạn: "${message.substring(0, 50)}..."`,
+                    'system',
+                    { reportId: reportId }
+                );
+            } else {
+                // Nếu User trả lời -> Thông báo cho Admin/Staff (Topic hoặc Admin ID cụ thể)
+                // Tạm thời chỉ tạo thông báo cho hệ thống (Admin sẽ thấy trong dashboard)
+            }
+        }
+
+        return { success: true, message: newMessage };
+    } catch (error) {
+        console.error("❌ Lỗi gửi tin nhắn báo cáo:", error.message);
+        return { success: false, error: error.message };
     }
 }

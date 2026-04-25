@@ -15,7 +15,10 @@ import {
     createOfficialTitleAction,
     getTitleSuggestionsAction,
     handleTitleSuggestionAction,
-    deleteOfficialTitleAction
+    deleteOfficialTitleAction,
+    getReportsAction,
+    getReportMessagesAction,
+    sendReportMessageAction
 } from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -100,6 +103,12 @@ function ProfileContent() {
   const [notifications, setNotifications] = useState([]);
   const [checkInDates, setCheckInDates] = useState([]);
   const [totalCheckIns, setTotalCheckIns] = useState(0);
+  const [userReports, setUserReports] = useState([]);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [reportMessages, setReportMessages] = useState([]);
+  const [newReportMessage, setNewReportMessage] = useState('');
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const fileInputRef = useRef(null);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -239,7 +248,36 @@ function ProfileContent() {
     if (activeTab === 'notifications' && user) {
         fetchNotifications();
     }
-  }, [activeTab]);
+    if (activeTab === 'reports' && user) {
+        fetchUserReports();
+    }
+  }, [activeTab, user]);
+
+  const fetchUserReports = async () => {
+      setLoading(true);
+      const res = await getReportsAction();
+      if (res.success) setUserReports(res.reports);
+      setLoading(false);
+  };
+
+  const fetchReportMessages = async (reportId) => {
+      setIsLoadingMessages(true);
+      const res = await getReportMessagesAction(reportId);
+      if (res.success) setReportMessages(res.messages);
+      setIsLoadingMessages(false);
+  };
+
+  const handleSendMessage = async (e) => {
+      e.preventDefault();
+      if (!newReportMessage.trim() || !selectedReport) return;
+      setIsSendingMessage(true);
+      const res = await sendReportMessageAction(selectedReport.id, newReportMessage);
+      if (res.success) {
+          setNewReportMessage('');
+          fetchReportMessages(selectedReport.id);
+      }
+      setIsSendingMessage(false);
+  };
 
   // 🛰️ REAL-TIME SYNC & CLEANUP: Thông báo Thánh địa 🔔
   useEffect(() => {
@@ -494,6 +532,7 @@ function ProfileContent() {
                 { id: 'profile', icon: '💎', label: 'Hồ sơ' },
                 { id: 'settings', icon: '⚙️', label: 'Cài đặt' },
                 { id: 'notifications', icon: '🔔', label: 'Hộp thư' },
+                { id: 'reports', icon: '🚩', label: 'Báo cáo' },
                 ...(user?.role === 'admin' ? [{ id: 'admin', icon: '🛡️', label: 'Quản trị' }] : [])
               ].map(t => (
                 <Link 
@@ -1049,6 +1088,116 @@ function ProfileContent() {
                             )}
                           </AnimatePresence>
                       </div>
+                  </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'reports' && (
+              <motion.div key="reports" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                  <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
+                      <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Báo cáo & Hỗ trợ</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                      </div>
+
+                      {!selectedReport ? (
+                        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar">
+                           {userReports.map((r, rIdx) => (
+                             <motion.div 
+                               key={r.id} 
+                               initial={{ opacity: 0, y: 10 }}
+                               animate={{ opacity: 1, y: 0 }}
+                               transition={{ delay: rIdx * 0.05 }}
+                               onClick={() => {
+                                   setSelectedReport(r);
+                                   fetchReportMessages(r.id);
+                               }}
+                               className="p-6 rounded-[32px] border border-white/5 bg-white/5 hover:bg-[#4caf50]/5 hover:border-[#4caf50]/20 transition-all cursor-pointer group"
+                             >
+                               <div className="flex justify-between items-start mb-2">
+                                  <p className="text-[10px] font-black uppercase text-[#4caf50]">#{r.id.substring(0, 8)}</p>
+                                  <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${
+                                      r.status === 'pending' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
+                                      r.status === 'fixed' ? 'text-green-500 border-green-500/20 bg-green-500/5' : 
+                                      'text-gray-500 border-white/10'
+                                  }`}>
+                                      {r.status === 'pending' ? 'Đang xử lý' : r.status === 'fixed' ? 'Đã khắc phục' : 'Bỏ qua'}
+                                  </span>
+                               </div>
+                               <p className="text-xs font-black text-white mb-1 uppercase tracking-tight">{r.mangas?.title || 'Báo cáo hệ thống'}</p>
+                               <p className="text-[10px] text-gray-500 line-clamp-1 italic">"{r.description}"</p>
+                               <div className="flex justify-between items-center mt-4">
+                                  <span className="text-[8px] text-gray-700 font-bold uppercase tracking-widest">{formatSafeDistance(r.created_at)}</span>
+                                  <span className="text-[9px] font-black text-[#4caf50] opacity-0 group-hover:opacity-100 transition-opacity uppercase">Mở hội thoại →</span>
+                               </div>
+                             </motion.div>
+                           ))}
+                           {userReports.length === 0 && (
+                             <div className="py-20 text-center opacity-30">
+                               <p className="text-4xl mb-4">🚩</p>
+                               <p className="text-[10px] font-black uppercase tracking-widest">Bạn chưa có báo cáo nào</p>
+                             </div>
+                           )}
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                            {/* Header Chat */}
+                            <div className="flex items-center gap-4 pb-6 border-b border-white/5">
+                                <button onClick={() => setSelectedReport(null)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-gray-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div>
+                                    <p className="text-xs font-black text-white uppercase tracking-tight">{selectedReport.mangas?.title || 'Hỗ trợ hệ thống'}</p>
+                                    <p className="text-[9px] text-gray-500 font-bold uppercase">Mã vụ việc: #{selectedReport.id.substring(0, 8)}</p>
+                                </div>
+                            </div>
+
+                            {/* Khung chat */}
+                            <div className="h-[400px] overflow-y-auto pr-4 custom-scrollbar space-y-4 flex flex-col">
+                                {/* Tin nhắn gốc (Báo cáo) */}
+                                <div className="self-start max-w-[85%] bg-white/5 p-5 rounded-[28px] rounded-tl-none border border-white/5">
+                                    <p className="text-[9px] font-black text-gray-500 uppercase mb-2">Báo cáo ban đầu:</p>
+                                    <p className="text-[11px] text-white leading-relaxed">{selectedReport.description}</p>
+                                    <p className="text-[8px] text-gray-700 font-bold mt-2 text-right uppercase">{formatSafeDistance(selectedReport.created_at)}</p>
+                                </div>
+
+                                {reportMessages.map((msg) => (
+                                    <div key={msg.id} className={`max-w-[85%] p-5 rounded-[28px] border ${
+                                        msg.is_admin_reply 
+                                        ? 'self-start bg-[#4caf50]/10 border-[#4caf50]/20 rounded-tl-none' 
+                                        : 'self-end bg-blue-500/10 border-blue-500/20 rounded-tr-none'
+                                    }`}>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <p className={`text-[9px] font-black uppercase ${msg.is_admin_reply ? 'text-[#4caf50]' : 'text-blue-400'}`}>
+                                                {msg.is_admin_reply ? 'Ban quản trị 🛡️' : 'Bạn'}
+                                            </p>
+                                        </div>
+                                        <p className="text-[11px] text-white leading-relaxed">{msg.message}</p>
+                                        <p className="text-[8px] text-gray-700 font-bold mt-2 text-right uppercase">{formatSafeDistance(msg.created_at)}</p>
+                                    </div>
+                                ))}
+                                {isLoadingMessages && <p className="text-center text-[10px] text-gray-700 animate-pulse uppercase font-black">Đang đồng bộ dữ liệu...</p>}
+                            </div>
+
+                            {/* Ô nhập liệu */}
+                            <form onSubmit={handleSendMessage} className="pt-6 border-t border-white/5 flex gap-3">
+                                <input 
+                                    type="text" 
+                                    value={newReportMessage}
+                                    onChange={(e) => setNewReportMessage(e.target.value)}
+                                    placeholder="Viết phản hồi của bạn..."
+                                    className="flex-1 bg-black/60 border border-white/10 rounded-2xl px-6 py-4 text-sm outline-none focus:border-[#4caf50] transition-all"
+                                />
+                                <button 
+                                    type="submit" 
+                                    disabled={isSendingMessage || !newReportMessage.trim()}
+                                    className="px-8 bg-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20 disabled:opacity-30 active:scale-95 transition-all"
+                                >
+                                    {isSendingMessage ? '...' : 'GỬI'}
+                                </button>
+                            </form>
+                        </div>
+                      )}
                   </div>
               </motion.div>
             )}

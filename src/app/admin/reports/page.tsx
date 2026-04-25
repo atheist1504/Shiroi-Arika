@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
-import { getReportsAction, updateReportStatusAction } from "@/lib/actions";
+import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction } from "@/lib/actions";
 import Link from "next/link";
 
 export default function AdminReportsPage() {
@@ -12,6 +12,11 @@ export default function AdminReportsPage() {
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [newChatMsg, setNewChatMsg] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false);
 
   useEffect(() => {
     fetchReports();
@@ -58,6 +63,27 @@ export default function AdminReportsPage() {
       case 'other': return 'LỖI KHÁC';
       default: return type;
     }
+  };
+
+  const openChat = async (report: any) => {
+      setSelectedReport(report);
+      setLoadingChat(true);
+      const res = await getReportMessagesAction(report.id);
+      if (res.success) setChatMessages(res.messages || []);
+      setLoadingChat(false);
+  };
+
+  const handleSendChat = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!newChatMsg.trim() || !selectedReport) return;
+      setIsSending(true);
+      const res = await sendReportMessageAction(selectedReport.id, newChatMsg);
+      if (res.success) {
+          setNewChatMsg('');
+          const updated = await getReportMessagesAction(selectedReport.id);
+          if (updated.success) setChatMessages(updated.messages || []);
+      }
+      setIsSending(false);
   };
 
   return (
@@ -153,6 +179,13 @@ export default function AdminReportsPage() {
                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                               )}
+                              <button 
+                                onClick={() => openChat(report)}
+                                className="p-2 bg-blue-500/10 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
+                                title="Chat hỗ trợ"
+                              >
+                                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                              </button>
                            </div>
                         </td>
                       </tr>
@@ -163,6 +196,70 @@ export default function AdminReportsPage() {
             </table>
           </div>
         </AdminCard>
+
+        {/* 💬 CHAT OVERLAY 🍀 */}
+        {selectedReport && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 pointer-events-none">
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto" onClick={() => setSelectedReport(null)} />
+                <div className="w-full sm:w-[450px] h-full sm:h-[90%] bg-[#0c0f0c] border-l sm:border border-white/10 sm:rounded-[32px] shadow-2xl flex flex-col relative z-10 pointer-events-auto animate-in slide-in-from-right duration-300">
+                    
+                    {/* Header */}
+                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-gradient-to-r from-blue-500/10 to-transparent">
+                        <div>
+                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-1">Hỗ trợ khách hàng 🛡️</p>
+                            <h3 className="text-sm font-black text-white uppercase truncate max-w-[250px]">{selectedReport.mangas?.title || 'Hệ thống'}</h3>
+                        </div>
+                        <button onClick={() => setSelectedReport(null)} className="p-2 hover:bg-white/5 rounded-xl transition-all">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    {/* Chat Body */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-black/20">
+                        {/* Initial Report */}
+                        <div className="bg-white/5 p-5 rounded-[24px] border border-white/5">
+                            <p className="text-[8px] font-black text-gray-500 uppercase mb-2">Nội dung báo cáo:</p>
+                            <p className="text-[11px] text-gray-300 leading-relaxed italic">"{selectedReport.description}"</p>
+                            <p className="text-[8px] text-gray-600 mt-2 text-right">{new Date(selectedReport.created_at).toLocaleString('vi-VN')}</p>
+                        </div>
+
+                        {chatMessages.map((msg) => (
+                            <div key={msg.id} className={`flex flex-col ${msg.is_admin_reply ? 'items-end' : 'items-start'}`}>
+                                <div className={`max-w-[90%] p-4 rounded-[22px] ${
+                                    msg.is_admin_reply 
+                                    ? 'bg-blue-600 text-white rounded-tr-none shadow-lg shadow-blue-900/20' 
+                                    : 'bg-[#1a1f1a] text-gray-200 border border-white/5 rounded-tl-none'
+                                }`}>
+                                    <p className="text-[11px] leading-relaxed">{msg.message}</p>
+                                </div>
+                                <span className="text-[7px] text-gray-600 mt-1 uppercase font-bold px-2">
+                                    {msg.is_admin_reply ? 'Bạn' : selectedReport.shiroi_users?.username || 'User'} • {new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                            </div>
+                        ))}
+                        {loadingChat && <p className="text-center py-4 text-[9px] font-black text-blue-500 animate-pulse uppercase">Đang triệu hồi tin nhắn...</p>}
+                    </div>
+
+                    {/* Footer */}
+                    <form onSubmit={handleSendChat} className="p-4 bg-black/40 border-t border-white/5 flex gap-2">
+                        <input 
+                            type="text" 
+                            value={newChatMsg}
+                            onChange={(e) => setNewChatMsg(e.target.value)}
+                            placeholder="Viết phản hồi cho user..."
+                            className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs outline-none focus:border-blue-500 transition-all"
+                        />
+                        <button 
+                            type="submit" 
+                            disabled={isSending || !newChatMsg.trim()}
+                            className="px-6 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-500 disabled:opacity-30 active:scale-95 transition-all"
+                        >
+                            {isSending ? '...' : 'GỬI'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )}
 
       </div>
     </div>
