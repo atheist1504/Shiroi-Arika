@@ -265,25 +265,53 @@ export default function NotificationBell() {
 
     const getLink = (notif) => {
         const data = notif.data || {};
+        const title = notif.title || '';
+
+        // 1. Trả lời bình luận 💬
         if (notif.type === 'reply') {
             if (data.mangaId && data.chapterId) return `/read/${data.chapterId}#comments`;
             if (data.mangaId) return `/manga/${data.mangaId}#comments`;
         }
+
+        // 2. Cập nhật chương mới 📚
         if (notif.type === 'chapter_update') {
             if (data.chapterId) return `/read/${data.chapterId}`;
             if (data.mangaId) return `/manga/${data.mangaId}`;
         }
-        if (data.missionKey || notif.title?.includes('nhiệm vụ') || notif.title?.includes('Thưởng')) {
+
+        // 3. Danh hiệu mới (Title Unlock) 🏆
+        if (data.titleName || title.includes('Danh hiệu')) {
+            return `/profile`;
+        }
+
+        // 4. Nhiệm vụ & Thành tựu 🎯
+        if (data.missionKey || title.includes('nhiệm vụ') || title.includes('Thưởng')) {
             return `/profile?tab=achievements`;
         }
-        if (notif.type === 'system' || notif.title?.includes('Báo cáo') || notif.title?.includes('khắc phục')) {
+
+        // 5. Hệ thống / Báo cáo 🚩
+        if (notif.type === 'system' || title.includes('Báo cáo') || title.includes('khắc phục')) {
             const isActualAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
+            
+            // Nếu là báo cáo mới (Dành cho Admin)
             if (data.reportId === 'new' && isActualAdmin) return '/admin/reports';
-            if (data.reportId) return '/profile?tab=reports';
-            if (isActualAdmin) return '/admin/reports';
-            return '/profile?tab=reports';
+            
+            // Nếu là phản hồi báo cáo hoặc báo cáo cụ thể
+            if (data.reportId) {
+                return isActualAdmin ? '/admin/reports' : '/profile?tab=reports';
+            }
+
+            // Mặc định cho system notification không thuộc các loại trên
+            if (title.includes('Báo cáo') || title.includes('khắc phục')) {
+                return isActualAdmin ? '/admin/reports' : '/profile?tab=reports';
+            }
+            
+            return '/profile';
         }
+
+        // 6. Mặc định (Nếu có mangaId)
         if (data.mangaId) return `/manga/${data.mangaId}`;
+
         return '#';
     };
 
