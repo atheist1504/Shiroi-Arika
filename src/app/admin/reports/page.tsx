@@ -252,7 +252,7 @@ export default function AdminReportsPage() {
                             type="text" 
                             value={newChatMsg}
                             onChange={(e) => setNewChatMsg(e.target.value)}
-                            placeholder="Viết phản hồi cho user..."
+                            placeholder="Viết phản hồi cho thành viên..."
                             className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-xs outline-none focus:border-blue-500 transition-all"
                         />
                         <button 
