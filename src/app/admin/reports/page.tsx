@@ -34,7 +34,7 @@ export default function AdminReportsPage() {
 
   const fetchReports = async () => {
     setLoading(true);
-    const res = await getReportsAction();
+    const res = await getReportsAction(true);
     if (res.success) {
       setReports(res.reports || []);
     } else {

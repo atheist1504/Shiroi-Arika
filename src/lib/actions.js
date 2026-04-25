@@ -973,7 +973,7 @@ export async function submitReportAction(reportData) {
 /**
  * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Admin xem hết, User xem của mình) 🍀
  */
-export async function getReportsAction() {
+export async function getReportsAction(all = false) {
   try {
     const user = await getAuthenticatedUser();
     if (!user) throw new Error("Chưa đăng nhập!");
@@ -990,11 +990,14 @@ export async function getReportsAction() {
         shiroi_users(username)
       `);
 
-    if (!isAdmin) {
+    if (!all || !isAdmin) {
         query = query.eq('user_id', user.id);
     }
 
+
+    console.time('⏱️ [DB] getReportsAction');
     const { data, error } = await query.order('created_at', { ascending: false });
+    console.timeEnd('⏱️ [DB] getReportsAction');
 
     if (error) throw error;
     return { success: true, reports: data };

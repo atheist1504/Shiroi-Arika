@@ -109,6 +109,7 @@ function ProfileContent() {
   const [newReportMessage, setNewReportMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const fileInputRef = useRef(null);
   const chatEndRef = useRef(null);
 
@@ -261,10 +262,10 @@ function ProfileContent() {
   }, [activeTab, user]);
 
   const fetchUserReports = async () => {
-      setLoading(true);
+      setIsLoadingReports(true);
       const res = await getReportsAction();
       if (res.success) setUserReports(res.reports);
-      setLoading(false);
+      setIsLoadingReports(false);
   };
 
   const fetchReportMessages = async (reportId) => {
@@ -1111,7 +1112,7 @@ function ProfileContent() {
                         <div className="space-y-4 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
                            {userReports.map((r, rIdx) => (
                              <motion.div 
-                               key={r.id} 
+                               key={r.id}
                                initial={{ opacity: 0, y: 10 }}
                                animate={{ opacity: 1, y: 0 }}
                                transition={{ delay: rIdx * 0.05 }}
@@ -1119,18 +1120,8 @@ function ProfileContent() {
                                    setSelectedReport(r);
                                    fetchReportMessages(r.id);
                                }}
-                               className="p-6 rounded-[32px] border border-white/5 bg-white/5 hover:bg-[#4caf50]/5 hover:border-[#4caf50]/20 transition-all cursor-pointer group"
+                               className="p-6 rounded-[32px] border border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden group"
                              >
-                               <div className="flex justify-between items-start mb-2">
-                                  <p className="text-[10px] font-black uppercase text-[#4caf50]">#{r.id.substring(0, 8)}</p>
-                                  <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase border ${
-                                      r.status === 'pending' ? 'text-amber-500 border-amber-500/20 bg-amber-500/5' : 
-                                      r.status === 'fixed' ? 'text-green-500 border-green-500/20 bg-green-500/5' : 
-                                      'text-gray-500 border-white/10'
-                                  }`}>
-                                      {r.status === 'pending' ? 'Đang xử lý' : r.status === 'fixed' ? 'Đã khắc phục' : 'Bỏ qua'}
-                                  </span>
-                               </div>
                                <p className="text-xs font-black text-white mb-1 uppercase tracking-tight">{r.mangas?.title || 'Báo cáo hệ thống'}</p>
                                <p className="text-[10px] text-gray-500 line-clamp-1 italic">"{r.description}"</p>
                                <div className="flex justify-between items-center mt-4">
@@ -1139,6 +1130,7 @@ function ProfileContent() {
                                </div>
                              </motion.div>
                            ))}
+
                            {userReports.length === 0 && (
                              <div className="py-20 text-center opacity-30">
                                <p className="text-4xl mb-4">🚩</p>
