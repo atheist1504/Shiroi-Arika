@@ -1077,7 +1077,7 @@ export async function updateReportStatusAction(reportId, status) {
                 );
             }
 
-            const statusLabel = status === 'fixed' ? 'Đã khắc phục' : status === 'ignored' ? 'Đã xem' : status;
+            const statusLabel = status === 'fixed' ? 'Đã khắc phục' : status === 'ignored' ? 'Đã kiểm tra không lỗi' : status;
             const title = `Cập nhật trạng thái báo cáo! 🛠️`;
             const body = `Báo cáo "${report.description?.substring(0, 20)}..." của bạn đã được chuyển sang: ${statusLabel}. Cảm ơn bạn đã đóng góp! 🍀`;
             await createInAppNotification(report.user_id, title, body, 'system', { reportId });

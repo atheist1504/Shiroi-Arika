@@ -6,18 +6,39 @@ import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
 import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction } from "@/lib/actions";
 import Link from "next/link";
 
+interface User {
+  id: string;
+  username: string;
+  role: string;
+  display_name?: string;
+}
+
+interface Report {
+  id: string;
+  manga_id: string;
+  chapter_id: string;
+  user_id: string;
+  type: string;
+  description: string;
+  status: string;
+  created_at: string;
+  mangas?: { title: string };
+  chapters?: { chapter_number: number | string };
+  shiroi_users?: { username: string };
+}
+
 export default function AdminReportsPage() {
   const router = useRouter();
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [selectedReport, setSelectedReport] = useState<any | null>(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [chatMessages, setChatMessages] = useState<any[]>([]);
   const [newChatMsg, setNewChatMsg] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -26,11 +47,22 @@ export default function AdminReportsPage() {
 
   useEffect(() => {
     const stored = localStorage.getItem('shiroi_user');
-    if (stored) setUser(JSON.parse(stored));
+    if (stored) {
+      const parsedUser = JSON.parse(stored);
+      setUser(parsedUser);
+      
+      // 🛡️ SECURITY GUARD: Kiểm tra quyền Admin ngay lập tức 🍀
+      const isAdmin = parsedUser.role === 'admin' || parsedUser.username?.toLowerCase() === 'atheist1504';
+      if (!isAdmin) {
+          router.replace('/');
+          return;
+      }
+    } else {
+      router.replace('/login');
+      return;
+    }
     fetchReports();
   }, []);
-
-  const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
 
   const fetchReports = async () => {
     setLoading(true);
@@ -39,6 +71,10 @@ export default function AdminReportsPage() {
       setReports(res.reports || []);
     } else {
       setMessage({ type: 'error', text: `LỖI TẢI BÁO CÁO: ${res.error}` });
+      // Nếu Server trả về lỗi chưa đăng nhập hoặc không có quyền, đá về Home
+      if (res.error?.includes("đăng nhập") || res.error?.includes("quyền")) {
+          router.replace('/');
+      }
     }
     setLoading(false);
   };
@@ -60,7 +96,7 @@ export default function AdminReportsPage() {
     switch (status) {
       case 'pending': return { label: 'CHỜ XỬ LÝ', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' };
       case 'fixed': return { label: 'ĐÃ SỬA', color: 'text-[#4caf50] bg-[#4caf50]/10 border-[#4caf50]/20' };
-      case 'ignored': return { label: 'BỎ QUA', color: 'text-gray-500 bg-gray-500/10 border-gray-500/20' };
+      case 'ignored': return { label: 'KHÔNG LỖI', color: 'text-gray-500 bg-gray-500/10 border-gray-500/20' };
       default: return { label: status, color: 'text-white bg-white/10' };
     }
   };
@@ -75,7 +111,7 @@ export default function AdminReportsPage() {
     }
   };
 
-  const openChat = async (report: any) => {
+  const openChat = async (report: Report) => {
       setSelectedReport(report);
       setLoadingChat(true);
       const res = await getReportMessagesAction(report.id);
