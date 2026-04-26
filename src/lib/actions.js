@@ -308,7 +308,10 @@ export async function getStorageUsageAction() {
  */
 export async function deleteMangaAction(mangaId) {
   try {
-    if (!(await checkAdminAuth())) throw new Error("Dừng lại! Chỉ quản trị viên mới có quyền hành quyết này! 🛡️");
+    const isAdmin = await checkAdminAuth();
+    const canDelete = isAdmin || (await checkResourceOwnership('mangas', mangaId));
+
+    if (!canDelete) throw new Error("Bạn không có quyền xóa bộ truyện này! 🛡️");
     const client = getDbClient();
     const { data: chapters, error: chapError } = await client.from('chapters').select('id').eq('manga_id', mangaId);
     if (chapError) throw chapError;
@@ -330,6 +333,42 @@ export async function deleteMangaAction(mangaId) {
 
     return { success: true };
   } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🗑️ SERVER ACTION: Xóa chương truyện (Data + R2) 🛡️
+ */
+export async function deleteChapterAction(chapterId) {
+  try {
+    const isAdmin = await checkAdminAuth();
+    const canDelete = isAdmin || (await checkResourceOwnership('chapters', chapterId));
+
+    if (!canDelete) throw new Error("Bạn không có quyền xóa chương này! 🛡️");
+
+    const client = getDbClient();
+    
+    // 1. Lấy manga_id để revalidate sau khi xóa
+    const { data: chapter } = await client.from('chapters').select('manga_id').eq('id', chapterId).single();
+
+    // 2. Xóa folder ảnh trên R2
+    const { deleteFolderFromR2 } = await import('./r2');
+    await deleteFolderFromR2(`chapters/${chapterId}/`);
+
+    // 3. Xóa dữ liệu trong DB (Pages sẽ tự xóa do ON DELETE CASCADE)
+    const { error } = await client.from('chapters').delete().eq('id', chapterId);
+    if (error) throw error;
+
+    // 4. Refresh cache
+    if (chapter) {
+      revalidatePath(`/manga/${chapter.manga_id}`);
+      revalidatePath('/');
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Lỗi deleteChapterAction:", error);
     return { success: false, error: error.message };
   }
 }

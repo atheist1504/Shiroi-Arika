@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction } from '@/lib/actions';
+import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { StorageMeter } from '@/components/admin/AdminCommon';
 
@@ -297,11 +297,17 @@ export default function AdminUploadPage() {
      try {
         setUploading(true);
         setMessage({ type: "info", text: "💥 ĐANG XÓA..." });
-        await supabase.from('pages').delete().eq('chapter_id', idToDel);
-        await supabase.from('chapters').delete().eq('id', idToDel);
+        
+        const res = await deleteChapterAction(idToDel);
+        if (!res.success) throw new Error(res.error);
+
         setMessage({ type: "success", text: "✅ XÓA THÀNH CÔNG!" });
         setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
-     } catch (err: any) { alert(err.message); } finally { setUploading(false); }
+     } catch (err: any) { 
+        setMessage({ type: 'error', text: "LỖI XÓA: " + err.message });
+     } finally { 
+        setUploading(false); 
+     }
   };
 
   const handleUpload = async () => {

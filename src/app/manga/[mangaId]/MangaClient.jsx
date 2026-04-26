@@ -230,19 +230,47 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 relative -mt-[80px] md:-mt-[160px] z-10 transition-all duration-700">
         
         {/* THANH CÔNG CỤ QUẢN TRỊ VIÊN 🍀 (Full Width) */}
+        {/* THANH CÔNG CỤ QUẢN TRỊ VIÊN 🍀 (Full Width) */}
         {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
            <div className="flex flex-wrap items-center gap-3 mb-10 p-5 bg-[#141814]/80 backdrop-blur-3xl border border-[#4caf50]/30 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-fade-in relative overflow-hidden group/admin">
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#4caf50]/30 to-transparent"></div>
               <div className="flex items-center gap-2 pr-5 border-r border-white/5 mr-1">
                  <span className="text-[11px] font-black text-[#4caf50] uppercase tracking-[0.2em] leading-none">BAN QUẢN TRỊ</span>
               </div>
-              <Link 
-                href={`/admin/create-manga?id=${mangaId}`}
-                className="flex items-center gap-2 px-6 py-3 bg-[#141814] border border-white/5 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-[#4caf50] hover:text-[#4caf50] transition-all shadow-inner"
-              >
-                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                 SỬA TRUYỆN
-              </Link>
+              
+              {/* Chỉ Admin hoặc Người đăng mới được sửa/xóa 🛡️ */}
+              {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504' || user?.id === manga.uploader_id) && (
+                <>
+                  <Link 
+                    href={`/admin/create-manga?id=${mangaId}`}
+                    className="flex items-center gap-2 px-6 py-3 bg-[#141814] border border-white/5 text-gray-400 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:border-[#4caf50] hover:text-[#4caf50] transition-all shadow-inner"
+                  >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                     SỬA TRUYỆN
+                  </Link>
+                  <button 
+                    onClick={async () => {
+                      if (confirm("Bạn có chắc chắn muốn XÓA VĨNH VIỄN bộ truyện này và tất cả chương của nó? 💥")) {
+                        try {
+                          const { deleteMangaAction } = await import('@/lib/actions');
+                          const res = await deleteMangaAction(mangaId);
+                          if (res.success) {
+                            alert("Đã xóa bộ truyện thành công! 🍀");
+                            router.push('/');
+                          } else {
+                            alert("Lỗi: " + res.error);
+                          }
+                        } catch (err) { alert("Lỗi kết nối server!"); }
+                      }
+                    }}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
+                  >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                     XÓA
+                  </button>
+                </>
+              )}
+
               <Link 
                 href={`/admin/upload?mangaId=${mangaId}`}
                 className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2e7d32] to-[#4caf50] text-[#0a0c0a] rounded-2xl font-black text-[10px] uppercase tracking-widest hover:brightness-110 hover:scale-[1.03] active:scale-95 transition-all shadow-xl shadow-[#4caf50]/10"
@@ -454,7 +482,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                           </div>
                           </Link>
                           
-                          {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
+                          {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504' || user?.id === chap.uploader_id) && (
                           <Link 
                               href={`/admin/upload?mangaId=${mangaId}&chapterId=${chap.id}`}
                               className="flex items-center justify-center w-14 bg-[#141814] border border-white/5 rounded-2xl text-gray-700 hover:text-amber-500 hover:border-amber-500/50 transition-all shadow-xl"
