@@ -106,8 +106,12 @@ export default function AdminReportsPage() {
       case 'image_broken': return 'ẢNH HỎNG';
       case 'wrong_translation': return 'DỊCH SAI';
       case 'wrong_order': return 'NHẦM THỨ TỰ';
+      case 'platform_bug': return 'LỖI HỆ THỐNG';
+      case 'account_issue': return 'LỖI TÀI KHOẢN';
+      case 'feature_suggestion': return 'GÓP Ý';
+      case 'content_error': return 'LỖI NỘI DUNG';
       case 'other': return 'LỖI KHÁC';
-      default: return type;
+      default: return type?.toUpperCase() || 'BÁO CÁO';
     }
   };
 

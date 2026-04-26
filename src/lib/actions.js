@@ -1,4 +1,4 @@
-'use server';
+﻿'use server';
 
 import { uploadToR2, getPresignedUploadUrl, deleteFolderFromR2 } from './r2';
 import { supabase } from './supabase';
@@ -7,14 +7,14 @@ import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { sendMangaNotification, createInAppNotification } from './notifications';
 import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
-import { getStartOfVNDay } from './missions';
+import { getStartOfVNDay, MISSIONS, calculateConquestReward } from './missions';
 import { hashPassword, verifyPassword } from './crypto';
 
 /**
  * 🛡️ HẰNG SỐ BẢO MẬT: Các trường dữ liệu người dùng an toàn được phép trả về Client 🍀
  * Tuyệt đối không bao gồm cột 'password'.
  */
-export const SAFE_USER_FIELDS = 'id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at';
+const SAFE_USER_FIELDS = 'id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at';
 
 /**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)
@@ -1074,47 +1074,56 @@ export async function updateReportStatusAction(reportId, status) {
     // 🔔 Thông báo phản hồi & Cộng điểm thưởng 🍀
     try {
         if (report && report.user_id) {
-            // 💎 THƯỞNG 100 XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
-            if (status === 'fixed' && report.status !== 'fixed') {
-                await recordXpLogAction(100, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
-                
-                // Thông báo thưởng riêng cho User
-                await createInAppNotification(
-                    report.user_id, 
-                    "Phần thưởng báo cáo lỗi! 💎", 
-                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +100 XP thưởng! 🍀`,
-                    'system'
-                );
-            }
-
-            const statusLabel = status === 'fixed' ? 'Đã khắc phục' : status === 'ignored' ? 'Đã kiểm tra không lỗi' : status;
-            const title = `Cập nhật trạng thái báo cáo! 🛠️`;
-            const body = `Báo cáo "${report.description?.substring(0, 20)}..." của bạn đã được chuyển sang: ${statusLabel}. Cảm ơn bạn đã đóng góp! 🍀`;
-            await createInAppNotification(report.user_id, title, body, 'system', { reportId });
-        }
-    } catch (e) {
-        console.warn("⚠️ Lỗi hậu xử lý báo cáo:", e.message);
-    }
+            // 💎 THƯỞNG     // 1 & 2. CHẠY SONG SONG: Kiểm tra đã nhận thưởng chưa & Lấy dữ liệu nhiệm vụ ⚡
+    const isDaily = missionKey === 'daily_read_1' || missionKey === 'daily_read_3' || missionKey === 'daily_comment_1';
+    let checkQuery = client.from('shiroi_mission_claims').select('id').eq('user_id', userId).eq('mission_key', missionKey);
     
-    revalidatePath('/admin/reports');
-    return { success: true };
-  } catch (error) {
-    console.error('Lỗi updateReportStatusAction:', error);
-    return { success: false, error: error.message };
-  }
-}
-/**
- * 🎯 SERVER ACTION: Nhận thưởng nhiệm vụ (Bảo mật 🛡️)
- */
-export async function claimMissionRewardAction(missionKey, mangaId = null) {
-  try {
-    const user = await getAuthenticatedUser();
-    if (!user || !user.id) throw new Error("Vui lòng đăng nhập để nhận thưởng! 🍀");
+    if (isDaily) {
+        const startOfTodayISO = getStartOfVNDay().toISOString();
+        checkQuery = checkQuery.gte('claimed_at', startOfTodayISO);
+    }
 
-    const userId = user.id;
-    const client = getDbClient();
+    const isConquest = missionKey.startsWith('finish_series_');
+    const isUltraConquest = missionKey.startsWith('conqueror_');
+    const mangaIdFromKey = isConquest ? missionKey.replace('finish_series_', '') : null;
 
-    // 1. Kiểm tra xem đã nhận thưởng chưa (Tránh double claim)
+    const promises = [checkQuery.maybeSingle()];
+
+    if (isConquest) {
+        promises.push(client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey));
+        promises.push(client.from('mangas').select('genres').eq('id', mangaIdFromKey).single());
+        promises.push(client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey));
+    }
+
+    const [existingRes, ...conquestData] = await Promise.all(promises);
+
+    if (existingRes.data) {
+        throw new Error(isDaily ? "Hôm nay bạn đã nhận thưởng rồi! 🛡️" : "Bạn đã nhận phần thưởng này rồi! 🛡️");
+    }
+
+    let rewardXp = 0;
+    if (isUltraConquest) {
+        rewardXp = 10000;
+    } else if (isConquest) {
+        const [chapterRes, mangaRes, readRes] = conquestData;
+        
+        const total = chapterRes.count || 0;
+        const isOneShotGenre = mangaRes.data?.genres?.some(g => {
+            const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
+            return normalized.includes('oneshot');
+        });
+
+        if (total <= 1 || isOneShotGenre) {
+            throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
+        }
+
+        rewardXp = calculateConquestReward(readRes.count || 0);
+    } else {
+        const mission = MISSIONS[missionKey];
+        if (!mission) throw new Error("Nhiệm vụ không tồn tại! 🕵️‍♂️");
+        rewardXp = mission.xp;
+    }
+�n thưởng chưa (Tránh double claim)
     const { MISSIONS } = await import('./missions');
     const mission = MISSIONS[missionKey];
     const isDaily = mission?.type === 'daily';
@@ -1188,24 +1197,21 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     if (claimError) throw claimError;
 
     // 4. Cộng XP và log nhật ký
-    const resLog = await recordXpLogAction(rewardXp, 'mission', missionKey);
-    if (!resLog.success) throw new Error(resLog.error);
-
-    const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
-
-    // 5. TỰ ĐỘNG ĐÁNH DẤU ĐÃ ĐỌC thông báo nhắc nhở cũ 🧹
-    try {
-        // Tìm và đánh dấu đã đọc cho thông báo nhắc nhở nhiệm vụ này (để dọn dẹp hộp thư)
-        await supabaseAdmin
+    // 4 & 5. CHẠY SONG SONG: Cập nhật XP, Lấy User mới & Dọn dẹp thông báo ⚡
+    const [resLog] = await Promise.all([
+        recordXpLogAction(rewardXp, 'mission', missionKey),
+        // Dọn dẹp thông báo (Silent cleanup)
+        supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })
             .eq('user_id', userId)
             .eq('is_read', false)
-            .contains('data', { missionKey });
-            
-    } catch (e) {
-        console.warn("⚠️ [Notification] Lỗi dọn dẹp thông báo cũ:", e.message);
-    }
+            .contains('data', { missionKey })
+    ]);
+
+    if (!resLog.success) throw new Error(resLog.error);
+
+    const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
     return { success: true, rewardXp, user: updatedUser };
   } catch (error) {

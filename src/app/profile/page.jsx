@@ -18,7 +18,8 @@ import {
     deleteOfficialTitleAction,
     getReportsAction,
     getReportMessagesAction,
-    sendReportMessageAction
+    sendReportMessageAction,
+    submitReportAction
 } from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -113,6 +114,24 @@ function ProfileContent() {
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const fileInputRef = useRef(null);
   const chatEndRef = useRef(null);
+
+  const [isCreatingReport, setIsCreatingReport] = useState(false);
+  const [newReportType, setNewReportType] = useState('platform_bug');
+  const [newReportDescription, setNewReportDescription] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  const getTypeLabel = (type) => {
+    switch (type) {
+      case 'image_broken': return 'ẢNH HỎNG';
+      case 'wrong_translation': return 'DỊCH SAI';
+      case 'wrong_order': return 'NHẦM THỨ TỰ';
+      case 'platform_bug': return 'LỖI HỆ THỐNG';
+      case 'account_issue': return 'LỖI TÀI KHOẢN';
+      case 'feature_suggestion': return 'GÓP Ý';
+      case 'other': return 'LỖI KHÁC';
+      default: return type?.toUpperCase() || 'BÁO CÁO';
+    }
+  };
 
   useEffect(() => {
     if (selectedReport) {
@@ -286,6 +305,28 @@ function ProfileContent() {
           fetchReportMessages(selectedReport.id);
       }
       setIsSendingMessage(false);
+  };
+
+  const handleCreateReport = async (e) => {
+      e.preventDefault();
+      if (!newReportDescription.trim()) return;
+      setIsSubmittingReport(true);
+      const res = await submitReportAction({
+          type: newReportType,
+          description: newReportDescription,
+          manga_id: null,
+          chapter_id: null,
+          mangaTitle: 'Hệ thống'
+      });
+      if (res.success) {
+          setNewReportDescription('');
+          setIsCreatingReport(false);
+          fetchUserReports();
+          alert('Báo cáo đã được gửi thành công! 🍀');
+      } else {
+          alert(`Lỗi: ${res.error}`);
+      }
+      setIsSubmittingReport(false);
   };
 
   // 🛰️ REAL-TIME SYNC & CLEANUP: Thông báo Thánh địa 🔔
@@ -1106,12 +1147,22 @@ function ProfileContent() {
             {activeTab === 'reports' && (
               <motion.div key="reports" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                   <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
-                      <div className="flex items-baseline gap-3">
-                        <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Báo cáo & Hỗ trợ</h3>
-                        <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-baseline gap-3">
+                           <h3 className="text-lg font-black uppercase tracking-tighter text-white italic">Báo cáo & Hỗ trợ</h3>
+                           <div className="h-[2px] w-20 bg-gradient-to-r from-white/10 to-transparent" />
+                        </div>
+                        {!selectedReport && !isCreatingReport && (
+                           <button 
+                             onClick={() => setIsCreatingReport(true)}
+                             className="px-6 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg active:scale-95"
+                           >
+                             Tạo báo cáo mới 🚩
+                           </button>
+                        )}
                       </div>
 
-                      {!selectedReport ? (
+                      {!selectedReport && !isCreatingReport ? (
                         <div className="space-y-4 max-h-[450px] overflow-y-auto pr-4 custom-scrollbar">
                            {userReports.map((r, rIdx) => (
                              <motion.div 
@@ -1125,12 +1176,15 @@ function ProfileContent() {
                                }}
                                className="p-6 rounded-[32px] border border-white/5 bg-white/5 hover:bg-white/10 transition-all cursor-pointer relative overflow-hidden group"
                              >
-                               <p className="text-xs font-black text-white mb-1 uppercase tracking-tight">{r.mangas?.title || 'Báo cáo hệ thống'}</p>
+                               <div className="flex justify-between items-start mb-1">
+                                  <p className="text-xs font-black text-white uppercase tracking-tight">{r.mangas?.title || 'Báo cáo hệ thống'}</p>
+                                  <span className="text-[8px] font-black text-amber-500/80 uppercase px-2 py-0.5 bg-amber-500/5 rounded-md border border-amber-500/10">{getTypeLabel(r.type)}</span>
+                               </div>
                                <p className="text-[10px] text-gray-500 line-clamp-1 italic">"{r.description}"</p>
                                <div className="flex justify-between items-center mt-4">
                                   <span className="text-[8px] text-gray-700 font-bold uppercase tracking-widest">{formatSafeDistance(r.created_at)}</span>
                                   <span className="text-[9px] font-black text-[#4caf50] opacity-0 group-hover:opacity-100 transition-opacity uppercase">Mở hội thoại →</span>
-                               </div>
+                                </div>
                              </motion.div>
                            ))}
 
@@ -1140,6 +1194,74 @@ function ProfileContent() {
                                <p className="text-[10px] font-black uppercase tracking-widest">Bạn chưa có báo cáo nào</p>
                              </div>
                            )}
+                        </div>
+                      ) : isCreatingReport ? (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                             <div className="flex items-center gap-4 pb-6 border-b border-white/5">
+                                <button onClick={() => setIsCreatingReport(false)} className="p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-gray-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <div>
+                                    <p className="text-xs font-black text-white uppercase tracking-tight">Gửi báo cáo lỗi hệ thống</p>
+                                    <p className="text-[9px] text-gray-500 font-bold uppercase italic">Phản hồi của bạn giúp Shiroi hoàn thiện hơn 🍀</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleCreateReport} className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-4 tracking-widest">Loại vấn đề</label>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                        {[
+                                            { id: 'platform_bug', label: 'Lỗi hệ thống' },
+                                            { id: 'account_issue', label: 'Lỗi tài khoản' },
+                                            { id: 'feature_suggestion', label: 'Góp ý tính năng' },
+                                            { id: 'content_error', label: 'Lỗi nội dung' },
+                                            { id: 'other', label: 'Vấn đề khác' }
+                                        ].map(t => (
+                                            <button 
+                                                key={t.id}
+                                                type="button"
+                                                onClick={() => setNewReportType(t.id)}
+                                                className={`py-4 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all ${
+                                                    newReportType === t.id 
+                                                    ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50] shadow-lg shadow-[#4caf50]/20' 
+                                                    : 'bg-white/5 border-white/5 text-gray-500 hover:border-white/20'
+                                                }`}
+                                            >
+                                                {t.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-gray-500 uppercase ml-4 tracking-widest">Mô tả chi tiết</label>
+                                    <textarea 
+                                        value={newReportDescription}
+                                        onChange={e => setNewReportDescription(e.target.value)}
+                                        placeholder="Hãy mô tả lỗi hoặc góp ý của bạn tại đây..."
+                                        className="w-full bg-black/60 border border-white/10 rounded-[24px] px-6 py-5 text-sm outline-none focus:border-[#4caf50] transition-all min-h-[150px] resize-none"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsCreatingReport(false)}
+                                        className="flex-1 py-5 bg-white/5 border border-white/5 text-gray-500 font-black rounded-[24px] text-[10px] uppercase tracking-widest hover:bg-white/10 transition-all"
+                                    >
+                                        Hủy bỏ
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        disabled={isSubmittingReport || !newReportDescription.trim()}
+                                        className="flex-[2] py-5 bg-[#4caf50] text-[#0a0c0a] font-black rounded-[24px] text-[11px] uppercase tracking-widest shadow-xl shadow-[#4caf50]/20 disabled:opacity-30 active:scale-95 transition-all"
+                                    >
+                                        {isSubmittingReport ? 'ĐANG GỬI...' : 'GỬI BÁO CÁO NGAY 🚀'}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                       ) : (
                         <div className="space-y-6">
