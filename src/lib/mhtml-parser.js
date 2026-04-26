@@ -101,6 +101,17 @@ export const parseMHTMLImages = async (file) => {
         
         for (let i = 0; i < urls.length; i++) {
             try {
+                const res = await fetch(urls[i]);
+                if (res.ok) {
+                    const blob = await res.blob();
+                    if (blob.size > 5000) {
+                        images.push(new File([blob], `web-img-${i}.${blob.type.split('/')[1]}`, { type: blob.type }));
+                    }
+                }
+            } catch (e) {}
+        }
+    }
+
     if (images.length === 0) {
         throw new Error("Không tìm thấy bất kỳ hình ảnh hay liên kết ảnh nào trong file này! 🛡️");
     }
