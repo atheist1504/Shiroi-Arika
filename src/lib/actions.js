@@ -951,23 +951,25 @@ export async function submitReportAction(reportData) {
     const user = await getAuthenticatedUser();
     const client = getDbClient();
 
+    // 🛡️ Tách mangaTitle ra để không gây lỗi DB (vì cột này không có trong bảng)
+    const { mangaTitle, ...dbFields } = reportData;
+
     const { error } = await client
       .from('shiroi_reports')
       .insert([{
-        ...reportData,
+        ...dbFields,
         user_id: user?.id || null,
         status: 'pending'
       }]);
 
     if (error) throw error;
 
-    // 🔔 Thông báo cho Quản trị viên (Admin) 🛡️
+    // 🔔 Thông báo cho Quản trị viên (Admin) 🍀
     try {
-        const adminIds = ['atheist1504']; // Có thể bổ sung thêm list admin ID hoặc query DB
+        const adminIds = ['atheist1504']; 
         const title = `Báo cáo mới từ User! 🚩`;
-        const body = `Có báo cáo lỗi mới cho bộ "${reportData.mangaTitle || 'Manga'}". Hãy kiểm tra ngay!`;
+        const body = `Có báo cáo lỗi mới về: "${mangaTitle || 'Hệ thống/Manga'}". Hãy kiểm tra ngay!`;
         
-        // Gửi thông báo cho Admin chính hoặc tất cả admin
         adminIds.forEach(adminId => {
              createInAppNotification(adminId, title, body, 'system', { reportId: 'new' });
         });
