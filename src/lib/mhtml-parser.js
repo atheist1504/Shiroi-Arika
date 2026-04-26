@@ -7,12 +7,26 @@ export const parseMHTMLImages = async (file) => {
     const text = await file.text();
     
     // 1. Tìm boundary (ranh giới giữa các phần)
-    const contentTypeMatch = text.match(/Content-Type: multipart\/related;.*boundary="?([^";\n\r]+)"?/i);
-    if (!contentTypeMatch) {
-        throw new Error("Không tìm thấy cấu trúc Multipart trong file MHTML này! 🛡️");
-    }
+    // Cải tiến Regex để bắt được cả trường hợp boundary nằm ở dòng tiếp theo 🚀
+    let boundary = null;
+    const boundaryMatch = text.match(/boundary=["']?([^"'\s;\r\n]+)["']?/i);
     
-    const boundary = contentTypeMatch[1];
+    if (boundaryMatch) {
+        boundary = boundaryMatch[1];
+    } else {
+        // Fallback: Thử tìm theo cấu trúc dòng bắt đầu bằng --
+        const lines = text.split('\n');
+        for (const line of lines) {
+            if (line.startsWith('----') && line.trim().length > 10) {
+                boundary = line.trim().substring(2);
+                break;
+            }
+        }
+    }
+
+    if (!boundary) {
+        throw new Error("Không tìm thấy ranh giới dữ liệu (Boundary) trong file MHTML này! 🛡️");
+    }
     const parts = text.split(`--${boundary}`);
     
     const images = [];
