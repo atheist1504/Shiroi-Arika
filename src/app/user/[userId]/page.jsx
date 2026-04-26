@@ -8,11 +8,20 @@ export const revalidate = 0; // Tắt cache để thấy thay đổi ngay lập 
 export async function generateMetadata({ params }) {
   const { userId } = params;
 
-  const { data: user } = await supabase
+  let { data: user } = await supabase
     .from("shiroi_users")
     .select("username, display_name, bio, avatar_url")
-    .eq("id", userId)
-    .single();
+    .eq("id", userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000')
+    .maybeSingle();
+
+  if (!user) {
+    const { data: byUsername } = await supabase
+      .from("shiroi_users")
+      .select("username, display_name, bio, avatar_url")
+      .eq("username", userId)
+      .maybeSingle();
+    user = byUsername;
+  }
 
   if (!user) {
     return {
@@ -54,12 +63,21 @@ export async function generateMetadata({ params }) {
 export default async function PublicProfilePage({ params }) {
   const { userId } = params;
 
-  // 1. Fetch User Info (Server-side)
-  const { data: userData } = await supabase
+  // 1. Fetch User Info (Server-side) - Hỗ trợ cả ID và Username 🍀
+  let { data: userData } = await supabase
     .from('shiroi_users')
     .select('*')
-    .eq('id', userId)
-    .single();
+    .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000') // Tránh lỗi type UUID
+    .maybeSingle();
+
+  if (!userData) {
+    const { data: byUsername } = await supabase
+      .from('shiroi_users')
+      .select('*')
+      .eq('username', userId)
+      .maybeSingle();
+    userData = byUsername;
+  }
 
   if (!userData) {
     notFound();

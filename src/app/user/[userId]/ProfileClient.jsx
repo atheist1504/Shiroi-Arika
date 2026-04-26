@@ -55,14 +55,23 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      // 1. Fetch User Info
-      const { data: userData, error: userError } = await supabase
+      // 1. Fetch User Info - Hỗ trợ cả ID và Username 🍀
+      let { data: userData, error: userError } = await supabase
         .from('shiroi_users')
         .select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge')
-        .eq('id', userId)
-        .single();
+        .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000')
+        .maybeSingle();
 
-      if (userError || !userData) {
+      if (!userData) {
+        const { data: byUsername } = await supabase
+          .from('shiroi_users')
+          .select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge')
+          .eq('username', userId)
+          .maybeSingle();
+        userData = byUsername;
+      }
+
+      if (!userData) {
         setError('Không tìm thấy người dùng này trong Thánh địa Shiroi!');
         return;
       }
