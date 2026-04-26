@@ -82,7 +82,40 @@ export const parseMHTMLImages = async (file) => {
     }
     
     if (images.length === 0) {
-        throw new Error("Không tìm thấy hình ảnh nào trong file MHTML này! 🛡️");
+        // 🚀 CHIÊU CUỐI: Nếu không thấy ảnh nhúng, hãy tìm các Link ảnh trong HTML
+        console.log("🔍 Không thấy ảnh nhúng, đang tìm kiếm Link ảnh trong HTML...");
+        const htmlPart = parts.find(p => /Content-Type:\s*text\/html/i.test(p));
+        if (htmlPart) {
+            const splitIndex = htmlPart.indexOf('\r\n\r\n');
+            const htmlContent = htmlPart.substring(splitIndex + 4);
+            
+            // Tìm tất cả các link ảnh (thường nằm trong data-src hoặc src)
+            const urlRegex = /(?:src|data-src|data-original)=["'](https?:\/\/[^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/gi;
+            let match;
+            const urls = [];
+            while ((match = urlRegex.exec(htmlContent)) !== null) {
+                if (!urls.includes(match[1])) urls.push(match[1]);
+            }
+
+            if (urls.length > 0) {
+                console.log(`🌐 Tìm thấy ${urls.length} link ảnh, đang tiến hành tải về...`);
+                for (let i = 0; i < urls.length; i++) {
+                    try {
+                        const response = await fetch(urls[i]);
+                        const blob = await response.blob();
+                        const type = blob.type.split('/')[1] || 'jpeg';
+                        const file = new File([blob], `fetched-image-${i}.${type}`, { type: blob.type });
+                        images.push(file);
+                    } catch (e) {
+                        console.warn(`⚠️ Không thể tải ảnh từ URL: ${urls[i]}`, e);
+                    }
+                }
+            }
+        }
+    }
+
+    if (images.length === 0) {
+        throw new Error("Không tìm thấy bất kỳ hình ảnh hay liên kết ảnh nào trong file này! 🛡️");
     }
 
     return images;
