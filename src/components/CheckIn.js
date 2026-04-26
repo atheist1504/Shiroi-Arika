@@ -177,19 +177,19 @@ export default function CheckIn() {
           : "cursor-default opacity-60"
         }`}
       >
-        <div className={`flex items-center gap-2.5 px-4 py-2 rounded-xl border transition-all duration-500 ${
+        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-500 ${
             canCheckIn && !isSyncing
             ? "bg-[#4caf50]/5 border-[#4caf50]/20 hover:border-[#4caf50] hover:bg-[#4caf50]/10 shadow-[0_0_20px_rgba(76,175,80,0.05)] hover:shadow-[0_0_25px_rgba(76,175,80,0.15)]" 
             : "bg-white/5 border-white/5"
         }`}>
-            <span className={`text-base transition-transform duration-500 ${canCheckIn && !isSyncing ? 'group-hover/checkin:scale-125 group-hover/checkin:rotate-12' : ''}`}>
+            <span className={`text-sm transition-transform duration-500 ${canCheckIn && !isSyncing ? 'group-hover/checkin:scale-125 group-hover/checkin:rotate-12' : ''}`}>
                 {isSyncing ? "🌀" : (canCheckIn ? (checking ? "🌀" : "🔥") : "📅")}
             </span>
-            <div className="flex flex-col items-start leading-none">
-                <span className={`text-[8px] font-black uppercase tracking-[0.2em] mb-0.5 ${canCheckIn && !isSyncing ? 'text-[#4caf50]' : 'text-gray-600'}`}>
+            <div className="flex flex-col items-start leading-tight">
+                <span className={`text-[7px] font-black uppercase tracking-[0.2em] ${canCheckIn && !isSyncing ? 'text-[#4caf50]' : 'text-gray-600'}`}>
                     {isSyncing ? "Đang check" : `CHUỖI: ${user?.check_in_streak || 0}`}
                 </span>
-                <span className={`text-[9px] font-black uppercase tracking-widest ${canCheckIn && !isSyncing ? 'text-white' : 'text-gray-500'}`}>
+                <span className={`text-[8px] font-black uppercase tracking-widest ${canCheckIn && !isSyncing ? 'text-white' : 'text-gray-500'}`}>
                     {isSyncing ? "XIN ĐỢI..." : (canCheckIn ? (checking ? "ĐANG GỬI..." : "ĐIỂM DANH") : "HẸN MAI NHÉ")}
                 </span>
             </div>

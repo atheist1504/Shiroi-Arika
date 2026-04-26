@@ -361,15 +361,11 @@ export default function Navbar() {
           <div className="hidden lg:flex h-10 items-center justify-start relative px-6 mb-2 gap-6">
                 {isMounted && (
                   <>
-                    <div className="scale-100 flex items-center gap-6">
-                      <CheckIn />
-                      <div className="w-[1px] h-3 bg-white/10"></div>
-                    </div>
+                    <CheckIn />
+                    <div className="w-[1px] h-3 bg-white/10"></div>
                     
-                    <div className="scale-100 flex items-center gap-6">
-                      <LuckyDraw />
-                      <div className="w-[1px] h-3 bg-white/10"></div>
-                    </div>
+                    <LuckyDraw />
+                    <div className="w-[1px] h-3 bg-white/10"></div>
     
                     <button 
                       onClick={() => setIsMissionsOpen(true)}
@@ -387,7 +383,7 @@ export default function Navbar() {
                           className="text-[#4caf50] hover:text-white transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
                         >
                             <span className="text-sm opacity-80">🚩</span>
-                            Quản lý Báo cáo
+                            Báo cáo
                         </Link>
                       </>
                     ) : (
@@ -469,7 +465,7 @@ export default function Navbar() {
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center justify-center gap-3 py-3 bg-[#4caf50]/10 text-[#4caf50] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-[#4caf50]/20 active:scale-95 transition-all"
                      >
-                          <span className="text-sm">🚩</span> QUẢN LÝ BÁO CÁO
+                          <span className="text-sm">🚩</span> BÁO CÁO
                      </Link>
                    ) : (
                      <Link 
