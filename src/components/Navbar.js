@@ -88,7 +88,7 @@ export default function Navbar() {
       try {
         const { data, error } = await supabase
           .from('shiroi_users')
-          .select('*')
+          .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at')
           .eq('id', userId)
           .single();
         
@@ -379,7 +379,18 @@ export default function Navbar() {
                       Nhiệm vụ
                     </button>
     
-                    {!(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
+                    {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') ? (
+                      <>
+                        <div className="w-[1px] h-3 bg-white/10"></div>
+                        <Link 
+                          href="/admin/reports" 
+                          className="text-[#4caf50] hover:text-white transition-all font-black text-[10px] uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2"
+                        >
+                            <span className="text-sm opacity-80">🚩</span>
+                            Quản lý Báo cáo
+                        </Link>
+                      </>
+                    ) : (
                       <>
                         <div className="w-[1px] h-3 bg-white/10"></div>
                         <Link 
@@ -452,7 +463,15 @@ export default function Navbar() {
                    >
                       <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
                    </button>
-                   {!(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
+                   {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') ? (
+                     <Link 
+                          href="/admin/reports" 
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center justify-center gap-3 py-3 bg-[#4caf50]/10 text-[#4caf50] rounded-xl font-black text-[10px] uppercase tracking-[0.2em] border border-[#4caf50]/20 active:scale-95 transition-all"
+                     >
+                          <span className="text-sm">🚩</span> QUẢN LÝ BÁO CÁO
+                     </Link>
+                   ) : (
                      <Link 
                           href="/profile?tab=reports" 
                           onClick={() => setIsMobileMenuOpen(false)}

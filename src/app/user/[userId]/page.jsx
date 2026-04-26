@@ -66,14 +66,14 @@ export default async function PublicProfilePage({ params }) {
   // 1. Fetch User Info (Server-side) - Hỗ trợ cả ID và Username 🍀
   let { data: userData } = await supabase
     .from('shiroi_users')
-    .select('*')
+    .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at')
     .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000') // Tránh lỗi type UUID
     .maybeSingle();
 
   if (!userData) {
     const { data: byUsername } = await supabase
       .from('shiroi_users')
-      .select('*')
+      .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at')
       .eq('username', userId)
       .maybeSingle();
     userData = byUsername;
@@ -87,12 +87,12 @@ export default async function PublicProfilePage({ params }) {
   const { count: mangaCount } = await supabase
     .from('shiroi_history')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
+    .eq('user_id', userData.id);
 
   const { count: chapterCount } = await supabase
     .from('shiroi_read_chapters')
     .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId);
+    .eq('user_id', userData.id);
 
 
   const initialStats = {

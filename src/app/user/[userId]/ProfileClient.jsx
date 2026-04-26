@@ -22,8 +22,8 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
   
   // 🛡️ Sử dụng useMemo để tính toán isOwner an toàn, tránh lỗi hoisting 🍀
   const isOwner = useMemo(() => {
-    return sessionUser?.id === userId && !!userId;
-  }, [sessionUser, userId]);
+    return sessionUser?.id === targetUser?.id && !!targetUser?.id;
+  }, [sessionUser, targetUser?.id]);
 
   useEffect(() => {
     // Lấy thông tin session từ Cookie (Client-side)
@@ -82,12 +82,12 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       const { count: mangaCount } = await supabase
         .from('shiroi_history')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        .eq('user_id', userData.id);
 
       const { count: chapterCount } = await supabase
         .from('shiroi_read_chapters')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        .eq('user_id', userData.id);
 
       setStats({
         total_mangas: mangaCount || 0,
