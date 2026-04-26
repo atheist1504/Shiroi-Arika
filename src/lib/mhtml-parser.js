@@ -89,25 +89,32 @@ export const parseMHTMLImages = async (file) => {
             const splitIndex = htmlPart.indexOf('\r\n\r\n');
             const htmlContent = htmlPart.substring(splitIndex + 4);
             
-            // Tìm tất cả các link ảnh (Mở rộng để bắt được link Google Drive và các link không đuôi) 🚀
-            const urlRegex = /(?:src|data-src|data-original)=["'](https?:\/\/(?:lh\d+\.googleusercontent\.com\/d\/|[^"']+\.(?:jpg|jpeg|png|webp|gif|bmp)|[^"']+\/image[^"']*))["']/gi;
+            // Tìm tất cả các link ảnh (Regex cực mạnh để bắt cả token bảo mật và ký tự lạ) 🚀
+            const urlRegex = /https?:\/\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp|gif|bmp)[^"'\s<>]*/gi;
             let match;
-            const urls = [];
+            const foundUrls = [];
             while ((match = urlRegex.exec(htmlContent)) !== null) {
-                if (!urls.includes(match[1])) urls.push(match[1]);
+                // Giải mã thực thể HTML (VD: &amp; -> &) để link hoạt động được
+                const cleanUrl = match[0].replace(/&amp;/g, '&');
+                if (!foundUrls.includes(cleanUrl)) foundUrls.push(cleanUrl);
             }
 
-            if (urls.length > 0) {
-                console.log(`🌐 Tìm thấy ${urls.length} link ảnh, đang tiến hành tải về...`);
-                for (let i = 0; i < urls.length; i++) {
+            if (foundUrls.length > 0) {
+                console.log(`🌐 Tìm thấy ${foundUrls.length} link ảnh tiềm năng, đang tiến hành tải về...`);
+                for (let i = 0; i < foundUrls.length; i++) {
                     try {
-                        const response = await fetch(urls[i]);
+                        // Thử tải ảnh, bỏ qua nếu lỗi (ví dụ link tracker hoặc link chết)
+                        const response = await fetch(foundUrls[i]);
+                        if (!response.ok) continue;
+                        
                         const blob = await response.blob();
+                        if (blob.size < 5000) continue; // Bỏ qua các icon hoặc ảnh quá nhỏ
+                        
                         const type = blob.type.split('/')[1] || 'jpeg';
                         const file = new File([blob], `fetched-image-${i}.${type}`, { type: blob.type });
                         images.push(file);
                     } catch (e) {
-                        console.warn(`⚠️ Không thể tải ảnh từ URL: ${urls[i]}`, e);
+                        // Không cần log lỗi vì một số link có thể bị chặn bởi CORS
                     }
                 }
             }
