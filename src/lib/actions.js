@@ -895,6 +895,22 @@ export async function performLuckyDrawAction() {
     const userId = user.id;
     const client = getDbClient();
 
+    // 🕵️‍♂️ KIỂM TRA GIỚI HẠN 1 LẦN/NGÀY TẠI SERVER (BẢO MẬT 🛡️)
+    const { data: checkUser } = await client
+      .from('shiroi_users')
+      .select('last_lucky_draw')
+      .eq('id', userId)
+      .single();
+
+    if (checkUser?.last_lucky_draw) {
+        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const lastDrawDate = new Date(checkUser.last_lucky_draw).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        
+        if (lastDrawDate === today) {
+            return { success: false, error: 'Hôm nay vận may đã cạn, hãy quay lại vào ngày mai! 💮' };
+        }
+    }
+
     // 1. Tính toán phần thưởng ngẫu nhiên (Gacha logic)
     const tiers = [10, 20, 30, 40, 50, 100, 500];
     const weights = [40, 30, 15, 8, 4, 2.5, 0.5]; // Tổng = 100%

@@ -69,41 +69,54 @@ export default function LuckyDraw() {
   }, [showModal]);
 
   const fetchStatusFromDb = async () => {
-    const storedUser = localStorage.getItem("shiroi_user");
     const userStr = localStorage.getItem("shiroi_user");
     if (!userStr) return;
     
     try {
       const userData = JSON.parse(userStr);
+      
+      // 🕵️‍♂️ LẤY DỮ LIỆU MỚI NHẤT TỪ USER TABLE ĐỂ KIỂM TRA last_lucky_draw
+      const { data: latestUser, error: userError } = await supabase
+        .from('shiroi_users')
+        .select('last_lucky_draw')
+        .eq('id', userData.id)
+        .single();
+
       // 🕵️‍♂️ LẤY NGÀY HIỆN TẠI (VIỆT NAM) 🇻🇳
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      let hasDrawnToday = false;
+
+      // Ưu tiên kiểm tra theo last_lucky_draw từ DB 🛡️
+      if (!userError && latestUser?.last_lucky_draw) {
+          const lastDrawDate = new Date(latestUser.last_lucky_draw).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+          if (lastDrawDate === today) hasDrawnToday = true;
+      }
+
+      // Nếu vẫn chưa chắc chắn, kiểm tra nhật ký XP 🍀
+      if (!hasDrawnToday) {
+          const { data: logs, error: logError } = await supabase
+            .from('shiroi_xp_logs')
+            .select('created_at')
+            .eq('user_id', userData.id)
+            .eq('type', 'lucky_draw')
+            .order('created_at', { ascending: false })
+            .limit(1);
+          
+          if (!logError && logs && logs.length > 0) {
+            const lastLogDate = new Date(logs[0].created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+            if (lastLogDate === today) hasDrawnToday = true;
+          }
+      }
       
-      // Lấy nhật ký bốc quà MỚI NHẤT của User 🍀
-      const { data: logs, error: logError } = await supabase
-        .from('shiroi_xp_logs')
-        .select('created_at')
-        .eq('user_id', userData.id)
-        .eq('type', 'lucky_draw')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      
-      if (!logError && logs && logs.length > 0) {
-        // So sánh ngày của log mới nhất với ngày hôm nay (VN) 🛡️
-        const lastLogDate = new Date(logs[0].created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        
-        if (lastLogDate === today) {
-           setCanDraw(false);
-           setButtonText("HẸN MAI NHÉ");
-        } else {
-           setCanDraw(true);
-           setButtonText("NHẬN QUÀ");
-        }
+      if (hasDrawnToday) {
+          setCanDraw(false);
+          setButtonText("HẸN MAI NHÉ");
       } else {
-        setCanDraw(true);
-        setButtonText("NHẬN QUÀ");
+          setCanDraw(true);
+          setButtonText("NHẬN QUÀ");
       }
     } catch (err) {
-      console.warn("Lỗi đồng bộ LuckyDraw từ Nhật ký:", err);
+      console.warn("Lỗi đồng bộ LuckyDraw:", err);
     } finally {
       setIsSyncing(false);
     }
@@ -118,16 +131,12 @@ export default function LuckyDraw() {
     const userData = JSON.parse(storedUser);
     setUser(userData);
 
-    // Kiểm tra xem đã bốc quà hôm nay chưa 🕵️‍♂️
+    // Kiểm tra xem đã bốc quà hôm nay chưa (Đồng nhất múi giờ VN) 🕵️‍♂️
     if (userData.last_lucky_draw) {
-      const lastDraw = new Date(userData.last_lucky_draw);
-      const today = new Date();
-      const isSameDay = 
-        lastDraw.getDate() === today.getDate() &&
-        lastDraw.getMonth() === today.getMonth() &&
-        lastDraw.getFullYear() === today.getFullYear();
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const lastDrawDate = new Date(userData.last_lucky_draw).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       
-      setCanDraw(!isSameDay);
+      setCanDraw(lastDrawDate !== today);
     } else {
       setCanDraw(true);
     }
