@@ -1329,6 +1329,27 @@ function ProfileContent() {
 
             {activeTab === 'admin' && (user?.role === 'admin' || user?.role === 'staff') && (
               <motion.div key="admin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
+                 
+                 {/* 🚩 QUẢN LÝ BÁO CÁO (ADMIN ONLY) */}
+                 <div className="glass-card p-10 rounded-[48px] border-amber-500/10 space-y-8 bg-gradient-to-br from-amber-500/5 to-transparent">
+                    <div className="flex items-baseline gap-3">
+                        <h3 className="text-lg font-black uppercase tracking-tighter text-amber-500 italic">Hệ thống Báo cáo</h3>
+                        <div className="h-[2px] flex-1 bg-gradient-to-r from-amber-500/10 to-transparent" />
+                    </div>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="space-y-1 text-center sm:text-left">
+                            <p className="text-sm font-black text-white uppercase tracking-tight">Trung tâm xử lý vi phạm & lỗi</p>
+                            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Xem toàn bộ báo cáo từ người dùng và phản hồi trực tiếp</p>
+                        </div>
+                        <Link 
+                            href="/admin/reports"
+                            className="px-10 py-5 bg-amber-500 text-[#0a0c0a] rounded-[24px] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-amber-500/20 active:scale-95 transition-all hover:scale-105"
+                        >
+                            ĐẾN BẢNG ĐIỀU KHIỂN 🚩
+                        </Link>
+                    </div>
+                 </div>
+
                  <div className="glass-card p-10 rounded-[48px] border-white/5 space-y-8">
                     <div className="flex items-baseline gap-3">
                         <h3 className="text-lg font-black uppercase tracking-tighter text-red-500 italic">Quản lý nhân sự</h3>
