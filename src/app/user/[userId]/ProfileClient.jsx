@@ -150,15 +150,17 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
                </div>
             </div>
 
-            <div className="space-y-4">
-               <div className="inline-block px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full">
+            <div className="flex flex-col items-center gap-4">
+               <div className="px-5 py-2 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full backdrop-blur-md shadow-inner">
                   <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.4em]">{userTitle.name}</span>
                </div>
-               <h1 className="text-4xl md:text-5xl font-black tracking-tight uppercase gradient-text drop-shadow-2xl">
+               <h1 className="text-4xl md:text-6xl font-black tracking-tight uppercase gradient-text drop-shadow-2xl leading-none">
                   {targetUser?.display_name || targetUser?.username || 'Thành viên Shiroi'}
                </h1>
-               <div className="w-20 h-1 whitespace-nowrap bg-gradient-to-r from-transparent via-[#4caf50]/40 to-transparent mx-auto"></div>
-               <p className="text-gray-500 font-bold italic text-sm leading-relaxed max-w-sm">
+               <div className="w-24 h-1 bg-gradient-to-r from-transparent via-[#4caf50]/40 to-transparent"></div>
+            </div>
+
+            <p className="text-gray-500 font-bold italic text-sm leading-relaxed max-w-sm">
                   "{targetUser?.bio || 'Một lãng khách bí ẩn chưa để lại lời giới thiệu nào tại Shiroi Arika...'}"
                </p>
             </div>
