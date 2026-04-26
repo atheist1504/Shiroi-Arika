@@ -66,14 +66,14 @@ export default async function PublicProfilePage({ params }) {
   // 1. Fetch User Info (Server-side) - Hỗ trợ cả ID và Username 🍀
   let { data: userData } = await supabase
     .from('shiroi_users')
-    .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at')
+    .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at, last_check_in, last_lucky_draw, check_in_streak')
     .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000') // Tránh lỗi type UUID
     .maybeSingle();
 
   if (!userData) {
     const { data: byUsername } = await supabase
       .from('shiroi_users')
-      .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at')
+      .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at, last_check_in, last_lucky_draw, check_in_streak')
       .eq('username', userId)
       .maybeSingle();
     userData = byUsername;

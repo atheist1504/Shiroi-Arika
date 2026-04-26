@@ -98,14 +98,10 @@ export default function CheckIn() {
 
     // Kiểm tra xem đã điểm danh hôm nay chưa
     if (userData.last_check_in) {
-      const lastCheck = new Date(userData.last_check_in);
-      const today = new Date();
-      const isSameDay = 
-        lastCheck.getDate() === today.getDate() &&
-        lastCheck.getMonth() === today.getMonth() &&
-        lastCheck.getFullYear() === today.getFullYear();
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const lastCheckDate = new Date(userData.last_check_in).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       
-      setCanCheckIn(!isSameDay);
+      setCanCheckIn(lastCheckDate !== today);
     } else {
       setCanCheckIn(true);
     }
