@@ -89,8 +89,8 @@ export const parseMHTMLImages = async (file) => {
             const splitIndex = htmlPart.indexOf('\r\n\r\n');
             const htmlContent = htmlPart.substring(splitIndex + 4);
             
-            // Tìm tất cả các link ảnh (thường nằm trong data-src hoặc src)
-            const urlRegex = /(?:src|data-src|data-original)=["'](https?:\/\/[^"']+\.(?:jpg|jpeg|png|webp)[^"']*)["']/gi;
+            // Tìm tất cả các link ảnh (Mở rộng để bắt được link Google Drive và các link không đuôi) 🚀
+            const urlRegex = /(?:src|data-src|data-original)=["'](https?:\/\/(?:lh\d+\.googleusercontent\.com\/d\/|[^"']+\.(?:jpg|jpeg|png|webp|gif|bmp)|[^"']+\/image[^"']*))["']/gi;
             let match;
             const urls = [];
             while ((match = urlRegex.exec(htmlContent)) !== null) {
