@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ProfileClient from "./ProfileClient";
 import { notFound } from "next/navigation";
 
@@ -8,14 +9,14 @@ export const revalidate = 0; // Tắt cache để thấy thay đổi ngay lập 
 export async function generateMetadata({ params }) {
   const { userId } = params;
 
-  let { data: user } = await supabase
+  let { data: user } = await supabaseAdmin
     .from("shiroi_users")
     .select("username, display_name, bio, avatar_url")
     .eq("id", userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000')
     .maybeSingle();
 
   if (!user) {
-    const { data: byUsername } = await supabase
+    const { data: byUsername } = await supabaseAdmin
       .from("shiroi_users")
       .select("username, display_name, bio, avatar_url")
       .eq("username", userId)
@@ -64,14 +65,14 @@ export default async function PublicProfilePage({ params }) {
   const { userId } = params;
 
   // 1. Fetch User Info (Server-side) - Hỗ trợ cả ID và Username 🍀
-  let { data: userData } = await supabase
+  let { data: userData } = await supabaseAdmin
     .from('shiroi_users')
     .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at, last_check_in, last_lucky_draw, check_in_streak')
     .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000') // Tránh lỗi type UUID
     .maybeSingle();
 
   if (!userData) {
-    const { data: byUsername } = await supabase
+    const { data: byUsername } = await supabaseAdmin
       .from('shiroi_users')
       .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at, last_check_in, last_lucky_draw, check_in_streak')
       .eq('username', userId)
