@@ -164,7 +164,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
             <p className="text-gray-500 font-bold italic text-sm leading-relaxed max-w-sm">
                   "{targetUser?.bio || 'Một lãng khách bí ẩn chưa để lại lời giới thiệu nào tại Shiroi Arika...'}"
                </p>
-            </div>
+
 
             <div className="w-full max-w-xs p-8 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[40px] space-y-5 shadow-2xl relative overflow-hidden group">
                <div className="absolute inset-0 bg-gradient-to-br from-[#4caf50]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
