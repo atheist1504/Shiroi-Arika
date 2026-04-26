@@ -1,126 +1,106 @@
 /**
- * 🛠️ MHTML PARSER ENGINE 🍀
- * Giúp trích xuất hình ảnh từ file .mhtml (MIME HTML) 📚
+ * TIỆN ÍCH TRÍCH XUẤT ẢNH TỪ FILE MHTML (BẢN TỐI THƯỢNG - BINARY READY) 🚀
+ * Hỗ trợ trích xuất ảnh nhúng (Base64/Binary) và ảnh từ Link.
  */
-
 export const parseMHTMLImages = async (file) => {
-    const text = await file.text();
+    // Đọc file dưới dạng ArrayBuffer để tránh hỏng dữ liệu nhị phân 🛡️
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const decoder = new TextDecoder();
     
-    // 1. Tìm boundary (ranh giới giữa các phần)
-    // Cải tiến Regex để bắt được cả trường hợp boundary nằm ở dòng tiếp theo 🚀
-    let boundary = null;
-    const boundaryMatch = text.match(/boundary=["']?([^"'\s;\r\n]+)["']?/i);
+    // Chuyển một phần nhỏ đầu file sang text để tìm boundary
+    const headerText = decoder.decode(bytes.slice(0, 5000));
+    const boundaryMatch = headerText.match(/boundary=["']?([^"'\s;\r\n]+)["']?/i);
     
-    if (boundaryMatch) {
-        boundary = boundaryMatch[1];
-    } else {
-        // Fallback: Thử tìm theo cấu trúc dòng bắt đầu bằng --
-        const lines = text.split('\n');
-        for (const line of lines) {
-            if (line.startsWith('----') && line.trim().length > 10) {
-                boundary = line.trim().substring(2);
+    if (!boundaryMatch) {
+        throw new Error("Không tìm thấy cấu trúc dữ liệu (Boundary) trong file này! 🛡️");
+    }
+    
+    const boundary = boundaryMatch[1];
+    const boundaryBytes = new TextEncoder().encode(`--${boundary}`);
+    
+    // Tìm các vị trí ranh giới trong mảng byte
+    const partIndices = [];
+    for (let i = 0; i < bytes.length - boundaryBytes.length; i++) {
+        let found = true;
+        for (let j = 0; j < boundaryBytes.length; j++) {
+            if (bytes[i + j] !== boundaryBytes[j]) {
+                found = false;
                 break;
             }
         }
+        if (found) partIndices.push(i);
     }
 
-    if (!boundary) {
-        throw new Error("Không tìm thấy ranh giới dữ liệu (Boundary) trong file MHTML này! 🛡️");
-    }
-    const parts = text.split(`--${boundary}`);
-    
     const images = [];
     let imageIndex = 0;
 
-    for (const part of parts) {
-        // Kiểm tra xem phần này có phải là ảnh không (Case-insensitive check) 🕵️‍♂️
-        const hasImageHeader = /Content-Type:\s*image\//i.test(part);
-        const hasImageLocation = /Content-Location:.*(\.jpg|\.jpeg|\.png|\.webp|\.gif)/i.test(part);
+    for (let i = 0; i < partIndices.length - 1; i++) {
+        const start = partIndices[i] + boundaryBytes.length;
+        const end = partIndices[i+1];
+        const partBytes = bytes.slice(start, end);
+        
+        // Tìm vị trí ngăn cách giữa Header và Body (\r\n\r\n)
+        let headerEndIndex = -1;
+        for (let j = 0; j < partBytes.length - 3; j++) {
+            if (partBytes[j] === 13 && partBytes[j+1] === 10 && partBytes[j+2] === 13 && partBytes[j+3] === 10) {
+                headerEndIndex = j;
+                break;
+            }
+        }
+        
+        if (headerEndIndex === -1) continue;
+        
+        const header = decoder.decode(partBytes.slice(0, headerEndIndex));
+        const bodyBytes = partBytes.slice(headerEndIndex + 4);
+        
+        // Kiểm tra xem có phải ảnh không
+        const isImage = /Content-Type:\s*image\//i.test(header) || 
+                        /Content-Location:.*(\.jpg|\.jpeg|\.png|\.webp|\.gif)/i.test(header);
+        
+        if (isImage) {
+            const typeMatch = header.match(/Content-Type:\s*image\/([^;\s\r\n]+)/i);
+            let type = typeMatch ? typeMatch[1] : 'jpeg';
+            if (type.includes('icon')) continue; // Bỏ qua favicon
 
-        if (hasImageHeader || hasImageLocation) {
-            try {
-                // Tách Header và Body
-                const splitIndex = part.indexOf('\r\n\r\n');
-                if (splitIndex === -1) continue;
-                
-                const header = part.substring(0, splitIndex);
-                const body = part.substring(splitIndex + 4).trim();
-                
-                // Lấy định dạng ảnh
-                const typeMatch = header.match(/Content-Type:\s*image\/([^;\s\r\n]+)/i);
-                let type = typeMatch ? typeMatch[1] : null;
-                
-                // Nếu không thấy Content-Type, thử đoán qua Content-Location
-                if (!type) {
-                    const locMatch = header.match(/Content-Location:.*\.([a-z0-9]+)/i);
-                    type = locMatch ? locMatch[1] : 'jpeg';
-                }
-                
-                // Lấy encoding
-                const isBase64 = /Content-Transfer-Encoding:\s*base64/i.test(header);
-                
-                if (isBase64 && body.length > 100) { // Đảm bảo có dữ liệu thực sự
-                    const cleanBase64 = body.replace(/[\r\n\s]/g, '');
-                    
-                    const byteCharacters = atob(cleanBase64);
-                    const byteNumbers = new Array(byteCharacters.length);
-                    for (let i = 0; i < byteCharacters.length; i++) {
-                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+            const isBase64 = /Content-Transfer-Encoding:\s*base64/i.test(header);
+            let finalBlob;
+
+            if (isBase64) {
+                const base64Text = decoder.decode(bodyBytes).replace(/[\r\n\s]/g, '');
+                try {
+                    const binaryString = atob(base64Text);
+                    const uint8Array = new Uint8Array(binaryString.length);
+                    for (let j = 0; j < binaryString.length; j++) {
+                        uint8Array[j] = binaryString.charCodeAt(j);
                     }
-                    const byteArray = new Uint8Array(byteNumbers);
-                    const blob = new Blob([byteArray], { type: `image/${type}` });
-                    
-                    const fileName = `mhtml-image-${imageIndex++}.${type}`;
-                    const imageFile = new File([blob], fileName, { type: `image/${type}` });
-                    
-                    images.push(imageFile);
-                }
-            } catch (err) {
-                console.warn("⚠️ Lỗi khi trích xuất một ảnh từ MHTML:", err);
+                    finalBlob = new Blob([uint8Array], { type: `image/${type}` });
+                } catch (e) { continue; }
+            } else {
+                // Xử lý dữ liệu nhị phân trực tiếp 🚀
+                finalBlob = new Blob([bodyBytes], { type: `image/${type}` });
+            }
+
+            if (finalBlob && finalBlob.size > 5000) {
+                const fileName = `mhtml-img-${imageIndex++}.${type}`;
+                images.push(new File([finalBlob], fileName, { type: `image/${type}` }));
             }
         }
     }
-    
+
+    // Nếu vẫn không thấy ảnh nhúng, dùng chiêu cũ: Quét Link
     if (images.length === 0) {
-        // 🚀 CHIÊU CUỐI: Nếu không thấy ảnh nhúng, hãy tìm các Link ảnh trong HTML
-        console.log("🔍 Không thấy ảnh nhúng, đang tìm kiếm Link ảnh trong HTML...");
-        const htmlPart = parts.find(p => /Content-Type:\s*text\/html/i.test(p));
-        if (htmlPart) {
-            const splitIndex = htmlPart.indexOf('\r\n\r\n');
-            const htmlContent = htmlPart.substring(splitIndex + 4);
-            
-            // Tìm tất cả các link ảnh (Regex cực mạnh để bắt cả token bảo mật và ký tự lạ) 🚀
-            const urlRegex = /https?:\/\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp|gif|bmp)[^"'\s<>]*/gi;
-            let match;
-            const foundUrls = [];
-            while ((match = urlRegex.exec(htmlContent)) !== null) {
-                // Giải mã thực thể HTML (VD: &amp; -> &) để link hoạt động được
-                const cleanUrl = match[0].replace(/&amp;/g, '&');
-                if (!foundUrls.includes(cleanUrl)) foundUrls.push(cleanUrl);
-            }
-
-            if (foundUrls.length > 0) {
-                console.log(`🌐 Tìm thấy ${foundUrls.length} link ảnh tiềm năng, đang tiến hành tải về...`);
-                for (let i = 0; i < foundUrls.length; i++) {
-                    try {
-                        // Thử tải ảnh, bỏ qua nếu lỗi (ví dụ link tracker hoặc link chết)
-                        const response = await fetch(foundUrls[i]);
-                        if (!response.ok) continue;
-                        
-                        const blob = await response.blob();
-                        if (blob.size < 5000) continue; // Bỏ qua các icon hoặc ảnh quá nhỏ
-                        
-                        const type = blob.type.split('/')[1] || 'jpeg';
-                        const file = new File([blob], `fetched-image-${i}.${type}`, { type: blob.type });
-                        images.push(file);
-                    } catch (e) {
-                        // Không cần log lỗi vì một số link có thể bị chặn bởi CORS
-                    }
-                }
-            }
+        const fullText = decoder.decode(bytes);
+        const urlRegex = /https?:\/\/[^"'\s<>]+\.(?:jpg|jpeg|png|webp|gif|bmp)[^"'\s<>]*/gi;
+        let match;
+        const urls = [];
+        while ((match = urlRegex.exec(fullText)) !== null) {
+            const url = match[0].replace(/&amp;/g, '&');
+            if (!urls.includes(url)) urls.push(url);
         }
-    }
-
+        
+        for (let i = 0; i < urls.length; i++) {
+            try {
     if (images.length === 0) {
         throw new Error("Không tìm thấy bất kỳ hình ảnh hay liên kết ảnh nào trong file này! 🛡️");
     }
