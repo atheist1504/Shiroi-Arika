@@ -33,8 +33,11 @@ export const parseMHTMLImages = async (file) => {
     let imageIndex = 0;
 
     for (const part of parts) {
-        // Kiểm tra xem phần này có phải là ảnh không
-        if (part.includes('Content-Type: image/')) {
+        // Kiểm tra xem phần này có phải là ảnh không (Case-insensitive check) 🕵️‍♂️
+        const hasImageHeader = /Content-Type:\s*image\//i.test(part);
+        const hasImageLocation = /Content-Location:.*(\.jpg|\.jpeg|\.png|\.webp|\.gif)/i.test(part);
+
+        if (hasImageHeader || hasImageLocation) {
             try {
                 // Tách Header và Body
                 const splitIndex = part.indexOf('\r\n\r\n');
@@ -43,18 +46,22 @@ export const parseMHTMLImages = async (file) => {
                 const header = part.substring(0, splitIndex);
                 const body = part.substring(splitIndex + 4).trim();
                 
-                // Lấy định dạng ảnh (jpeg, png, webp, ...)
-                const typeMatch = header.match(/Content-Type: image\/([^;\s\r\n]+)/i);
-                const type = typeMatch ? typeMatch[1] : 'jpeg';
+                // Lấy định dạng ảnh
+                const typeMatch = header.match(/Content-Type:\s*image\/([^;\s\r\n]+)/i);
+                let type = typeMatch ? typeMatch[1] : null;
                 
-                // Lấy encoding (thường là base64)
-                const isBase64 = header.includes('Content-Transfer-Encoding: base64');
+                // Nếu không thấy Content-Type, thử đoán qua Content-Location
+                if (!type) {
+                    const locMatch = header.match(/Content-Location:.*\.([a-z0-9]+)/i);
+                    type = locMatch ? locMatch[1] : 'jpeg';
+                }
                 
-                if (isBase64) {
-                    // Làm sạch dữ liệu Base64 (loại bỏ xuống dòng)
+                // Lấy encoding
+                const isBase64 = /Content-Transfer-Encoding:\s*base64/i.test(header);
+                
+                if (isBase64 && body.length > 100) { // Đảm bảo có dữ liệu thực sự
                     const cleanBase64 = body.replace(/[\r\n\s]/g, '');
                     
-                    // Chuyển sang Blob
                     const byteCharacters = atob(cleanBase64);
                     const byteNumbers = new Array(byteCharacters.length);
                     for (let i = 0; i < byteCharacters.length; i++) {
@@ -63,7 +70,6 @@ export const parseMHTMLImages = async (file) => {
                     const byteArray = new Uint8Array(byteNumbers);
                     const blob = new Blob([byteArray], { type: `image/${type}` });
                     
-                    // Tạo File object để tương thích với logic upload hiện tại
                     const fileName = `mhtml-image-${imageIndex++}.${type}`;
                     const imageFile = new File([blob], fileName, { type: `image/${type}` });
                     
