@@ -7,6 +7,7 @@ import { AdminButton } from '@/components/admin/AdminCommon';
 import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { StorageMeter } from '@/components/admin/AdminCommon';
+import { parseMHTMLImages } from '@/lib/mhtml-parser';
 
 // 🚀 DND-KIT IMPORTS
 import {
@@ -241,30 +242,52 @@ export default function AdminUploadPage() {
   };
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // 🕵️‍♂️ TỰ ĐỘNG SẮP XẾP THEO NGÀY (FILE LAST MODIFIED) 🍀
-    const files = Array.from(e.target.files || []).sort((a, b) => a.lastModified - b.lastModified);
-    if (files.length === 0) return;
-    setMessage({ type: 'info', text: `ĐANG XỬ LÝ & SẮP XẾP ${files.length} ẢNH THEO NGÀY... ⏳` });
-    
-    const newItems = files.map((file, idx) => {
-      const id = `new-${Date.now()}-${idx}-${Math.random()}`;
-      // Kiểm tra sơ bộ định dạng file TikTok / Mobile 🕵️‍♂️
-      const isTikTok = file.name.toLowerCase().includes('tiktok') || file.size < 1000;
-      
-      return {
-        id,
-        file, 
-        preview: URL.createObjectURL(file),
-        type: 'new',
-        isTikTok
-      };
-    });
+    const rawFiles = Array.from(e.target.files || []);
+    if (rawFiles.length === 0) return;
 
-    setItems(prev => [...prev, ...newItems]);
+    setMessage({ type: 'info', text: `ĐANG XỬ LÝ DỮ LIỆU... ⏳` });
     
-    // 🛡️ Reset input để có thể chọn lại cùng một file nếu cần 🍀
-    e.target.value = '';
-    setMessage(null);
+    let allFiles: File[] = [];
+
+    try {
+      for (const file of rawFiles) {
+        const isMHTML = file.name.toLowerCase().endsWith('.mhtml') || file.name.toLowerCase().endsWith('.mht');
+        
+        if (isMHTML) {
+          setMessage({ type: 'info', text: `ĐANG TRÍCH XUẤT ẢNH TỪ FILE MHTML: ${file.name}... 📂` });
+          const extractedImages = await parseMHTMLImages(file);
+          allFiles = [...allFiles, ...extractedImages];
+        } else {
+          allFiles.push(file);
+        }
+      }
+
+      // 🕵️‍♂️ SẮP XẾP THEO NGÀY (FILE LAST MODIFIED) cho các file lẻ, hoặc giữ nguyên thứ tự MHTML
+      const files = allFiles;
+      
+      const newItems = files.map((file, idx) => {
+        const id = `new-${Date.now()}-${idx}-${Math.random()}`;
+        // Kiểm tra sơ bộ định dạng file TikTok / Mobile 🕵️‍♂️
+        const isTikTok = file.name.toLowerCase().includes('tiktok') || file.size < 1000;
+        
+        return {
+          id,
+          file, 
+          preview: URL.createObjectURL(file),
+          type: 'new',
+          isTikTok
+        };
+      });
+
+      setItems(prev => [...prev, ...newItems]);
+      setMessage(null);
+    } catch (err: any) {
+      console.error("❌ Lỗi xử lý file:", err);
+      setMessage({ type: 'error', text: `LỖI XỬ LÝ FILE: ${err.message}` });
+    } finally {
+      // 🛡️ Reset input để có thể chọn lại cùng một file nếu cần 🍀
+      e.target.value = '';
+    }
   };
 
   const handleDragEnd = (event: any) => {
@@ -521,7 +544,7 @@ export default function AdminUploadPage() {
                           <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} onPreview={setPreviewImage} onBroken={markAsBroken} />
                        ))}
                        <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
-                          <input type="file" id="fileInput" multiple accept="image/*" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                          <input type="file" id="fileInput" multiple accept="image/*,.mhtml,.mht" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                           <div className="w-10 h-10 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
                           <span className="text-[9px] font-black text-gray-600 uppercase">Thêm trang</span>
                        </div>
