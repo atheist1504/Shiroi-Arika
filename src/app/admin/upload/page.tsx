@@ -696,6 +696,7 @@ export default function AdminUploadPage() {
                src={previewImage} 
                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-[0_40px_100px_rgba(0,0,0,0.8)] animate-zoom-in" 
                alt="Preview" 
+               referrerPolicy="no-referrer"
                onClick={(e) => e.stopPropagation()} 
                onError={(e: any) => {
                   // 🛡️ CHẶN VÒNG LẶP: Nếu đã thử rồi mà vẫn lỗi thì dừng 🍀
