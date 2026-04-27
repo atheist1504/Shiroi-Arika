@@ -457,16 +457,45 @@ export async function leechChapterAction(url) {
     const html = await response.text();
     const images = [];
 
-    // TRUYENDEX logic (Hỗ trợ cả .com, .cc, .org...) 🚀
+    // TRUYENDEX logic (Đánh trực tiếp vào API - Siêu chuẩn xác) 🚀
     if (url.includes('truyendex')) {
-        // TruyenDex thường dùng data-src cho lazy load
+        try {
+            // 1. Trích xuất ID chương (UUID) từ link
+            // Ví dụ: .../chuong/2699dbee-fb6d-45dc-ac42-42a1e6eef7b7
+            const uuidMatch = url.match(/chuong\/([a-f0-9-]{36})/i);
+            const uuid = uuidMatch ? uuidMatch[1] : url.split('/').pop()?.split('?')[0];
+
+            if (uuid && uuid.length === 36) {
+                console.log(`🎯 [Leecher] Phát hiện UUID TruyenDex: ${uuid}. Đang gọi API...`);
+                const apiRes = await fetch(`https://api.truyendex.cc/v1/chapters/${uuid}`, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Origin': 'https://truyendex.cc',
+                        'Referer': 'https://truyendex.cc/'
+                    }
+                });
+
+                if (apiRes.ok) {
+                    const apiData = await apiRes.json();
+                    // Cấu trúc API TruyenDex: data.images là mảng các link ảnh
+                    const apiImages = apiData.data?.images || [];
+                    if (apiImages.length > 0) {
+                        console.log(`✅ [Leecher] Lấy thành công ${apiImages.length} ảnh từ API TruyenDex!`);
+                        return { success: true, images: apiImages, source: 'TruyenDex-API' };
+                    }
+                }
+            }
+        } catch (apiErr) {
+            console.warn("⚠️ [Leecher] Lỗi gọi API TruyenDex, chuyển sang cào HTML dự phòng:", apiErr.message);
+        }
+
+        // FALLBACK: Cào HTML nếu API lỗi hoặc không tìm thấy UUID
         const imgRegex = /<img[^>]+(?:src|data-src|data-original|data-cdn)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["'][^>]*class=["'][^"']*chapter-img[^"']*["']/gi;
         let match;
         while ((match = imgRegex.exec(html)) !== null) {
             images.push(match[1]);
         }
         
-        // Fallback cho TruyenDex: Quét tất cả thuộc tính có thể chứa ảnh
         if (images.length === 0) {
             const attributesRegex = /(?:src|data-src|data-original|data-cdn|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif)[^"']*?)["']/gi;
             while ((match = attributesRegex.exec(html)) !== null) {
