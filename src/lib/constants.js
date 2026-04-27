@@ -3,7 +3,7 @@ export const GENRES = [
   "Action", "Adventure", "Comedy", "Drama", "Fantasy", 
   "Magic", "Mystery", "18+", "Romance", 
   "Sci-Fi", "Slice of Life", "Supernatural", "Tragedy", "Historical",
-  "Isekai", "School Life", "Harem", "NTR", "Boy love", "Yuri"
+  "Isekai", "School Life", "Harem", "NTR", "Boy love", "Yuri", "Tsu Or Yan"
 ];
 
 export const STATUS_OPTIONS = [
