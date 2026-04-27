@@ -441,12 +441,12 @@ export async function leechChapterAction(url) {
             if (data.result !== 'ok') throw new Error("Dữ liệu chương không hợp lệ! 🧱");
 
             const hash = data.chapter.hash;
-            // Dùng uploads.mangadex.org làm fallback nếu baseUrl của node bị lỗi
-            const baseUrl = data.baseUrl || 'https://uploads.mangadex.org';
+            // Dùng uploads.mangadex.org làm gốc cho ổn định nhất 🚀
+            const baseUrl = 'https://uploads.mangadex.org';
             
-            // Lấy danh sách ảnh (ưu tiên dataSaver để nhẹ, hoặc data để lấy ảnh gốc)
-            const images = data.chapter.data.map(filename => 
-                `${baseUrl}/data/${hash}/${filename}`
+            // 🖼️ Dùng 'dataSaver' (Ảnh đã nén) để vừa nhẹ vừa dễ vượt rào hơn
+            const images = data.chapter.dataSaver.map(filename => 
+                `${baseUrl}/data-saver/${hash}/${filename}`
             );
 
             return { success: true, images, source: 'MangaDex-Core' };
