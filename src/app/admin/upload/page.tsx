@@ -121,6 +121,7 @@ function SortableItem({ id, item, index, onRemove, onPreview, onBroken }: any) {
         className={`w-full h-full object-cover pointer-events-none transition-opacity duration-300 ${item.error ? 'opacity-20' : 'opacity-100'}`} 
         draggable="false" 
         alt="" 
+        referrerPolicy="no-referrer"
         onError={(e: any) => {
           // 🛡️ XỬ LÝ ẢNH LỖI (FIX VỠ ẢNH TIKTOK/MOBILE) 🍀
           if (!item.error) {
@@ -245,14 +246,11 @@ export default function AdminUploadPage() {
       if (!res.success) throw new Error(res.error);
 
       const newItems = res.images.map((url: string, idx: number) => {
-        // 🛡️ DÙNG PROXY CHO PREVIEW ĐỂ KHÔNG BỊ CHẶN CORS 🚀
-        const proxiedPreview = `/api/proxy/image?url=${encodeURIComponent(url)}`;
-        
         return {
           id: `leech-${Date.now()}-${idx}`,
-          data: url, // Vẫn giữ link gốc để server tải lên R2
+          data: url, // Link gốc để server tải lên R2
           type: 'url',
-          preview: proxiedPreview 
+          preview: url // Dùng link gốc để trình duyệt ông tự tải (thường sẽ nhanh hơn và không bị server chặn)
         };
       });
 
