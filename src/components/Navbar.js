@@ -375,7 +375,7 @@ export default function Navbar() {
                       Nhiệm vụ
                     </button>
     
-                    {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') ? (
+                    {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
                       <>
                         <div className="w-[1px] h-3 bg-white/10"></div>
                         <Link 
@@ -386,7 +386,9 @@ export default function Navbar() {
                             Báo cáo
                         </Link>
                       </>
-                    ) : (
+                    )}
+
+                    {!(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                       <>
                         <div className="w-[1px] h-3 bg-white/10"></div>
                         <Link 
@@ -459,7 +461,7 @@ export default function Navbar() {
                    >
                       <span className="text-sm">🎯</span> NHIỆM VỤ & THƯỞNG
                    </button>
-                   {(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') ? (
+                   {(user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
                      <Link 
                           href="/admin/reports" 
                           onClick={() => setIsMobileMenuOpen(false)}
@@ -467,7 +469,9 @@ export default function Navbar() {
                      >
                           <span className="text-sm">🚩</span> BÁO CÁO
                      </Link>
-                   ) : (
+                   )}
+
+                   {!(user?.role === 'admin' || user?.role === 'staff' || user?.username?.toLowerCase() === 'atheist1504') && (
                      <Link 
                           href="/profile?tab=reports" 
                           onClick={() => setIsMobileMenuOpen(false)}
