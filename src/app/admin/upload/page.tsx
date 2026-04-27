@@ -246,11 +246,14 @@ export default function AdminUploadPage() {
       if (!res.success) throw new Error(res.error);
 
       const newItems = res.images.map((url: string, idx: number) => {
+        // 🛡️ KHÔI PHỤC PROXY ĐỂ HIỆN ẢNH (VƯỢT CƠ CHẾ CHẶN CỦA MANGADEX) 🚀
+        const proxiedPreview = `/api/proxy/image?url=${encodeURIComponent(url)}`;
+        
         return {
           id: `leech-${Date.now()}-${idx}`,
           data: url, // Link gốc để server tải lên R2
           type: 'url',
-          preview: url // Dùng link gốc để trình duyệt ông tự tải (thường sẽ nhanh hơn và không bị server chặn)
+          preview: proxiedPreview 
         };
       });
 
