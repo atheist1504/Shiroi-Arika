@@ -353,8 +353,6 @@ export async function deleteChapterAction(chapterId) {
     const { data: chapter } = await client.from('chapters').select('manga_id, chapter_number').eq('id', chapterId).single();
 
     // 2. Xóa folder ảnh trên R2 🧹
-    const { deleteFolderFromR2 } = await import('./r2');
-    
     // Thử xóa folder theo chuẩn mới (UUID)
     await deleteFolderFromR2(`chapters/${chapterId}/`);
     
@@ -408,7 +406,6 @@ export async function uploadChapterPageAction(formData) {
 
     if (!file || !fileName) throw new Error("Thiếu dữ liệu upload!");
 
-    const { uploadToR2 } = await import('./r2');
     const result = await uploadToR2(file, fileName);
 
     return { success: true, url: result };
@@ -543,7 +540,6 @@ export async function uploadFromUrlAction(url, fileName) {
         // Tạo File object giả để dùng với uploadToR2
         const file = new File([buffer], fileName, { type: contentType });
 
-        const { uploadToR2 } = await import('./r2');
         const result = await uploadToR2(file, fileName);
 
         return { success: true, url: result, size_kb: Math.round(buffer.length / 1024) };
@@ -562,13 +558,10 @@ export async function uploadImageAction(formData) {
     const file = formData.get('file');
     if (!file) throw new Error("Không tìm thấy file ảnh!");
     
-    // Sử dụng helper uploadToR2 có sẵn
-    const { uploadToR2 } = await import('./r2');
     const fileName = `covers/${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
     const result = await uploadToR2(file, fileName);
     
-    if (!result.success) throw new Error(result.error);
-    return { success: true, url: result.url };
+    return { success: true, url: result };
   } catch (error) {
     console.error('Lỗi uploadImageAction:', error);
     return { success: false, error: error.message };

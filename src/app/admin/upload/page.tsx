@@ -267,7 +267,7 @@ export default function AdminUploadPage() {
           const fileName = `chapters/${pendingFolderId}/${Date.now()}-${globalIdx}.webp`;
           
           try {
-            const uploadRes = await uploadFromUrlAction(url, tempFileName);
+            const uploadRes = await uploadFromUrlAction(url, fileName);
             if (uploadRes.success) {
                 return {
                     id: `leech-${Date.now()}-${globalIdx}`,
