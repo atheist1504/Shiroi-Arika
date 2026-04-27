@@ -510,15 +510,22 @@ export async function uploadFromUrlAction(url, fileName) {
 
         console.log(`🌩️ [Transfer] Đang kéo ảnh: ${url}`);
         
-        // Tải ảnh về server RAM
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Referer': new URL(url).origin
-            }
-        });
+        // Tải ảnh về server RAM với bộ Headers "xịn" 🛡️
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        };
 
-        if (!response.ok) throw new Error(`Không thể tải ảnh từ nguồn! (Status: ${response.status})`);
+        // Ưu tiên Referer của MangaDex nếu là link từ họ 🕵️‍♂️
+        if (url.includes('mangadex')) {
+            headers['Referer'] = 'https://mangadex.org/';
+        } else {
+            headers['Referer'] = new URL(url).origin;
+        }
+
+        const response = await fetch(url, { headers });
+
+        if (!response.ok) throw new Error(`Web gốc chặn tải ảnh! (Status: ${response.status})`);
         
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);

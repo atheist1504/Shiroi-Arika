@@ -12,14 +12,33 @@ export async function GET(request) {
   }
 
   try {
-    const response = await fetch(imageUrl, {
-      headers: {
+    console.log(`🌩️ [Proxy] Đang lấy ảnh: ${imageUrl}`);
+    
+    // Giả lập Referer từ MangaDex để vượt rào bảo mật 🛡️
+    const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': new URL(imageUrl).origin,
-      },
-    });
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'vi,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Sec-Fetch-Dest': 'image',
+        'Sec-Fetch-Mode': 'no-cors',
+        'Sec-Fetch-Site': 'cross-site'
+    };
 
-    if (!response.ok) throw new Error('Failed to fetch image');
+    // Nếu là ảnh từ MangaDex thì bắt buộc phải có Referer của họ 🕵️‍♂️
+    if (imageUrl.includes('mangadex')) {
+        headers['Referer'] = 'https://mangadex.org/';
+    } else {
+        headers['Referer'] = new URL(imageUrl).origin;
+    }
+
+    const response = await fetch(imageUrl, { headers });
+
+    if (!response.ok) {
+        console.error(`❌ [Proxy] Web gốc từ chối (Status: ${response.status}) cho URL: ${imageUrl}`);
+        return new NextResponse(`Web gốc từ chối (Status: ${response.status})`, { status: response.status });
+    }
 
     const contentType = response.headers.get('content-type');
     const buffer = await response.arrayBuffer();
