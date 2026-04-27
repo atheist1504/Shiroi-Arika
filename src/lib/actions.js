@@ -457,30 +457,29 @@ export async function leechChapterAction(url) {
     const html = await response.text();
     const images = [];
 
-    // TRUYENDEX.COM logic 🚀
-    if (url.includes('truyendex.com')) {
-        // TruyenDex thường để ảnh trong các thẻ img có class nhất định hoặc trong script
-        // Regex này quét các ảnh trong container chính của chương
-        const imgRegex = /<img[^>]+src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["'][^>]*class=["'][^"']*chapter-img[^"']*["']/gi;
+    // TRUYENDEX logic (Hỗ trợ cả .com, .cc, .org...) 🚀
+    if (url.includes('truyendex')) {
+        // TruyenDex thường dùng data-src cho lazy load
+        const imgRegex = /<img[^>]+(?:src|data-src|data-original|data-cdn)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["'][^>]*class=["'][^"']*chapter-img[^"']*["']/gi;
         let match;
         while ((match = imgRegex.exec(html)) !== null) {
             images.push(match[1]);
         }
         
-        // Fallback: Nếu không thấy class, quét toàn bộ ảnh có đuôi mở rộng phù hợp
+        // Fallback cho TruyenDex: Quét tất cả thuộc tính có thể chứa ảnh
         if (images.length === 0) {
-            const fallbackRegex = /src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif|bmp)[^"']*?)["']/gi;
-            while ((match = fallbackRegex.exec(html)) !== null) {
+            const attributesRegex = /(?:src|data-src|data-original|data-cdn|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif)[^"']*?)["']/gi;
+            while ((match = attributesRegex.exec(html)) !== null) {
                 const imgUrl = match[1];
-                // Bỏ qua các ảnh hệ thống/quảng cáo
-                if (!imgUrl.includes('logo') && !imgUrl.includes('avatar') && !imgUrl.includes('ads') && !imgUrl.includes('icon')) {
+                if (!imgUrl.includes('logo') && !imgUrl.includes('avatar') && !imgUrl.includes('ads') && !imgUrl.includes('icon') && !imgUrl.includes('theme')) {
                     images.push(imgUrl);
                 }
             }
         }
     } else {
         // LOGIC CHUNG CHO CÁC TRANG KHÁC 🛠️
-        const genericRegex = /src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
+        // Quét cả src và các thuộc tính data- phổ biến
+        const genericRegex = /(?:src|data-src|data-original|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
         let match;
         while ((match = genericRegex.exec(html)) !== null) {
             const imgUrl = match[1];
