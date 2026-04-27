@@ -14,23 +14,19 @@ export async function GET(request) {
   try {
     console.log(`🌩️ [Super-Proxy] Đang thâm nhập: ${imageUrl}`);
     
-    // Bộ Headers "Siêu cấp" giả dạng trình duyệt Chrome thực thụ 🕵️‍♂️
+    // Bộ Headers "Tàng hình" 🕵️‍♂️
     const headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-        'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
         'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache',
-        'Referer': 'https://mangadex.org/',
-        'Sec-Ch-Ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
         'Sec-Fetch-Dest': 'image',
         'Sec-Fetch-Mode': 'no-cors',
         'Sec-Fetch-Site': 'cross-site',
-        'Connection': 'keep-alive'
     };
+
+    // 🕵️‍♂️ THỬ NGHIỆM: Gỡ bỏ Referer hoàn toàn để xem MangaDex có nhả ảnh thật không
+    // (Đôi khi có Referer lại là dấu hiệu để nó chặn)
 
     const response = await fetch(imageUrl, { headers });
 
