@@ -76,6 +76,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [showSettings, setShowSettings] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showCommentsDrawer, setShowCommentsDrawer] = useState(false); // 💬 NGĂN KÉO BÌNH LUẬN
   const [chapterSearchTerm, setChapterSearchTerm] = useState('');
   const [reportType, setReportType] = useState('image_broken');
   const [reportDescription, setReportDescription] = useState('');
@@ -444,10 +445,20 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           </div>
 
           <div className="flex items-center justify-end gap-1.5 sm:gap-3 flex-1">
-              <button onClick={() => { setShowReportModal(true); setShowSettings(false); }} className={`px-2 py-1.5 sm:px-2.5 rounded border transition-all flex items-center gap-1 sm:gap-1.5 ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/20 shadow-lg'}`} title="Báo lỗi chương">
+              <button onClick={() => { setShowReportModal(true); setShowSettings(false); setShowCommentsDrawer(false); }} className={`px-2 py-1.5 sm:px-2.5 rounded border transition-all flex items-center gap-1 sm:gap-1.5 ${theme === 'light' ? 'bg-white text-red-500 border-black/10 hover:bg-red-50' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:border-red-500/40 hover:bg-red-500/20 shadow-lg'}`} title="Báo lỗi chương">
                  <svg className="w-3.5 h-3.5 sm:w-3 sm:h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                  <span className="text-[9px] font-black uppercase tracking-tighter whitespace-nowrap hidden xs:inline-block">Báo lỗi</span>
               </button>
+
+              {/* 💬 NÚT MỞ BÌNH LUẬN (NEW) */}
+              <button 
+                onClick={() => { setShowCommentsDrawer(!showCommentsDrawer); setShowSettings(false); setShowReportModal(false); }} 
+                className={`p-2 rounded-xl border transition-all flex-shrink-0 group ${showCommentsDrawer ? 'bg-[#4caf50] text-[#0a0c0a] border-[#4caf50]' : (theme === 'light' ? 'bg-white text-black border-black/10 hover:bg-gray-50' : 'bg-black/40 text-gray-400 border-white/5 hover:border-white/20')}`}
+                title="Bình luận"
+              >
+                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              </button>
+
               <div className={`px-1.5 py-1.5 sm:px-2 ${readingMode === 'scroll' ? 'bg-[#4caf50]/10 text-[#4caf50]' : (theme === 'light' ? 'bg-black text-white' : 'bg-amber-500/10 text-amber-500')} rounded border border-current/20 text-[8px] sm:text-[9px] font-black uppercase tracking-tighter`}>
                  {readingMode === 'scroll' ? (
                    <>
@@ -708,6 +719,49 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                   
                   <div className={`p-4 border-t text-center ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-black/20 border-white/5'}`}>
                      <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Shiroi Arika Premium Selector</p>
+                  </div>
+               </motion.div>
+            </div>
+          )}
+
+          {/* 💬 PREMIUM COMMENT DRAWER (BẢN TRƯỢT TỪ CẠNH PHẢI) 🚀 */}
+          {showCommentsDrawer && (
+            <div className="fixed inset-0 z-[30005] flex justify-end">
+               <motion.div 
+                 initial={{ opacity: 0 }} 
+                 animate={{ opacity: 1 }} 
+                 exit={{ opacity: 0 }} 
+                 onClick={() => setShowCommentsDrawer(false)} 
+                 className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" 
+               />
+               <motion.div 
+                 initial={{ x: '100%' }} 
+                 animate={{ x: 0 }} 
+                 exit={{ x: '100%' }} 
+                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                 className={`relative w-full max-w-md h-full shadow-2xl flex flex-col border-l ${theme === 'light' ? 'bg-white border-black/10' : 'bg-[#0a0c0a]/90 backdrop-blur-3xl border-white/5'}`}
+               >
+                  <div className="p-4 border-b border-current/5 flex items-center justify-between">
+                     <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]">
+                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"></path></svg>
+                        </div>
+                        <div>
+                           <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-widest leading-none">Bình luận chương</h3>
+                           <p className="text-[8px] opacity-40 font-bold uppercase tracking-tighter mt-1">Giao lưu cùng anh em Shiroi Arika</p>
+                        </div>
+                     </div>
+                     <button onClick={() => setShowCommentsDrawer(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors group">
+                        <svg className="w-5 h-5 opacity-50 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     </button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                     <Comments chapterId={chapterId} mangaId={chapter?.manga_id} />
+                  </div>
+
+                  <div className={`p-3 border-t text-center ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-black/20 border-white/5'}`}>
+                     <p className="text-[8px] font-black uppercase tracking-[0.2em] opacity-30">Cảm ơn ông đã đóng góp cho cộng đồng! 💮</p>
                   </div>
                </motion.div>
             </div>

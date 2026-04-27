@@ -28,31 +28,33 @@ export async function GET() {
     // 🛡️ 2. Lấy Client DB (Ưu tiên Admin, Fallback về Anon)
     const client = getDbClient();
 
-    // 🛡️ 3. Tính toán dung lượng (Safe Query)
-    const { data: pagesData, error: pagesError } = await client
-      .from('pages')
-      .select('size_kb')
-      .limit(2000);
+    // 🛡️ 3. Tính toán dung lượng chuẩn xác bằng SQL SUM 🚀
+    // Tính tổng dung lượng từ bảng pages và mangas
+    const { data: storageData, error: storageError } = await client.rpc('get_total_storage_kb');
     
-    if (pagesError) throw pagesError;
-    
-    const pagesTotal = (pagesData || []).reduce((sum, p) => sum + (p.size_kb || 150), 0);
+    let totalKB = 0;
 
-    const { data: mangasData, error: mangasError } = await client
-      .from('mangas')
-      .select('size_kb');
+    if (storageError) {
+      console.warn('⚠️ RPC failed, falling back to manual sum:', storageError);
+      // Fallback nếu chưa tạo RPC: Tính thủ công nhưng không giới hạn limit
+      const { data: pData } = await client.from('pages').select('size_kb');
+      const { data: mData } = await client.from('mangas').select('size_kb');
+      
+      const pSum = (pData || []).reduce((s, p) => s + (p.size_kb || 150), 0);
+      const mSum = (mData || []).reduce((s, m) => s + (m.size_kb || 300), 0);
+      totalKB = pSum + mSum;
+    } else {
+      totalKB = storageData || 0;
+    }
     
-    const mangasTotal = (mangasData || []).reduce((sum, m) => sum + (m.size_kb || 300), 0);
-    
-    const totalKB = pagesTotal + mangasTotal;
     const totalGB = totalKB / (1024 * 1024);
 
     return NextResponse.json({
       success: true,
-      totalGB: parseFloat(totalGB.toFixed(3)),
+      totalGB: parseFloat(totalGB.toFixed(4)), // Tăng độ chính xác lên 4 chữ số thập phân
       limitGB: 10,
       totalKB,
-      debug: supabaseAdmin ? 'ADMIN_MODE' : 'ANON_FALLBACK'
+      method: storageError ? 'FALLBACK_SUM' : 'SQL_RPC'
     });
 
   } catch (error) {

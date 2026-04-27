@@ -1,16 +1,18 @@
--- 📊 SHIROI STORAGE TRACKING SYSTEM
--- Run this in your Supabase SQL Editor (https://supabase.com/dashboard/project/_/sql)
+-- 📊 HÀM TÍNH TỔNG DUNG LƯỢNG LƯU TRỮ (KB)
+-- Cộng dồn từ bảng mangas (ảnh bìa) và bảng pages (nội dung chương)
 
--- 1. Add size_kb column to pages table
-ALTER TABLE public.pages 
-ADD COLUMN IF NOT EXISTS size_kb INTEGER DEFAULT 150; 
-
--- 2. Add size_kb column to mangas table (for covers)
-ALTER TABLE public.mangas 
-ADD COLUMN IF NOT EXISTS size_kb INTEGER DEFAULT 300;
-
--- 3. Note: Existing records are defaulted to an average estimate (150KB per page, 300KB per cover).
--- New uploads will record precise sizes.
-
-COMMENT ON COLUMN public.pages.size_kb IS 'Dung lượng file tính bằng KB';
-COMMENT ON COLUMN public.mangas.size_kb IS 'Dung lượng ảnh bìa tính bằng KB';
+CREATE OR REPLACE FUNCTION get_total_storage_kb()
+RETURNS float AS $$
+DECLARE
+    total_manga_size float;
+    total_pages_size float;
+BEGIN
+    -- Tính tổng dung lượng ảnh bìa (mangas)
+    SELECT COALESCE(SUM(COALESCE(size_kb, 300)), 0) INTO total_manga_size FROM mangas;
+    
+    -- Tính tổng dung lượng các trang truyện (pages)
+    SELECT COALESCE(SUM(COALESCE(size_kb, 150)), 0) INTO total_pages_size FROM pages;
+    
+    RETURN total_manga_size + total_pages_size;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
