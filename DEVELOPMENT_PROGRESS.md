@@ -67,8 +67,9 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **MHTML Binary-Safe Parser**: 
     - Hoàn thiện bộ xử lý file `.mhtml` có khả năng trích xuất dữ liệu ảnh nhị phân trực tiếp từ luồng byte (ArrayBuffer).
     - Hỗ trợ cả ảnh nhúng (Base64/Binary) và ảnh từ Link trong file MHTML. 📂📁
-- [x] **Storage Tracking v2**: 
+- [x] **Storage Tracking & Cleanup v2**: 
     - Chỉnh sửa cơ chế tính toán dung lượng Storage bằng SQL Function (`get_total_storage_kb`) kết hợp với log chi tiết của từng trang truyện.
+    - **Standardized R2 Folders (UUID)**: Chuyển sang đặt tên thư mục lưu trữ theo ID (UUID) của chương thay vì số chương, giúp việc dọn dẹp (Xóa truyện) trở nên chính xác 100%, không để lại rác. 🛡️🧹
     - Tự động ghi nhận kích thước (`size_kb`) cho mọi loại hình tải lên (File lẻ, MHTML, Auto-Leech). 📊🛡️
 - [x] **Reader Enhancement (Comment Drawer)**:
     - Tích hợp **Ngăn kéo bình luận (Comment Drawer)** mượt mà vào trình đọc (Reader).
