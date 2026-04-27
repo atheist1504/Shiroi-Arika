@@ -82,6 +82,9 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Vá lỗi logic trong `uploadImageAction` giúp khôi phục tính năng đăng ảnh bìa Manga. 🖼️
     - Khôi phục nút **"⇄ Đảo ngược thứ tự"** trong giao diện quản lý trang truyện. 🔄
     - **XP System Fix**: Sửa lỗi phân quyền RLS và cập nhật hàm RPC `get_monthly_leaderboard` (Security Definer) giúp hiện điểm tháng. 🏆🛡️
+- [x] **Hotfix & Stability (v48.2)**:
+    - **UI Optimization**: Ẩn nút "Bình luận" ở chế độ cuộn dọc (Scroll) để tránh bấm nhầm và tinh gọn giao diện, chỉ hiện ở chế độ lật trang (Page-flip). 💬🛡️
+    - Đã push code lên GitHub thành công. ✅
 - [ ] **Grand Opening Plan (Target: 01/05)**:
     - [ ] Trao danh hiệu huyền thoại cho Top 10 bản thử nghiệm (🥇🥈🥉). 🎖️
     - [ ] Reset toàn bộ hệ thống (Bình luận, XP, Lịch sử đọc) để làm mới 100%. 🧹
