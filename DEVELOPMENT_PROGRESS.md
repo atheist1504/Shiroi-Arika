@@ -77,6 +77,11 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Admin Upload Turbo UI**: 
     - Nâng cấp giao diện đăng chương với thanh tiến trình tải ảnh (Progress Bar) thời gian thực.
     - Cơ chế **Smart Publishing**: Tự động nhận diện ảnh đã có trên R2 để lưu DB ngay lập tức, bỏ qua bước upload thừa. 🚀🌪️
+- [x] **Hotfix & Stability (v48.1)**:
+    - Khắc phục lỗi **ReferenceError** (`tempFileName`) gây sập build trên Vercel. 🛠️⚡
+    - Vá lỗi logic trong `uploadImageAction` giúp khôi phục tính năng đăng ảnh bìa Manga. 🖼️
+    - Khôi phục nút **"⇄ Đảo ngược thứ tự"** trong giao diện quản lý trang truyện. 🔄
+    - Dọn dẹp hệ thống Import để tối ưu hóa tốc độ đóng gói (Bundle size). 🧹
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
@@ -107,4 +112,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 12:10 - 27/04/2026 (The Great Leeching Overhaul - v48)*
+*Cập nhật lần cuối: 16:45 - 27/04/2026 (The Great Leeching Overhaul - v48.1 Hotfix)*
