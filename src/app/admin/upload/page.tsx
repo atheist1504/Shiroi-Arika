@@ -186,6 +186,7 @@ export default function AdminUploadPage() {
   const [uploadMode, setUploadMode] = useState<'file' | 'leech'>('file');
   const [leechUrl, setLeechUrl] = useState('');
   const [leeching, setLeeching] = useState(false);
+  const [preUploadProgress, setPreUploadProgress] = useState({ current: 0, total: 0 });
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -239,26 +240,65 @@ export default function AdminUploadPage() {
   const handleLeech = async () => {
     if (!leechUrl) return;
     setLeeching(true);
-    setMessage({ type: 'info', text: 'ĐANG TRIỆU HỒI ẢNH TỪ LINK... 🪄' });
+    setPreUploadProgress({ current: 0, total: 0 });
+    setMessage({ type: 'info', text: 'ĐANG TRIỆU HỒI DANH SÁCH ẢNH... 🪄' });
     
     try {
       const res = await leechChapterAction(leechUrl);
       if (!res.success) throw new Error(res.error);
 
-      const newItems = res.images.map((url: string, idx: number) => {
-        // 🛡️ KHÔI PHỤC PROXY ĐỂ HIỆN ẢNH (VƯỢT CƠ CHẾ CHẶN CỦA MANGADEX) 🚀
-        const proxiedPreview = `/api/proxy/image?url=${encodeURIComponent(url)}`;
-        
-        return {
-          id: `leech-${Date.now()}-${idx}`,
-          data: url, // Link gốc để server tải lên R2
-          type: 'url',
-          preview: proxiedPreview 
-        };
-      });
+      const totalImages = res.images.length;
+      setPreUploadProgress({ current: 0, total: totalImages });
+      setMessage({ type: 'info', text: `ĐÃ LẤY ĐƯỢC ${totalImages} LINK. ĐANG "BƯNG" ẢNH VỀ R2 ĐỂ XEM TRƯỚC... 🌩️` });
 
-      setItems(prev => [...prev, ...newItems]);
-      setMessage({ type: 'success', text: `TRIỆU HỒI THÀNH CÔNG ${res.images.length} ẢNH TỪ ${res.source}! 💮` });
+      // 🚀 QUY TRÌNH "BƯNG" ẢNH (AUTO PRE-UPLOAD)
+      // Chia đợt để không làm nghẽn server action
+      const BATCH_SIZE = 5;
+      const uploadedItems: any[] = [];
+
+      for (let i = 0; i < totalImages; i += BATCH_SIZE) {
+        const batch = res.images.slice(i, i + BATCH_SIZE);
+        
+        const results = await Promise.all(batch.map(async (url: string, localIdx: number) => {
+          const globalIdx = i + localIdx;
+          const tempFileName = `temp/${selectedMangaId || 'unknown'}/${Date.now()}-${globalIdx}.webp`;
+          
+          try {
+            const uploadRes = await uploadFromUrlAction(url, tempFileName);
+            if (uploadRes.success) {
+                return {
+                    id: `leech-${Date.now()}-${globalIdx}`,
+                    data: uploadRes.url, // Bây giờ data chính là link R2 xịn
+                    type: 'existing', // Coi như đã tồn tại trên R2 để lúc save không upload lại
+                    preview: uploadRes.url,
+                    originalUrl: url,
+                    size_kb: uploadRes.size_kb || 150
+                };
+            }
+            return null;
+          } catch (e) {
+            console.error("Lỗi pre-upload:", e);
+            return null;
+          }
+        }));
+
+        const validResults = results.filter(r => r !== null);
+        uploadedItems.push(...validResults);
+        
+        // Cập nhật UI ngay lập tức cho từng đợt
+        setItems(prev => [...prev, ...validResults]);
+        setPreUploadProgress(prev => ({ ...prev, current: Math.min(prev.current + BATCH_SIZE, totalImages) }));
+      }
+
+      if (uploadedItems.length === 0) {
+        throw new Error("Không thể tải được ảnh nào về hệ thống. Web gốc có thể đã chặn đứng Server. 🛡️");
+      }
+
+      setMessage({ 
+        type: 'success', 
+        text: `TRIỆU HỒI THÀNH CÔNG ${uploadedItems.length}/${totalImages} ẢNH! 💮`,
+        suggestion: uploadedItems.length < totalImages ? "Một số ảnh bị lỗi tải về do web gốc chặn server, bạn có thể bổ sung bằng tay." : undefined
+      });
       setLeechUrl('');
       
       // Tự động cuộn xuống danh sách ảnh
@@ -269,6 +309,7 @@ export default function AdminUploadPage() {
       setMessage({ type: 'error', text: `TRIỆU HỒI THẤT BẠI: ${err.message}` });
     } finally {
       setLeeching(false);
+      setPreUploadProgress({ current: 0, total: 0 });
     }
   };
 
@@ -424,7 +465,7 @@ export default function AdminUploadPage() {
             return {
               image_url: item.data,
               page_number: globalIndex + 1,
-              size_kb: 150
+              size_kb: item.size_kb || 150
             };
           }
 
@@ -608,7 +649,7 @@ export default function AdminUploadPage() {
                       <button 
                         onClick={handleLeech} 
                         disabled={leeching || !leechUrl}
-                        className={`px-10 h-14 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${leeching || !leechUrl ? 'bg-white/5 text-gray-500' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-lg shadow-[#4caf50]/20'}`}
+                        className={`px-10 h-14 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${leeching || !leechUrl ? 'bg-white/5 text-gray-400' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-lg shadow-[#4caf50]/20'}`}
                       >
                          {leeching ? <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div> : '⚡'}
                          {leeching ? 'ĐANG TRIỆU HỒI...' : 'TRIỆU HỒI ẢNH'}
