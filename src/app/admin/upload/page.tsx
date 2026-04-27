@@ -244,12 +244,17 @@ export default function AdminUploadPage() {
       const res = await leechChapterAction(leechUrl);
       if (!res.success) throw new Error(res.error);
 
-      const newItems = res.images.map((url: string, idx: number) => ({
-        id: `leech-${Date.now()}-${idx}`,
-        data: url,
-        type: 'url', // Đánh dấu đây là ảnh từ link
-        preview: url // Dùng link gốc làm preview tạm thời
-      }));
+      const newItems = res.images.map((url: string, idx: number) => {
+        // 🛡️ DÙNG PROXY CHO PREVIEW ĐỂ KHÔNG BỊ CHẶN CORS 🚀
+        const proxiedPreview = `/api/proxy/image?url=${encodeURIComponent(url)}`;
+        
+        return {
+          id: `leech-${Date.now()}-${idx}`,
+          data: url, // Vẫn giữ link gốc để server tải lên R2
+          type: 'url',
+          preview: proxiedPreview 
+        };
+      });
 
       setItems(prev => [...prev, ...newItems]);
       setMessage({ type: 'success', text: `TRIỆU HỒI THÀNH CÔNG ${res.images.length} ẢNH TỪ ${res.source}! 💮` });

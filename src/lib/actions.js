@@ -422,90 +422,42 @@ export async function leechChapterAction(url) {
 
     console.log(`🔍 [Leecher] Đang thám thính: ${url}`);
     
-    // 1. XỬ LÝ MANGADEX (Dùng API chính chủ cực chuẩn) 🌟
-    if (url.includes('mangadex.org')) {
-        const chapterId = url.split('/').pop()?.split('?')[0];
-        if (!chapterId) throw new Error("Link MangaDex không đúng định dạng! 🛡️");
+    // 🌟 LOGIC UNIFIED: MANGADEX & TRUYENDEX (Dùng chung MangaDex API)
+    if (url.includes('mangadex.org') || url.includes('truyendex')) {
+        try {
+            // 1. Trích xuất UUID (36 ký tự)
+            const uuidMatch = url.match(/([a-f0-9-]{36})/i);
+            const uuid = uuidMatch ? uuidMatch[1] : null;
+            
+            if (!uuid) throw new Error("Không tìm thấy mã chương (UUID) trong Link này! 🛡️");
 
-        // Gọi API MangaDex để lấy danh sách file ảnh
-        const res = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
-        const data = await res.json();
-        
-        if (data.result !== 'ok') throw new Error("Không thể lấy dữ liệu từ MangaDex API! 📉");
+            console.log(`🎯 [Leecher] Triệu hồi từ MangaDex Source (ID: ${uuid})`);
+            
+            // 2. Gọi API MangaDex chính chủ
+            const res = await fetch(`https://api.mangadex.org/at-home/server/${uuid}`);
+            if (!res.ok) throw new Error("MangaDex API từ chối truy cập! 📉");
+            
+            const data = await res.json();
+            if (data.result !== 'ok') throw new Error("Dữ liệu chương không hợp lệ! 🧱");
 
-        const hash = data.chapter.hash;
-        const baseUrl = data.baseUrl;
-        // Sử dụng ảnh 'data-saver' để tối ưu tốc độ và dung lượng (nếu muốn ảnh gốc thì dùng 'data')
-        const images = data.chapter.dataSaver.map(filename => 
-            `${baseUrl}/data-saver/${hash}/${filename}`
-        );
+            const hash = data.chapter.hash;
+            // Dùng uploads.mangadex.org làm fallback nếu baseUrl của node bị lỗi
+            const baseUrl = data.baseUrl || 'https://uploads.mangadex.org';
+            
+            // Lấy danh sách ảnh (ưu tiên dataSaver để nhẹ, hoặc data để lấy ảnh gốc)
+            const images = data.chapter.data.map(filename => 
+                `${baseUrl}/data/${hash}/${filename}`
+            );
 
-        return { success: true, images, source: 'MangaDex' };
+            return { success: true, images, source: 'MangaDex-Core' };
+        } catch (err) {
+            console.error("❌ [Leecher] Lỗi MangaDex Source:", err.message);
+            if (url.includes('mangadex.org')) throw err; // Nếu là link MD xịn thì báo lỗi luôn
+            // Nếu là link TruyenDex thì thử cào HTML dự phòng bên dưới
+        }
     }
 
-    // 2. XỬ LÝ CÁC TRANG TRUYỆN VIỆT NAM (Cào HTML) 🐉
-    // Giả lập trình duyệt để tránh bị chặn
-    const response = await fetch(url, {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': url
-        }
-    });
-
-    if (!response.ok) throw new Error(`Không thể truy cập trang web này! (Status: ${response.status}) 🧱`);
-    
-    const html = await response.text();
-    const images = [];
-
-    // TRUYENDEX logic (Đánh trực tiếp vào API - Siêu chuẩn xác) 🚀
-    if (url.includes('truyendex')) {
-        try {
-            // 1. Trích xuất ID chương (UUID) từ link
-            // Ví dụ: .../chuong/2699dbee-fb6d-45dc-ac42-42a1e6eef7b7
-            const uuidMatch = url.match(/chuong\/([a-f0-9-]{36})/i);
-            const uuid = uuidMatch ? uuidMatch[1] : url.split('/').pop()?.split('?')[0];
-
-            if (uuid && uuid.length === 36) {
-                console.log(`🎯 [Leecher] Phát hiện UUID TruyenDex: ${uuid}. Đang gọi API...`);
-                const apiRes = await fetch(`https://api.truyendex.cc/v1/chapters/${uuid}`, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Origin': 'https://truyendex.cc',
-                        'Referer': 'https://truyendex.cc/'
-                    }
-                });
-
-                if (apiRes.ok) {
-                    const apiData = await apiRes.json();
-                    // Cấu trúc API TruyenDex: data.images là mảng các link ảnh
-                    const apiImages = apiData.data?.images || [];
-                    if (apiImages.length > 0) {
-                        console.log(`✅ [Leecher] Lấy thành công ${apiImages.length} ảnh từ API TruyenDex!`);
-                        return { success: true, images: apiImages, source: 'TruyenDex-API' };
-                    }
-                }
-            }
-        } catch (apiErr) {
-            console.warn("⚠️ [Leecher] Lỗi gọi API TruyenDex, chuyển sang cào HTML dự phòng:", apiErr.message);
-        }
-
-        // FALLBACK: Cào HTML nếu API lỗi hoặc không tìm thấy UUID
-        const imgRegex = /<img[^>]+(?:src|data-src|data-original|data-cdn)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["'][^>]*class=["'][^"']*chapter-img[^"']*["']/gi;
-        let match;
-        while ((match = imgRegex.exec(html)) !== null) {
-            images.push(match[1]);
-        }
-        
-        if (images.length === 0) {
-            const attributesRegex = /(?:src|data-src|data-original|data-cdn|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif)[^"']*?)["']/gi;
-            while ((match = attributesRegex.exec(html)) !== null) {
-                const imgUrl = match[1];
-                if (!imgUrl.includes('logo') && !imgUrl.includes('avatar') && !imgUrl.includes('ads') && !imgUrl.includes('icon') && !imgUrl.includes('theme')) {
-                    images.push(imgUrl);
-                }
-            }
-        }
-    } else {
+    // 2. XỬ LÝ CÁC TRANG TRUYỆN VIỆT NAM KHÁC (Cào HTML) 🐉
         // LOGIC CHUNG CHO CÁC TRANG KHÁC 🛠️
         // Quét cả src và các thuộc tính data- phổ biến
         const genericRegex = /(?:src|data-src|data-original|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
