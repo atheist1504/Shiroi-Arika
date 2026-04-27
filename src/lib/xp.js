@@ -26,6 +26,12 @@ export const calculateProgress = (xp) => {
 };
 
 export const TITLES = [
+    // 🏆 DANH HIỆU HUYỀN THOẠI (Dành riêng cho những người khai mở Shiroi Arika) 🍀
+    { name: '🥇 Quán Quân Thử Nghiệm', lv: 999 },
+    { name: '🥈 Á Quân Thử Nghiệm', lv: 998 },
+    { name: '🥉 Hạng 3 Thử Nghiệm', lv: 997 },
+    { name: '🎖️ Top 10 Thử Nghiệm', lv: 996 },
+
     { name: 'Thái Thượng Vong Tình Quyết', lv: 220 },
     { name: 'Thiên cơ bất khả lộ', lv: 215 },
     { name: 'Đệ nhất kiếm tiên', lv: 210 },
