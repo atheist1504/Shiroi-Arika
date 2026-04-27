@@ -59,6 +59,24 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Khắc phục triệt để lỗi logic trong `updateUserProfileAction` gây hỏng tính năng đổi Avatar/Danh hiệu.
     - Sửa các lỗi TypeScript (missing variables) tại trang quản trị. 🏗️✅
 
+### 🚀 Tự Động Hóa & Triệu Hồi Tối Thượng (v48 - The Great Leeching Overhaul) 🚀⚡🌪️
+- [x] **Auto-Leech v2 (Nuclear Option)**:
+    - Triển khai cơ chế **"Bưng" ảnh về R2 (Auto Pre-upload)**: Tự động tải ảnh từ web gốc (MangaDex, TruyenDex) về Server và lưu vào Cloudflare R2 ngay khi triệu hồi.
+    - **Bypass 100% CORS & Referer**: Giải quyết triệt để lỗi "ô đỏ" hoặc "hình con mèo MangaDex" bằng cách hiển thị ảnh trực tiếp từ Storage cá nhân. 🛡️🖼️
+    - **Batch Processing**: Hỗ trợ tải ảnh theo đợt (5 ảnh/lần) giúp tăng tốc độ triệu hồi mà không làm treo Server. ⚡
+- [x] **MHTML Binary-Safe Parser**: 
+    - Hoàn thiện bộ xử lý file `.mhtml` có khả năng trích xuất dữ liệu ảnh nhị phân trực tiếp từ luồng byte (ArrayBuffer).
+    - Hỗ trợ cả ảnh nhúng (Base64/Binary) và ảnh từ Link trong file MHTML. 📂📁
+- [x] **Storage Tracking v2**: 
+    - Chỉnh sửa cơ chế tính toán dung lượng Storage bằng SQL Function (`get_total_storage_kb`) kết hợp với log chi tiết của từng trang truyện.
+    - Tự động ghi nhận kích thước (`size_kb`) cho mọi loại hình tải lên (File lẻ, MHTML, Auto-Leech). 📊🛡️
+- [x] **Reader Enhancement (Comment Drawer)**:
+    - Tích hợp **Ngăn kéo bình luận (Comment Drawer)** mượt mà vào trình đọc (Reader).
+    - Đồng bộ hóa trải nghiệm cho cả chế độ đọc dọc (Scroll) và chế độ lật trang (Page-flip). 💬📖
+- [x] **Admin Upload Turbo UI**: 
+    - Nâng cấp giao diện đăng chương với thanh tiến trình tải ảnh (Progress Bar) thời gian thực.
+    - Cơ chế **Smart Publishing**: Tự động nhận diện ảnh đã có trên R2 để lưu DB ngay lập tức, bỏ qua bước upload thừa. 🚀🌪️
+
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
 - [x] **Leaderboard V2**: BXH phân cấp theo tháng và tổng hạng, tích hợp danh hiệu người dùng tự chọn. 🏆
@@ -88,4 +106,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 11:45 - 25/04/2026 (Performance & UX Final Polish - v47)*
+*Cập nhật lần cuối: 12:10 - 27/04/2026 (The Great Leeching Overhaul - v48)*
