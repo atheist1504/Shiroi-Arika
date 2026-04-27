@@ -457,16 +457,30 @@ export async function leechChapterAction(url) {
         }
     }
 
-    // 2. XỬ LÝ CÁC TRANG TRUYỆN VIỆT NAM KHÁC (Cào HTML) 🐉
-        // LOGIC CHUNG CHO CÁC TRANG KHÁC 🛠️
-        // Quét cả src và các thuộc tính data- phổ biến
-        const genericRegex = /(?:src|data-src|data-original|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
-        let match;
-        while ((match = genericRegex.exec(html)) !== null) {
-            const imgUrl = match[1];
-            if (!imgUrl.includes('logo') && !imgUrl.includes('icon') && !imgUrl.includes('ads')) {
-                images.push(imgUrl);
+    // --- KHU VỰC DỰ PHÒNG: CÀO HTML NẾU KHÔNG PHẢI MANGADEX/TRUYENDEX ---
+    let html = "";
+    const images = [];
+
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': url
             }
+        });
+        if (response.ok) html = await response.text();
+    } catch (e) {
+        console.warn("⚠️ [Leecher] Không thể lấy HTML dự phòng:", e.message);
+    }
+
+    // LOGIC CHUNG CHO CÁC TRANG KHÁC 🛠️
+    // Quét cả src và các thuộc tính data- phổ biến
+    const genericRegex = /(?:src|data-src|data-original|data-url)=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
+    let match;
+    while ((match = genericRegex.exec(html)) !== null) {
+        const imgUrl = match[1];
+        if (!imgUrl.includes('logo') && !imgUrl.includes('icon') && !imgUrl.includes('ads')) {
+            images.push(imgUrl);
         }
     }
 
