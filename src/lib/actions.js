@@ -349,12 +349,19 @@ export async function deleteChapterAction(chapterId) {
 
     const client = getDbClient();
     
-    // 1. Lấy manga_id để revalidate sau khi xóa
-    const { data: chapter } = await client.from('chapters').select('manga_id').eq('id', chapterId).single();
+    // 1. Lấy thông tin chương để dọn dẹp và revalidate
+    const { data: chapter } = await client.from('chapters').select('manga_id, chapter_number').eq('id', chapterId).single();
 
-    // 2. Xóa folder ảnh trên R2
+    // 2. Xóa folder ảnh trên R2 🧹
     const { deleteFolderFromR2 } = await import('./r2');
+    
+    // Thử xóa folder theo chuẩn mới (UUID)
     await deleteFolderFromR2(`chapters/${chapterId}/`);
+    
+    // Thử xóa folder theo chuẩn cũ (mangaId/chapterNumber) - Nếu tồn tại
+    if (chapter) {
+        await deleteFolderFromR2(`chapters/${chapter.manga_id}/${chapter.chapter_number}/`);
+    }
 
     // 3. Xóa dữ liệu trong DB (Pages sẽ tự xóa do ON DELETE CASCADE)
     const { error } = await client.from('chapters').delete().eq('id', chapterId);

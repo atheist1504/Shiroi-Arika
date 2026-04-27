@@ -187,6 +187,8 @@ export default function AdminUploadPage() {
   const [leechUrl, setLeechUrl] = useState('');
   const [leeching, setLeeching] = useState(false);
   const [preUploadProgress, setPreUploadProgress] = useState({ current: 0, total: 0 });
+  // 📁 Tên thư mục cố định cho chương này (Dùng UUID để không bao giờ bị trùng hoặc sót rác)
+  const [pendingFolderId] = useState(() => preSelectedChapterId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36)));
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
@@ -261,7 +263,8 @@ export default function AdminUploadPage() {
         
         const results = await Promise.all(batch.map(async (url: string, localIdx: number) => {
           const globalIdx = i + localIdx;
-          const tempFileName = `temp/${selectedMangaId || 'unknown'}/${Date.now()}-${globalIdx}.webp`;
+          // 📁 Lưu vào thư mục chuẩn của chương: chapters/[ID]/[Tên file]
+          const fileName = `chapters/${pendingFolderId}/${Date.now()}-${globalIdx}.webp`;
           
           try {
             const uploadRes = await uploadFromUrlAction(url, tempFileName);
@@ -429,6 +432,7 @@ export default function AdminUploadPage() {
     
     try {
       const chapterPayload = { 
+        id: pendingFolderId, // 🛡️ Ép Database dùng đúng ID này để đồng bộ với Folder R2
         manga_id: selectedMangaId, 
         chapter_number: parseFloat(chapterNumber), 
         title: chapterTitle 
@@ -469,7 +473,8 @@ export default function AdminUploadPage() {
             };
           }
 
-          const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
+          // 📁 Lưu vào thư mục chuẩn của chương: chapters/[ID]/[Tên file]
+          const fileName = `chapters/${pendingFolderId}/${Date.now()}-${globalIndex}.webp`;
 
           // 🚀 2. XỬ LÝ ẢNH TỪ URL (AUTO-LEECH)
           if (item.type === 'url') {
