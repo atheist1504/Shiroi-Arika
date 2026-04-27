@@ -412,6 +412,138 @@ export async function uploadChapterPageAction(formData) {
 }
 
 /**
+ * 🕵️‍♂️ SERVER ACTION: Triệu hồi truyện (Leech Chapter Images) 🚀
+ * Trích xuất danh sách ảnh từ Link web khác mà không cần tải về máy.
+ */
+export async function leechChapterAction(url) {
+  try {
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!url) throw new Error("Vui lòng cung cấp Link chương truyện! 🔗");
+
+    console.log(`🔍 [Leecher] Đang thám thính: ${url}`);
+    
+    // 1. XỬ LÝ MANGADEX (Dùng API chính chủ cực chuẩn) 🌟
+    if (url.includes('mangadex.org')) {
+        const chapterId = url.split('/').pop()?.split('?')[0];
+        if (!chapterId) throw new Error("Link MangaDex không đúng định dạng! 🛡️");
+
+        // Gọi API MangaDex để lấy danh sách file ảnh
+        const res = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
+        const data = await res.json();
+        
+        if (data.result !== 'ok') throw new Error("Không thể lấy dữ liệu từ MangaDex API! 📉");
+
+        const hash = data.chapter.hash;
+        const baseUrl = data.baseUrl;
+        // Sử dụng ảnh 'data-saver' để tối ưu tốc độ và dung lượng (nếu muốn ảnh gốc thì dùng 'data')
+        const images = data.chapter.dataSaver.map(filename => 
+            `${baseUrl}/data-saver/${hash}/${filename}`
+        );
+
+        return { success: true, images, source: 'MangaDex' };
+    }
+
+    // 2. XỬ LÝ CÁC TRANG TRUYỆN VIỆT NAM (Cào HTML) 🐉
+    // Giả lập trình duyệt để tránh bị chặn
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': url
+        }
+    });
+
+    if (!response.ok) throw new Error(`Không thể truy cập trang web này! (Status: ${response.status}) 🧱`);
+    
+    const html = await response.text();
+    const images = [];
+
+    // TRUYENDEX.COM logic 🚀
+    if (url.includes('truyendex.com')) {
+        // TruyenDex thường để ảnh trong các thẻ img có class nhất định hoặc trong script
+        // Regex này quét các ảnh trong container chính của chương
+        const imgRegex = /<img[^>]+src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["'][^>]*class=["'][^"']*chapter-img[^"']*["']/gi;
+        let match;
+        while ((match = imgRegex.exec(html)) !== null) {
+            images.push(match[1]);
+        }
+        
+        // Fallback: Nếu không thấy class, quét toàn bộ ảnh có đuôi mở rộng phù hợp
+        if (images.length === 0) {
+            const fallbackRegex = /src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif|bmp)[^"']*?)["']/gi;
+            while ((match = fallbackRegex.exec(html)) !== null) {
+                const imgUrl = match[1];
+                // Bỏ qua các ảnh hệ thống/quảng cáo
+                if (!imgUrl.includes('logo') && !imgUrl.includes('avatar') && !imgUrl.includes('ads') && !imgUrl.includes('icon')) {
+                    images.push(imgUrl);
+                }
+            }
+        }
+    } else {
+        // LOGIC CHUNG CHO CÁC TRANG KHÁC 🛠️
+        const genericRegex = /src=["'](https?:\/\/[^"']+?\.(?:jpg|jpeg|png|webp|gif))["']/gi;
+        let match;
+        while ((match = genericRegex.exec(html)) !== null) {
+            const imgUrl = match[1];
+            if (!imgUrl.includes('logo') && !imgUrl.includes('icon') && !imgUrl.includes('ads')) {
+                images.push(imgUrl);
+            }
+        }
+    }
+
+    // Lọc trùng lặp
+    const uniqueImages = [...new Set(images)];
+
+    if (uniqueImages.length === 0) {
+        throw new Error("Không tìm thấy ảnh nào trong chương này! Web gốc có thể đã chặn truy cập ngầm. 🛡️");
+    }
+
+    console.log(`✅ [Leecher] Triệu hồi thành công ${uniqueImages.length} ảnh từ ${url}`);
+    return { success: true, images: uniqueImages, source: 'HTML-Scraper' };
+
+  } catch (error) {
+    console.error('❌ [Leecher] Lỗi:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🌩️ SERVER ACTION: Tải ảnh từ URL lên R2 (Atomic Transfer) 🚀
+ * Giúp vượt qua CORS khi cào truyện từ web khác.
+ */
+export async function uploadFromUrlAction(url, fileName) {
+    try {
+        if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+
+        console.log(`🌩️ [Transfer] Đang kéo ảnh: ${url}`);
+        
+        // Tải ảnh về server RAM
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': new URL(url).origin
+            }
+        });
+
+        if (!response.ok) throw new Error(`Không thể tải ảnh từ nguồn! (Status: ${response.status})`);
+        
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+        // Tạo File object giả để dùng với uploadToR2
+        const file = new File([buffer], fileName, { type: contentType });
+
+        const { uploadToR2 } = await import('./r2');
+        const result = await uploadToR2(file, fileName);
+
+        return { success: true, url: result, size_kb: Math.round(buffer.length / 1024) };
+    } catch (error) {
+        console.error(`❌ [Transfer] Lỗi tại ${url}:`, error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * 🌩️ SERVER ACTION: Upload Image to R2
  */
 export async function uploadImageAction(formData) {

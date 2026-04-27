@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction } from '@/lib/actions';
+import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction, leechChapterAction, uploadFromUrlAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { StorageMeter } from '@/components/admin/AdminCommon';
 import { parseMHTMLImages } from '@/lib/mhtml-parser';
@@ -181,6 +181,11 @@ export default function AdminUploadPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [storageInfo, setStorageInfo] = useState<{totalGB: number, limitGB: number} | null>(null);
 
+  // 🚀 AUTO-LEECH STATES (NEW) 🕵️‍♂️
+  const [uploadMode, setUploadMode] = useState<'file' | 'leech'>('file');
+  const [leechUrl, setLeechUrl] = useState('');
+  const [leeching, setLeeching] = useState(false);
+
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
     useSensor(TouchSensor, { 
@@ -227,6 +232,38 @@ export default function AdminUploadPage() {
   const fetchMangas = async () => {
     const { data } = await supabase.from('mangas').select('id, title').order('title');
     setMangas(data || []);
+  };
+
+  // 🕵️‍♂️ HÀM TRIỆU HỒI TRUYỆN (AUTO-LEECH) 🚀
+  const handleLeech = async () => {
+    if (!leechUrl) return;
+    setLeeching(true);
+    setMessage({ type: 'info', text: 'ĐANG TRIỆU HỒI ẢNH TỪ LINK... 🪄' });
+    
+    try {
+      const res = await leechChapterAction(leechUrl);
+      if (!res.success) throw new Error(res.error);
+
+      const newItems = res.images.map((url: string, idx: number) => ({
+        id: `leech-${Date.now()}-${idx}`,
+        data: url,
+        type: 'url', // Đánh dấu đây là ảnh từ link
+        preview: url // Dùng link gốc làm preview tạm thời
+      }));
+
+      setItems(prev => [...prev, ...newItems]);
+      setMessage({ type: 'success', text: `TRIỆU HỒI THÀNH CÔNG ${res.images.length} ẢNH TỪ ${res.source}! 💮` });
+      setLeechUrl('');
+      
+      // Tự động cuộn xuống danh sách ảnh
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }, 300);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: `TRIỆU HỒI THẤT BẠI: ${err.message}` });
+    } finally {
+      setLeeching(false);
+    }
   };
 
   const loadChapterData = async (id: string) => {
@@ -363,7 +400,7 @@ export default function AdminUploadPage() {
 
         setMessage({ 
           type: "info", 
-          text: `🚀 PROXY UPLOAD... ĐỜT ${batchIndex}/${totalBatches} SONG SONG ⏳` 
+          text: `🚀 ĐANG XỬ LÝ... ĐỜT ${batchIndex}/${totalBatches} SONG SONG ⏳` 
         });
 
         // Xử lý song song các trang trong đợt hiện tại
@@ -371,9 +408,10 @@ export default function AdminUploadPage() {
           const globalIndex = i + localIndex;
           
           if (item.error) {
-            throw new Error(`Trang số ${globalIndex + 1} đang bị lỗi hiển thị. Vui lòng xóa trang này và thử lại!`);
+            throw new Error(`Trang số ${globalIndex + 1} đang bị lỗi hiển thị.`);
           }
 
+          // 🛡️ 1. XỬ LÝ ẢNH CÓ SẴN (Trong DB)
           if (item.type === 'existing') {
             completedCount++;
             setProgress(Math.round((completedCount / total) * 100));
@@ -384,17 +422,37 @@ export default function AdminUploadPage() {
             };
           }
 
-          try {
-            // 1. Nén ảnh
-            const compressed = await compressImageToWebP(item.file, item.isTikTok);
-            const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
+          const fileName = `chapters/${selectedMangaId}/${chapterNumber}/${Date.now()}-${globalIndex}.webp`;
 
-            // 2. Chuẩn bị FormData cho Proxy Upload
+          // 🚀 2. XỬ LÝ ẢNH TỪ URL (AUTO-LEECH)
+          if (item.type === 'url') {
+            try {
+              const res = await uploadFromUrlAction(item.data, fileName);
+              if (!res.success) throw new Error(res.error);
+              
+              completedCount++;
+              setProgress(Math.round((completedCount / total) * 100));
+              return {
+                image_url: res.url,
+                page_number: globalIndex + 1,
+                size_kb: res.size_kb || 150
+              };
+            } catch (err: any) {
+              throw new Error(`Trang ${globalIndex + 1} (Link): ${err.message}`);
+            }
+          }
+
+          // 📁 3. XỬ LÝ FILE TẢI LÊN TỪ MÁY
+          try {
+            // Nén ảnh
+            const compressed = await compressImageToWebP(item.file, item.isTikTok);
+
+            // Chuẩn bị FormData cho Proxy Upload
             const formData = new FormData();
             formData.append('file', compressed);
             formData.append('fileName', fileName);
 
-            // 3. Gửi lên qua Server Action Proxy
+            // Gửi lên qua Server Action Proxy
             const res = await uploadChapterPageAction(formData);
 
             if (!res.success) throw new Error(res.error || "Lỗi Proxy Upload");
@@ -521,20 +579,57 @@ export default function AdminUploadPage() {
               </div>
            </div>
 
+           {/* CHỌN PHƯƠNG THỨC NẠP ẢNH */}
+           <div className="space-y-6">
+              <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl w-fit">
+                 <button onClick={() => setUploadMode('file')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'file' ? 'bg-[#4caf50] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}>Tải file (MHTML/Ảnh)</button>
+                 <button onClick={() => setUploadMode('leech')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'leech' ? 'bg-[#4caf50] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}>Dán link (Auto-Leech)</button>
+              </div>
+
+              {uploadMode === 'leech' ? (
+                <div className="bg-[#4caf50]/5 p-6 rounded-3xl border border-[#4caf50]/20 shadow-2xl animate-fade-in">
+                   <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1 relative">
+                        <input 
+                          type="text" 
+                          value={leechUrl} 
+                          onChange={(e) => setLeechUrl(e.target.value)}
+                          placeholder="Dán link chương từ MangaDex hoặc TruyenDex..."
+                          className="w-full bg-black border border-white/10 rounded-2xl p-4 pl-12 text-sm font-bold outline-none focus:border-[#4caf50] transition-all"
+                        />
+                        <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                      <button 
+                        onClick={handleLeech} 
+                        disabled={leeching || !leechUrl}
+                        className={`px-10 h-14 rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 ${leeching || !leechUrl ? 'bg-white/5 text-gray-500' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-lg shadow-[#4caf50]/20'}`}
+                      >
+                         {leeching ? <div className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full animate-spin"></div> : '⚡'}
+                         {leeching ? 'ĐANG TRIỆU HỒI...' : 'TRIỆU HỒI ẢNH'}
+                      </button>
+                   </div>
+                   <p className="mt-4 text-[9px] text-gray-500 font-bold uppercase tracking-tight pl-1">Hỗ trợ: MangaDex, TruyenDex và các trang truyện phổ biến khác 🍀</p>
+                </div>
+              ) : (
+                <div className="relative group">
+                  <div className="bg-white/[0.02] p-12 rounded-3xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer">
+                    <input type="file" multiple accept="image/*,.mhtml,.mht" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                    <div className="w-16 h-16 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50] group-hover:scale-110 transition-transform"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                    <div className="text-center">
+                       <p className="text-xs font-black uppercase tracking-widest">Kéo thả hoặc Nhấn để tải file</p>
+                       <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">Hỗ trợ ảnh lẻ hoặc file MHTML 📂</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+           </div>
+
            <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                  <h2 className="text-[11px] font-black text-gray-600 uppercase tracking-widest leading-none">CÁC TRANG TRUYỆN ({items.length})</h2>
-                 <div className="flex gap-4">
-                    {items.length > 0 && (
-                      <>
-                        <button onClick={() => setItems(prev => [...prev].reverse())} className="text-[9px] font-black text-[#4caf50]/50 hover:text-[#4caf50] transition-colors uppercase flex items-center gap-1.5">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          Đảo ngược
-                        </button>
-                        <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch</button>
-                      </>
-                    )}
-                 </div>
+                 {items.length > 0 && (
+                    <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch danh sách</button>
+                 )}
               </div>
 
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -543,11 +638,13 @@ export default function AdminUploadPage() {
                        {items.map((item, index) => (
                           <SortableItem key={item.id} id={item.id} item={item} index={index} onRemove={removeItem} onPreview={setPreviewImage} onBroken={markAsBroken} />
                        ))}
-                       <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
-                          <input type="file" id="fileInput" multiple accept="image/*,.mhtml,.mht" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                          <div className="w-10 h-10 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-                          <span className="text-[9px] font-black text-gray-600 uppercase">Thêm trang</span>
-                       </div>
+                       {items.length > 0 && (
+                          <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
+                             <input type="file" multiple accept="image/*,.mhtml,.mht" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                             <div className="w-8 h-8 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
+                             <span className="text-[8px] font-black text-gray-600 uppercase">Thêm ảnh</span>
+                          </div>
+                       )}
                     </div>
                  </SortableContext>
               </DndContext>
@@ -558,7 +655,7 @@ export default function AdminUploadPage() {
            <div className="p-4 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col gap-4">
               {uploading && (
                 <div className="space-y-2 px-1">
-                   <div className="flex justify-between text-[10px] font-black text-[#4caf50] uppercase tracking-widest"><span>Đang tải...</span><span>{progress}%</span></div>
+                   <div className="flex justify-between text-[10px] font-black text-[#4caf50] uppercase tracking-widest"><span>TIẾN ĐỘ</span><span>{progress}%</span></div>
                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-[#4caf50] transition-all duration-300" style={{ width: `${progress}%` }}></div></div>
                 </div>
               )}
@@ -567,7 +664,7 @@ export default function AdminUploadPage() {
                 disabled={uploading || items.length === 0} 
                 className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || items.length === 0 ? 'bg-white/5 text-white/20' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-xl shadow-[#4caf50]/20'}`}
               >
-                 {uploading ? 'ĐANG XỬ LÝ...' : 'XUẤT BẢN NGAY 🚀'}
+                 {uploading ? 'ĐANG XUẤT BẢN...' : 'XUẤT BẢN NGAY 🚀'}
               </button>
            </div>
         </div>
