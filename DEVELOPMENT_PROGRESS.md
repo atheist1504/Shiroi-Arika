@@ -81,7 +81,11 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Khắc phục lỗi **ReferenceError** (`tempFileName`) gây sập build trên Vercel. 🛠️⚡
     - Vá lỗi logic trong `uploadImageAction` giúp khôi phục tính năng đăng ảnh bìa Manga. 🖼️
     - Khôi phục nút **"⇄ Đảo ngược thứ tự"** trong giao diện quản lý trang truyện. 🔄
-    - Dọn dẹp hệ thống Import để tối ưu hóa tốc độ đóng gói (Bundle size). 🧹
+    - **XP System Fix**: Sửa lỗi phân quyền RLS và cập nhật hàm RPC `get_monthly_leaderboard` (Security Definer) giúp hiện điểm tháng. 🏆🛡️
+- [ ] **Grand Opening Plan (Target: 01/05)**:
+    - [ ] Trao danh hiệu huyền thoại cho Top 10 bản thử nghiệm (🥇🥈🥉). 🎖️
+    - [ ] Reset toàn bộ hệ thống (Bình luận, XP, Lịch sử đọc) để làm mới 100%. 🧹
+    - [ ] Chính thức mở cửa cộng đồng Shiroi Arika. 🚀💮
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
@@ -112,4 +116,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 16:45 - 27/04/2026 (The Great Leeching Overhaul - v48.1 Hotfix)*
+*Cập nhật lần cuối: 17:10 - 27/04/2026 (The Great Leeching Overhaul - v48.1 Hotfix & Roadmap 01/05)*
