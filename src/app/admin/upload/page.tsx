@@ -679,9 +679,20 @@ export default function AdminUploadPage() {
            <div className="space-y-6">
               <div className="flex items-center justify-between px-2">
                  <h2 className="text-[11px] font-black text-gray-600 uppercase tracking-widest leading-none">CÁC TRANG TRUYỆN ({items.length})</h2>
-                 {items.length > 0 && (
-                    <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch danh sách</button>
-                 )}
+                  <div className="flex items-center gap-4">
+                    {items.length > 1 && (
+                       <button 
+                         onClick={() => setItems(prev => [...prev].reverse())} 
+                         className="text-[9px] font-black text-[#4caf50]/40 hover:text-[#4caf50] transition-colors uppercase flex items-center gap-1"
+                       >
+                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                         Đảo ngược thứ tự
+                       </button>
+                    )}
+                    {items.length > 0 && (
+                       <button onClick={() => setItems([])} className="text-[9px] font-black text-red-500/30 hover:text-red-500 transition-colors uppercase">Dọn sạch danh sách</button>
+                    )}
+                  </div>
               </div>
 
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
