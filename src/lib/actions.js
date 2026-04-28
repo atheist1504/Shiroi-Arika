@@ -1225,6 +1225,25 @@ export async function deleteResolvedReportsAction(olderThanDays = null) {
 }
 
 /**
+ * 🗑️ SERVER ACTION: Xóa 1 báo cáo đơn lẻ
+ */
+export async function deleteReportAction(reportId) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+
+    const { error } = await client.from('shiroi_reports').delete().eq('id', reportId);
+    if (error) throw error;
+    
+    revalidatePath('/admin/reports');
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi deleteReportAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Admin xem hết, User xem của mình) 🍀
  */
 export async function getReportsAction(all = false) {

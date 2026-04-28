@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
-import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction, deleteResolvedReportsAction } from "@/lib/actions";
+import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction, deleteResolvedReportsAction, deleteReportAction } from "@/lib/actions";
 import Link from "next/link";
 
 interface User {
@@ -56,6 +56,20 @@ export default function AdminReportsPage() {
       setMessage({ type: 'error', text: `THẤT BẠI: ${res.error}` });
       setLoading(false);
     }
+  };
+
+  const handleDeleteSingle = async (reportId: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn báo cáo này?')) return;
+    setUpdatingId(reportId);
+    const res = await deleteReportAction(reportId);
+    if (res.success) {
+      setReports(prev => prev.filter(r => r.id !== reportId));
+      setMessage({ type: 'success', text: 'ĐÃ XÓA BÁO CÁO! 🗑️' });
+      setTimeout(() => setMessage(null), 3000);
+    } else {
+      setMessage({ type: 'error', text: `XÓA THẤT BẠI: ${res.error}` });
+    }
+    setUpdatingId(null);
   };
 
   useEffect(() => {
@@ -297,6 +311,16 @@ export default function AdminReportsPage() {
                                >
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                                </button>
+                               {isAdmin && (
+                                  <button 
+                                    onClick={() => handleDeleteSingle(report.id)}
+                                    disabled={!!updatingId}
+                                    className="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-lg transition-all"
+                                    title="Xóa báo cáo"
+                                  >
+                                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                  </button>
+                               )}
                            </div>
                         </td>
                       </tr>
