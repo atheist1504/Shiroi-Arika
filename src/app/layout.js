@@ -15,10 +15,10 @@ export const metadata = {
     siteName: 'Shiroi Arika',
     images: [
       {
-        url: '/og-banner-v8.png?v=8',
+        url: 'https://res.cloudinary.com/dcfxienmu/image/fetch/w_1200,h_630,c_pad,b_auto:blur_2000,q_auto,f_jpg/https%3A%2F%2Fpsgivxgycjireinwnelc.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fmanga_images%2Fcovers%2F1775300208647.webp',
         width: 1200,
         height: 630,
-        alt: 'Shiroi Arika Banner',
+        alt: 'Shiroi Arika - Haimiya-senpai',
       },
     ],
     locale: 'vi_VN',
@@ -28,7 +28,10 @@ export const metadata = {
     card: 'summary_large_image',
     title: "Shiroi Arika 🍀 - Manga Online Premium",
     description: "Đọc truyện tranh miễn phí chất lượng cao, không quảng cáo tại Shiroi Arika.",
-    images: ['/og-banner-v8.png?v=8'],
+    images: ['https://res.cloudinary.com/dcfxienmu/image/fetch/w_1200,h_630,c_pad,b_auto:blur_2000,q_auto,f_jpg/https%3A%2F%2Fpsgivxgycjireinwnelc.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fmanga_images%2Fcovers%2F1775300208647.webp'],
+  },
+  icons: {
+    icon: 'https://res.cloudinary.com/dcfxienmu/image/fetch/w_256,h_256,c_fill,q_auto,f_png/https%3A%2F%2Fpsgivxgycjireinwnelc.supabase.co%2Fstorage%2Fv1%2Fobject%2Fpublic%2Fmanga_images%2Fcovers%2F1775300208647.webp',
   },
   verification: {
     google: 'qpMR8fpx4r4n5PDQb4d8F84eHJFS6ioMPnwhlt9gya8',
