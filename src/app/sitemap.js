@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 
 export default async function sitemap() {
-  const baseUrl = "https://shiroiarika.vercel.app";
+  const baseUrl = "https://shiroi-arika.vercel.app";
 
   try {
     // 1. Fetch all manga IDs for dynamic routes
