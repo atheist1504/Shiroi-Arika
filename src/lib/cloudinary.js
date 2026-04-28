@@ -15,10 +15,6 @@ export const optimizeImage = (url, width = '', height = '') => {
     url.startsWith('blob:') || 
     url.startsWith('data:') || 
     url.startsWith('/') ||
-    url.includes('r2.cloudflarestorage.com') ||
-    url.includes('r2.dev') ||
-    url.includes('cloudflarestorage.com') ||
-    (r2Domain && url.includes(r2Domain)) ||
     !url.startsWith('http')
   ) {
     return url;
