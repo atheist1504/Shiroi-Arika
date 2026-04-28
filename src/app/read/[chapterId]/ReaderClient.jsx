@@ -242,10 +242,24 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   // 📖 TRIGGER PRELOAD CHO CHẾ ĐỘ LẬT TRANG
   useEffect(() => {
-    if (readingMode === 'page' && currentPageIndex >= pages.length - 3 && pages.length > 0) {
-      preloadNextChapterImages();
+    if (readingMode === 'page' && pages.length > 0) {
+      // 1. Tải trước trang tiếp theo của chương hiện tại 🚀
+      const nextIdx1 = currentPageIndex + 1;
+      const nextIdx2 = currentPageIndex + 2;
+      
+      [nextIdx1, nextIdx2].forEach(idx => {
+        if (pages[idx]) {
+          const img = new Image();
+          img.src = optimizeImage(fixR2Url(pages[idx].image_url), 1600);
+        }
+      });
+
+      // 2. Nếu sắp hết chương, tải trước chương sau 🌩️
+      if (currentPageIndex >= pages.length - 3) {
+        preloadNextChapterImages();
+      }
     }
-  }, [readingMode, currentPageIndex, pages.length]);
+  }, [readingMode, currentPageIndex, pages, nextChapterPages]);
 
   const lastScrollYRef = useRef(0);
 
