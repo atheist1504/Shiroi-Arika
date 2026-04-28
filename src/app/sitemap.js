@@ -34,6 +34,7 @@ export default async function sitemap() {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1.0,
+      ...(route === "" ? { images: ["https://shiroi-arika.vercel.app/og-banner-v8.png"] } : {})
     }));
 
     return [...staticRoutes, ...mangaUrls, ...chapterUrls];
