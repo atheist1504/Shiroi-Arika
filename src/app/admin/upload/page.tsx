@@ -622,11 +622,11 @@ export default function AdminUploadPage() {
                  </div>
                  <div className="md:col-span-4 lg:col-span-2 space-y-2">
                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Số chương</label>
-                    <input type="number" step="0.1" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black text-[#4caf50] outline-none focus:border-[#4caf50]" placeholder="1" />
+                    <input type="number" step="0.1" max="99999999" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} onInput={(e: any) => { if (e.target.value.length > 8) e.target.value = e.target.value.slice(0, 8); }} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black text-[#4caf50] outline-none focus:border-[#4caf50]" placeholder="1" />
                  </div>
                  <div className="md:col-span-8 lg:col-span-4 space-y-2">
                     <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Tên chương</label>
-                    <input type="text" value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black outline-none focus:border-[#4caf50]" placeholder="Nội dung tùy chọn..." />
+                    <input type="text" maxLength={200} value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm font-black outline-none focus:border-[#4caf50]" placeholder="Nội dung tùy chọn..." />
                  </div>
               </div>
            </div>

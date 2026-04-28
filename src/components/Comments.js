@@ -8,12 +8,14 @@ import Link from 'next/link';
 import { addCommentAction } from '@/lib/actions';
 
 // 🛠️ COMPONENT CON: FORM TRẢ LỜI 🚀
-const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSuccess, fetchComments }) => {
+const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSuccess, fetchComments, checkCooldown }) => {
     const [replyContent, setReplyContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleReplySubmit = async () => {
       if (!replyContent.trim()) return;
+      if (replyContent.length > 500) return alert("Bình luận quá dài (tối đa 500 ký tự).");
+      if (checkCooldown && !checkCooldown()) return;
       try {
         setIsSubmitting(true);
         
@@ -49,7 +51,10 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
 
     return (
       <div className="mt-4 animate-fade-in-up space-y-2">
-         <textarea autoFocus placeholder={parentComment.parent_id ? `Đang trả lời @${parentComment.user_name}...` : "Viết phản hồi của bạn..."} value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="w-full bg-black/60 border border-[#4caf50]/20 rounded-xl py-3 px-4 text-xs focus:border-[#4caf50] outline-none transition-all text-gray-300 min-h-[70px] resize-none shadow-inner"></textarea>
+         <div className="relative">
+             <textarea autoFocus maxLength={500} placeholder={parentComment.parent_id ? `Đang trả lời @${parentComment.user_name}...` : "Viết phản hồi của bạn..."} value={replyContent} onChange={(e) => setReplyContent(e.target.value)} className="w-full bg-black/60 border border-[#4caf50]/20 rounded-xl py-3 px-4 text-xs focus:border-[#4caf50] outline-none transition-all text-gray-300 min-h-[70px] resize-none shadow-inner"></textarea>
+             <span className={`absolute bottom-3 right-3 text-[9px] font-black ${replyContent.length >= 500 ? 'text-red-500' : 'text-gray-500'}`}>{replyContent.length}/500</span>
+         </div>
          <div className="flex justify-end gap-3 mt-1">
             <button onClick={onCancel} className="text-[8px] font-black text-gray-600 hover:text-white uppercase tracking-widest">Hủy</button>
             <button onClick={handleReplySubmit} disabled={isSubmitting} className="px-5 py-2 bg-[#4caf50] text-[#0a0c0a] font-black rounded-lg text-[9px] shadow-lg shadow-[#4caf50]/20 uppercase tracking-widest">{isSubmitting ? 'ĐANG GỬI...' : 'GỬI ✨'}</button>
@@ -59,7 +64,7 @@ const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSucces
 };
 
 // 🛠️ COMPONENT CON: ITEM BÌNH LUẬN 🚀
-const CommentItem = ({ comment, isReply = false, allComments = [], user, replyTo, setReplyTo, handleLike, handleDelete, localLikes, mangaId, chapterId, fetchComments }) => {
+const CommentItem = ({ comment, isReply = false, allComments = [], user, replyTo, setReplyTo, handleLike, handleDelete, localLikes, mangaId, chapterId, fetchComments, checkCooldown }) => {
     const isReplyingThis = replyTo?.id === comment.id;
     const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
         const key = cK(comment.user_name);
@@ -154,6 +159,7 @@ const CommentItem = ({ comment, isReply = false, allComments = [], user, replyTo
                     onCancel={() => setReplyTo(null)} 
                     onSuccess={() => setReplyTo(null)} 
                     fetchComments={fetchComments}
+                    checkCooldown={checkCooldown}
                 />
              )}
           </div>
@@ -172,6 +178,21 @@ export default function Comments({ mangaId, chapterId }) {
   const [submitting, setSubmitting] = useState(false);
   const [xpToast, setXpToast] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [expandedThreads, setExpandedThreads] = useState({});
+  const [lastCommentTime, setLastCommentTime] = useState(0);
+
+  const checkCooldown = () => {
+      const now = Date.now();
+      const diff = now - lastCommentTime;
+      if (diff < 5000) {
+          alert(`Vui lòng đợi ${Math.ceil((5000 - diff) / 1000)}s để tiếp tục bình luận (chống spam 🍀).`);
+          return false;
+      }
+      setLastCommentTime(now);
+      return true;
+  };
+
   // 🔍 HÀM TÌM TẤT CẢ CON CHÁU ĐỂ HIỂN THỊ DẠNG PHẲNG (2 CẤP) 🍀
   const getAllDescendants = (parentId, allComments) => {
     let results = [];
@@ -320,6 +341,8 @@ export default function Comments({ mangaId, chapterId }) {
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     if (!user || !content.trim()) return;
+    if (content.length > 500) return alert("Bình luận quá dài (tối đa 500 ký tự).");
+    if (!checkCooldown()) return;
     try {
       setSubmitting(true);
       console.log("💬 Gửi bình luận:", { mangaId, chapterId, content: content.trim() });
@@ -365,7 +388,10 @@ export default function Comments({ mangaId, chapterId }) {
                  </div>
                  <span className="text-[8px] font-black uppercase tracking-widest italic" style={{ color: 'var(--text-muted-reader, #6b7280)' }}>Gửi lời thảo luận 🍀</span>
              </div>
-             <textarea placeholder={chapterId ? "Cảm nhận về chương này..." : "Cảm nhận về truyện..."} value={content} onChange={(e) => setContent(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:border-[#4caf50] outline-none transition-all min-h-[100px] resize-none shadow-inner" style={{ color: 'var(--text-reader, #d1d5db)' }}></textarea>
+             <div className="relative">
+                 <textarea maxLength={500} placeholder={chapterId ? "Cảm nhận về chương này..." : "Cảm nhận về truyện..."} value={content} onChange={(e) => setContent(e.target.value)} className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 px-6 text-sm focus:border-[#4caf50] outline-none transition-all min-h-[100px] resize-none shadow-inner" style={{ color: 'var(--text-reader, #d1d5db)' }}></textarea>
+                 <span className={`absolute bottom-4 right-4 text-[10px] font-black ${content.length >= 500 ? 'text-red-500' : 'text-gray-500'}`}>{content.length}/500</span>
+             </div>
              <div className="flex justify-end mt-4">
                  <button disabled={submitting} className="px-10 py-3 bg-[#4caf50] text-[#0a0c0a] font-black rounded-2xl shadow-xl shadow-[#4caf50]/20 hover:scale-105 active:scale-95 transition-all text-[10px] uppercase tracking-widest">{submitting ? '...' : 'XÁC NHẬN GỬI 🚀'}</button>
              </div>
@@ -378,40 +404,80 @@ export default function Comments({ mangaId, chapterId }) {
         ) : comments.length === 0 ? (
              <div className="text-center py-20 bg-white/[0.01] rounded-[40px] border border-dashed border-white/5 text-gray-800 font-black text-[9px] uppercase tracking-[0.4em]">KHÔNG CÓ TIẾNG NÓI NÀO...</div>
         ) : (
-          comments.filter(c => !c.parent_id).map((comment) => (
-            <div key={comment.id} className="space-y-6">
-              <CommentItem allComments={comments} 
-                comment={comment} 
-                user={user} 
-                replyTo={replyTo} 
-                setReplyTo={setReplyTo} 
-                handleLike={handleLike} 
-                handleDelete={handleDelete} 
-                localLikes={localLikes} 
-                mangaId={mangaId} 
-                chapterId={chapterId} 
-                fetchComments={fetchComments}
-              />
-              <div className="space-y-6">
-                {getAllDescendants(comment.id, comments)
-                  .sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
-                  .map(reply => (
-                  <CommentItem allComments={comments} 
-                    key={reply.id} 
-                    comment={reply} 
-                    isReply={true} 
-                    user={user} 
-                    replyTo={replyTo}
-                    setReplyTo={setReplyTo}
-                    handleLike={handleLike} 
-                    handleDelete={handleDelete} 
-                    localLikes={localLikes} 
-                    fetchComments={fetchComments}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+          (() => {
+              const parentComments = comments.filter(c => !c.parent_id);
+              const COMMENTS_PER_PAGE = 10;
+              const totalPages = Math.max(1, Math.ceil(parentComments.length / COMMENTS_PER_PAGE));
+              const visibleParents = parentComments.slice((currentPage - 1) * COMMENTS_PER_PAGE, currentPage * COMMENTS_PER_PAGE);
+
+              return (
+                <>
+                  {visibleParents.map((comment) => {
+                    const allReplies = getAllDescendants(comment.id, comments).sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+                    const isExpanded = expandedThreads[comment.id];
+                    const visibleReplies = isExpanded ? allReplies : allReplies.slice(allReplies.length > 0 ? allReplies.length - 1 : 0);
+                    
+                    return (
+                      <div key={comment.id} className="space-y-6">
+                        <CommentItem allComments={comments} 
+                          comment={comment} 
+                          user={user} 
+                          replyTo={replyTo} 
+                          setReplyTo={setReplyTo} 
+                          handleLike={handleLike} 
+                          handleDelete={handleDelete} 
+                          localLikes={localLikes} 
+                          mangaId={mangaId} 
+                          chapterId={chapterId} 
+                          fetchComments={fetchComments}
+                          checkCooldown={checkCooldown}
+                        />
+                        <div className="space-y-6">
+                          {allReplies.length > 1 && !isExpanded && (
+                             <button onClick={() => setExpandedThreads(p => ({...p, [comment.id]: true}))} className="ml-10 text-[9px] font-black uppercase text-[#4caf50] bg-[#4caf50]/5 hover:bg-[#4caf50]/10 border border-[#4caf50]/20 px-4 py-2 rounded-xl transition-all shadow-sm">
+                                ↪ Xem thêm {allReplies.length - 1} phản hồi khác
+                             </button>
+                          )}
+                          {visibleReplies.map(reply => (
+                            <CommentItem allComments={comments} 
+                              key={reply.id} 
+                              comment={reply} 
+                              isReply={true} 
+                              user={user} 
+                              replyTo={replyTo}
+                              setReplyTo={setReplyTo}
+                              handleLike={handleLike} 
+                              handleDelete={handleDelete} 
+                              localLikes={localLikes} 
+                              fetchComments={fetchComments}
+                              checkCooldown={checkCooldown}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 mt-12 pt-8 border-t border-white/5">
+                        <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4caf50] hover:text-black transition-all">
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+                        </button>
+                        <div className="flex items-center gap-1">
+                           {[...Array(totalPages)].map((_, i) => (
+                             <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-10 h-10 rounded-xl text-[11px] font-black transition-all ${currentPage === i + 1 ? 'bg-[#4caf50] text-black shadow-[0_0_15px_rgba(76,175,80,0.3)]' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
+                                {i + 1}
+                             </button>
+                           ))}
+                        </div>
+                        <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4caf50] hover:text-black transition-all">
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </div>
+                  )}
+                </>
+              );
+          })()
         )}
       </div>
     </div>
