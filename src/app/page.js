@@ -33,13 +33,40 @@ export default async function Home({ searchParams }) {
     console.error("Lỗi khi tải truyện mới:", error);
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Shiroi Arika",
+    "alternateName": "Shiroi Arika Manga",
+    "url": "https://shiroi-arika.vercel.app",
+    "description": "Trang web đọc truyện tranh online miễn phí cập nhật chương mới nhanh nhất.",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Shiroi Arika",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://shiroi-arika.vercel.app/og-banner-v8.png"
+      }
+    },
+    "primaryImageOfPage": {
+      "@type": "ImageObject",
+      "url": "https://shiroi-arika.vercel.app/og-banner-v8.png"
+    }
+  };
+
   return (
-    <HomeClient 
-      initialFeatured={featuredMangas || []} 
-      initialLatest={latestMangas || []} 
-      totalCount={count || 0}
-      currentPage={currentPage}
-      pageSize={pageSize}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <HomeClient 
+        initialFeatured={featuredMangas || []} 
+        initialLatest={latestMangas || []} 
+        totalCount={count || 0}
+        currentPage={currentPage}
+        pageSize={pageSize}
+      />
+    </>
   );
 }
