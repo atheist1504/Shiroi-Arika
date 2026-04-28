@@ -279,11 +279,31 @@ export default function Comments({ mangaId, chapterId }) {
       if (chapterId) query = query.eq('chapter_id', chapterId);
       else if (mangaId) query = query.eq('manga_id', mangaId);
       const { data: cData } = await query.order('created_at', { ascending: false });
-      const { data: uData } = await supabase.from('shiroi_users').select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge');
+      
+      // 🚀 TỐI ƯU HÓA: Chỉ lấy thông tin những người thực sự đã bình luận 🕵️‍♂️
+      const commentUserIds = [...new Set(cData?.map(c => c.user_id).filter(id => !!id))];
+      const commentUserNames = [...new Set(cData?.map(c => c.user_name).filter(name => !!name))];
+      
+      let uData = [];
+      if (commentUserIds.length > 0 || commentUserNames.length > 0) {
+          const userQuery = supabase.from('shiroi_users').select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge');
+          
+          if (commentUserIds.length > 0 && commentUserNames.length > 0) {
+              userQuery.or(`id.in.(${commentUserIds.map(id => `"${id}"`).join(',')}),username.in.(${commentUserNames.map(name => `"${name}"`).join(',')})`);
+          } else if (commentUserIds.length > 0) {
+              userQuery.in('id', commentUserIds);
+          } else {
+              userQuery.in('username', commentUserNames);
+          }
+          
+          const { data } = await userQuery;
+          uData = data || [];
+      }
+
       const uMap = {};
       const cK = (s) => (s || '').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, ' ').trim().toLowerCase();
 
-      uData?.forEach(u => {
+      uData.forEach(u => {
          const info = {  
             avatar: u.avatar_url, 
             badge: calculateTitle(u.xp, u.selected_badge).name, 

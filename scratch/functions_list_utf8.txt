@@ -1,0 +1,53 @@
+﻿
+export async function loginAction(username, password) {
+export async function logoutAction() {
+export async function signupAction(userData) {
+export async function getAuthenticatedUser() {
+export async function getStorageUsageAction() {
+export async function deleteMangaAction(mangaId) {
+export async function deleteChapterAction(chapterId) {
+export async function getUploadUrlAction(fileName) {
+export async function uploadChapterPageAction(formData) {
+export async function leechChapterAction(url) {
+export async function uploadFromUrlAction(url, fileName) {
+export async function uploadImageAction(formData) {
+export async function notifyNewChapterAction(mangaId, mangaName, chapterNumber, coverImage) {
+export async function recordXpLogAction(amount, type, reason = null, targetUserId = null) {
+export async function addReadXPAction(mangaId, chapterId) {
+export async function performCheckInAction() {
+export async function saveMangaAction(mangaData, mangaId = null) {
+export async function submitReportAction(reportData) {
+export async function deleteResolvedReportsAction(olderThanDays = null) {
+export async function deleteReportAction(reportId) {
+export async function cleanupSystemDataAction() {
+export async function getReportsAction(all = false) {
+export async function getReportByIdAction(reportId) {
+export async function updateReportStatusAction(reportId, status) {
+export async function claimMissionRewardAction(missionKey, mangaId = null) {
+export async function addCommentAction(commentData) {
+export async function getNotificationsAction(limit = 20, offset = 0) {
+export async function markNotificationAsReadAction(notificationId) {
+export async function markAllNotificationsAsReadAction() {
+export async function saveFcmTokenAction(token, platform = 'web') {
+export async function cleanupNotificationsAction() {
+export async function registerFcmTokenAction(token) {
+export async function unregisterFcmTokenAction() {
+export async function subscribeToTopicAction(token, topic = 'all_manga_updates') {
+export async function unsubscribeFromTopicAction(token, topic = 'all_manga_updates') {
+export async function changePasswordAction(oldPassword, newPassword) {
+export async function searchUsersAction(query) {
+export async function getPersonnelListAction() {
+export async function updateUserRoleAction(targetId, newRole) {
+export async function updateUserProfileAction(updateData) {
+export async function suggestTitleAction(titleName, reason) {
+export async function getOfficialTitlesAction() {
+export async function deleteOfficialTitleAction(id) {
+export async function getTitleSuggestionsAction() {
+export async function handleTitleSuggestionAction(id, status) {
+export async function createOfficialTitleAction(name, lv) {
+export async function cleanupXpLogsAction() {
+export async function getReportMessagesAction(reportId) {
+export async function sendReportMessageAction(reportId, message) {
+export async function syncHistoryToDBAction(mangaId, chapterId) {
+
+

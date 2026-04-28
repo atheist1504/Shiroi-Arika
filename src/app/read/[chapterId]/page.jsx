@@ -3,8 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import ReaderClient from "./ReaderClient";
 import { notFound } from "next/navigation";
 
-export const dynamic = 'force-dynamic'; // ⚡ Bắt buộc Next.js không được cache trang này
-export const revalidate = 0; // Luôn lấy dữ liệu mới nhất để cập nhật ảnh ngay lập tức 🍀
+export const revalidate = 3600; // Cache trang đọc trong 1 giờ 🍀
 
 // 🕵️‍♂️ HÀM HỖ TRỢ CHỌN CLIENT (Server-side)
 const getDbClient = () => supabaseAdmin || supabase;

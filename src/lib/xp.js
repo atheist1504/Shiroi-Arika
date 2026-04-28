@@ -110,7 +110,7 @@ export const recordXpLog = async (supabase, userId, amount, type, reason = null)
     if (!userId || !amount) return;
     try {
         const { recordXpLogAction } = await import('./actions');
-        const res = await recordXpLogAction(userId, amount, type, reason);
+        const res = await recordXpLogAction(amount, type, reason, userId);
         if (!res.success) {
             console.warn("Ghi log XP thất bại (Server):", res.error);
         }

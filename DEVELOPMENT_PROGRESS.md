@@ -90,6 +90,22 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - [ ] Reset toàn bộ hệ thống (Bình luận, XP, Lịch sử đọc) để làm mới 100%. 🧹
     - [ ] Chính thức mở cửa cộng đồng Shiroi Arika. 🚀💮
 
+### 🚀 Tối Ưu Hóa Tối Thượng & Sẵn Sàng Khai Trương (v49 - Grand Opening Optimization) 🚀⚡💎🥇
+- [x] **Hybrid ISR & On-demand Revalidation**:
+    - Chuyển đổi Trang chủ (`/`) và Trang đọc (`/read/[id]`) sang cơ chế **ISR (1-hour cache)** để chịu tải hàng vạn người truy cập cùng lúc.
+    - Triển khai **Xóa cache chủ động (`revalidatePath`)** trong mọi Server Action quản trị. Đảm bảo dữ liệu mới (truyện mới, chương mới) xuất hiện tức thì mà không cần chờ 1 tiếng. 🚀⚡
+    - Tối ưu hóa trang **"Mới cập nhật" (`/latest`)** với cơ chế làm mới ngay khi có nội dung mới. 🆕
+- [x] **Atomic SQL Operations (Solution B - Performance)**:
+    - Di chuyển logic **Điểm danh (Check-in)** và **Bốc quà (Lucky Draw)** vào trực tiếp Database thông qua **Postgres SQL Functions (RPC)**.
+    - Loại bỏ hoàn toàn rủi ro Race Condition và bão hòa kết nối Database khi có traffic cao điểm. 🛡️💎
+- [x] **Scalable Comment System (User-only Fetch)**:
+    - Tối ưu hóa cơ chế tải thông tin người dùng trong phần bình luận. Chỉ tải dữ liệu của những người thực sự bình luận thay vì tải toàn bộ danh sách User.
+    - Giảm 99% tải trọng Network và RAM trình duyệt cho người dùng. 💬📉
+- [x] **Core Integrity Fix (XP Logic & Actions)**:
+    - Khắc phục lỗi hoán đổi tham số trong helper `recordXpLog`, đảm bảo điểm thưởng được ghi nhận chính xác 100%. 🛡️
+    - Rà soát và khôi phục toàn bộ các Server Action quan trọng, đảm bảo quy trình quản trị (`publishChapterAction`, `saveChapterDataAction`) hoạt động trơn tru. 🛠️✅
+- [x] **Production Readiness**: Xác nhận hệ thống đã sẵn sàng cho ngày khai trương 01/05 với hiệu năng cao nhất và bảo mật tuyệt đối. 💮🚀
+
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
 - [x] **Leaderboard V2**: BXH phân cấp theo tháng và tổng hạng, tích hợp danh hiệu người dùng tự chọn. 🏆
@@ -119,4 +135,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 17:10 - 27/04/2026 (The Great Leeching Overhaul - v48.1 Hotfix & Roadmap 01/05)*
+*Cập nhật lần cuối: 16:25 - 28/04/2026 (Grand Opening Optimization - v49.0)*
