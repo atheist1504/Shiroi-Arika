@@ -104,6 +104,7 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Core Integrity Fix (XP Logic & Actions)**:
     - Khắc phục lỗi hoán đổi tham số trong helper `recordXpLog`, đảm bảo điểm thưởng được ghi nhận chính xác 100%. 🛡️
     - **Hotfix Cache**: Bổ sung `revalidatePath` vào `deleteMangaAction`, đảm bảo truyện biến mất khỏi trang chủ và trang mới nhất ngay khi bị xóa. 🛠️⚡
+    - **TikTok Leecher**: Tích hợp khả năng triệu hồi ảnh slideshow từ TikTok trực tiếp vào hệ thống quản trị. 📱🚀
     - Rà soát và khôi phục toàn bộ các Server Action quan trọng, đảm bảo quy trình quản trị (`publishChapterAction`, `saveChapterDataAction`) hoạt động trơn tru. 🛠️✅
 - [x] **Production Readiness**: Xác nhận hệ thống đã sẵn sàng cho ngày khai trương 01/05 với hiệu năng cao nhất và bảo mật tuyệt đối. 💮🚀
 

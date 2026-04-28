@@ -467,6 +467,74 @@ export async function leechChapterAction(url) {
         }
     }
 
+    // 📱 LOGIC MỚI: TRIỆU HỒI TỪ TIKTOK (PHOTO MODE / SLIDESHOW) 🚀
+    if (url.includes('tiktok.com')) {
+        console.log(`📱 [Leecher] Đang thâm nhập TikTok: ${url}`);
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+                }
+            });
+
+            if (!response.ok) throw new Error(`TikTok từ chối truy cập! (Status: ${response.status}) 🛡️`);
+            const html = await response.text();
+
+            // 🔍 Tìm kiếm JSON chứa dữ liệu ảnh
+            let jsonData = null;
+            
+            // Pattern 1: __UNIVERSAL_DATA_FOR_REA_T7_CLIENT__ (Mới nhất)
+            const universalMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REA_T7_CLIENT__" type="application\/json">([\s\S]*?)<\/script>/);
+            if (universalMatch) {
+                try {
+                    const parsed = JSON.parse(universalMatch[1]);
+                    const videoDetail = parsed?.__DEFAULT_SCOPE__?.['webapp.video-detail'];
+                    jsonData = videoDetail?.itemInfo?.itemStruct || videoDetail?.shareMeta?.videoData;
+                    
+                    if (!jsonData && parsed?.props?.pageProps?.itemInfo?.itemStruct) {
+                        jsonData = parsed.props.pageProps.itemInfo.itemStruct;
+                    }
+                } catch (e) { console.warn("⚠️ Lỗi parse Universal Data:", e.message); }
+            }
+
+            // Pattern 2: SIGI_STATE (Dự phòng)
+            if (!jsonData) {
+                const sigiMatch = html.match(/<script id="SIGI_STATE" type="application\/json">([\s\S]*?)<\/script>/);
+                if (sigiMatch) {
+                    try {
+                        const parsed = JSON.parse(sigiMatch[1]);
+                        const itemKey = Object.keys(parsed.ItemModule || {})[0];
+                        jsonData = parsed.ItemModule[itemKey];
+                    } catch (e) { console.warn("⚠️ Lỗi parse SIGI_STATE:", e.message); }
+                }
+            }
+
+            // 🖼️ Trích xuất danh sách ảnh từ TikTok Object
+            const images = [];
+            const tiktokImages = jsonData?.imagePost?.images || jsonData?.image_post_info?.images;
+
+            if (tiktokImages && Array.isArray(tiktokImages)) {
+                tiktokImages.forEach(img => {
+                    const imgUrl = img.display_image?.url_list?.[0] || img.imageURL?.url_list?.[0] || img.image_url?.url_list?.[0];
+                    if (imgUrl) images.push(imgUrl);
+                });
+            }
+
+            if (images.length > 0) {
+                console.log(`✅ [Leecher] Triệu hồi thành công ${images.length} ảnh từ TikTok!`);
+                return { success: true, images, source: 'TikTok-Slideshow' };
+            }
+            
+            throw new Error("Không tìm thấy bộ ảnh nào trên bài đăng TikTok này! Có thể đây là Video hoặc bài đăng riêng tư. 🛡️");
+
+        } catch (err) {
+            console.error("❌ [Leecher] Lỗi TikTok Source:", err.message);
+            throw err;
+        }
+    }
+
     // --- KHU VỰC DỰ PHÒNG: CÀO HTML NẾU KHÔNG PHẢI MANGADEX/TRUYENDEX ---
     let html = "";
     const images = [];
