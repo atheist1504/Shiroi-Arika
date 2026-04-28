@@ -917,6 +917,8 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     const client = getDbClient();
     const user = await getAuthenticatedUser();
 
+    let resultData;
+
     if (mangaId) {
       const { data, error } = await client
         .from('mangas')
@@ -926,11 +928,27 @@ export async function saveMangaAction(mangaData, mangaId = null) {
         .single();
       
       if (error) throw error;
-      return { success: true, data };
+      resultData = data;
     } else {
       const { data, error } = await client
         .from('mangas')
         .insert([{ ...mangaData, uploader_id: user.id }])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      resultData = data;
+    }
+
+    // 🚀 XÓA CACHE ĐỂ CẬP NHẬT TRUYỆN MỚI / CẬP NHẬT ⚡
+    revalidatePath('/');
+    revalidatePath('/latest');
+    if (mangaId || resultData?.id) revalidatePath(`/manga/${mangaId || resultData?.id}`);
+
+    return { success: true, data: resultData };
+  } catch (error) {
+    console.error('❌ Lỗi saveMangaAction:', error.message);
+    return { success: false, error: error.message };
   }
 }
 
