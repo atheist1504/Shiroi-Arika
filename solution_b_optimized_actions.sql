@@ -38,10 +38,13 @@ BEGIN
         v_streak := 1;
     END IF;
 
-    -- Tính Bonus (Logic từ xp.js: 1-6 ngày: +0, 7-13: +50, 14-29: +100, 30+: +200)
-    IF v_streak >= 30 THEN v_bonus_xp := 200;
-    ELSIF v_streak >= 14 THEN v_bonus_xp := 100;
-    ELSIF v_streak >= 7 THEN v_bonus_xp := 50;
+    -- Tính Bonus theo mốc chính xác (Milestones) 🏆
+    -- (Số XP thưởng này sẽ cộng thêm vào 100 XP gốc để ra đúng tổng 500, 1000, 1500)
+    IF v_streak = 30 THEN v_bonus_xp := 1400; -- Tổng nhận 1500 XP
+    ELSIF v_streak = 21 THEN v_bonus_xp := 900; -- Tổng nhận 1000 XP
+    ELSIF v_streak = 14 THEN v_bonus_xp := 900; -- Tổng nhận 1000 XP
+    ELSIF v_streak = 7 THEN v_bonus_xp := 400;  -- Tổng nhận 500 XP
+    ELSIF v_streak = 3 THEN v_bonus_xp := 400;  -- Tổng nhận 500 XP
     END IF;
 
     v_total_xp := v_base_xp + v_bonus_xp;

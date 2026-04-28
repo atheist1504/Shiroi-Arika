@@ -10,11 +10,11 @@ export const XP_REWARDS = {
 };
 
 export const STREAK_BONUSES = {
-    DAY_3: 100,   // Thưởng chuỗi 3 ngày
-    DAY_7: 200,   // Thưởng chuỗi 7 ngày
-    DAY_14: 500,  // Thưởng chuỗi 14 ngày
-    DAY_21: 500,  // Thưởng chuỗi 21 ngày
-    DAY_30: 1000, // Thưởng chuỗi 30 ngày
+    DAY_3: 400,   // Tổng nhận 500 XP (400 bonus + 100 gốc)
+    DAY_7: 400,   // Tổng nhận 500 XP
+    DAY_14: 900,  // Tổng nhận 1000 XP
+    DAY_21: 900,  // Tổng nhận 1000 XP
+    DAY_30: 1400, // Tổng nhận 1500 XP
 };
 
 export const calculateLevel = (xp) => {

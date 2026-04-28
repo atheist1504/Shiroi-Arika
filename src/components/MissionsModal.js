@@ -15,7 +15,7 @@ export default function MissionsModal({ isOpen, onClose }) {
     const [claimingKey, setClaimingKey] = useState(null);
     const lastClaimRef = useRef(null); // Để bỏ qua reload thừa 🛡️
     const [user, setUser] = useState(null);
-    const [compassData, setCompassData] = useState({ total: 0, finished: 0, pending: [] });
+    const [compassData, setCompassData] = useState({ total: 0, finished: 0, pending: [], unread: [] });
 
     useEffect(() => {
         let channels = [];
@@ -112,15 +112,21 @@ export default function MissionsModal({ isOpen, onClose }) {
                 });
             }
 
-            const pending = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount < m.chapters.length)
+            const pending = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount > 0 && m.readCount < m.chapters.length)
                 .sort((a, b) => b.readCount - a.readCount);
             
+            const unread = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount === 0)
+                .sort(() => 0.5 - Math.random()); // Xáo trộn ngẫu nhiên để đổi mới 🎲
+            
             const finishedCount = Object.values(mangaMap).filter(m => m.chapters.length > 0 && m.readCount >= m.chapters.length).length;
+            
+            const totalWithChapters = Object.values(mangaMap).filter(m => m.chapters.length > 0).length;
 
             setCompassData({
-                total: allManga.length,
+                total: totalWithChapters,
                 finished: finishedCount,
-                pending: pending.slice(0, 5) // Show top 5 pending
+                pending: pending.slice(0, 3),
+                unread: unread.slice(0, 3)
             });
         } catch (err) { console.error("Compass error:", err); }
     };
@@ -305,6 +311,36 @@ export default function MissionsModal({ isOpen, onClose }) {
                                                     <span className="text-[9px] font-bold text-gray-500">{m.readCount}/{m.chapters.length}</span>
                                                 </div>
                                                 <button onClick={() => window.location.href = `/manga/${m.id}`} className="mt-3 text-[9px] font-black text-[#4caf50] uppercase tracking-widest hover:underline text-left">Tiếp tục cày ➔</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* 📔 UNREAD LIST (NEW ADVENTURE) 🆕 */}
+                            <div className="space-y-4">
+                                <h3 className="text-[11px] font-black text-[#4caf50] uppercase tracking-[0.3em] pl-2">Hành trình mới (Chưa khám phá)</h3>
+                                {compassData.unread.length === 0 ? (
+                                    <div className="py-10 text-center bg-white/5 rounded-[40px] border border-dashed border-white/10">
+                                        <p className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Bạn đã đụng vào tất cả các bộ truyện rồi! ⚡</p>
+                                    </div>
+                                ) : (
+                                    compassData.unread.map(m => (
+                                        <div key={m.id} className="flex gap-4 p-4 bg-[#4caf50]/5 border border-[#4caf50]/10 rounded-3xl hover:bg-[#4caf50]/10 transition-all group">
+                                            <div className="w-16 h-20 rounded-xl overflow-hidden bg-black shrink-0 border border-white/10 flex items-center justify-center">
+                                                {m.cover_image ? (
+                                                    <img src={optimizeImage(fixR2Url(m.cover_image), '200')} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-500" alt="" />
+                                                ) : (
+                                                    <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 flex flex-col justify-center">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[8px] bg-[#4caf50] text-[#0a0c0a] px-1.5 py-0.5 rounded font-black uppercase">Mới</span>
+                                                    <h4 className="text-xs font-black text-white uppercase tracking-tight line-clamp-1">{m.title}</h4>
+                                                </div>
+                                                <p className="text-[9px] text-gray-500 mt-1 italic uppercase font-bold">Chưa từng đọc - {m.chapters.length} chương</p>
+                                                <button onClick={() => window.location.href = `/manga/${m.id}`} className="mt-3 text-[9px] font-black text-[#4caf50] uppercase tracking-widest hover:underline text-left">Bắt đầu ngay ➔</button>
                                             </div>
                                         </div>
                                     ))
