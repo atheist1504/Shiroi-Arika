@@ -331,8 +331,14 @@ export async function deleteMangaAction(mangaId) {
     const { error: mangaDelError } = await client.from('mangas').delete().eq('id', mangaId);
     if (mangaDelError) throw mangaDelError;
 
+    // 🚀 XÓA CACHE ĐỂ CẬP NHẬT TRUYỆN ĐÃ XÓA KHỎI TRANG CHỦ & DANH SÁCH ⚡
+    revalidatePath('/');
+    revalidatePath('/latest');
+    revalidatePath(`/manga/${mangaId}`);
+
     return { success: true };
   } catch (error) {
+    console.error("❌ Lỗi deleteMangaAction:", error);
     return { success: false, error: error.message };
   }
 }
