@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
-import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction, deleteResolvedReportsAction, deleteReportAction } from "@/lib/actions";
+import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction, deleteResolvedReportsAction, deleteReportAction, cleanupSystemDataAction } from "@/lib/actions";
 import Link from "next/link";
 
 interface User {
@@ -70,6 +70,19 @@ export default function AdminReportsPage() {
       setMessage({ type: 'error', text: `XÓA THẤT BẠI: ${res.error}` });
     }
     setUpdatingId(null);
+  };
+
+  const handleSystemCleanup = async () => {
+    if (!confirm('Hành động này sẽ xóa vĩnh viễn các thông báo và nhật ký XP cũ hơn 7 ngày. Bạn có chắc chắn?')) return;
+    setLoading(true);
+    const res = await cleanupSystemDataAction();
+    if (res.success) {
+      setMessage({ type: 'success', text: res.details || 'DỌN DẸP HỆ THỐNG THÀNH CÔNG! 🍀' });
+      setTimeout(() => setMessage(null), 5000);
+    } else {
+      setMessage({ type: 'error', text: `THẤT BẠI: ${res.error}` });
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -227,6 +240,15 @@ export default function AdminReportsPage() {
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 Dọn tất cả Đã Xử Lý
+              </button>
+              
+              <button 
+                onClick={handleSystemCleanup}
+                className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-2"
+                title="Xóa thông báo & nhật ký XP > 7 ngày"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                Dọn Rác Hệ Thống (7 ngày)
               </button>
            </div>
         </div>

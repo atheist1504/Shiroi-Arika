@@ -187,13 +187,12 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   }, [chapterId]);
 
   const syncHistoryToDB = async () => {
-    const raw = localStorage.getItem('shiroi_user');
-    if (!raw) return;
-    const user = JSON.parse(raw);
     try {
-      // 📍 CHỈ CẬP NHẬT LỊCH SỬ GẦN NHẤT (Không ghi vào bảng log vĩnh viễn ở đây) 🍀
-      await supabase.from('shiroi_history').upsert({ user_id: user.id, username: user.username, manga_id: chapter.manga_id, chapter_id: chapterId, last_read_at: new Date().toISOString() }, { onConflict: 'user_id, manga_id' });
-    } catch (err) { console.error("Lỗi đồng bộ lịch sử:", err); }
+      const { syncHistoryToDBAction } = await import('@/lib/actions');
+      await syncHistoryToDBAction(chapter.manga_id, chapterId);
+    } catch (err) { 
+      console.error("Lỗi đồng bộ lịch sử:", err); 
+    }
   };
 
   const giveReadXP = async () => {

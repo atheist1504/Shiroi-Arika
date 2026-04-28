@@ -1244,6 +1244,42 @@ export async function deleteReportAction(reportId) {
 }
 
 /**
+ * 🧹 SERVER ACTION: Dọn dẹp hệ thống tự động (Thông báo & Nhật ký XP > 7 ngày) 🍀
+ */
+export async function cleanupSystemDataAction() {
+  try {
+    if (!(await checkAdminAuth())) return { success: false, error: "Không có quyền Admin" };
+    
+    const client = getDbClient();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const sevenDaysAgoISO = sevenDaysAgo.toISOString();
+
+    console.log("🧹 [System] Bắt đầu dọn dẹp dữ liệu cũ hơn 7 ngày...");
+
+    // 1. Xóa thông báo cũ
+    const { count: notifCount } = await client
+      .from('shiroi_notifications')
+      .delete({ count: 'exact' })
+      .lt('created_at', sevenDaysAgoISO);
+
+    // 2. Xóa nhật ký XP cũ (Không ảnh hưởng đến số XP hiện tại của User)
+    const { count: xpCount } = await client
+      .from('shiroi_xp_logs')
+      .delete({ count: 'exact' })
+      .lt('created_at', sevenDaysAgoISO);
+
+    return { 
+      success: true, 
+      details: `Đã dọn dẹp ${notifCount || 0} thông báo và ${xpCount || 0} nhật ký XP cũ. 🍀` 
+    };
+  } catch (error) {
+    console.error('❌ Lỗi cleanupSystemDataAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🕵️‍♂️ SERVER ACTION: Lấy danh sách báo cáo (Admin xem hết, User xem của mình) 🍀
  */
 export async function getReportsAction(all = false) {
@@ -2221,4 +2257,48 @@ export async function sendReportMessageAction(reportId, message) {
         console.error("❌ Lỗi gửi tin nhắn báo cáo:", error.message);
         return { success: false, error: error.message };
     }
+}
+/**
+ * 🕵️‍♂️ SERVER ACTION: Đồng bộ lịch sử đọc truyện với giới hạn 50 bộ 🛡️
+ */
+export async function syncHistoryToDBAction(mangaId, chapterId) {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user) return { success: false, error: "Chưa đăng nhập" };
+
+    const userId = user.id;
+    const client = getDbClient();
+
+    // 1. Cập nhật hoặc thêm mới lịch sử đọc của bộ truyện này
+    await client.from('shiroi_history').upsert({ 
+      user_id: userId, 
+      username: user.username, 
+      manga_id: mangaId, 
+      chapter_id: chapterId, 
+      last_read_at: new Date().toISOString() 
+    }, { onConflict: 'user_id, manga_id' });
+
+    // 2. TỐI ƯU DỮ LIỆU: Giới hạn 50 bộ truyện gần nhất/user 🛡️
+    const { data: historyList } = await client
+      .from('shiroi_history')
+      .select('manga_id, last_read_at')
+      .eq('user_id', userId)
+      .order('last_read_at', { ascending: false });
+
+    if (historyList && historyList.length > 50) {
+      const mangaIdsToDelete = historyList.slice(50).map(h => h.manga_id);
+      await client
+        .from('shiroi_history')
+        .delete()
+        .eq('user_id', userId)
+        .in('manga_id', mangaIdsToDelete);
+      
+      console.log(`🧹 [History] Đã xóa ${mangaIdsToDelete.length} bộ truyện cũ để giữ giới hạn 50.`);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Lỗi syncHistoryToDBAction:', error.message);
+    return { success: false, error: error.message };
+  }
 }
