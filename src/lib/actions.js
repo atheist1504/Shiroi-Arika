@@ -1141,6 +1141,27 @@ export async function submitReportAction(reportData) {
     const user = await getAuthenticatedUser();
     const client = getDbClient();
 
+    if (user?.id) {
+        const startOfTodayISO = getStartOfVNDay().toISOString();
+        const { data: logs } = await client
+          .from('shiroi_reports')
+          .select('created_at')
+          .eq('user_id', user.id)
+          .gte('created_at', startOfTodayISO)
+          .order('created_at', { ascending: false });
+
+        if (logs && logs.length >= 20) {
+          return { success: false, error: 'Bạn đã đạt giới hạn 20 báo cáo/ngày. Vui lòng quay lại vào ngày mai!' };
+        }
+        
+        if (logs && logs.length > 0) {
+          const lastTime = new Date(logs[0].created_at).getTime();
+          if (Date.now() - lastTime < 30000) {
+            return { success: false, error: `Vui lòng đợi ${Math.ceil((30000 - (Date.now() - lastTime))/1000)}s nữa để gửi tiếp.` };
+          }
+        }
+    }
+
     // 🛡️ Tách mangaTitle ra để không gây lỗi DB (vì cột này không có trong bảng)
     const { mangaTitle, ...dbFields } = reportData;
 
@@ -1156,18 +1177,49 @@ export async function submitReportAction(reportData) {
 
     // 🔔 Thông báo cho Quản trị viên (Admin) 🍀
     try {
-        const adminIds = ['atheist1504']; 
+        const { data: admins } = await client.from('shiroi_users').select('id').or('role.eq.admin,username.ilike.atheist1504');
+        const adminIds = admins?.map(a => a.id) || [];
+        
         const title = `Báo cáo mới từ User! 🚩`;
         const body = `Có báo cáo lỗi mới về: "${mangaTitle || 'Hệ thống/Manga'}". Hãy kiểm tra ngay!`;
         
         adminIds.forEach(adminId => {
              createInAppNotification(adminId, title, body, 'system', { reportId: 'new' });
         });
-    } catch (e) {}
+    } catch (e) {
+        console.warn("⚠️ Lỗi thông báo Admin:", e.message);
+    }
 
     return { success: true };
   } catch (error) {
     console.error('Lỗi submitReportAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * 🗑️ SERVER ACTION: Dọn dẹp báo cáo đã xử lý (Resolved)
+ */
+export async function deleteResolvedReportsAction(olderThanDays = null) {
+  try {
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const client = getDbClient();
+
+    let query = client.from('shiroi_reports').delete().in('status', ['fixed', 'ignored']);
+    
+    if (olderThanDays !== null) {
+      const date = new Date();
+      date.setDate(date.getDate() - olderThanDays);
+      query = query.lt('created_at', date.toISOString());
+    }
+
+    const { error } = await query;
+    if (error) throw error;
+    
+    revalidatePath('/admin/reports');
+    return { success: true };
+  } catch (error) {
+    console.error('Lỗi deleteResolvedReportsAction:', error);
     return { success: false, error: error.message };
   }
 }

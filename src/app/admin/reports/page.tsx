@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { AdminCard, AdminButton } from "@/components/admin/AdminCommon";
-import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction } from "@/lib/actions";
+import { getReportsAction, updateReportStatusAction, getReportMessagesAction, sendReportMessageAction, deleteResolvedReportsAction } from "@/lib/actions";
 import Link from "next/link";
 
 interface User {
@@ -39,7 +39,24 @@ export default function AdminReportsPage() {
   const [isSending, setIsSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'resolved'>('pending');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Cleanup handler
+  const handleCleanup = async (days: number | null) => {
+    if (!confirm(days ? `Xóa các báo cáo đã xử lý cũ hơn ${days} ngày?` : 'Xóa tất cả báo cáo đã xử lý?')) return;
+    setLoading(true);
+    const res = await deleteResolvedReportsAction(days);
+    if (res.success) {
+      setMessage({ type: 'success', text: 'DỌN DẸP THÀNH CÔNG! 🍀' });
+      fetchReports();
+    } else {
+      setMessage({ type: 'error', text: `THẤT BẠI: ${res.error}` });
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -138,6 +155,14 @@ export default function AdminReportsPage() {
 
   const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
 
+  const filteredReports = reports.filter(r => activeTab === 'pending' ? r.status === 'pending' : r.status !== 'pending');
+  const totalPages = Math.max(1, Math.ceil(filteredReports.length / itemsPerPage));
+  const currentReports = filteredReports.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
+
   return (
     <div className="min-h-screen bg-[#0a0c0a] text-white p-4 sm:p-8 font-sans">
       <div className="max-w-4xl mx-auto">
@@ -158,7 +183,41 @@ export default function AdminReportsPage() {
           </div>
         )}
 
-        <AdminCard title="Danh sách báo cáo" icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4"/></svg>}>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+           <div className="flex bg-white/5 rounded-xl p-1">
+             <button 
+               onClick={() => setActiveTab('pending')} 
+               className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'pending' ? 'bg-[#4caf50] text-black shadow-lg shadow-[#4caf50]/20' : 'text-gray-500 hover:text-white'}`}
+             >
+                Chưa xử lý 🔴
+             </button>
+             <button 
+               onClick={() => setActiveTab('resolved')} 
+               className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'resolved' ? 'bg-gray-700 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+             >
+                Đã xử lý 🟢
+             </button>
+           </div>
+           
+           <div className="flex gap-2">
+              <button 
+                onClick={() => handleCleanup(3)}
+                className="px-4 py-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 hover:bg-amber-500 hover:text-black rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Xóa cũ &gt; 3 ngày
+              </button>
+              <button 
+                onClick={() => handleCleanup(null)}
+                className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Dọn tất cả Đã Xử Lý
+              </button>
+           </div>
+        </div>
+
+        <AdminCard title={`Danh sách báo cáo (${filteredReports.length})`} icon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10l4 4v10a2 2 0 01-2 2zM14 4v4h4"/></svg>}>
           <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -176,12 +235,12 @@ export default function AdminReportsPage() {
                   <tr>
                     <td colSpan={6} className="py-20 text-center animate-pulse text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">Đang truy vấn dữ liệu báo cáo...</td>
                   </tr>
-                ) : reports.length === 0 ? (
+                ) : currentReports.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-20 text-center text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">Hệ thống chưa ghi nhận báo cáo nào 🍀</td>
+                    <td colSpan={6} className="py-20 text-center text-[10px] font-black text-gray-600 uppercase tracking-[0.3em]">{activeTab === 'pending' ? 'Không có báo cáo nào đang chờ xử lý 🍀' : 'Chưa có báo cáo nào được xử lý'}</td>
                   </tr>
                 ) : (
-                  reports.map((report) => {
+                  currentReports.map((report) => {
                     const statusInfo = getStatusLabel(report.status);
                     return (
                       <tr key={report.id} className="border-b border-[#2a332a] hover:bg-white/[0.02] transition-colors group">
@@ -247,6 +306,20 @@ export default function AdminReportsPage() {
               </tbody>
             </table>
           </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6 pt-6 border-t border-white/5">
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4caf50] hover:text-black transition-all">
+                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4">
+                   TRANG {currentPage} / {totalPages}
+                </span>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#4caf50] hover:text-black transition-all">
+                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" /></svg>
+                </button>
+            </div>
+          )}
         </AdminCard>
 
         {/* 💬 CHAT OVERLAY 🍀 */}
