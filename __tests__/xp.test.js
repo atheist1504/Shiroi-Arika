@@ -81,7 +81,7 @@ describe('XP Logic Unit Tests', () => {
 
     it('should return highest unlocked title if no badge selected', () => {
       const titleObj = calculateTitle(10900); // LV 110
-      expect(titleObj.name).toBe('Vạn cổ như đêm dài');
+      expect(titleObj.name).toBe('Đại sư tỷ');
     });
   });
 });

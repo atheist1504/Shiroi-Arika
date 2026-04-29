@@ -28,6 +28,20 @@ jest.mock('../src/lib/supabase', () => ({
   },
 }));
 
+// Polyfill cho crypto.randomUUID và fetch trong môi trường JSDOM
+if (typeof global.crypto === 'undefined') {
+  Object.defineProperty(global, 'crypto', {
+    value: { randomUUID: () => 'test-uuid-' + Math.random() },
+  });
+}
+
+global.fetch = jest.fn().mockImplementation(() =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ success: true, totalGB: 0, limitGB: 10 }),
+  })
+);
+
 describe('Trang Admin Quản Lý Upload - Kiểm Thử Việt Hóa & Logic Toàn Diện 🍀', () => {
   beforeEach(() => {
     jest.clearAllMocks();

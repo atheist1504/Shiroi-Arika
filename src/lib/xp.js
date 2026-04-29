@@ -10,11 +10,11 @@ export const XP_REWARDS = {
 };
 
 export const STREAK_BONUSES = {
-    DAY_3: 400,   // Tổng nhận 500 XP (400 bonus + 100 gốc)
-    DAY_7: 400,   // Tổng nhận 500 XP
-    DAY_14: 900,  // Tổng nhận 1000 XP
-    DAY_21: 900,  // Tổng nhận 1000 XP
-    DAY_30: 1400, // Tổng nhận 1500 XP
+    DAY_3: 100,   // Thưởng thêm +100 XP (Tổng 200)
+    DAY_7: 200,   // Thưởng thêm +200 XP (Tổng 300)
+    DAY_14: 500,  // Thưởng thêm +500 XP (Tổng 600)
+    DAY_21: 500,  // Thưởng thêm +500 XP (Tổng 600)
+    DAY_30: 1000, // Thưởng thêm +1000 XP (Tổng 1100)
 };
 
 export const calculateLevel = (xp) => {
@@ -85,10 +85,13 @@ export const calculateTitle = (xp, selectedBadge = null) => {
     // 🚀 ƯU TIÊN 1: Nếu người dùng đã chủ động chọn một danh hiệu (Badge) -> Hiển thị nó 🍀
     // (Bao gồm cả danh hiệu cứng và danh hiệu động từ Database)
     if (selectedBadge && typeof selectedBadge === 'string' && selectedBadge.trim()) {
-        return { name: selectedBadge, lv: 0 };
+        const standardTitle = TITLES.find(t => t.name === selectedBadge);
+        if (!standardTitle || lvl >= standardTitle.lv) {
+            return { name: selectedBadge, lv: standardTitle ? standardTitle.lv : 0 };
+        }
     }
 
-    // 🚀 ƯU TIÊN 2: Nếu không chọn, trả về danh hiệu cao nhất đã mở khóa theo Level
+    // 🚀 ƯU TIÊN 2: Nếu không chọn hoặc không đủ cấp, trả về danh hiệu cao nhất đã mở khóa theo Level
     const unlockedTitles = TITLES.filter(t => lvl >= t.lv);
     return unlockedTitles[0] || TITLES[TITLES.length - 1];
 };

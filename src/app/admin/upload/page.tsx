@@ -705,7 +705,7 @@ export default function AdminUploadPage() {
                           <div className="relative w-[120px] sm:w-[155px] aspect-[3/4] rounded-2xl border-2 border-dashed border-white/5 hover:border-[#4caf50]/30 transition-all flex flex-col items-center justify-center gap-3 bg-white/[0.01] hover:bg-[#4caf50]/5 cursor-pointer">
                              <input type="file" multiple accept="image/*,.mhtml,.mht" onChange={onFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                              <div className="w-8 h-8 rounded-full bg-[#4caf50]/10 flex items-center justify-center text-[#4caf50]"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg></div>
-                             <span className="text-[8px] font-black text-gray-600 uppercase">Thêm ảnh</span>
+                             <span className="text-[8px] font-black text-gray-600 uppercase">Thêm trang</span>
                           </div>
                        )}
                     </div>

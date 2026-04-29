@@ -1260,15 +1260,15 @@ export async function updateReportStatusAction(reportId, status) {
     // 🔔 Thông báo phản hồi & Cộng điểm thưởng 🍀
     try {
         if (report && report.user_id) {
-            // 💎 THƯỞNG 100 XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
+            // 💎 THƯỞNG 500 XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
             if (status === 'fixed' && report.status !== 'fixed') {
-                await recordXpLogAction(100, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
+                await recordXpLogAction(500, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
                 
                 // Thông báo thưởng riêng cho User
                 await createInAppNotification(
                     report.user_id, 
                     "Phần thưởng báo cáo lỗi! 💎", 
-                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +100 XP thưởng! 🍀`,
+                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +500 XP thưởng! 🍀`,
                     'system'
                 );
             }

@@ -143,10 +143,10 @@ export const StorageMeter: React.FC<StorageMeterProps> = ({ totalGB, limitGB }) 
     <div className="bg-black/40 border border-[#2a332a] rounded-2xl p-4 mb-8 shadow-inner">
       <div className="flex justify-between items-center mb-2">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">Storage Status</span>
-          {isCritical && <span className="text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black animate-pulse">CRITICAL</span>}
+          <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-widest">DUNG LƯỢNG ĐÃ DÙNG</span>
+          {isCritical && <span className="text-[8px] bg-red-500 text-white px-1.5 py-0.5 rounded font-black animate-pulse">TỚI HẠN</span>}
         </div>
-        <span className="text-[11px] font-black text-white">{totalGB} GB <span className="text-gray-600">/ {limitGB} GB</span></span>
+        <span className="text-[11px] font-black text-white">{totalGB.toFixed(2)} GB <span className="text-gray-600">/ {limitGB} GB</span></span>
       </div>
       <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
         <div 

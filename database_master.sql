@@ -239,16 +239,20 @@ BEGIN
         RETURN json_build_object('success', false, 'error', 'Bạn đã điểm danh hôm nay rồi!');
     END IF;
 
-    IF v_last_check IS NOT NULL AND (v_start_of_today::date - (v_last_check AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) = 1 THEN
+    -- Logic chuỗi ngày: Reset về 1 nếu là ngày đầu tháng, hoặc nếu đứt chuỗi (không điểm danh hôm qua)
+    IF EXTRACT(DAY FROM v_start_of_today) = 1 THEN
+        v_streak := 1;
+    ELSIF v_last_check IS NOT NULL AND (v_start_of_today::date - (v_last_check AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) = 1 THEN
         v_streak := v_streak + 1;
     ELSE
         v_streak := 1;
     END IF;
 
-    -- Milestone logic: 3/7 ngày -> 500 total, 14/21 ngày -> 1000 total, 30 ngày -> 1500 total
-    IF v_streak = 30 THEN v_bonus_xp := 1400;
-    ELSIF v_streak IN (14, 21) THEN v_bonus_xp := 900;
-    ELSIF v_streak IN (3, 7) THEN v_bonus_xp := 400;
+    -- Milestone logic: 3 ngày (+100), 7 ngày (+200), 14/21 ngày (+500), 30 ngày (+1000)
+    IF v_streak = 30 THEN v_bonus_xp := 1000;
+    ELSIF v_streak IN (14, 21) THEN v_bonus_xp := 500;
+    ELSIF v_streak = 7 THEN v_bonus_xp := 200;
+    ELSIF v_streak = 3 THEN v_bonus_xp := 100;
     END IF;
 
     v_total_xp := v_base_xp + v_bonus_xp;
