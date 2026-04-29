@@ -474,7 +474,9 @@ export async function leechChapterAction(url) {
             const html = await response.text();
             let jsonData = null;
             
-            const universalMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REA_T7_CLIENT__" type="application\/json">([\s\S]*?)<\/script>/);
+                        const universalMatch = html.match(/<script\b[^>]*id="__UNIVERSAL_DATA_FOR_REA_T7_CLIENT__"[^>]*>([\s\S]*?)<\/script>/i) || 
+                                   html.match(/<script\b[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+
             if (universalMatch) {
                 try {
                     const parsed = JSON.parse(universalMatch[1]);
@@ -520,9 +522,26 @@ export async function leechChapterAction(url) {
                 });
             }
 
+                        // 🛠️ PHƯƠNG ÁN DỰ PHÒNG CUỐI CÙNG (Regex quét mù CDN) 🚀
+            if (images.length === 0) {
+                console.log("⚠️ [Leecher] JSON fail, chuyển sang chế độ quét mù CDN...");
+                const cdnRegex = /"https:\/\/p\d+-sign[^"]+?\.tiktokcdn\.com\/obj\/[^"]+?"/g;
+                const matches = html.match(cdnRegex);
+                if (matches) {
+                    const uniqueCdn = [...new Set(matches.map(m => m.replace(/"/g, '').replace(/\\u0026/g, '&')))];
+                    uniqueCdn.forEach(url => {
+                        if (!url.includes('avatar') && !url.includes('tos-alisg')) {
+                            images.push(url);
+                        }
+                    });
+                }
+            }
+
             if (images.length > 0) {
+
                 console.log(`✅ [Leecher] Triệu hồi thành công ${images.length} ảnh từ TikTok!`);
-                return { success: true, images, source: 'TikTok-Slideshow' };
+                                return { success: true, images, source: 'TikTok-Slideshow-Hybrid' };
+
             }
             
             throw new Error("Không tìm thấy bộ ảnh nào trên bài đăng TikTok này! Có thể đây là Video hoặc bài đăng riêng tư. 🛡️");
