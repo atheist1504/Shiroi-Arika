@@ -1,21 +1,23 @@
 -- ==========================================================
--- 🍀 SHIROI ARIKA - MASTER DATABASE SCHEMA (CLEAN CONSOLIDATED)
--- Phiên bản: v36 - Performance & UI Overhaul Optimized
+-- 🍀 SHIROI ARIKA - MASTER DATABASE SCHEMA (FINAL CONSOLIDATED)
+-- Phiên bản: v36.final - Performance, Security & Gamification
 -- ==========================================================
 
--- 1. CẤU TRÚC BẢNG CỐT LÕI 🏗️
+-- 1. CẤU TRÚC BẢNG CỐT LÕI (CORE TABLES) 🏗️
+
+-- Bảng Truyện (Mangas)
 CREATE TABLE IF NOT EXISTS public.mangas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
     description TEXT,
     author TEXT DEFAULT 'Khuyết danh',
     cover_image TEXT,
-    genres TEXT[], -- Mảng các thể loại như ['Action', 'Romance', ...]
+    genres TEXT[], 
     status TEXT DEFAULT 'ONGOING' CHECK (status IN ('ONGOING', 'COMPLETED')),
     is_featured BOOLEAN DEFAULT false,
     default_reading_mode TEXT DEFAULT 'scroll',
     size_kb FLOAT DEFAULT 300,
-    -- Counter Cache Columns ⚡
+    -- Counter Cache Columns
     total_chapters INTEGER DEFAULT 0,
     latest_chapter_number NUMERIC,
     latest_chapter_id UUID,
@@ -24,6 +26,7 @@ CREATE TABLE IF NOT EXISTS public.mangas (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Bảng Chương (Chapters)
 CREATE TABLE IF NOT EXISTS public.chapters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     manga_id UUID REFERENCES public.mangas(id) ON DELETE CASCADE,
@@ -34,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.chapters (
     UNIQUE(manga_id, chapter_number)
 );
 
+-- Bảng Trang (Pages)
 CREATE TABLE IF NOT EXISTS public.pages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chapter_id UUID REFERENCES public.chapters(id) ON DELETE CASCADE,
@@ -44,6 +48,7 @@ CREATE TABLE IF NOT EXISTS public.pages (
     UNIQUE(chapter_id, page_number)
 );
 
+-- Bảng Người dùng (Users)
 CREATE TABLE IF NOT EXISTS public.shiroi_users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username TEXT UNIQUE NOT NULL,
@@ -62,7 +67,9 @@ CREATE TABLE IF NOT EXISTS public.shiroi_users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- 2. HỆ THỐNG TƯƠNG TÁC & NHẬT KÝ 💬💎
+-- 2. HỆ THỐNG TƯƠNG TÁC & GAMIFICATION 💬💎
+
+-- Bảng Bình luận (Comments)
 CREATE TABLE IF NOT EXISTS public.comments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     manga_id UUID REFERENCES mangas(id) ON DELETE CASCADE,
@@ -75,15 +82,25 @@ CREATE TABLE IF NOT EXISTS public.comments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Nhật ký XP (XP Logs)
 CREATE TABLE IF NOT EXISTS public.shiroi_xp_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES shiroi_users(id) ON DELETE CASCADE,
     amount INTEGER NOT NULL,
-    type TEXT NOT NULL, -- read / checkin / lucky_draw / comment
+    type TEXT NOT NULL, -- read / check_in / lucky_draw / comment
     reason TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Thống kê tháng (Monthly Stats Cache)
+CREATE TABLE IF NOT EXISTS public.shiroi_monthly_stats (
+    user_id UUID REFERENCES shiroi_users(id) ON DELETE CASCADE,
+    month_year DATE, -- Lưu ngày đầu tiên của tháng
+    amount BIGINT DEFAULT 0,
+    PRIMARY KEY (user_id, month_year)
+);
+
+-- Lịch sử đọc (History)
 CREATE TABLE IF NOT EXISTS public.shiroi_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES shiroi_users(id) ON DELETE CASCADE,
@@ -93,6 +110,7 @@ CREATE TABLE IF NOT EXISTS public.shiroi_history (
     UNIQUE(user_id, manga_id)
 );
 
+-- Chương đã đọc (Read Chapters)
 CREATE TABLE IF NOT EXISTS public.shiroi_read_chapters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.shiroi_users(id) ON DELETE CASCADE,
@@ -102,6 +120,7 @@ CREATE TABLE IF NOT EXISTS public.shiroi_read_chapters (
     UNIQUE(user_id, chapter_id)
 );
 
+-- Thông báo (Notifications)
 CREATE TABLE IF NOT EXISTS public.shiroi_notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.shiroi_users(id) ON DELETE CASCADE,
@@ -113,78 +132,256 @@ CREATE TABLE IF NOT EXISTS public.shiroi_notifications (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 3. CHỨC NĂNG HỆ THỐNG (FUNCTIONS & TRIGGERS) ⚙️
--- [Performance] Tự động cập nhật Stats và Timestamp cho Manga
+-- 3. HỆ THỐNG BÁO CÁO (REPORTS) 🚩
+
+CREATE TABLE IF NOT EXISTS public.shiroi_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES public.shiroi_users(id) ON DELETE SET NULL,
+    manga_id UUID REFERENCES public.mangas(id) ON DELETE CASCADE,
+    chapter_id UUID REFERENCES public.chapters(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.shiroi_report_messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id UUID REFERENCES public.shiroi_reports(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES public.shiroi_users(id) ON DELETE SET NULL,
+    message TEXT NOT NULL,
+    is_admin_reply BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- 4. LOGIC TỰ ĐỘNG (TRIGGERS & FUNCTIONS) ⚙️
+
+-- [Manga Stats] Cập nhật số chương và chương mới nhất
 CREATE OR REPLACE FUNCTION public.update_manga_stats_and_time()
 RETURNS TRIGGER AS $$
 DECLARE
     latest_chap RECORD;
 BEGIN
-    IF (TG_OP = 'INSERT') THEN
-        SELECT id, chapter_number INTO latest_chap FROM public.chapters 
-        WHERE manga_id = NEW.manga_id ORDER BY chapter_number DESC LIMIT 1;
+    SELECT id, chapter_number INTO latest_chap 
+    FROM public.chapters 
+    WHERE manga_id = COALESCE(NEW.manga_id, OLD.manga_id) 
+    ORDER BY chapter_number DESC LIMIT 1;
 
-        UPDATE public.mangas SET 
-            total_chapters = (SELECT COUNT(*) FROM public.chapters WHERE manga_id = NEW.manga_id),
-            latest_chapter_number = latest_chap.chapter_number,
-            latest_chapter_id = latest_chap.id,
-            updated_at = now()
-        WHERE id = NEW.manga_id;
-    ELSIF (TG_OP = 'DELETE') THEN
-        SELECT id, chapter_number INTO latest_chap FROM public.chapters 
-        WHERE manga_id = OLD.manga_id ORDER BY chapter_number DESC LIMIT 1;
+    UPDATE public.mangas SET 
+        total_chapters = (SELECT COUNT(*) FROM public.chapters WHERE manga_id = COALESCE(NEW.manga_id, OLD.manga_id)),
+        latest_chapter_number = latest_chap.chapter_number,
+        latest_chapter_id = latest_chap.id,
+        updated_at = now()
+    WHERE id = COALESCE(NEW.manga_id, OLD.manga_id);
 
-        UPDATE public.mangas SET 
-            total_chapters = (SELECT COUNT(*) FROM public.chapters WHERE manga_id = OLD.manga_id),
-            latest_chapter_number = latest_chap.chapter_number,
-            latest_chapter_id = latest_chap.id,
-            updated_at = now()
-        WHERE id = OLD.manga_id;
-    END IF;
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_update_manga_all IN public.chapters;
-CREATE TRIGGER trg_update_manga_all AFTER INSERT OR DELETE ON public.chapters
+DROP TRIGGER IF EXISTS trg_update_manga_all ON public.chapters;
+CREATE TRIGGER trg_update_manga_all 
+AFTER INSERT OR DELETE OR UPDATE OF chapter_number ON public.chapters
 FOR EACH ROW EXECUTE FUNCTION public.update_manga_stats_and_time();
 
--- [XP] Đồng bộ XP từ Log vào Profile ngay lập tức
-CREATE OR REPLACE FUNCTION fn_sync_user_xp_on_log()
+-- [XP & Monthly Stats] Đồng bộ XP từ Log vào User Profile và Monthly Stats
+CREATE OR REPLACE FUNCTION fn_sync_user_xp_and_monthly()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_month_year DATE;
 BEGIN
-    IF (TG_OP = 'INSERT') THEN
-        UPDATE shiroi_users SET xp = xp + NEW.amount WHERE id = NEW.user_id;
-    ELSIF (TG_OP = 'DELETE') THEN
-        UPDATE shiroi_users SET xp = xp - OLD.amount WHERE id = OLD.user_id;
-    END IF;
-    RETURN NULL;
+    -- Cập nhật XP tổng
+    UPDATE shiroi_users SET xp = xp + NEW.amount WHERE id = NEW.user_id;
+    
+    -- Cập nhật Cache tháng
+    v_month_year := date_trunc('month', NEW.created_at)::date;
+    INSERT INTO shiroi_monthly_stats (user_id, month_year, amount)
+    VALUES (NEW.user_id, v_month_year, NEW.amount)
+    ON CONFLICT (user_id, month_year) 
+    DO UPDATE SET amount = shiroi_monthly_stats.amount + EXCLUDED.amount;
+    
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trg_sync_user_xp ON shiroi_xp_logs;
-CREATE TRIGGER trg_sync_user_xp AFTER INSERT OR DELETE ON public.shiroi_xp_logs
-FOR EACH ROW EXECUTE FUNCTION fn_sync_user_xp_on_log();
+DROP TRIGGER IF EXISTS trg_sync_user_xp ON public.shiroi_xp_logs;
+CREATE TRIGGER trg_sync_user_xp AFTER INSERT ON public.shiroi_xp_logs
+FOR EACH ROW EXECUTE FUNCTION fn_sync_user_xp_and_monthly();
 
--- 4. BẢO MẬT & TRUY CẬP (RLS) 🔓
--- RLS được quản lý thông qua file security_overhaul.sql
+-- [Timestamp] Cập nhật updated_at cho Mangas
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_mangas_updated_at ON public.mangas;
+CREATE TRIGGER update_mangas_updated_at BEFORE UPDATE ON public.mangas FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
--- 5. CHỈ MỤC TỐI ƯU (INDEXES) 🚀
+-- 5. HÀM TRIỆU HỒI ĐẶC BIỆT (RPC) 🚀
+
+-- [RPC] Điểm danh hàng ngày (Milestone Bonus)
+CREATE OR REPLACE FUNCTION public.rpc_perform_check_in(p_user_id UUID)
+RETURNS JSON AS $$
+DECLARE
+    v_last_check TIMESTAMP WITH TIME ZONE;
+    v_streak INTEGER;
+    v_start_of_today TIMESTAMP WITH TIME ZONE;
+    v_base_xp INTEGER := 100;
+    v_bonus_xp INTEGER := 0;
+    v_total_xp INTEGER;
+BEGIN
+    v_start_of_today := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+    SELECT last_check_in, check_in_streak INTO v_last_check, v_streak FROM shiroi_users WHERE id = p_user_id;
+
+    IF v_last_check IS NOT NULL AND (v_last_check AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = v_start_of_today::date THEN
+        RETURN json_build_object('success', false, 'error', 'Bạn đã điểm danh hôm nay rồi!');
+    END IF;
+
+    IF v_last_check IS NOT NULL AND (v_start_of_today::date - (v_last_check AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) = 1 THEN
+        v_streak := v_streak + 1;
+    ELSE
+        v_streak := 1;
+    END IF;
+
+    -- Milestone logic: 3/7 ngày -> 500 total, 14/21 ngày -> 1000 total, 30 ngày -> 1500 total
+    IF v_streak = 30 THEN v_bonus_xp := 1400;
+    ELSIF v_streak IN (14, 21) THEN v_bonus_xp := 900;
+    ELSIF v_streak IN (3, 7) THEN v_bonus_xp := 400;
+    END IF;
+
+    v_total_xp := v_base_xp + v_bonus_xp;
+
+    INSERT INTO shiroi_xp_logs (user_id, amount, type, reason)
+    VALUES (p_user_id, v_total_xp, 'check_in', 'Điểm danh (Ngày ' || v_streak || ')');
+
+    UPDATE shiroi_users SET last_check_in = now(), check_in_streak = v_streak WHERE id = p_user_id;
+
+    RETURN json_build_object('success', true, 'xpGain', v_total_xp, 'streak', v_streak, 'message', 'Điểm danh thành công! +' || v_total_xp || ' XP');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- [RPC] Bốc quà may mắn (Gacha)
+CREATE OR REPLACE FUNCTION public.rpc_perform_lucky_draw(p_user_id UUID)
+RETURNS JSON AS $$
+DECLARE
+    v_last_draw TIMESTAMP WITH TIME ZONE;
+    v_start_of_today TIMESTAMP WITH TIME ZONE;
+    v_rand FLOAT;
+    v_xp_gain INTEGER;
+BEGIN
+    v_start_of_today := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date;
+    SELECT last_lucky_draw INTO v_last_draw FROM shiroi_users WHERE id = p_user_id;
+
+    IF v_last_draw IS NOT NULL AND (v_last_draw AT TIME ZONE 'Asia/Ho_Chi_Minh')::date = v_start_of_today::date THEN
+        RETURN json_build_object('success', false, 'error', 'Hôm nay vận may đã cạn, hãy quay lại vào ngày mai!');
+    END IF;
+
+    v_rand := random() * 100;
+    IF v_rand <= 0.5 THEN v_xp_gain := 500;
+    ELSIF v_rand <= 3.0 THEN v_xp_gain := 100;
+    ELSIF v_rand <= 7.0 THEN v_xp_gain := 50;
+    ELSIF v_rand <= 15.0 THEN v_xp_gain := 40;
+    ELSIF v_rand <= 30.0 THEN v_xp_gain := 30;
+    ELSIF v_rand <= 60.0 THEN v_xp_gain := 20;
+    ELSE v_xp_gain := 10;
+    END IF;
+
+    INSERT INTO shiroi_xp_logs (user_id, amount, type, reason)
+    VALUES (p_user_id, v_xp_gain, 'lucky_draw', 'May mắn hàng ngày');
+
+    UPDATE shiroi_users SET last_lucky_draw = now() WHERE id = p_user_id;
+
+    RETURN json_build_object('success', true, 'xpGain', v_xp_gain, 'message', 'Bốc quà thành công! +' || v_xp_gain || ' XP');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- [RPC] BXH Tháng (Monthly Leaderboard)
+CREATE OR REPLACE FUNCTION get_monthly_leaderboard(month_offset INT DEFAULT 0)
+RETURNS TABLE (id UUID, username TEXT, display_name TEXT, avatar_url TEXT, selected_badge TEXT, total_xp BIGINT, monthly_xp BIGINT) 
+SECURITY DEFINER 
+SET search_path = public
+AS $$
+DECLARE target_month DATE;
+BEGIN
+    target_month := date_trunc('month', now() - (month_offset * interval '1 month'))::date;
+    RETURN QUERY
+    SELECT u.id, u.username, u.display_name, u.avatar_url, u.selected_badge, u.xp::BIGINT, COALESCE(ms.amount, 0)::BIGINT
+    FROM shiroi_users u
+    LEFT JOIN shiroi_monthly_stats ms ON u.id = ms.user_id AND ms.month_year = target_month
+    WHERE (u.role != 'admin' OR u.username = 'atheist1504')
+    ORDER BY monthly_xp DESC, total_xp DESC LIMIT 100;
+END;
+$$ LANGUAGE plpgsql;
+
+-- [RPC] Tổng dung lượng (Storage Stats)
+CREATE OR REPLACE FUNCTION get_total_storage_kb()
+RETURNS float AS $$
+DECLARE
+    total_manga_size float;
+    total_pages_size float;
+BEGIN
+    SELECT COALESCE(SUM(COALESCE(size_kb, 300)), 0) INTO total_manga_size FROM mangas;
+    SELECT COALESCE(SUM(COALESCE(size_kb, 150)), 0) INTO total_pages_size FROM pages;
+    RETURN total_manga_size + total_pages_size;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 6. BẢO MẬT (SECURITY & RLS) 🛡️
+
+-- Bật RLS cho tất cả các bảng
+ALTER TABLE public.mangas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chapters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_xp_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_read_chapters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_report_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.shiroi_monthly_stats ENABLE ROW LEVEL SECURITY;
+
+-- Chính sách Select công khai
+CREATE POLICY "Public Select" ON public.mangas FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.chapters FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.pages FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.comments FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.shiroi_users FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.shiroi_notifications FOR SELECT USING (true);
+CREATE POLICY "Public Select" ON public.shiroi_monthly_stats FOR SELECT USING (true);
+
+-- Khóa ghi từ Client (Chỉ Admin qua Server/Service Role mới được phép)
+CREATE POLICY "Admin Only Write" ON public.mangas FOR ALL USING (false);
+CREATE POLICY "Admin Only Write" ON public.chapters FOR ALL USING (false);
+CREATE POLICY "Admin Only Write" ON public.pages FOR ALL USING (false);
+CREATE POLICY "Admin Only Write" ON public.shiroi_users FOR ALL USING (false);
+
+-- Quyền riêng tư cho Users (Ẩn mật khẩu và Token)
+REVOKE SELECT ON public.shiroi_users FROM anon, authenticated;
+GRANT SELECT (id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at) ON public.shiroi_users TO anon, authenticated;
+
+-- Reports System RLS
+CREATE POLICY "View Own Reports" ON public.shiroi_reports FOR SELECT USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM shiroi_users WHERE id = auth.uid() AND role IN ('admin', 'staff')));
+CREATE POLICY "View Own Report Messages" ON public.shiroi_report_messages FOR SELECT USING (EXISTS (SELECT 1 FROM shiroi_reports r WHERE r.id = report_id AND (r.user_id = auth.uid() OR EXISTS (SELECT 1 FROM shiroi_users WHERE id = auth.uid() AND role IN ('admin', 'staff')))));
+
+-- 7. CHỈ MỤC TỐI ƯU (INDEXES) 🚀
+
 CREATE INDEX IF NOT EXISTS idx_manga_updated ON public.mangas(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_mangas_status ON public.mangas(status);
 CREATE INDEX IF NOT EXISTS idx_mangas_genres ON public.mangas USING GIN (genres);
 CREATE INDEX IF NOT EXISTS idx_chapters_manga ON public.chapters(manga_id, chapter_number DESC);
 CREATE INDEX IF NOT EXISTS idx_pages_chapter ON public.pages(chapter_id, page_number);
 CREATE INDEX IF NOT EXISTS idx_users_xp_desc ON public.shiroi_users(xp DESC);
-CREATE INDEX IF NOT EXISTS idx_xp_logs_user_date ON public.shiroi_xp_logs(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_xp_logs_created_at ON public.shiroi_xp_logs(created_at DESC);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_checkin_per_day ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)) WHERE type = 'check_in';
-CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_lucky_draw_per_day ON shiroi_xp_logs (user_id, ((created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date)) WHERE type = 'lucky_draw';
+CREATE INDEX IF NOT EXISTS idx_reports_status ON public.shiroi_reports(status);
 
--- 6. REAL-TIME TỰ ĐỘNG
+-- 8. REAL-TIME CONFIGURATION
+
 ALTER PUBLICATION supabase_realtime ADD TABLE comments;
 ALTER PUBLICATION supabase_realtime ADD TABLE shiroi_notifications;
 ALTER TABLE comments REPLICA IDENTITY FULL;
 
-SELECT 'Shiroi Master Schema v36: Đã hợp nhất và tối ưu thành công! 🍀🟢' as status;
+SELECT 'Shiroi Master Schema (FINAL CONSOLIDATED): Đã hoàn thiện và sẵn sàng! 🍀🟢' as status;

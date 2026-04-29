@@ -490,8 +490,14 @@ export async function leechChapterAction(url) {
             if (universalMatch) {
                 try {
                     const parsed = JSON.parse(universalMatch[1]);
-                    const videoDetail = parsed?.__DEFAULT_SCOPE__?.['webapp.video-detail'];
-                    jsonData = videoDetail?.itemInfo?.itemStruct || videoDetail?.shareMeta?.videoData;
+                                        const defaultScope = parsed?.__DEFAULT_SCOPE__ || {};
+                    const videoDetail = defaultScope['webapp.video-detail'];
+                    const appContext = defaultScope['webapp.app-context'];
+
+                                        jsonData = videoDetail?.itemInfo?.itemStruct || 
+                               videoDetail?.shareMeta?.videoData ||
+                               appContext?.itemDetail?.itemStruct;
+
                     
                     if (!jsonData && parsed?.props?.pageProps?.itemInfo?.itemStruct) {
                         jsonData = parsed.props.pageProps.itemInfo.itemStruct;
