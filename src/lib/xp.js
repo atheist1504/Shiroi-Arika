@@ -86,7 +86,8 @@ export const calculateTitle = (xp, selectedBadge = null) => {
     // (Bao gồm cả danh hiệu cứng và danh hiệu động từ Database)
     if (selectedBadge && typeof selectedBadge === 'string' && selectedBadge.trim()) {
         const standardTitle = TITLES.find(t => t.name === selectedBadge);
-        if (!standardTitle || lvl >= standardTitle.lv) {
+        // 💎 ĐẶC CÁCH: Nếu là danh hiệu "Thử Nghiệm" (lv >= 900) hoặc người dùng đủ cấp -> Cho phép hiển thị 🍀
+        if (!standardTitle || lvl >= standardTitle.lv || standardTitle.lv >= 900) {
             return { name: selectedBadge, lv: standardTitle ? standardTitle.lv : 0 };
         }
     }

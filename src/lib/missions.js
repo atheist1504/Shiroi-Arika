@@ -185,12 +185,12 @@ export const fetchUserMissionProgress = async (userId) => {
             };
         });
 
-        // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Đã hoàn thành) ⚔️
-        // Chỉ hiện với những bộ truyện có Status là 'completed' và user đã đọc xong hoàn toàn.
+        // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Toàn bộ hệ thống) ⚔️
         try {
-            const { data: completedMangas } = await supabase.from('mangas').select('id, title, genres').eq('status', 'completed');
-            if (completedMangas && completedMangas.length > 0) {
-                const mangaIds = completedMangas.map(m => m.id);
+            // Lấy tất cả bộ truyện có trên hệ thống
+            const { data: allMangas } = await supabase.from('mangas').select('id, title, genres');
+            if (allMangas && allMangas.length > 0) {
+                const mangaIds = allMangas.map(m => m.id);
                 
                 // Lấy tổng số chương và số lượng đã đọc song song 🚀
                 const [
@@ -212,27 +212,23 @@ export const fetchUserMissionProgress = async (userId) => {
                 });
 
                 // Tạo nhiệm vụ Chinh phục cho từng bộ
-                completedMangas.forEach(m => {
+                allMangas.forEach(m => {
                     const total = totalMap[m.id] || 0;
                     const read = userMap[m.id] || 0;
                     
-                    // 🚩 LOẠI BỎ ONE-SHOT (Dựa trên số chương HOẶC Thể loại) 🛡️
-                    const isOneShotGenre = m.genres?.some(g => {
-                        const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
-                        return normalized.includes('oneshot');
-                    });
-                    
-                    if (total > 1 && !isOneShotGenre && read >= total) {
+                    // 🚩 CHỈ TÍNH NHỮNG BỘ CÓ CHƯƠNG 🛡️
+                    if (total === 0) return;
 
+                    if (read >= total) {
                         const mKey = `finish_series_${m.id}`;
                         
-                        // Tính toán thưởng dựa trên số chương (Dùng hàm dùng chung)
-                        const rewardXp = calculateConquestReward(total);
+                        // Tính toán thưởng: 1 chương (One-shot) = 50 XP, nhiều chương = Dùng hàm tính toán 💎
+                        const rewardXp = total === 1 ? 50 : calculateConquestReward(total);
 
                         results.push({
                             key: mKey,
                             title: `Chinh phục: ${m.title}`,
-                            description: `Hoàn thành bộ truyện dài ${total} chương`,
+                            description: total === 1 ? `Hoàn thành bộ truyện One-shot` : `Hoàn thành bộ truyện dài ${total} chương`,
                             category: MISSION_CATEGORIES.CONQUEST,
                             target: total,
                             current: read,
@@ -242,6 +238,25 @@ export const fetchUserMissionProgress = async (userId) => {
                         });
                     }
                 });
+
+                // 🏆 NHIỆM VỤ ĐẠI CHINH PHỤC (PHÁ ĐẢO TOÀN BỘ) 💮
+                const totalFinished = allMangas.filter(m => (totalMap[m.id] || 0) > 0).length;
+                const userFinishedCount = results.filter(r => r.category === MISSION_CATEGORIES.CONQUEST).length;
+
+                if (totalFinished > 0 && userFinishedCount >= totalFinished) {
+                    const grandKey = 'grand_conquest_all';
+                    results.push({
+                        key: grandKey,
+                        title: `💮 ĐẠI CHINH PHỤC: PHÁ ĐẢO SHIROI`,
+                        description: `Chúc mừng! Bạn đã quét sạch toàn bộ ${totalFinished} bộ truyện đang có trên hệ thống.`,
+                        category: MISSION_CATEGORIES.CONQUEST,
+                        target: totalFinished,
+                        current: userFinishedCount,
+                        xp: 10000,
+                        isCompleted: true,
+                        isClaimed: lifetimeClaimedKeys.has(grandKey)
+                    });
+                }
             }
         } catch (err) {
             console.error("Lỗi tính toán nhiệm vụ Chinh phục:", err);

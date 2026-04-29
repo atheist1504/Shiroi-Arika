@@ -183,7 +183,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             if (globalMode) setReadingModeState(globalMode);
         }
     }
-    giveReadXP();
+    giveReadXP(true); // Gọi lần đầu để đánh dấu lịch sử, nhưng không bắt buộc phải trả XP ngay
   }, [chapterId]);
 
   const syncHistoryToDB = async () => {
@@ -195,35 +195,33 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     }
   };
 
-  const giveReadXP = async () => {
+  const giveReadXP = async (isInitial = false) => {
     const storedUser = localStorage.getItem('shiroi_user');
     if (!storedUser || !chapterId) return;
-    const userData = JSON.parse(storedUser);
     
     const sessionKey = `xp_read_${chapterId}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
+    // 🛡️ Nếu là lần đầu mở (isInitial), chỉ đánh dấu lịch sử trong DB nếu cần.
+    // 🛡️ Việc nhận XP thực sự sẽ kích hoạt khi chạm đáy (IntersectionObserver).
+    if (isInitial && readingMode === 'scroll') return; 
+
     try {
+      console.log(`🎯 [Reader] Đang ghi nhận "Đọc hết" chương ${chapter?.chapter_number}...`);
       const { addReadXPAction } = await import('@/lib/actions');
       const res = await addReadXPAction(chapter.manga_id, chapterId);
       
       if (res.success) {
-        // Cập nhật lại UI thông qua localStorage 🍀
         localStorage.setItem('shiroi_user', JSON.stringify(res.user));
-        
         sessionStorage.setItem(sessionKey, 'true');
         setXpToast(true);
         setTimeout(() => setXpToast(false), 4000);
         window.dispatchEvent(new Event('storage'));
-      } else {
-        // Nếu lỗi là do đã đọc rồi thì vẫn đánh dấu session
-        if (res.error?.includes('Đã nhận thưởng')) {
-           sessionStorage.setItem(sessionKey, 'true');
-        }
-        console.warn("XP Reward Note:", res.error);
+      } else if (res.error?.includes('Đã nhận thưởng')) {
+        sessionStorage.setItem(sessionKey, 'true');
       }
     } catch (err) { 
-      console.error("Lỗi gọi Server Action XP:", err); 
+      console.error("Lỗi ghi nhận đọc truyện:", err); 
     }
   };
 
@@ -233,12 +231,14 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         preloadNextChapterImages();
+        // 💎 KÍCH HOẠT NHẬN THƯỞNG KHI CHẠM ĐÁY 🍀
+        giveReadXP();
       }
-    }, { threshold: 0.1, rootMargin: '500px' }); // Kích hoạt sớm 500px trước khi chạm đáy
+    }, { threshold: 0.1, rootMargin: '100px' }); 
 
     observer.observe(endOfChapterRef.current);
     return () => observer.disconnect();
-  }, [readingMode, nextChapterPages, hasPreloaded]);
+  }, [readingMode, nextChapterPages, hasPreloaded, chapterId]);
 
   // 📖 TRIGGER PRELOAD CHO CHẾ ĐỘ LẬT TRANG
   useEffect(() => {
@@ -257,6 +257,11 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       // 2. Nếu sắp hết chương, tải trước chương sau 🌩️
       if (currentPageIndex >= pages.length - 3) {
         preloadNextChapterImages();
+      }
+
+      // 3. 💎 KÍCH HOẠT NHẬN THƯỞNG KHI ĐẾN TRANG CUỐI 🍀
+      if (currentPageIndex === pages.length - 1) {
+          giveReadXP();
       }
     }
   }, [readingMode, currentPageIndex, pages, nextChapterPages]);

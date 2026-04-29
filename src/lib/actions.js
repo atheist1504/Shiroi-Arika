@@ -1326,7 +1326,7 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     // 2. Lấy định nghĩa nhiệm vụ để xác định XP (Tránh Client gửi XP láo)
     let rewardXp = 0;
     
-    if (missionKey.startsWith('conqueror_')) {
+    if (missionKey === 'grand_conquest_all' || missionKey.startsWith('conqueror_')) {
         rewardXp = 10000;
     } else if (missionKey.startsWith('finish_series_')) {
         // Phân loại Tier cho bộ truyện đã hoàn thành
@@ -1339,21 +1339,13 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
         ]);
 
         const total = chapterRes.count || 0;
-        const isOneShotGenre = mangaRes.data?.genres?.some(g => {
-            const normalized = g.toLowerCase().replace(/[^a-z]/g, '');
-            return normalized.includes('oneshot');
-        });
-
-        if (total <= 1 || isOneShotGenre) {
-            throw new Error("Truyện One-shot không áp dụng phần thưởng Chinh phục! 🛡️");
-        }
 
         // 3. Kiểm tra số lượng đã đọc thực tế
         const { count: n } = await client.from('shiroi_read_chapters').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('manga_id', mangaIdFromKey);
         
         // Dùng hàm dùng chung từ missions.js
         const { calculateConquestReward } = await import('./missions');
-        rewardXp = calculateConquestReward(n);
+        rewardXp = total === 1 ? 50 : calculateConquestReward(n);
 
     } else {
         const mission = MISSIONS[missionKey];

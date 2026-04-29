@@ -52,6 +52,17 @@ export default function MissionsModal({ isOpen, onClose }) {
                         .subscribe();
                     channels.push(channel);
                 });
+
+                // 📢 LẮNG NGHE ADMIN CẬP NHẬT TRUYỆN MỚI (GLOBAL) 🌍
+                const adminChannel = supabase
+                    .channel(`global_content_updates_${Math.random().toString(36).substring(7)}`)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chapters' }, () => {
+                        console.log("🆕 [Missions] Admin vừa đăng chương mới! Đang tính toán lại tiến trình...");
+                        loadProgress(u.id);
+                        loadCompass(u.id);
+                    })
+                    .subscribe();
+                channels.push(adminChannel);
             }
         }
         return () => {
