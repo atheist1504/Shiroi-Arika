@@ -435,26 +435,18 @@ export async function leechChapterAction(url) {
     // 🌟 LOGIC UNIFIED: MANGADEX & TRUYENDEX (Dùng chung MangaDex API)
     if (url.includes('mangadex.org') || url.includes('truyendex')) {
         try {
-            // 1. Trích xuất UUID (36 ký tự)
             const uuidMatch = url.match(/([a-f0-9-]{36})/i);
             const uuid = uuidMatch ? uuidMatch[1] : null;
-            
             if (!uuid) throw new Error("Không tìm thấy mã chương (UUID) trong Link này! 🛡️");
 
             console.log(`🎯 [Leecher] Triệu hồi từ MangaDex Source (ID: ${uuid})`);
-            
-            // 2. Gọi API MangaDex chính chủ
             const res = await fetch(`https://api.mangadex.org/at-home/server/${uuid}`);
             if (!res.ok) throw new Error("MangaDex API từ chối truy cập! 📉");
-            
             const data = await res.json();
             if (data.result !== 'ok') throw new Error("Dữ liệu chương không hợp lệ! 🧱");
 
             const hash = data.chapter.hash;
-            // Dùng baseUrl động từ MangaDex API để tránh bị nhận diện cào 🚀
             const baseUrl = data.baseUrl || 'https://uploads.mangadex.org';
-            
-            // 🖼️ Dùng 'dataSaver' (Ảnh đã nén)
             const images = data.chapter.dataSaver.map(filename => 
                 `${baseUrl}/data-saver/${hash}/${filename}`
             );
@@ -462,8 +454,7 @@ export async function leechChapterAction(url) {
             return { success: true, images, source: 'MangaDex-Core' };
         } catch (err) {
             console.error("❌ [Leecher] Lỗi MangaDex Source:", err.message);
-            if (url.includes('mangadex.org')) throw err; // Nếu là link MD xịn thì báo lỗi luôn
-            // Nếu là link TruyenDex thì thử cào HTML dự phòng bên dưới
+            if (url.includes('mangadex.org')) throw err;
         }
     }
 
@@ -481,31 +472,33 @@ export async function leechChapterAction(url) {
 
             if (!response.ok) throw new Error(`TikTok từ chối truy cập! (Status: ${response.status}) 🛡️`);
             const html = await response.text();
-
-            // 🔍 Tìm kiếm JSON chứa dữ liệu ảnh
             let jsonData = null;
             
-            // Pattern 1: __UNIVERSAL_DATA_FOR_REA_T7_CLIENT__ (Mới nhất)
             const universalMatch = html.match(/<script id="__UNIVERSAL_DATA_FOR_REA_T7_CLIENT__" type="application\/json">([\s\S]*?)<\/script>/);
             if (universalMatch) {
                 try {
                     const parsed = JSON.parse(universalMatch[1]);
-                                        const defaultScope = parsed?.__DEFAULT_SCOPE__ || {};
-                    const videoDetail = defaultScope['webapp.video-detail'];
-                    const appContext = defaultScope['webapp.app-context'];
-
-                                        jsonData = videoDetail?.itemInfo?.itemStruct || 
-                               videoDetail?.shareMeta?.videoData ||
-                               appContext?.itemDetail?.itemStruct;
-
+                    const root = parsed || {};
+                    const defaultScope = root.__DEFAULT_SCOPE__ || {};
                     
-                    if (!jsonData && parsed?.props?.pageProps?.itemInfo?.itemStruct) {
-                        jsonData = parsed.props.pageProps.itemInfo.itemStruct;
+                    // 🕵️‍♂️ TRUY TÌM DỮ LIỆU TỪ MỌI NGÓC NGÁCH 🔍
+                    jsonData = defaultScope['webapp.video-detail']?.itemInfo?.itemStruct || 
+                               root['webapp.video-detail']?.itemInfo?.itemStruct ||
+                               defaultScope['webapp.app-context']?.itemDetail?.itemStruct ||
+                               root['webapp.app-context']?.itemDetail?.itemStruct ||
+                               root.props?.pageProps?.itemInfo?.itemStruct ||
+                               defaultScope['webapp.video-detail']?.shareMeta?.videoData;
+
+                    if (!jsonData) {
+                        const itemModule = root.ItemModule || defaultScope.ItemModule;
+                        if (itemModule) {
+                            const firstKey = Object.keys(itemModule)[0];
+                            jsonData = itemModule[firstKey];
+                        }
                     }
                 } catch (e) { console.warn("⚠️ Lỗi parse Universal Data:", e.message); }
             }
 
-            // Pattern 2: SIGI_STATE (Dự phòng)
             if (!jsonData) {
                 const sigiMatch = html.match(/<script id="SIGI_STATE" type="application\/json">([\s\S]*?)<\/script>/);
                 if (sigiMatch) {
@@ -517,7 +510,6 @@ export async function leechChapterAction(url) {
                 }
             }
 
-            // 🖼️ Trích xuất danh sách ảnh từ TikTok Object
             const images = [];
             const tiktokImages = jsonData?.imagePost?.images || jsonData?.image_post_info?.images;
 
