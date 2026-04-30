@@ -94,24 +94,10 @@ export default function CheckIn() {
       return;
     }
     const userData = JSON.parse(storedUser);
-    if (!user || user.id !== userData.id) {
-        setUser(userData);
-        fetchStatusFromDb(); // 🚀 Force fetch mới khi đổi user
-        return;
-    }
     setUser(userData);
     
-    // LOGIC KIỂM TRA ĐIỂM DANH 🕵️‍♂️
-
-    // Kiểm tra xem đã điểm danh hôm nay chưa
-    if (userData.last_check_in) {
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const lastCheckDate = new Date(userData.last_check_in).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-      
-      setCanCheckIn(lastCheckDate !== today);
-    } else {
-      setCanCheckIn(true);
-    }
+    // 🕵️‍♂️ ĐẢM BẢO CHÍNH XÁC TUYỆT ĐỐI: Fetch lại từ DB ngay cả khi có storage event
+    fetchStatusFromDb();
   };
 
     const handleCheckIn = async () => {

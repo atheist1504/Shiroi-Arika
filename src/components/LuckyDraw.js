@@ -131,22 +131,10 @@ export default function LuckyDraw() {
       return;
     }
     const userData = JSON.parse(storedUser);
-    if (!user || user.id !== userData.id) {
-        setUser(userData);
-        fetchStatusFromDb(); // 🚀 Force fetch mới khi đổi user
-        return;
-    }
     setUser(userData);
 
-    // Kiểm tra xem đã bốc quà hôm nay chưa (Đồng nhất múi giờ VN) 🕵️‍♂️
-    if (userData.last_lucky_draw) {
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-      const lastDrawDate = new Date(userData.last_lucky_draw).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-      
-      setCanDraw(lastDrawDate !== today);
-    } else {
-      setCanDraw(true);
-    }
+    // 🕵️‍♂️ ĐẢM BẢO CHÍNH XÁC TUYỆT ĐỐI: Fetch lại từ DB ngay cả khi có storage event
+    fetchStatusFromDb();
   };
 
   const handleDraw = async () => {

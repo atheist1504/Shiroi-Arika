@@ -622,6 +622,10 @@ function ProfileContent() {
                                     src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
                                     className="w-full h-full object-cover group-hover/avatar:scale-110 transition-transform duration-700" 
                                     alt="Avatar" 
+                                    onError={(e) => {
+                                        e.target.src = 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png';
+                                        console.warn("⚠️ [Profile] Không thể tải ảnh đại diện, đang dùng ảnh mặc định.");
+                                    }}
                                 />
                                 <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-all cursor-pointer backdrop-blur-sm z-10">
                                     <span className="text-2xl mb-1">📸</span>

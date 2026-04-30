@@ -292,7 +292,14 @@ export default function Navbar() {
                                 isUserMenuOpen ? 'border-[#4caf50] ring-4 ring-[#4caf50]/20' : 'border-white/10 hover:border-[#4caf50]/50'
                             }`}
                           >
-                              <img src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-full h-full object-cover group-hover:scale-110 transition-transform" alt="Avatar" />
+                              <img 
+                                src={user.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
+                                alt="Avatar" 
+                                onError={(e) => {
+                                    e.target.src = 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png';
+                                }}
+                              />
                           </button>
 
                           {/* 👤 USER DROPDOWN MENU 🍀 */}
