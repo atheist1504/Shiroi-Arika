@@ -53,11 +53,13 @@ export default function CheckIn() {
     };
   }, []);
 
-  const fetchStatusFromDb = async () => {
-    const storedUser = localStorage.getItem("shiroi_user");
-    if (!storedUser) return;
-    
     try {
+      const storedUser = localStorage.getItem("shiroi_user");
+      if (!storedUser) {
+        setIsSyncing(false);
+        return;
+      }
+
       const userData = JSON.parse(storedUser);
       // 🕵️‍♂️ LẤY NGÀY HIỆN TẠI (VIỆT NAM) 🇻🇳
       const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -92,6 +94,11 @@ export default function CheckIn() {
       return;
     }
     const userData = JSON.parse(storedUser);
+    if (!user || user.id !== userData.id) {
+        setUser(userData);
+        fetchStatusFromDb(); // 🚀 Force fetch mới khi đổi user
+        return;
+    }
     setUser(userData);
     
     // LOGIC KIỂM TRA ĐIỂM DANH 🕵️‍♂️

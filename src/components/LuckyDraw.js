@@ -68,11 +68,13 @@ export default function LuckyDraw() {
     };
   }, [showModal]);
 
-  const fetchStatusFromDb = async () => {
-    const userStr = localStorage.getItem("shiroi_user");
-    if (!userStr) return;
-    
     try {
+      const userStr = localStorage.getItem("shiroi_user");
+      if (!userStr) {
+        setIsSyncing(false);
+        return;
+      }
+
       const userData = JSON.parse(userStr);
       
       // 🕵️‍♂️ LẤY DỮ LIỆU MỚI NHẤT TỪ USER TABLE ĐỂ KIỂM TRA last_lucky_draw
@@ -129,6 +131,11 @@ export default function LuckyDraw() {
       return;
     }
     const userData = JSON.parse(storedUser);
+    if (!user || user.id !== userData.id) {
+        setUser(userData);
+        fetchStatusFromDb(); // 🚀 Force fetch mới khi đổi user
+        return;
+    }
     setUser(userData);
 
     // Kiểm tra xem đã bốc quà hôm nay chưa (Đồng nhất múi giờ VN) 🕵️‍♂️

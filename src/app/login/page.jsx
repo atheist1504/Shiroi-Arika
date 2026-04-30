@@ -46,8 +46,8 @@ export default function Login() {
 
         // Vẫn lưu LocalStorage để UI Client đồng bộ nhanh 🍀
         localStorage.setItem('shiroi_user', JSON.stringify(res.user));
-        router.push('/');
-        setTimeout(() => window.dispatchEvent(new Event('storage')), 100);
+        // ✅ SỬ DỤNG HARD REDIRECT ĐỂ RESET TOÀN BỘ CACHE VÀ UI 🚀
+        window.location.href = '/';
       } else {
         setMessage(`Lỗi: ${res.error} 🛡️`);
       }
