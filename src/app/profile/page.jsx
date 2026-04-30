@@ -189,6 +189,9 @@ function ProfileContent() {
         } else {
             const data = JSON.parse(storedUser);
             setUser(data);
+            setDisplayName(data.display_name || '');
+            setBio(data.bio || '');
+            setAvatarUrl(data.avatar_url || '');
             fetchDynamicTitles();
             if (data.role === 'admin' || data.role === 'staff') {
                 fetchPersonnel();
@@ -619,7 +622,7 @@ function ProfileContent() {
                                     </div>
                                 ) : null}
                                 <img 
-                                    src={avatarUrl || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
+                                    src={avatarUrl || user?.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} 
                                     className="w-full h-full object-cover group-hover/avatar:scale-110 transition-transform duration-700" 
                                     alt="Avatar" 
                                     onError={(e) => {
