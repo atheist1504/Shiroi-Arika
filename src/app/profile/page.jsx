@@ -749,7 +749,20 @@ function ProfileContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-4 custom-scrollbar">
                         {[...dynamicTitles].reverse().map((title) => {
                             const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
-                            const isUnlocked = isAdmin || (calculateLevel(user?.xp) >= title.lv);
+                            
+                            // 🛡️ LOGIC MỚI: 
+                            // 1. Nếu là danh hiệu thường (Lv < 900): Admin thấy hết, User thấy theo Level.
+                            // 2. Nếu là danh hiệu đặc biệt (Lv >= 900): Chỉ hiện nếu User/Admin ĐANG SỞ HỮU nó.
+                            const isLegendary = title.lv >= 900;
+                            const isCurrentlyHeld = user?.selected_badge === title.name;
+                            
+                            const isUnlocked = isLegendary 
+                                ? isCurrentlyHeld 
+                                : (isAdmin || (calculateLevel(user?.xp) >= title.lv));
+                            
+                            // Nếu là danh hiệu huyền thoại mà không sở hữu thì ẩn luôn khỏi danh sách chọn 🕵️‍♂️
+                            if (isLegendary && !isCurrentlyHeld) return null;
+
                             const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
                             
                             return (
