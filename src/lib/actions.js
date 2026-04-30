@@ -14,7 +14,7 @@ import { hashPassword, verifyPassword } from './crypto';
  * 🛡️ HẰNG SỐ BẢO MẬT: Các trường dữ liệu người dùng an toàn được phép trả về Client 🍀
  * Tuyệt đối không bao gồm cột 'password'.
  */
-const SAFE_USER_FIELDS = 'id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at';
+const SAFE_USER_FIELDS = 'id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, unlocked_badges, created_at';
 
 /**
  * 🇻🇳 HÀM HELPER: Lấy thời gian hiện tại theo múi giờ Việt Nam (GMT+7)

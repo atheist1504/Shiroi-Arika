@@ -58,7 +58,7 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
       // 1. Fetch User Info - Hỗ trợ cả ID và Username 🍀
       let { data: userData, error: userError } = await supabase
         .from('shiroi_users')
-        .select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge, last_check_in, last_lucky_draw, check_in_streak')
+        .select('id, username, display_name, avatar_url, bio, role, xp, level, created_at, selected_badge, unlocked_badges, last_check_in, last_lucky_draw, check_in_streak')
         .eq('id', userId.length === 36 ? userId : '00000000-0000-0000-0000-000000000000')
         .maybeSingle();
 

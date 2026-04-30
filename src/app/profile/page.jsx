@@ -156,7 +156,7 @@ function ProfileContent() {
         const userData = JSON.parse(storedUser);
         const { data, error } = await supabase
           .from('shiroi_users')
-          .select('id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, check_in_streak, selected_badge')
+          .select('id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, check_in_streak, selected_badge, unlocked_badges')
           .eq('id', userData.id)
           .single();
 
@@ -755,13 +755,14 @@ function ProfileContent() {
                             // 2. Nếu là danh hiệu đặc biệt (Lv >= 900): Chỉ hiện nếu User/Admin ĐANG SỞ HỮU nó.
                             const isLegendary = title.lv >= 900;
                             const isCurrentlyHeld = user?.selected_badge === title.name;
+                            const isPermanentlyUnlocked = user?.unlocked_badges?.includes(title.name);
                             
                             const isUnlocked = isLegendary 
-                                ? isCurrentlyHeld 
+                                ? (isCurrentlyHeld || isPermanentlyUnlocked)
                                 : (isAdmin || (calculateLevel(user?.xp) >= title.lv));
                             
-                            // Nếu là danh hiệu huyền thoại mà không sở hữu thì ẩn luôn khỏi danh sách chọn 🕵️‍♂️
-                            if (isLegendary && !isCurrentlyHeld) return null;
+                            // Nếu là danh hiệu huyền thoại mà không sở hữu (và không đang đeo) thì ẩn luôn khỏi danh sách chọn 🕵️‍♂️
+                            if (isLegendary && !isCurrentlyHeld && !isPermanentlyUnlocked) return null;
 
                             const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
                             

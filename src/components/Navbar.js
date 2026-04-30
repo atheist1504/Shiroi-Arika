@@ -88,7 +88,7 @@ export default function Navbar() {
       try {
         const { data, error } = await supabase
           .from('shiroi_users')
-          .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, created_at, last_check_in, last_lucky_draw, check_in_streak')
+          .select('id, username, display_name, avatar_url, bio, role, xp, level, selected_badge, unlocked_badges, created_at, last_check_in, last_lucky_draw, check_in_streak')
           .eq('id', userId)
           .single();
         
