@@ -242,19 +242,23 @@ export const fetchUserMissionProgress = async (userId) => {
                 // 🏆 NHIỆM VỤ ĐẠI CHINH PHỤC (PHÁ ĐẢO TOÀN BỘ) 💮
                 const totalFinished = allMangas.filter(m => (totalMap[m.id] || 0) > 0).length;
                 const userFinishedCount = results.filter(r => r.category === MISSION_CATEGORIES.CONQUEST).length;
+                const grandKey = 'grand_conquest_all';
+                const isGrandClaimed = lifetimeClaimedKeys.has(grandKey);
 
-                if (totalFinished > 0 && userFinishedCount >= totalFinished) {
-                    const grandKey = 'grand_conquest_all';
+                // Hiển thị nhiệm vụ nếu đã hoàn thành HOẶC đã nhận thưởng từ trước 🍀
+                if (totalFinished > 0) {
                     results.push({
                         key: grandKey,
                         title: `💮 ĐẠI CHINH PHỤC: PHÁ ĐẢO SHIROI`,
-                        description: `Chúc mừng! Bạn đã quét sạch toàn bộ ${totalFinished} bộ truyện đang có trên hệ thống.`,
+                        description: isGrandClaimed 
+                            ? `Bạn đã là Huyền thoại Chinh phục của Shiroi Arika! ✨`
+                            : `Quét sạch toàn bộ ${totalFinished} bộ truyện trên hệ thống để nhận thưởng cực đại.`,
                         category: MISSION_CATEGORIES.CONQUEST,
                         target: totalFinished,
-                        current: userFinishedCount,
+                        current: isGrandClaimed ? totalFinished : userFinishedCount, // Nếu đã nhận thì giữ 100%
                         xp: 10000,
-                        isCompleted: true,
-                        isClaimed: lifetimeClaimedKeys.has(grandKey)
+                        isCompleted: isGrandClaimed || userFinishedCount >= totalFinished,
+                        isClaimed: isGrandClaimed
                     });
                 }
             }
