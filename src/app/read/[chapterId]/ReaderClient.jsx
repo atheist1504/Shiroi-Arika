@@ -62,6 +62,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [manga] = useState(initialManga);
   const [readingMode, setReadingModeState] = useState('scroll'); 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true); // 🌀 TRẠNG THÁI LOADING ẢNH
   
   const [prevChapterId, setPrevChapterId] = useState(null);
   const [nextChapterId, setNextChapterId] = useState(null);
@@ -374,11 +375,8 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (readingMode === 'page') {
-        if (e.key === 'ArrowLeft') setCurrentPageIndex(prev => Math.max(0, prev - 1));
-        if (e.key === 'ArrowRight') {
-            if (currentPageIndex < pages.length - 1) setCurrentPageIndex(prev => prev + 1);
-            else goToNextChapter();
-        }
+        if (e.key === 'ArrowLeft') handlePrevPage();
+        if (e.key === 'ArrowRight') handleNextPage();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -387,6 +385,25 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   const goToNextChapter = () => nextChapterId && router.push(`/read/${nextChapterId}`);
   const goToPrevChapter = () => prevChapterId && router.push(`/read/${prevChapterId}`);
+
+  // 📖 HÀM LẬT TRANG TỐI ƯU 🚀
+  const handleNextPage = () => {
+    if (currentPageIndex < pages.length - 1) {
+        setIsImageLoading(true);
+        setCurrentPageIndex(prev => prev + 1);
+    } else {
+        goToNextChapter();
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (currentPageIndex > 0) {
+        setIsImageLoading(true);
+        setCurrentPageIndex(prev => prev - 1);
+    } else {
+        goToPrevChapter();
+    }
+  };
 
   const handleReportSubmit = async (e) => {
     e.preventDefault();
@@ -572,12 +589,22 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
         {readingMode === 'page' && (
           <div className="relative w-full h-full flex flex-col items-center justify-center p-0 md:p-2 pt-14">
-            <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)] w-full">
+            <div className="relative flex items-center justify-center max-h-[calc(100vh-100px)] w-full overflow-hidden">
+                {/* 🌀 SPINNER KHI ĐANG TẢI TRANG 🍀 */}
+                {isImageLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/20 backdrop-blur-sm animate-fade-in">
+                        <div className="w-12 h-12 border-4 border-[#4caf50]/20 border-t-[#4caf50] rounded-full animate-spin"></div>
+                    </div>
+                )}
+
                 <img 
+                  key={currentPageIndex} // Force re-render animation
                   src={optimizeImage(fixR2Url(pages[currentPageIndex]?.image_url), 1600)} 
                   alt={`Trang ${currentPageIndex + 1}`} 
-                  className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} 
+                  className={`max-w-full max-h-[calc(100vh-120px)] object-contain select-none transition-all duration-300 ${isImageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'} ${theme === 'light' ? '' : 'shadow-2xl rounded-sm'}`} 
+                  onLoad={() => setIsImageLoading(false)}
                   onError={(e) => { 
+                    setIsImageLoading(false);
                     const currentSrc = e.currentTarget.src;
                     const raw = fixR2Url(pages[currentPageIndex]?.image_url); 
                     
@@ -594,8 +621,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                   }} 
                 />
             </div>
-            <div onClick={(e) => { e.stopPropagation(); currentPageIndex > 0 && setCurrentPageIndex(c => c - 1); }} className="fixed top-20 bottom-0 left-0 w-1/4 z-[10001] cursor-pointer"></div>
-            <div onClick={(e) => { e.stopPropagation(); currentPageIndex < pages.length - 1 ? setCurrentPageIndex(c => c + 1) : goToNextChapter(); }} className="fixed top-20 bottom-0 right-0 w-1/4 z-[10001] cursor-pointer"></div>
+            {/* 🖱️ VÙNG NHẤN LẬT TRANG (MỞ RỘNG) 🚀 */}
+            <div onClick={(e) => { e.stopPropagation(); handlePrevPage(); }} className="fixed top-20 bottom-0 left-0 w-[40%] z-[10001] cursor-pointer" title="Trang trước"></div>
+            <div onClick={(e) => { e.stopPropagation(); handleNextPage(); }} className="fixed top-20 bottom-0 right-0 w-[40%] z-[10001] cursor-pointer" title="Trang sau"></div>
           </div>
         )}
       </div>

@@ -65,6 +65,7 @@ export default async function ReaderPage({ params }) {
 
   return (
     <ReaderClient 
+      key={chapterId}
       chapterId={chapterId}
       initialChapter={chapter}
       initialManga={manga}
