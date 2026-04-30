@@ -62,11 +62,32 @@ export default function CheckIn() {
       }
 
       const userData = JSON.parse(storedUser);
-      // 🕵️‍♂️ LẤY NGÀY HIỆN TẠI (VIỆT NAM) 🇻🇳
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       
-      // Lấy nhật ký điểm danh MỚI NHẤT của User 🍀
-      const { data: logs, error: logError } = await supabase
+      // 🕵️‍♂️ TRUY VẤN TRỰC TIẾP TRẠNG THÁI MỚI NHẤT TỪ BẢNG USERS 🛡️
+      const { data: latestUser, error: userError } = await supabase
+        .from('shiroi_users')
+        .select('last_check_in, check_in_streak')
+        .eq('id', userData.id)
+        .single();
+
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+      if (!userError && latestUser) {
+          // Cập nhật lại streak và thông tin user mới nhất vào LocalStorage 🍀
+          const updatedUser = { ...userData, ...latestUser };
+          localStorage.setItem("shiroi_user", JSON.stringify(updatedUser));
+          setUser(updatedUser);
+
+          if (latestUser.last_check_in) {
+              const lastCheckDate = new Date(latestUser.last_check_in).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+              setCanCheckIn(lastCheckDate !== today);
+              setIsSyncing(false);
+              return;
+          }
+      }
+
+      // 🕵️‍♂️ DỰ PHÒNG: Nếu cột last_check_in trống, mới kiểm tra nhật ký logs 📜
+      const { data: logs } = await supabase
         .from('shiroi_xp_logs')
         .select('created_at')
         .eq('user_id', userData.id)
@@ -74,15 +95,14 @@ export default function CheckIn() {
         .order('created_at', { ascending: false })
         .limit(1);
       
-      if (!logError && logs && logs.length > 0) {
-         // So sánh ngày của log mới nhất với ngày hôm nay (VN) 🛡️
+      if (logs && logs.length > 0) {
          const lastLogDate = new Date(logs[0].created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
          setCanCheckIn(lastLogDate !== today);
       } else {
          setCanCheckIn(true);
       }
     } catch (err) {
-      console.warn("Lỗi đồng bộ CheckIn từ Nhật ký:", err);
+      console.warn("Lỗi đồng bộ CheckIn:", err);
     } finally {
       setIsSyncing(false);
     }
