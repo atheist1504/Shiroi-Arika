@@ -475,16 +475,12 @@ export async function leechChapterAction(url) {
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-                'Referer': new URL(url).origin,
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-                'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': url
             }
         });
         if (response.ok) {
             html = await response.text();
-        } else {
-            console.warn(`⚠️ [Leecher] Web gốc trả về lỗi ${response.status}. Thử dùng chiêu quét thô...`);
         }
     } catch (e) {
         console.warn("⚠️ [Leecher] Không thể lấy HTML dự phòng:", e.message);
@@ -530,15 +526,11 @@ export async function uploadFromUrlAction(url, fileName) {
 
         console.log(`🌩️ [Transfer] Đang kéo ảnh: ${url}`);
         
-        // Tải ảnh về server RAM với bộ Headers "xịn" 🛡️
+        // Tải ảnh về server RAM 🛡️
         const headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-            'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
-            'Cache-Control': 'no-cache',
-            'Sec-Ch-Ua': '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"'
+            'Referer': new URL(url).origin
         };
 
         // Ưu tiên Referer của MangaDex nếu là link từ họ 🕵️‍♂️
