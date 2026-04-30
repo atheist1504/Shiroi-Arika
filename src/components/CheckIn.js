@@ -53,6 +53,7 @@ export default function CheckIn() {
     };
   }, []);
 
+  const fetchStatusFromDb = async () => {
     try {
       const storedUser = localStorage.getItem("shiroi_user");
       if (!storedUser) {

@@ -68,6 +68,7 @@ export default function LuckyDraw() {
     };
   }, [showModal]);
 
+  const fetchStatusFromDb = async () => {
     try {
       const userStr = localStorage.getItem("shiroi_user");
       if (!userStr) {
