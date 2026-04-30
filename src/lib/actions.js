@@ -430,6 +430,14 @@ export async function leechChapterAction(url) {
     if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     if (!url) throw new Error("Vui lòng cung cấp Link chương truyện! 🔗");
 
+    // 🚀 CHẾ ĐỘ MỚI: NHẬN DIỆN DANH SÁCH LINK ẢNH DÁN TRỰC TIẾP 🚀
+    const urlPattern = /https?:\/\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp|gif|bmp)[^\s"'<>]*/gi;
+    const directLinks = url.match(urlPattern);
+    if (directLinks && (directLinks.length > 1 || (directLinks.length === 1 && url.trim() === directLinks[0]))) {
+        console.log(`🎯 [Leecher] Phát hiện ${directLinks.length} link ảnh dán trực tiếp.`);
+        return { success: true, images: [...new Set(directLinks)], source: 'Direct-Paste' };
+    }
+
     console.log(`🔍 [Leecher] Đang thám thính: ${url}`);
     
     // 🌟 LOGIC UNIFIED: MANGADEX & TRUYENDEX (Dùng chung MangaDex API)
