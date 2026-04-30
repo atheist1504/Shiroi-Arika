@@ -744,11 +744,8 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
 
 /**
  * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
- * @param {string} mangaId - ID bộ truyện
- * @param {string} chapterId - ID chương
- * @param {boolean} onlyRecord - Nếu true, chỉ ghi nhận đã đọc (vào shiroi_read_chapters) mà chưa tặng XP
  */
-export async function addReadXPAction(mangaId, chapterId, onlyRecord = false) {
+export async function addReadXPAction(mangaId, chapterId) {
   try {
     const user = await getAuthenticatedUser();
     
@@ -759,8 +756,19 @@ export async function addReadXPAction(mangaId, chapterId, onlyRecord = false) {
     const userId = user.id;
     const client = getDbClient();
 
-    // 1. LUÔN Ghi nhận đã đọc chương này (Unique record) 🍀
-    // Việc này giúp đồng bộ với UI "Đã xem" và thanh tiến trình nhiệm vụ
+    // 1. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
+    const { data: alreadyRewarded } = await client
+      .from('shiroi_xp_logs')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('type', 'read')
+      .eq('reason', chapterId) 
+      .maybeSingle();
+
+    if (alreadyRewarded) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
+
+    // 2. Ghi nhận đã đọc chương (Vào Database) ✅
+    // Việc này sẽ giúp thanh tiến trình nhiệm vụ và La bàn chinh phục tăng lên
     const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
       user_id: userId, 
       username: user.username, 
@@ -769,29 +777,15 @@ export async function addReadXPAction(mangaId, chapterId, onlyRecord = false) {
       read_at: new Date().toISOString() 
     }, { onConflict: 'user_id,chapter_id' });
 
-    // 2. Nếu chỉ yêu cầu ghi nhận (onlyRecord), dừng lại ở đây 🛡️
-    if (onlyRecord) {
-        return { success: true, message: 'Đã ghi nhận lịch sử đọc.' };
-    }
+    if (readError) throw readError;
 
-    // 3. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
-    const { data: alreadyRewarded } = await client
-      .from('shiroi_xp_logs')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('type', 'read')
-      .eq('reason', chapterId) // Một số bản cũ dùng reason là ID chương
-      .maybeSingle();
-
-    if (alreadyRewarded) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
-
-    // 4. Ghi log và nhận XP 💎
+    // 3. Ghi log và nhận XP 💎
     const resLog = await recordXpLogAction(20, 'read', chapterId);
     if (!resLog.success) return resLog;
 
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
-    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
+    // 4. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
     try {
         const { count: dailyRead } = await client
             .from('shiroi_read_chapters')
@@ -804,7 +798,7 @@ export async function addReadXPAction(mangaId, chapterId, onlyRecord = false) {
             await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
         }
 
-        // 6. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
+        // 5. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
         await supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })

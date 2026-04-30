@@ -163,12 +163,13 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         history[chapter.manga_id] = chapterId;
         localStorage.setItem(historyKey, JSON.stringify(history));
 
-        const readKey = 'shiroi_read_chapters';
-        const read = JSON.parse(localStorage.getItem(readKey) || '[]');
-        if (!read.includes(chapterId)) {
-            read.push(chapterId);
-            localStorage.setItem(readKey, JSON.stringify(read));
-        }
+        // 🛡️ KHÔNG đánh dấu Đã đọc ở đây nữa! Chờ đến khi lướt hết chương. 🍀
+        // const readKey = 'shiroi_read_chapters';
+        // const read = JSON.parse(localStorage.getItem(readKey) || '[]');
+        // if (!read.includes(chapterId)) {
+        //     read.push(chapterId);
+        //     localStorage.setItem(readKey, JSON.stringify(read));
+        // }
         syncHistoryToDB();
     }
 
@@ -183,7 +184,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             if (globalMode) setReadingModeState(globalMode);
         }
     }
-    giveReadXP(true); // Gọi lần đầu để đánh dấu lịch sử, nhưng không bắt buộc phải trả XP ngay
+    // giveReadXP(true); // Gỡ bỏ việc gọi "giả" khi vừa mở trang 🛡️
   }, [chapterId]);
 
   const syncHistoryToDB = async () => {
@@ -213,12 +214,20 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
       if (res.success) {
+        // ✅ CHỈ KHI NÀY MỚI ĐÁNH DẤU "ĐÃ XEM" VÀO LOCAL STORAGE ĐỂ ĐỒNG BỘ 💎
+        const readKey = 'shiroi_read_chapters';
+        const read = JSON.parse(localStorage.getItem(readKey) || '[]');
+        if (!read.includes(chapterId)) {
+            read.push(chapterId);
+            localStorage.setItem(readKey, JSON.stringify(read));
+        }
+
         localStorage.setItem('shiroi_user', JSON.stringify(res.user));
         sessionStorage.setItem(sessionKey, 'true');
         setXpToast(true);
         setTimeout(() => setXpToast(false), 4000);
         window.dispatchEvent(new Event('storage'));
-      } else if (res.error?.includes('Đã nhận thưởng')) {
+      } else if (res.error?.includes('Đã nhận thưởng') || res.error?.includes('trước đó')) {
         sessionStorage.setItem(sessionKey, 'true');
       }
     } catch (err) { 
