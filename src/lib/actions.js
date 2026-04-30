@@ -466,7 +466,42 @@ export async function leechChapterAction(url) {
         }
     }
 
+    // 🎵 TIKTOK PHOTO MODE (Dùng TikWM API để lấy ảnh Slideshow) 🚀
+    if (url.includes('tiktok.com')) {
+        try {
+            console.log(`🎵 [Leecher] Đang triệu hồi từ TikTok: ${url}`);
+            
+            const res = await fetch(`https://tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Referer': 'https://tikwm.com/'
+                }
+            });
 
+            if (!res.ok) throw new Error(`TikWM API lỗi: ${res.status}`);
+            
+            const data = await res.json();
+            
+            if (data.code !== 0) throw new Error(data.msg || 'TikTok API thất bại!');
+
+            // Ảnh slideshow (Photo Mode)
+            if (data.data?.images && data.data.images.length > 0) {
+                console.log(`✅ [Leecher] Tìm thấy ${data.data.images.length} ảnh TikTok!`);
+                return { 
+                    success: true, 
+                    images: data.data.images, 
+                    source: 'TikTok-Photo' 
+                };
+            }
+
+            // Nếu là video thay vì ảnh
+            throw new Error('Link này là TikTok video, không phải ảnh slideshow! Vui lòng dùng link ảnh (Photo Mode) 🖼️');
+
+        } catch (err) {
+            console.error('❌ [Leecher] Lỗi TikTok:', err.message);
+            throw err;
+        }
+    }
 
     // --- KHU VỰC DỰ PHÒNG: CÀO HTML NẾU KHÔNG PHẢI MANGADEX/TRUYENDEX ---
     let html = "";
