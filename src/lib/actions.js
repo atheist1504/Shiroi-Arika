@@ -1768,7 +1768,7 @@ export async function searchUsersAction(query) {
  */
 export async function getPersonnelListAction() {
   try {
-    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    if (!(await checkAdminAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
     const client = getDbClient();
     
     const { data, error } = await client
@@ -1868,6 +1868,22 @@ export async function suggestTitleAction(titleName, reason) {
 
     if (error) throw error;
     
+    // 🔔 Thông báo cho Quản trị viên (Admin) về đề xuất mới 🍀
+    try {
+        const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or('role.eq.admin,username.ilike.atheist1504');
+        const adminIds = admins?.map(a => a.id) || [];
+        
+        const title = `Gợi ý danh xưng mới! 💡`;
+        const body = `${user.display_name || user.username} vừa hiến kế danh hiệu: "${titleName}".`;
+        
+        const { createInAppNotification } = await import('./notifications');
+        adminIds.forEach(adminId => {
+             createInAppNotification(adminId, title, body, 'system', { suggestId: 'new' });
+        });
+    } catch (e) {
+        console.warn("⚠️ Lỗi thông báo Admin (Title Suggestion):", e.message);
+    }
+
     return { success: true };
   } catch (error) {
     console.error("❌ Lỗi gửi gợi ý danh hiệu:", error);
@@ -1902,7 +1918,7 @@ export async function deleteOfficialTitleAction(id) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
 
     const { error } = await supabaseAdmin
       .from('shiroi_titles')
@@ -1926,7 +1942,7 @@ export async function getTitleSuggestionsAction() {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
 
     const { data, error } = await supabaseAdmin
       .from('shiroi_title_suggestions')
@@ -1951,7 +1967,7 @@ export async function handleTitleSuggestionAction(id, status) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
 
     // 🕵️‍♂️ LẤY THÔNG TIN GỢI Ý TRƯỚC KHI CẬP NHẬT 🍀
     const { data: suggestion, error: fetchError } = await supabaseAdmin
@@ -2031,7 +2047,7 @@ export async function createOfficialTitleAction(name, lv) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.role !== 'staff') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
 
     const { error } = await supabaseAdmin
       .from('shiroi_titles')
@@ -2126,8 +2142,20 @@ export async function sendReportMessageAction(reportId, message) {
                     { reportId: reportId }
                 );
             } else {
-                // Nếu User trả lời -> Thông báo cho Admin/Staff (Topic hoặc Admin ID cụ thể)
-                // Tạm thời chỉ tạo thông báo cho hệ thống (Admin sẽ thấy trong dashboard)
+                // Nếu User trả lời -> Thông báo cho Admin/Staff 🛡️
+                try {
+                    const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or('role.eq.admin,username.ilike.atheist1504');
+                    const adminIds = admins?.map(a => a.id) || [];
+                    
+                    const title = `Tin nhắn báo cáo mới! 💬`;
+                    const body = `${user.display_name || user.username} đã phản hồi trong báo cáo: "${message.substring(0, 30)}..."`;
+                    
+                    adminIds.forEach(adminId => {
+                         createInAppNotification(adminId, title, body, 'system', { reportId: reportId });
+                    });
+                } catch (e) {
+                    console.warn("⚠️ Lỗi thông báo Admin (Report Reply):", e.message);
+                }
             }
         }
 

@@ -1341,7 +1341,7 @@ function ProfileContent() {
               </motion.div>
             )}
 
-            {activeTab === 'admin' && (user?.role === 'admin' || user?.role === 'staff') && (
+            {activeTab === 'admin' && (user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504') && (
               <motion.div key="admin" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                  
                  {/* 🚩 QUẢN LÝ BÁO CÁO (ADMIN ONLY) */}
