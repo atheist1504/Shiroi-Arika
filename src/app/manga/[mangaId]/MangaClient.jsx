@@ -46,6 +46,7 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     let read = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
     
     // ⚔️ ĐỒNG BỘ TỪ DATABASE NẾU ĐÃ ĐĂNG NHẬP 🍀
+    // Nếu có User, chúng ta CHỈ TIN vào Database để đảm bảo đồng bộ với Nhiệm vụ & XP
     if (userId) {
       try {
         const { data: dbRead } = await supabase
@@ -56,9 +57,8 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
         
         if (dbRead) {
           const dbIds = dbRead.map(r => r.chapter_id);
-          const combined = Array.from(new Set([...read, ...dbIds]));
-          read = combined;
-          localStorage.setItem('shiroi_read_chapters', JSON.stringify(combined));
+          read = dbIds; // 🛡️ Không gộp nữa, lấy trực tiếp từ DB để "thanh lọc" dữ liệu ảo cũ
+          localStorage.setItem('shiroi_read_chapters', JSON.stringify(dbIds));
         }
       } catch (err) { console.warn("Lỗi đồng bộ lịch sử đọc:", err); }
     }
