@@ -187,8 +187,8 @@ export const fetchUserMissionProgress = async (userId) => {
 
         // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Toàn bộ hệ thống) ⚔️
         try {
-            // Lấy tất cả bộ truyện có trên hệ thống
-            const { data: allMangas } = await supabase.from('mangas').select('id, title, genres');
+            // Lấy tất cả bộ truyện có trên hệ thống (Lấy thêm status để kiểm tra hoàn thành)
+            const { data: allMangas } = await supabase.from('mangas').select('id, title, genres, status');
             if (allMangas && allMangas.length > 0) {
                 const mangaIds = allMangas.map(m => m.id);
                 
@@ -219,7 +219,11 @@ export const fetchUserMissionProgress = async (userId) => {
                     // 🚩 CHỈ TÍNH NHỮNG BỘ CÓ CHƯƠNG 🛡️
                     if (total === 0) return;
 
-                    if (read >= total) {
+                    // 🏁 CHỈ TẶNG THƯỞNG NẾU: Đã đọc hết AND (Truyện đã xong OR là One-shot)
+                    const isOneShot = m.genres?.includes('One-shot') || m.genres?.includes('Oneshot');
+                    const isFinished = m.status === 'COMPLETED' || isOneShot;
+
+                    if (read >= total && isFinished) {
                         const mKey = `finish_series_${m.id}`;
                         
                         // Tính toán thưởng: 1 chương (One-shot) = 50 XP, nhiều chương = Dùng hàm tính toán 💎
