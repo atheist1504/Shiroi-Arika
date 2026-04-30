@@ -219,9 +219,8 @@ export const fetchUserMissionProgress = async (userId) => {
                     // 🚩 CHỈ TÍNH NHỮNG BỘ CÓ CHƯƠNG 🛡️
                     if (total === 0) return;
 
-                    // 🏁 CHỈ TẶNG THƯỞNG NẾU: Đã đọc hết AND (Truyện đã xong OR là One-shot)
-                    const isOneShot = m.genres?.includes('One-shot') || m.genres?.includes('Oneshot');
-                    const isFinished = m.status === 'COMPLETED' || isOneShot;
+                    // 🏁 CHỈ TẶNG THƯỞNG NẾU: Đã đọc hết AND Admin đánh dấu Hoàn thành (COMPLETED)
+                    const isFinished = m.status === 'COMPLETED';
 
                     if (read >= total && isFinished) {
                         const mKey = `finish_series_${m.id}`;
