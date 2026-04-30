@@ -176,11 +176,11 @@ export default function CheckIn() {
                 {isSyncing ? "🌀" : (canCheckIn ? (checking ? "🌀" : "🔥") : "📅")}
             </span>
             <div className="flex flex-col items-start leading-tight">
-                <span className={`text-[7px] font-black uppercase tracking-[0.2em] ${canCheckIn && !isSyncing ? 'text-[#4caf50]' : 'text-gray-600'}`}>
-                    {isSyncing ? "Đang check" : `CHUỖI: ${user?.check_in_streak || 0}`}
+                <span className={`text-[7px] font-black uppercase tracking-[0.3em] ${canCheckIn && !isSyncing ? 'text-[#4caf50]' : 'text-gray-500'}`}>
+                    {isSyncing ? "Đang check" : (canCheckIn ? `CHUỖI: ${user?.check_in_streak || 0}` : "HOÀN THÀNH")}
                 </span>
-                <span className={`text-[8px] font-black uppercase tracking-widest ${canCheckIn && !isSyncing ? 'text-white' : 'text-gray-500'}`}>
-                    {isSyncing ? "XIN ĐỢI..." : (canCheckIn ? (checking ? "ĐANG GỬI..." : "ĐIỂM DANH") : "HẸN MAI NHÉ")}
+                <span className={`text-[8px] font-black uppercase tracking-widest ${canCheckIn && !isSyncing ? 'text-white' : 'text-gray-600'}`}>
+                    {isSyncing ? "XIN ĐỢI..." : (canCheckIn ? (checking ? "ĐANG GỬI..." : "ĐIỂM DANH") : "ĐÃ ĐIỂM DANH")}
                 </span>
             </div>
         </div>
