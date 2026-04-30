@@ -202,14 +202,15 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const sessionKey = `xp_read_${chapterId}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
-    // 🛡️ Nếu là lần đầu mở (isInitial), chỉ đánh dấu lịch sử trong DB nếu cần.
-    // 🛡️ Việc nhận XP thực sự sẽ kích hoạt khi chạm đáy (IntersectionObserver).
-    if (isInitial && readingMode === 'scroll') return; 
+    // 🛡️ Nếu là lần đầu mở (isInitial), chúng ta sẽ ghi nhận "Đã đọc" vào DB 
+    // để đồng bộ với UI, nhưng chưa tặng XP ngay. 
+    // Việc nhận XP thực sự sẽ kích hoạt khi chạm đáy (IntersectionObserver).
+    // if (isInitial && readingMode === 'scroll') return; 
 
     try {
-      console.log(`🎯 [Reader] Đang ghi nhận "Đọc hết" chương ${chapter?.chapter_number}...`);
+      console.log(`🎯 [Reader] Đang ghi nhận "Đọc" chương ${chapter?.chapter_number} (Chỉ ghi nhận: ${isInitial})...`);
       const { addReadXPAction } = await import('@/lib/actions');
-      const res = await addReadXPAction(chapter.manga_id, chapterId);
+      const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
       if (res.success) {
         localStorage.setItem('shiroi_user', JSON.stringify(res.user));

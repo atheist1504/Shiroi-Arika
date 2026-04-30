@@ -744,8 +744,11 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
 
 /**
  * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
+ * @param {string} mangaId - ID bộ truyện
+ * @param {string} chapterId - ID chương
+ * @param {boolean} onlyRecord - Nếu true, chỉ ghi nhận đã đọc (vào shiroi_read_chapters) mà chưa tặng XP
  */
-export async function addReadXPAction(mangaId, chapterId) {
+export async function addReadXPAction(mangaId, chapterId, onlyRecord = false) {
   try {
     const user = await getAuthenticatedUser();
     
@@ -755,36 +758,36 @@ export async function addReadXPAction(mangaId, chapterId) {
 
     const userId = user.id;
     const client = getDbClient();
-    // 1. Kiểm tra xem đã đọc chương này chưa (Tránh spam/double claim)
-    const { data: alreadyRead } = await client
-      .from('shiroi_read_chapters')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('chapter_id', chapterId)
-      .maybeSingle();
 
-    if (alreadyRead) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
-
-    // 3. Ghi log và nhận XP TRƯỚC 💎
-    // Nếu ghi log thất bại, hệ thống sẽ dừng lại ở đây (User có thể thử lại). 🛡️
-    const resLog = await recordXpLogAction(20, 'read', chapterId);
-    if (!resLog.success) return resLog;
-
-    // 4. Đánh dấu đã đọc chương này (Chỉ ghi sau khi đã có XP) ✅
-    const { error: readError } = await client.from('shiroi_read_chapters').insert({ 
+    // 1. LUÔN Ghi nhận đã đọc chương này (Unique record) 🍀
+    // Việc này giúp đồng bộ với UI "Đã xem" và thanh tiến trình nhiệm vụ
+    const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
       user_id: userId, 
       username: user.username, 
       chapter_id: chapterId, 
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
-    });
+    }, { onConflict: 'user_id,chapter_id' });
 
-    if (readError) {
-        console.error("❌ Lỗi đánh dấu đã đọc (nhưng đã có XP):", readError.message);
-        // Lưu ý: User đã có XP nhưng DB chưa hiện đã đọc -> Có thể bị lợi dụng để cày? 
-        // Tuy nhiên recordXpLogAction đã có Unique Index hoặc CHECK logic? 
-        // Thực tế recordXpLogAction cho 'read' chưa có Index unique cho chapterId.
+    // 2. Nếu chỉ yêu cầu ghi nhận (onlyRecord), dừng lại ở đây 🛡️
+    if (onlyRecord) {
+        return { success: true, message: 'Đã ghi nhận lịch sử đọc.' };
     }
+
+    // 3. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
+    const { data: alreadyRewarded } = await client
+      .from('shiroi_xp_logs')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('type', 'read')
+      .eq('reason', chapterId) // Một số bản cũ dùng reason là ID chương
+      .maybeSingle();
+
+    if (alreadyRewarded) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
+
+    // 4. Ghi log và nhận XP 💎
+    const resLog = await recordXpLogAction(20, 'read', chapterId);
+    if (!resLog.success) return resLog;
 
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
@@ -1570,6 +1573,8 @@ export async function getNotificationsAction(limit = 20, offset = 0) {
         return { success: false, error: error.message };
     }
 }
+
+
 
 /**
  * 🔔 SERVER ACTION: Đánh dấu thông báo đã đọc
