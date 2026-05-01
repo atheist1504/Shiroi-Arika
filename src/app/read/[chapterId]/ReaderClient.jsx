@@ -205,7 +205,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     if (sessionStorage.getItem(sessionKey)) return;
 
     try {
-      console.log(`🎯 [Reader] Đang ghi nhận "Đọc" chương ${chapter?.chapter_number} (Chỉ ghi nhận: ${isInitial})...`);
+      console.log(`🎯 [Reader] Đang gọi addReadXPAction cho chương: ${chapterId}, Manga: ${chapter.manga_id}`);
       const { addReadXPAction } = await import('@/lib/actions');
       const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
