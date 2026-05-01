@@ -548,6 +548,26 @@ function ProfileContent() {
     if (res.success) fetchPersonnel();
   };
 
+  const handleGiveXp = async (targetUserId) => {
+    const amountStr = prompt("Nhập số lượng XP muốn tặng (hoặc trừ dùng dấu -):");
+    if (!amountStr) return;
+    const amount = parseInt(amountStr);
+    if (isNaN(amount)) return alert("Số lượng không hợp lệ!");
+    
+    const reason = prompt("Lý do tặng XP:", "Admin thưởng 🎁");
+    if (!reason) return;
+
+    const { recordXpLogAction } = await import('@/lib/actions');
+    const res = await recordXpLogAction(amount, 'mission', reason, targetUserId);
+    
+    if (res.success) {
+        alert(`Đã tặng ${amount} XP cho người dùng thành công! ✨`);
+        fetchPersonnel(); // Để cập nhật LV nếu có hiện
+    } else {
+        alert(`Lỗi: ${res.error}`);
+    }
+  };
+
   const currentDynamicTitle = user ? (() => {
     const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
     const lvl = calculateLevel(user.xp);
@@ -1394,6 +1414,12 @@ function ProfileContent() {
                                </div>
                             </div>
                             <div className="flex gap-2">
+                               <button 
+                                 onClick={() => handleGiveXp(u.id)} 
+                                 className="px-4 py-2 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-500 font-black text-[8px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all"
+                               >
+                                 THƯỞNG XP
+                               </button>
                                <button 
                                  onClick={() => handleUpdateRole(u.id, 'staff')} 
                                  className={`px-4 py-2 rounded-xl border font-black text-[8px] uppercase tracking-widest transition-all ${
