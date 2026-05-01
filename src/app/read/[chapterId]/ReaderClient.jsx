@@ -208,54 +208,47 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
   const giveReadXP = useCallback(async (isInitial = false) => {
     const storedUser = localStorage.getItem('shiroi_user');
-    if (!storedUser || !chapterId) return;
-    
-    const sessionKey = `xp_read_${chapterId}`;
-    if (sessionStorage.getItem(sessionKey)) return;
+    if (!chapterId) return;
 
+    // 1. LUÔN ĐÁNH DẤU "ĐÃ XEM" LOCAL TRƯỚC ĐỂ UI PHẢN HỒI TỨC THÌ ⚡
+    const readKey = 'shiroi_read_chapters';
+    const currentRead = JSON.parse(localStorage.getItem(readKey) || '[]');
+    if (!currentRead.includes(chapterId)) {
+        currentRead.push(chapterId);
+        localStorage.setItem(readKey, JSON.stringify(currentRead));
+        window.dispatchEvent(new Event('storage'));
+        console.log("✅ [Local] Đã đánh dấu chương đã xem.");
+    }
+
+    // Nếu chưa đăng nhập thì dừng ở đây (không gọi Action)
+    if (!storedUser) return;
+    
+    // 2. GỌI SERVER ACTION ĐỂ ĐỒNG BỘ DB & NHẬN XP 💎
+    const sessionKey = `xp_read_${chapterId}`;
     try {
-      console.log(`🎯 [Reader] Đang gọi addReadXPAction cho chương: ${chapterId}, Manga: ${chapter.manga_id}`);
+      console.log(`🎯 [Reader] Đang đồng bộ DB cho chương: ${chapterId}`);
       const { addReadXPAction } = await import('@/lib/actions');
       const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
       if (res.success) {
-        // ✅ LUÔN ĐÁNH DẤU "ĐÃ XEM" VÀO LOCAL STORAGE ĐỂ ĐỒNG BỘ UI 💎
-        const readKey = 'shiroi_read_chapters';
-        const read = JSON.parse(localStorage.getItem(readKey) || '[]');
-        if (!read.includes(chapterId)) {
-            read.push(chapterId);
-            localStorage.setItem(readKey, JSON.stringify(read));
-        }
-
         // 🛡️ Cập nhật thông tin User nếu có (Chỉ khi có XP hoặc thay đổi)
         if (res.user) {
             localStorage.setItem('shiroi_user', JSON.stringify(res.user));
         }
 
-        sessionStorage.setItem(sessionKey, 'true');
-
         // 🎊 CHỈ HIỂN THỊ TOAST XP NẾU LÀ LẦN ĐẦU VÀ KHÔNG PHẢI INITIAL 🍀
-        if (!res.alreadyRewarded && !res.isInitial) {
+        if (!res.alreadyRewarded && !res.isInitial && !sessionStorage.getItem(sessionKey)) {
             setXpToast(true);
+            sessionStorage.setItem(sessionKey, 'true');
             setTimeout(() => setXpToast(false), 4000);
         }
         
         window.dispatchEvent(new Event('storage'));
-      } else if (res.error?.includes('Đã nhận thưởng') || res.error?.includes('trước đó')) {
-        sessionStorage.setItem(sessionKey, 'true');
-        // Vẫn nên cố gắng cập nhật local storage để UI đồng bộ nếu server báo đã nhận thưởng
-        const readKey = 'shiroi_read_chapters';
-        const read = JSON.parse(localStorage.getItem(readKey) || '[]');
-        if (!read.includes(chapterId)) {
-            read.push(chapterId);
-            localStorage.setItem(readKey, JSON.stringify(read));
-            window.dispatchEvent(new Event('storage'));
-        }
       }
     } catch (err) { 
-      console.error("Lỗi ghi nhận đọc truyện:", err); 
+      console.error("Lỗi đồng bộ DB:", err); 
     }
-  }, [chapterId, chapter?.manga_id, chapter?.chapter_number]);
+  }, [chapterId, chapter?.manga_id]);
 
   useEffect(() => {
     if (readingMode !== 'scroll' || !endOfChapterRef.current) return;
