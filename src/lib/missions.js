@@ -222,7 +222,7 @@ export const fetchUserMissionProgress = async (userId, customClient = null) => {
                     if (total === 0) return;
 
                     // 🏁 CHỈ TẶNG THƯỞNG NẾU: Đã đọc hết AND Admin đánh dấu Hoàn thành (COMPLETED)
-                    const isFinished = m.status === 'COMPLETED';
+                    const isFinished = m.status?.toUpperCase() === 'COMPLETED';
 
                     if (read >= total && isFinished) {
                         const mKey = `finish_series_${m.id}`;

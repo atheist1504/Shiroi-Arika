@@ -249,7 +249,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   };
 
   useEffect(() => {
-    if (readingMode !== 'scroll' || !endOfChapterRef.current || nextChapterPages.length === 0 || hasPreloaded) return;
+    if (readingMode !== 'scroll' || !endOfChapterRef.current) return;
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {

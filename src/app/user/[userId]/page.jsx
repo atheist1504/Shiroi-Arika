@@ -84,13 +84,13 @@ export default async function PublicProfilePage({ params }) {
     notFound();
   }
 
-  // 2. Fetch Stats
-  const { count: mangaCount } = await supabase
+  // 2. Fetch Stats 🛡️
+  const { count: mangaCount } = await supabaseAdmin
     .from('shiroi_history')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userData.id);
 
-  const { count: chapterCount } = await supabase
+  const { count: chapterCount } = await supabaseAdmin
     .from('shiroi_read_chapters')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userData.id);

@@ -22,7 +22,8 @@ import {
     submitReportAction,
     getUserStatsAction,
     getUserXpLogsAction,
-    getUserCheckInDatesAction
+    getUserCheckInDatesAction,
+    getMyFullProfileAction
 } from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -147,66 +148,56 @@ function ProfileContent() {
     setIsMounted(true);
   }, []);
 
+
+
   useEffect(() => {
     const checkSession = async () => {
-      const storedUser = localStorage.getItem('shiroi_user');
-      if (!storedUser) {
-        router.push('/login');
-        return;
-      }
-
       try {
-        const userData = JSON.parse(storedUser);
-        const { data, error } = await supabase
-          .from('shiroi_users')
-          .select('id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, check_in_streak, selected_badge, unlocked_badges')
-          .eq('id', userData.id)
-          .single();
-
-        if (!error && data) {
+        const res = await getMyFullProfileAction();
+        if (res.success) {
+          const data = res.user;
           setUser(data);
           setDisplayName(data.display_name || '');
           setBio(data.bio || '');
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
-          fetchStats(data.id);
-          fetchXpLogs(data.id); // Tải 20 nhật ký đầu tiên 📜
+          
+          fetchStats();
+          fetchXpLogs();
           fetchNotifications();
           fetchDynamicTitles();
-          cleanupXpLogsAction(); 
+          cleanupXpLogsAction();
           
           if (data.role === 'admin' || data.role === 'staff') {
-            fetchPersonnel();
-            fetchTitleSuggestions();
+             fetchPersonnel();
+             fetchTitleSuggestions();
           }
 
           cleanupNotificationsAction();
 
-
           // 🔔 Kiểm tra trạng thái thông báo đẩy (Push) 🍀
           if (typeof window !== 'undefined' && 'Notification' in window) {
             const isPushActive = localStorage.getItem('shiroi_push_enabled') === 'true';
-            // Chỉ coi là đã kích hoạt nếu: Trình duyệt cho phép VÀ (Đã lưu preference HOẶC có token trong DB)
             setFcmEnabled(Notification.permission === 'granted' && (isPushActive || !!data.fcm_token));
           }
         } else {
-            const data = JSON.parse(storedUser);
-            setUser(data);
-            setDisplayName(data.display_name || '');
-            setBio(data.bio || '');
-            setAvatarUrl(data.avatar_url || '');
-            fetchDynamicTitles();
-            if (data.role === 'admin' || data.role === 'staff') {
-                fetchPersonnel();
-                fetchTitleSuggestions();
+            const storedUser = localStorage.getItem('shiroi_user');
+            if (storedUser) {
+                const data = JSON.parse(storedUser);
+                setUser(data);
+                setDisplayName(data.display_name || '');
+                setBio(data.bio || '');
+                setAvatarUrl(data.avatar_url || '');
+                fetchDynamicTitles();
+                cleanupNotificationsAction();
+                cleanupXpLogsAction();
+                fetchXpLogs();
+            } else {
+                router.push('/login');
             }
-
-            cleanupNotificationsAction();
-            cleanupXpLogsAction(); // Dọn nhật ký cũ 🧹
-            fetchXpLogs(data.id); // Tải nhật ký 📜
         }
       } catch (err) {
-        console.error("Lỗi đồng bộ:", err);
+        console.error("❌ Lỗi đồng bộ hồ sơ:", err.message);
       } finally {
         setLoading(false);
       }
@@ -215,12 +206,16 @@ function ProfileContent() {
     checkSession();
   }, [router]);
 
-  const fetchStats = async (userId) => {
-    const res = await getUserStatsAction();
-    if (res.success) {
-        setStats({ total_mangas: res.total_mangas, total_chapters: res.total_chapters });
-    } else {
-        console.warn("⚠️ [Profile] Lỗi fetch stats:", res.error);
+  const fetchStats = async () => {
+    try {
+      const res = await getUserStatsAction();
+      if (res.success) {
+          setStats({ total_mangas: res.total_mangas, total_chapters: res.total_chapters });
+      } else {
+          console.error("⚠️ [Stats] Failed to fetch stats:", res.error);
+      }
+    } catch (err) {
+      console.error("❌ [Stats] Fetch error:", err.message);
     }
   };
 

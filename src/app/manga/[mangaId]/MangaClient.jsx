@@ -36,11 +36,11 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
 
     // Luôn bóc tách dữ liệu mới nhất từ server để tránh cache ảnh cũ 🍀
     fetchMangaDetails();
+    loadReadHistory(user?.id);
     checkFollowStatus();
-    loadReadHistory(JSON.parse(localStorage.getItem('shiroi_user') || '{}')?.id);
 
     return () => window.removeEventListener('storage', checkSession);
-  }, [mangaId]);
+  }, [mangaId, user?.id]);
 
   const loadReadHistory = async (userId = null) => {
     let read = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
@@ -54,8 +54,11 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
         
         if (res.success && res.dbRead) {
           const dbIds = res.dbRead.map(r => r.chapter_id);
-          read = dbIds; // 🛡️ Không gộp nữa, lấy trực tiếp từ DB để "thanh lọc" dữ liệu ảo cũ
-          localStorage.setItem('shiroi_read_chapters', JSON.stringify(dbIds));
+          // 🛡️ Hợp nhất dữ liệu DB vào Local thay vì ghi đè, tránh mất lịch sử các bộ khác 🍀
+          const currentGlobalRead = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
+          const merged = Array.from(new Set([...currentGlobalRead, ...dbIds]));
+          read = merged; 
+          localStorage.setItem('shiroi_read_chapters', JSON.stringify(merged));
         }
       } catch (err) { console.warn("Lỗi đồng bộ lịch sử đọc:", err); }
     }

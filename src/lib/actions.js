@@ -206,6 +206,29 @@ export const getAuthenticatedUser = cache(async () => {
 });
 
 /**
+ * 👤 SERVER ACTION: Lấy toàn bộ thông tin hồ sơ của bản thân (Bypass RLS) 🛡️
+ */
+export async function getMyFullProfileAction() {
+  try {
+    const user = await getAuthenticatedUser();
+    if (!user || !user.id) return { success: false, error: 'Chưa đăng nhập' };
+
+    const client = supabaseAdmin || getDbClient();
+    const { data, error } = await client
+      .from('shiroi_users')
+      .select(SAFE_USER_FIELDS)
+      .eq('id', user.id)
+      .single();
+
+    if (error) throw error;
+    return { success: true, user: data };
+  } catch (error) {
+    console.error('❌ Lỗi getMyFullProfileAction:', error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🛡️ HELPER: Kiểm tra quyền Admin từ Cookie
  */
 async function checkAdminAuth() {
@@ -819,6 +842,10 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
 
     } catch (e) {}
 
+    // 6. Refresh cache for profile and user pages 🚀
+    revalidatePath('/profile');
+    revalidatePath(`/user/${userId}`);
+
     return { success: true, xpGain: 20, alreadyRewarded: false, isInitial: false, user: updatedUser };
   } catch (error) {
     console.error('Lỗi addReadXPAction:', error);
@@ -1407,22 +1434,20 @@ export async function getUserCheckInDatesAction() {
  */
 export async function getPublicUserStatsAction(userId) {
     try {
-        const client = getDbClient();
+        const client = supabaseAdmin || getDbClient();
         
-        const { count: mCount } = await client
-            .from('shiroi_history')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId);
+        const [mRes, cRes] = await Promise.all([
+            client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+        ]);
             
-        const { count: cCount } = await client
-            .from('shiroi_read_chapters')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId);
+        if (mRes.error) console.error('⚠️ [Stats] History Error:', mRes.error.message);
+        if (cRes.error) console.error('⚠️ [Stats] Read Chapters Error:', cRes.error.message);
 
         return { 
             success: true, 
-            total_mangas: mCount || 0, 
-            total_chapters: cCount || 0 
+            total_mangas: mRes.count || 0, 
+            total_chapters: cRes.count || 0 
         };
     } catch (error) {
         console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
@@ -2475,6 +2500,10 @@ export async function syncHistoryToDBAction(mangaId, chapterId) {
       
       console.log(`🧹 [History] Đã xóa ${mangaIdsToDelete.length} bộ truyện cũ để giữ giới hạn 50.`);
     }
+
+    // 3. Refresh cache 🚀
+    revalidatePath('/profile');
+    revalidatePath(`/user/${userId}`);
 
     return { success: true };
   } catch (error) {
