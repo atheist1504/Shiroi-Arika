@@ -2554,9 +2554,9 @@ export async function loadCompassDataAction() {
             { data: readLogs },
             { data: allChapters }
         ] = await Promise.all([
-            client.from('mangas').select('id, title, cover_image, status'),
-            client.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', user.id),
-            client.from('chapters').select('id, manga_id')
+            client.from('mangas').select('id, title, cover_image, status').limit(2000),
+            client.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', user.id).limit(20000),
+            client.from('chapters').select('id, manga_id').limit(20000)
         ]);
 
         if (mangaErr) throw mangaErr;

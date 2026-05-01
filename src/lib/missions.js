@@ -199,8 +199,8 @@ export const fetchUserMissionProgress = async (userId, customClient = null) => {
                     { data: chapterCounts },
                     { data: userReadCounts }
                 ] = await Promise.all([
-                    client.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000),
-                    client.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds)
+                    client.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(20000),
+                    client.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds).limit(20000)
                 ]);
 
                 const totalMap = {};
