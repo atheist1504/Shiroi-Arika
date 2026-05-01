@@ -781,7 +781,6 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
     const client = getDbClient();
 
     // 1. LUÔN GHI NHẬN ĐÃ ĐỌC CHƯƠNG (Upsert) ✅
-    // Đảm bảo "Đã xem" luôn hoạt động dù user đã nhận XP hay chưa.
     const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
       user_id: userId, 
       chapter_id: chapterId, 
@@ -791,7 +790,7 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
 
     if (readError) throw readError;
 
-    // 2. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
+    // 2. Kiểm tra xem đã nhận thưởng XP cho chương này chưa
     const { data: alreadyRewarded } = await client
       .from('shiroi_xp_logs')
       .select('id')
@@ -800,25 +799,19 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
       .eq('reason', chapterId) 
       .maybeSingle();
 
-    // 3. Logic trả về dựa trên trạng thái
-    if (isInitial || alreadyRewarded) {
-        // Nếu là lần đầu mở trang hoặc đã có XP rồi thì không làm gì thêm
-        const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
-        return { 
-            success: true, 
-            alreadyRewarded: !!alreadyRewarded, 
-            isInitial, 
-            user: updatedUser 
-        };
-    }
+    let alreadyRewardedStatus = !!alreadyRewarded;
 
-    // 4. Ghi log và nhận XP 💎 (Chỉ khi !isInitial và !alreadyRewarded)
-    const resLog = await recordXpLogAction(20, 'read', chapterId);
-    if (!resLog.success) return resLog;
+    // 3. Ghi log và nhận XP 💎 (Chỉ khi !isInitial và chưa nhận bao giờ)
+    if (!isInitial && !alreadyRewardedStatus) {
+        const resLog = await recordXpLogAction(20, 'read', chapterId);
+        if (resLog.success) {
+            alreadyRewardedStatus = false; // Đánh dấu là vừa nhận xong
+        }
+    }
 
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
-    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
+    // 4. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Daily Missions) 🏆
     try {
         const { count: dailyRead } = await client
             .from('shiroi_read_chapters')
@@ -827,29 +820,47 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
             .gte('read_at', getStartOfVNDay().toISOString());
         
         if (dailyRead === 1 || dailyRead === 3) {
+            const mKey = dailyRead === 1 ? "daily_read_1" : "daily_read_3";
             const mTitle = dailyRead === 1 ? "Độc hành giả I" : "Độc hành giả II";
-            await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
-        }
 
-        // 6. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
-        await supabaseAdmin
+            const { data: alreadyClaimed } = await client
+                .from('shiroi_mission_claims')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('mission_key', mKey)
+                .gte('claimed_at', getStartOfVNDay().toISOString())
+                .maybeSingle();
+
+            if (!alreadyClaimed) {
+                await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: mKey });
+            }
+        }
+    } catch (err) { console.warn("Lỗi check mission:", err); }
+
+    // 5. Tự động đánh dấu đã đọc cho thông báo chương mới 📚
+    try {
+        await client
             .from('shiroi_notifications')
             .update({ is_read: true })
             .eq('user_id', userId)
             .eq('type', 'chapter_update')
             .eq('is_read', false)
-            .contains('data', { mangaId: mangaId });
-
+            .filter('data->>mangaId', 'eq', mangaId);
     } catch (e) {}
 
-    // 6. Refresh cache for profile and user pages 🚀
+    // 6. Refresh cache 🚀
     revalidatePath('/profile');
     revalidatePath(`/user/${userId}`);
 
-    return { success: true, xpGain: 20, alreadyRewarded: false, isInitial: false, user: updatedUser };
-  } catch (error) {
-    console.error('Lỗi addReadXPAction:', error);
-    return { success: false, error: error.message };
+    return { 
+        success: true, 
+        alreadyRewarded: alreadyRewardedStatus, 
+        isInitial, 
+        user: updatedUser 
+    };
+  } catch (err) {
+    console.error("Lỗi addReadXPAction:", err);
+    return { success: false, error: err.message };
   }
 }
 
