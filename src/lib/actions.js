@@ -2315,15 +2315,24 @@ export async function handleTitleSuggestionAction(id, status) {
         await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +${rewardXp} XP thưởng! 🍀`);
 
         // 🚀 4. TỰ ĐỘNG THÊM VÀO DANH SÁCH CHÍNH THỨC ✨
-        // Tìm cấp độ cao nhất hiện tại
+        // Tìm cấp độ cao nhất hiện tại (Bỏ qua các danh hiệu huyền thoại/đặc biệt lv >= 900)
         const { data: maxLevelTitle } = await supabaseAdmin
             .from('shiroi_titles')
             .select('lv')
+            .lt('lv', 900)
             .order('lv', { ascending: false })
             .limit(1)
             .single();
         
-        const nextLv = (maxLevelTitle?.lv || 0) + 5;
+        // Nếu chưa có danh hiệu nào < 900, bắt đầu từ lv 1, nếu có thì cộng thêm 5
+        let nextLv = 5;
+        if (maxLevelTitle) {
+            nextLv = maxLevelTitle.lv + 5;
+        } else {
+            // Nếu không có trong DB, check từ TITLES cứng
+            const standardMax = Math.max(...TITLES.filter(t => t.lv < 900).map(t => t.lv));
+            nextLv = standardMax + 5;
+        }
 
         await supabaseAdmin
             .from('shiroi_titles')

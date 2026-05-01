@@ -559,7 +559,11 @@ function ProfileContent() {
     }
 
     // Nếu không chọn hoặc badge không tồn tại -> Lấy theo Level đã mở khóa
-    const unlocked = isAdmin ? dynamicTitles : dynamicTitles.filter(t => lvl >= t.lv);
+    // Lọc lấy danh hiệu có LV <= hiện tại, sau đó sắp xếp LV giảm dần để lấy cái cao nhất
+    const unlocked = dynamicTitles
+        .filter(t => lvl >= t.lv)
+        .sort((a, b) => b.lv - a.lv);
+        
     return unlocked[0] || dynamicTitles[dynamicTitles.length - 1];
   })() : null;
 
@@ -763,11 +767,11 @@ function ProfileContent() {
                             const isPermanentlyUnlocked = user?.unlocked_badges?.includes(title.name);
                             
                             const isUnlocked = isLegendary 
-                                ? (isCurrentlyHeld || isPermanentlyUnlocked)
+                                ? (isCurrentlyHeld || isPermanentlyUnlocked || isAdmin)
                                 : (isAdmin || (calculateLevel(user?.xp) >= title.lv));
                             
-                            // Nếu là danh hiệu huyền thoại mà không sở hữu (và không đang đeo) thì ẩn luôn khỏi danh sách chọn 🕵️‍♂️
-                            if (isLegendary && !isCurrentlyHeld && !isPermanentlyUnlocked) return null;
+                            // Nếu là danh hiệu huyền thoại mà không sở hữu (và không phải admin đang xem) thì ẩn 🕵️‍♂️
+                            if (isLegendary && !isCurrentlyHeld && !isPermanentlyUnlocked && !isAdmin) return null;
 
                             const isSelected = user?.selected_badge === title.name || (currentDynamicTitle?.name === title.name && !user?.selected_badge);
                             
