@@ -5,10 +5,13 @@ import { supabase } from './supabase';
 import { supabaseAdmin } from './supabaseAdmin';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { cache } from 'react';
 import { sendMangaNotification, createInAppNotification } from './notifications';
 import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
 import { getStartOfVNDay } from './missions';
 import { hashPassword, verifyPassword } from './crypto';
+
+const OWNER_USERNAME = process.env.NEXT_PUBLIC_OWNER_USERNAME?.toLowerCase() || 'atheist1504';
 
 /**
  * 🛡️ HẰNG SỐ BẢO MẬT: Các trường dữ liệu người dùng an toàn được phép trả về Client 🍀
@@ -83,7 +86,13 @@ export async function loginAction(username, password) {
  * 🚪 SERVER ACTION: Đăng xuất và xóa Session (Cookie) 🛡️
  */
 export async function logoutAction() {
-  cookies().delete('shiroi_session');
+  cookies().set('shiroi_session', '', { 
+    maxAge: 0, 
+    path: '/', 
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: 'lax'
+  });
   return { success: true };
 }
 
@@ -147,7 +156,7 @@ export async function signupAction(userData) {
 /**
  * 🔐 HELPER: Lấy thông tin người dùng đang đăng nhập (Auto-healing) 🛡️
  */
-export async function getAuthenticatedUser() {
+export const getAuthenticatedUser = cache(async () => {
   const sessionData = cookies().get('shiroi_session');
   if (!sessionData) return null;
 
@@ -155,7 +164,7 @@ export async function getAuthenticatedUser() {
     let user = JSON.parse(sessionData.value);
     
     // 🔍 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING) 🩹
-    if (!user.id && user.username?.toLowerCase() === 'atheist1504') {
+    if (!user.id && user.username?.toLowerCase() === OWNER_USERNAME) {
       console.log(`⚠️ [Auth] Phát hiện session thiếu ID cho Admin ${user.username}, đang khôi phục...`);
       const client = getDbClient();
       const { data, error } = await client
@@ -170,11 +179,23 @@ export async function getAuthenticatedUser() {
       }
     }
 
-    // 🔍 LUÔN CẬP NHẬT ROLE TỪ DB: Đảm bảo phân quyền chính xác nhất (Tránh session stale khi vừa được nâng cấp) 🩹
+    // 🔍 LUÔN CẬP NHẬT ROLE TỪ DB: Đảm bảo phân quyền chính xác nhất (Tránh session stale) 🩹
     if (user.id) {
         const client = getDbClient();
         const { data } = await client.from('shiroi_users').select('role').eq('id', user.id).single();
-        if (data) user.role = data.role;
+        
+        if (data && data.role !== user.role) {
+            console.log(`🔄 [Auth] Cập nhật quyền mới cho ${user.username}: ${data.role}`);
+            user.role = data.role;
+            // Cập nhật Cookie để UI và các request sau không bị stale 🍪
+            cookies().set('shiroi_session', JSON.stringify(user), { 
+                httpOnly: true, 
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 60 * 60 * 24 * 7,
+                path: '/',
+                sameSite: 'lax'
+            });
+        }
     }
 
     return user.id ? user : null;
@@ -182,7 +203,7 @@ export async function getAuthenticatedUser() {
     console.error("❌ Lỗi giải mã Session:", err.message);
     return null;
   }
-}
+});
 
 /**
  * 🛡️ HELPER: Kiểm tra quyền Admin từ Cookie
@@ -191,7 +212,7 @@ async function checkAdminAuth() {
   const user = await getAuthenticatedUser();
   if (!user) return false;
   
-  if (user.username?.toLowerCase() === 'atheist1504') return true;
+  if (user.username?.toLowerCase() === OWNER_USERNAME) return true;
   return user.role === 'admin';
 }
 
@@ -203,7 +224,7 @@ async function checkStaffAuth() {
   if (!user) return false;
   
   if (user.role === 'admin' || user.role === 'staff') return true;
-  if (user.username?.toLowerCase() === 'atheist1504') return true;
+  if (user.username?.toLowerCase() === OWNER_USERNAME) return true;
   return false;
 }
 
@@ -215,7 +236,7 @@ async function checkResourceOwnership(table, id) {
   if (!user) return false;
   
   // Admin được sửa tất cả 👑
-  if (user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504') return true;
+  if (user.role === 'admin' || user.username?.toLowerCase() === OWNER_USERNAME) return true;
   
   // Staff chỉ sửa được của mình 🛡️
   const client = getDbClient();
@@ -684,38 +705,18 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
         .eq('id', finalUserId)
         .single();
 
-    // 🛡️ KIỂM TRA GIỚI HẠN XP HÀNG NGÀY (CHỈ CHO BÌNH LUẬN) 🍀
-    if (type === 'comment' || type === 'first_comment') {
-        const startOfTodayISO = getStartOfVNDay().toISOString();
-
-        const { data: todayLogs, error: logError } = await client
-            .from('shiroi_xp_logs')
-            .select('amount')
-            .eq('user_id', finalUserId)
-            .in('type', ['comment', 'first_comment'])
-            .gte('created_at', startOfTodayISO);
-
-        if (!logError && todayLogs) {
-            const totalToday = todayLogs.reduce((sum, log) => sum + (log.amount || 0), 0);
-            const MAX_COMMENT_XP = 100; 
-            
-            if (totalToday + amount > MAX_COMMENT_XP) {
-                return { success: false, error: 'Đã đạt giới hạn XP bình luận trong ngày (100 XP)! 🛡️' };
-            }
-        }
-    }
+    // 🛡️ GỌI RPC ĐỂ GHI LOG & KIỂM TRA GIỚI HẠN (ATOMIC OPERATION) 🚀
+    const { data: rpcRes, error: rpcError } = await client.rpc('rpc_record_xp_log', {
+        p_amount: amount,
+        p_type: type,
+        p_reason: reason,
+        p_user_id: finalUserId
+    });
     
-    const { error } = await client
-      .from('shiroi_xp_logs')
-      .insert({
-        user_id: finalUserId,
-        amount,
-        type,
-        reason,
-        created_at: new Date().toISOString()
-      });
-
-    if (error) throw error;
+    if (rpcError) throw rpcError;
+    if (rpcRes && !rpcRes.success) {
+        return { success: false, error: rpcRes.error };
+    }
 
     // 🔔 KIỂM TRA ĐẠT DANH HIỆU MỚI (TITLE UNLOCK) 🏆
     if (userData) {
@@ -1218,7 +1219,7 @@ export async function getReportsAction(all = false) {
     const user = await getAuthenticatedUser();
     if (!user) throw new Error("Chưa đăng nhập!");
 
-    const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
+    const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === OWNER_USERNAME;
     const client = getDbClient();
 
     let selectStr = `
@@ -1271,7 +1272,7 @@ export async function getReportByIdAction(reportId) {
 
         if (error) throw error;
         
-        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
+        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === OWNER_USERNAME;
         if (!isAdmin && data.user_id !== user.id) {
             throw new Error("Không có quyền xem báo cáo này! 🛡️");
         }
@@ -1349,24 +1350,6 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
     const mission = MISSIONS[missionKey];
     const isDaily = mission?.type === 'daily';
 
-    let query = client
-      .from('shiroi_mission_claims')
-      .select('id, claimed_at')
-      .eq('user_id', userId)
-      .eq('mission_key', missionKey);
-
-    if (isDaily) {
-        // Nếu là nhiệm vụ hàng ngày: Chỉ tính lượt nhận trong hôm nay (Mốc 0h Việt Nam) 🇻🇳
-        const startOfTodayISO = getStartOfVNDay().toISOString();
-        query = query.gte('claimed_at', startOfTodayISO);
-    }
-
-    const { data: existing } = await query.maybeSingle();
-
-    if (existing) {
-        throw new Error(isDaily ? "Hôm nay bạn đã nhận thưởng nhiệm vụ này rồi! Hãy quay lại vào ngày mai 🛡️" : "Bạn đã nhận phần thưởng này rồi! 🛡️");
-    }
-
     // 2. Lấy định nghĩa nhiệm vụ để xác định XP (Tránh Client gửi XP láo)
     let rewardXp = 0;
     
@@ -1377,9 +1360,8 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
         const mangaIdFromKey = missionKey.replace('finish_series_', '');
         
         // 1 & 2. Chạy song song kiểm tra số chương và thể loại One-shot ⚡
-        const [chapterRes, mangaRes] = await Promise.all([
-            client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey),
-            client.from('mangas').select('genres').eq('id', mangaIdFromKey).single()
+        const [chapterRes] = await Promise.all([
+            client.from('chapters').select('id', { count: 'exact', head: true }).eq('manga_id', mangaIdFromKey)
         ]);
 
         const total = chapterRes.count || 0;
@@ -1397,21 +1379,18 @@ export async function claimMissionRewardAction(missionKey, mangaId = null) {
         rewardXp = mission.xp;
     }
 
-    // 3. Ghi log nhận thưởng (Atomic operation)
-    const { error: claimError } = await client
-      .from('shiroi_mission_claims')
-      .insert([{
-        user_id: userId,
-        mission_key: missionKey,
-        reward_xp: rewardXp,
-        claimed_at: new Date().toISOString()
-      }]);
+    // 🛡️ GỌI RPC ĐỂ NHẬN THƯỞNG (ATOMIC OPERATION) 🚀
+    const { data: rpcRes, error: rpcError } = await client.rpc('rpc_claim_mission_reward', {
+        p_user_id: userId,
+        p_mission_key: missionKey,
+        p_reward_xp: rewardXp,
+        p_is_daily: isDaily
+    });
 
-    if (claimError) throw claimError;
-
-    // 4. Cộng XP và log nhật ký
-    const resLog = await recordXpLogAction(rewardXp, 'mission', missionKey);
-    if (!resLog.success) throw new Error(resLog.error);
+    if (rpcError) throw rpcError;
+    if (rpcRes && !rpcRes.success) {
+        throw new Error(rpcRes.error);
+    }
 
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
@@ -1844,7 +1823,7 @@ export async function updateUserRoleAction(targetId, newRole) {
     
     const client = getDbClient();
     const { data: targetUser } = await client.from('shiroi_users').select('username').eq('id', targetId).single();
-    if (targetUser?.username?.toLowerCase() === 'atheist1504') throw new Error("Không thể tác động đến Boss của Thánh địa! 🛡️");
+    if (targetUser?.username?.toLowerCase() === OWNER_USERNAME) throw new Error("Không thể tác động đến Boss của Thánh địa! 🛡️");
 
     const { error } = await client
       .from('shiroi_users')
@@ -1916,7 +1895,7 @@ export async function suggestTitleAction(titleName, reason) {
     
     // 🔔 Thông báo cho Quản trị viên (Admin) về đề xuất mới 🍀
     try {
-        const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or('role.eq.admin,username.ilike.atheist1504');
+        const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or(`role.eq.admin,username.ilike.${OWNER_USERNAME}`);
         const adminIds = admins?.map(a => a.id) || [];
         
         const title = `Gợi ý danh xưng mới! 💡`;
@@ -1964,7 +1943,7 @@ export async function deleteOfficialTitleAction(id) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== OWNER_USERNAME) throw new Error("Không có quyền!");
 
     const { error } = await supabaseAdmin
       .from('shiroi_titles')
@@ -1988,7 +1967,7 @@ export async function getTitleSuggestionsAction() {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== OWNER_USERNAME) throw new Error("Không có quyền!");
 
     const { data, error } = await supabaseAdmin
       .from('shiroi_title_suggestions')
@@ -2013,7 +1992,7 @@ export async function handleTitleSuggestionAction(id, status) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== OWNER_USERNAME) throw new Error("Không có quyền!");
 
     // 🕵️‍♂️ LẤY THÔNG TIN GỢI Ý TRƯỚC KHI CẬP NHẬT 🍀
     const { data: suggestion, error: fetchError } = await supabaseAdmin
@@ -2042,21 +2021,13 @@ export async function handleTitleSuggestionAction(id, status) {
         const currentXp = suggestion.shiroi_users?.xp || 0;
         const rewardXp = XP_REWARDS.SUGGEST_TITLE;
 
-        // 1. Cập nhật XP 🛡️
-        await supabaseAdmin
-            .from('shiroi_users')
-            .update({ xp: currentXp + rewardXp })
-            .eq('id', userId);
-
-        // 2. Ghi nhật ký XP 🕰️
-        await supabaseAdmin
-            .from('shiroi_xp_logs')
-            .insert([{ 
-                user_id: userId, 
-                amount: rewardXp, 
-                type: 'mission', 
-                reason: `Được chấp nhận gợi ý danh hiệu: ${suggestion.title_name}` 
-            }]);
+        // 1. Ghi nhật ký XP & Cập nhật Profile (Atomic qua RPC + Trigger) 🕰️
+        await recordXpLogAction(
+            XP_REWARDS.SUGGEST_TITLE, 
+            'mission', 
+            `Được chấp nhận gợi ý danh hiệu: ${suggestion.title_name}`, 
+            userId
+        );
 
         // 3. Gửi thông báo cho người dùng 🔔
         await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +${rewardXp} XP thưởng! 🍀`);
@@ -2093,7 +2064,7 @@ export async function createOfficialTitleAction(name, lv) {
     if (!sessionCookie) throw new Error("Chưa đăng nhập!");
     
     const session = JSON.parse(sessionCookie.value);
-    if (session.role !== 'admin' && session.username?.toLowerCase() !== 'atheist1504') throw new Error("Không có quyền!");
+    if (session.role !== 'admin' && session.username?.toLowerCase() !== OWNER_USERNAME) throw new Error("Không có quyền!");
 
     const { error } = await supabaseAdmin
       .from('shiroi_titles')
@@ -2153,7 +2124,7 @@ export async function sendReportMessageAction(reportId, message) {
         const user = await getAuthenticatedUser();
         if (!user) return { success: false, error: 'Chưa đăng nhập' };
 
-        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === 'atheist1504';
+        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === OWNER_USERNAME;
 
         // 1. Lưu tin nhắn
         const { data: newMessage, error } = await supabaseAdmin
@@ -2190,7 +2161,7 @@ export async function sendReportMessageAction(reportId, message) {
             } else {
                 // Nếu User trả lời -> Thông báo cho Admin/Staff 🛡️
                 try {
-                    const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or('role.eq.admin,username.ilike.atheist1504');
+                    const { data: admins } = await supabaseAdmin.from('shiroi_users').select('id').or(`role.eq.admin,username.ilike.${OWNER_USERNAME}`);
                     const adminIds = admins?.map(a => a.id) || [];
                     
                     const title = `Tin nhắn báo cáo mới! 💬`;

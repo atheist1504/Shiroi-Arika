@@ -85,10 +85,6 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Hotfix & Stability (v48.2)**:
     - **UI Optimization**: Ẩn nút "Bình luận" ở chế độ cuộn dọc (Scroll) để tránh bấm nhầm và tinh gọn giao diện, chỉ hiện ở chế độ lật trang (Page-flip). 💬🛡️
     - Đã push code lên GitHub thành công. ✅
-- [ ] **Grand Opening Plan (Target: 01/05)**:
-    - [ ] Trao danh hiệu huyền thoại cho Top 10 bản thử nghiệm (🥇🥈🥉). 🎖️
-    - [ ] Reset toàn bộ hệ thống (Bình luận, XP, Lịch sử đọc) để làm mới 100%. 🧹
-    - [ ] Chính thức mở cửa cộng đồng Shiroi Arika. 🚀💮
 
 ### 🚀 Tối Ưu Hóa Tối Thượng & Sẵn Sàng Khai Trương (v49 - Grand Opening Optimization) 🚀⚡💎🥇
 - [x] **Hybrid ISR & On-demand Revalidation**:
@@ -107,6 +103,21 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - **TikTok Leecher**: Tích hợp khả năng triệu hồi ảnh slideshow từ TikTok trực tiếp vào hệ thống quản trị. 📱🚀
     - Rà soát và khôi phục toàn bộ các Server Action quan trọng, đảm bảo quy trình quản trị (`publishChapterAction`, `saveChapterDataAction`) hoạt động trơn tru. 🛠️✅
 - [x] **Production Readiness**: Xác nhận hệ thống đã sẵn sàng cho ngày khai trương 01/05 với hiệu năng cao nhất và bảo mật tuyệt đối. 💮🚀
+
+### 🛡️ Bảo Mật Tối Thượng & XP Atomic (v50 - Security & Reward Hardening) 🛡️⚡💎🥇
+- [x] **Atomic Reward System (Race Condition Shield)**:
+    - Chuyển đổi toàn bộ logic cộng XP (Bình luận, Báo cáo lỗi, Nhiệm vụ) sang cơ chế **Atomic thông qua Postgres RPC (`rpc_record_xp_log`, `rpc_claim_mission_reward`)**.
+    - Loại bỏ hoàn toàn rủi ro người dùng "spam" nhấn nút để nhận thưởng nhiều lần (Race Condition). 🛡️🚀
+- [x] **Secure Session Management**:
+    - Nâng cấp `logoutAction`: Sử dụng `maxAge: 0` để ép buộc trình duyệt xóa sạch session cookie, khắc phục lỗi session "ma" trên một số thiết bị. 🍪🔐
+    - **Auth Cache & Auto-healing**: Tích hợp `React cache()` vào `getAuthenticatedUser` để giảm tải DB (chỉ query 1 lần/request) và tự động cập nhật session nếu phát hiện quyền hạn (Role) bị thay đổi. 🔄⚡
+- [x] **Hardcode Cleanup & Ownership Protection**:
+    - Loại bỏ toàn bộ username Admin (`atheist1504`) bị hardcode trong code. Chuyển sang sử dụng biến môi trường `OWNER_USERNAME` để linh hoạt và bảo mật hơn. 🕵️‍♂️🛡️
+    - Tăng cường bảo vệ tài khoản "Boss" khỏi các lệnh quản trị hạ cấp chức vụ.
+- [x] **Reward Balancing**: Điều chỉnh XP thưởng báo cáo lỗi từ 500 XP xuống 100 XP để giữ cân bằng hệ thống (Platform Balance). Cập nhật đồng bộ cả Backend và UI hướng dẫn. 📉💎
+- [x] **Double XP Bugfix**: Khắc phục lỗi cộng điểm 2 lần khi duyệt gợi ý danh hiệu do xung đột giữa logic Server Action và Trigger Database. 🛠️✅
+
+---
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
 - [x] **Profile Premium Overhaul (v38)**: Giao diện Glassmorphism đa tầng, Nhật ký tu luyện dạng Timeline, và thanh XP pha lê phát sáng. 💎✨
