@@ -83,7 +83,15 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [reportDescription, setReportDescription] = useState('');
   const [reportStatus, setReportStatus] = useState(null); // { type: 'success' | 'error', text: string }
   const [theme, setThemeState] = useState('dark'); 
+  const [mounted, setMounted] = useState(false);
 
+  // 🚀 TỐI ƯU: Memoize danh sách chương để tránh filter lại mỗi lần render 🍀
+  const filteredChapters = useMemo(() => {
+    return allChapters.filter(c => 
+        c.chapter_number.toString().includes(chapterSearchTerm) || 
+        (c.title && c.title.toLowerCase().includes(chapterSearchTerm.toLowerCase()))
+    );
+  }, [allChapters, chapterSearchTerm]);
   // 🔄 ĐỒNG BỘ THEME & CHẾ ĐỘ ĐỌC VĨNH VIỄN (CHỈ TRONG READER) 🍀
   useEffect(() => {
     const savedTheme = localStorage.getItem('shiroi_reader_theme');
@@ -186,7 +194,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         }
     }
     // giveReadXP(true); // Gỡ bỏ việc gọi "giả" khi vừa mở trang 🛡️
-  }, [chapterId]);
+  }, [chapterId, chapter, manga, initialSiblings]);
 
   const syncHistoryToDB = async () => {
     try {
@@ -197,7 +205,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     }
   };
 
-  const giveReadXP = async (isInitial = false) => {
+  const giveReadXP = useCallback(async (isInitial = false) => {
     const storedUser = localStorage.getItem('shiroi_user');
     if (!storedUser || !chapterId) return;
     
@@ -246,7 +254,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     } catch (err) { 
       console.error("Lỗi ghi nhận đọc truyện:", err); 
     }
-  };
+  }, [chapterId, chapter?.manga_id, chapter?.chapter_number]);
 
   useEffect(() => {
     if (readingMode !== 'scroll' || !endOfChapterRef.current) return;
@@ -261,7 +269,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
     observer.observe(endOfChapterRef.current);
     return () => observer.disconnect();
-  }, [readingMode, nextChapterPages, hasPreloaded, chapterId]);
+  }, [readingMode, giveReadXP]);
 
   // 📖 TRIGGER PRELOAD CHO CHẾ ĐỘ LẬT TRANG
   useEffect(() => {
@@ -287,7 +295,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           giveReadXP();
       }
     }
-  }, [readingMode, currentPageIndex, pages, nextChapterPages]);
+  }, [readingMode, currentPageIndex, pages, giveReadXP]);
 
   const lastScrollYRef = useRef(0);
 
@@ -362,6 +370,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           return;
       }
 
+      // 🛡️ Cải thiện logic kiểm tra click: Sử dụng closest để bao quát cả icon bên trong button 🍀
       if (e.target.closest('button') || e.target.closest('a') || e.target.closest('select') || e.target.closest('input') || e.target.closest('textarea') || e.target.closest('.modal')) return;
 
       
@@ -762,9 +771,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
 
                   <div className="flex-1 overflow-y-auto p-2 min-h-0 reader-chapter-list">
                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {allChapters
-                          .filter(c => c.chapter_number.toString().includes(chapterSearchTerm) || (c.title && c.title.toLowerCase().includes(chapterSearchTerm.toLowerCase())))
-                          .map(c => (
+                        {filteredChapters.map(c => (
                           <button 
                              key={c.id} 
                              onClick={() => { router.push(`/read/${c.id}`); setShowChapterModal(false); }}
@@ -775,12 +782,12 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
                              {c.id === chapterId && (
                                <div className="absolute top-2 right-2">
                                   <div className="w-1.5 h-1.5 rounded-full bg-[#0a0c0a] animate-pulse" />
-                               </div>
+                                </div>
                              )}
                           </button>
                         ))}
                      </div>
-                     {allChapters.filter(c => c.chapter_number.toString().includes(chapterSearchTerm)).length === 0 && (
+                     {filteredChapters.length === 0 && (
                        <div className="py-20 text-center opacity-30">
                           <svg className="w-12 h-12 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                           <p className="text-xs font-black uppercase tracking-widest">Không tìm thấy chương nào</p>
