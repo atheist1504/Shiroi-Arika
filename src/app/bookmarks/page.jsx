@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { optimizeImage } from '@/lib/cloudinary';
+import { getFollowedMangasAction, toggleFollowAction } from '@/lib/actions';
 
 export default function BookmarksPage() {
   const [followedMangas, setFollowedMangas] = useState([]);
@@ -20,30 +21,28 @@ export default function BookmarksPage() {
       const storedUser = localStorage.getItem('shiroi_user');
       const user = storedUser ? JSON.parse(storedUser) : null;
       
-      let followedIds = [];
-
       if (user && user.id) {
-        // GIAI ĐOẠN 1: Lấy từ Database ☁️
-        const { data: followData } = await supabase
-          .from('shiroi_follows')
-          .select('manga_id')
-          .eq('user_id', user.id);
+        // GIAI ĐOẠN 1: Lấy từ Database qua Server Action 🛡️
+        const res = await getFollowedMangasAction();
         
-        followedIds = followData?.map(f => f.manga_id) || [];
-        
-        // Đồng bộ ngược lại Local Storage 💾
-        localStorage.setItem('shiroi_followed', JSON.stringify(followedIds));
-      } else {
-        // GIAI ĐOẠN 2: Lấy từ Local (Dành cho khách) 🚶
-        followedIds = JSON.parse(localStorage.getItem('shiroi_followed') || '[]');
+        if (res.success) {
+            setFollowedMangas(res.mangas);
+            // Đồng bộ ngược lại Local Storage 💾
+            const followedIds = res.mangas.map(m => m.id);
+            localStorage.setItem('shiroi_followed', JSON.stringify(followedIds));
+            return;
+        }
       }
+
+      // GIAI ĐOẠN 2: Lấy từ Local (Dành cho khách hoặc khi Cloud lỗi) 🚶
+      const followedIds = JSON.parse(localStorage.getItem('shiroi_followed') || '[]');
       
       if (followedIds.length === 0) {
         setFollowedMangas([]);
         return;
       }
 
-      // Lấy thông tin các manga được theo dõi
+      // Lấy thông tin các manga được theo dõi (Công khai)
       const { data, error } = await supabase
         .from('mangas')
         .select(`
@@ -83,10 +82,8 @@ export default function BookmarksPage() {
     setFollowedMangas(prev => prev.filter(m => m.id !== id));
 
     // 2. Đồng bộ Cloud nếu có user
-    const storedUser = localStorage.getItem('shiroi_user');
-    const user = storedUser ? JSON.parse(storedUser) : null;
     if (user && user.id) {
-       await supabase.from('shiroi_follows').delete().eq('user_id', user.id).eq('manga_id', id);
+       await toggleFollowAction(id, true); // true vì hiện tại đang followed -> muốn unfollow
     }
   };
 

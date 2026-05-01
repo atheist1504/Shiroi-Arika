@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { calculateLevel, calculateTitle } from '@/lib/xp';
 import { fixR2Url } from '@/lib/cloudinary';
 import Link from 'next/link';
-import { addCommentAction } from '@/lib/actions';
+import { addCommentAction, toggleCommentLikeAction, deleteCommentAction } from '@/lib/actions';
 
 // 🛠️ COMPONENT CON: FORM TRẢ LỜI 🚀
 const ReplyForm = ({ parentComment, user, mangaId, chapterId, onCancel, onSuccess, fetchComments, checkCooldown }) => {
@@ -345,7 +345,11 @@ export default function Comments({ mangaId, chapterId }) {
     if (!comment) return;
     const newCount = Math.max(0, (comment.likes_count || 0) + (isLiked ? -1 : 1));
     setComments(prev => prev.map(c => c.id === commentId ? { ...c, likes_count: newCount } : c));
-    try { await supabase.from('comments').update({ likes_count: newCount }).eq('id', commentId); } catch (err) { console.error("Lỗi LIKE:", err); }
+    try { 
+      await toggleCommentLikeAction(commentId, newCount); 
+    } catch (err) { 
+      console.error("Lỗi LIKE:", err); 
+    }
   };
 
   const handleDelete = async (id) => {
@@ -353,8 +357,13 @@ export default function Comments({ mangaId, chapterId }) {
     const originalComments = [...comments];
     setComments(prev => prev.filter(c => c.id !== id && c.parent_id !== id));
     try {
-      const { error } = await supabase.from('comments').delete().eq('id', id);
-      if (error) { setComments(originalComments); } else { fetchComments(true); }
+      const res = await deleteCommentAction(id);
+      if (!res.success) { 
+          setComments(originalComments); 
+          alert(res.error || "Không thể xóa bình luận!");
+      } else { 
+          fetchComments(true); 
+      }
     } catch (err) { setComments(originalComments); }
   };
 

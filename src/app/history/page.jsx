@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import { getUserHistoryAction, clearUserHistoryAction } from '@/lib/actions';
 
 export default function HistoryPage() {
   const [historyItems, setHistoryItems] = useState([]);
@@ -42,24 +43,11 @@ export default function HistoryPage() {
       
       if (storedUser) {
         const user = JSON.parse(storedUser);
-        // Lớp 1: Lấy từ Cloud (Supabase) - Sắp xếp theo thời gian đọc mới nhất
-        const { data: cloudHistory, error } = await supabase
-          .from('shiroi_history')
-          .select(`
-            last_read_at,
-            manga:mangas(*),
-            chapter:chapters(*)
-          `)
-          .eq('user_id', user.id)
-          .order('last_read_at', { ascending: false });
+        // Lớp 1: Lấy từ Cloud (Server Action) - Bypass RLS 🛡️
+        const res = await getUserHistoryAction();
 
-        if (!error && cloudHistory) {
-          const formatted = cloudHistory.map(item => ({
-            ...item.manga,
-            lastReadChapter: item.chapter,
-            last_read_at: item.last_read_at
-          }));
-          setHistoryItems(formatted);
+        if (res.success && res.history) {
+          setHistoryItems(res.history);
           return;
         }
       }
@@ -107,17 +95,8 @@ export default function HistoryPage() {
         const storedUser = localStorage.getItem('shiroi_user');
         
         if (storedUser) {
-            const user = JSON.parse(storedUser);
-            // Xoá trên Cloud
-            await supabase
-                .from('shiroi_history')
-                .delete()
-                .eq('user_id', user.id);
-
-            await supabase
-                .from('shiroi_read_chapters')
-                .delete()
-                .eq('user_id', user.id);
+            // Xoá trên Cloud thông qua Server Action 🛡️
+            await clearUserHistoryAction();
         }
 
         localStorage.removeItem('shiroi_history');

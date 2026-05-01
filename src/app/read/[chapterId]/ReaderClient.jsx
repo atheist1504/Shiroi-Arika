@@ -204,18 +204,13 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     const sessionKey = `xp_read_${chapterId}`;
     if (sessionStorage.getItem(sessionKey)) return;
 
-    // 🛡️ Nếu là lần đầu mở (isInitial), chúng ta sẽ ghi nhận "Đã đọc" vào DB 
-    // để đồng bộ với UI, nhưng chưa tặng XP ngay. 
-    // Việc nhận XP thực sự sẽ kích hoạt khi chạm đáy (IntersectionObserver).
-    // if (isInitial && readingMode === 'scroll') return; 
-
     try {
       console.log(`🎯 [Reader] Đang ghi nhận "Đọc" chương ${chapter?.chapter_number} (Chỉ ghi nhận: ${isInitial})...`);
       const { addReadXPAction } = await import('@/lib/actions');
       const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
       if (res.success) {
-        // ✅ CHỈ KHI NÀY MỚI ĐÁNH DẤU "ĐÃ XEM" VÀO LOCAL STORAGE ĐỂ ĐỒNG BỘ 💎
+        // ✅ LUÔN ĐÁNH DẤU "ĐÃ XEM" VÀO LOCAL STORAGE ĐỂ ĐỒNG BỘ UI 💎
         const readKey = 'shiroi_read_chapters';
         const read = JSON.parse(localStorage.getItem(readKey) || '[]');
         if (!read.includes(chapterId)) {
@@ -223,13 +218,30 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             localStorage.setItem(readKey, JSON.stringify(read));
         }
 
-        localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+        // 🛡️ Cập nhật thông tin User nếu có (Chỉ khi có XP hoặc thay đổi)
+        if (res.user) {
+            localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+        }
+
         sessionStorage.setItem(sessionKey, 'true');
-        setXpToast(true);
-        setTimeout(() => setXpToast(false), 4000);
+
+        // 🎊 CHỈ HIỂN THỊ TOAST XP NẾU LÀ LẦN ĐẦU VÀ KHÔNG PHẢI INITIAL 🍀
+        if (!res.alreadyRewarded && !res.isInitial) {
+            setXpToast(true);
+            setTimeout(() => setXpToast(false), 4000);
+        }
+        
         window.dispatchEvent(new Event('storage'));
       } else if (res.error?.includes('Đã nhận thưởng') || res.error?.includes('trước đó')) {
         sessionStorage.setItem(sessionKey, 'true');
+        // Vẫn nên cố gắng cập nhật local storage để UI đồng bộ nếu server báo đã nhận thưởng
+        const readKey = 'shiroi_read_chapters';
+        const read = JSON.parse(localStorage.getItem(readKey) || '[]');
+        if (!read.includes(chapterId)) {
+            read.push(chapterId);
+            localStorage.setItem(readKey, JSON.stringify(read));
+            window.dispatchEvent(new Event('storage'));
+        }
       }
     } catch (err) { 
       console.error("Lỗi ghi nhận đọc truyện:", err); 

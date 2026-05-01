@@ -371,6 +371,13 @@ GRANT SELECT (id, username, display_name, avatar_url, bio, role, xp, level, last
 CREATE POLICY "View Own Reports" ON public.shiroi_reports FOR SELECT USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM shiroi_users WHERE id = auth.uid() AND role IN ('admin', 'staff')));
 CREATE POLICY "View Own Report Messages" ON public.shiroi_report_messages FOR SELECT USING (EXISTS (SELECT 1 FROM shiroi_reports r WHERE r.id = report_id AND (r.user_id = auth.uid() OR EXISTS (SELECT 1 FROM shiroi_users WHERE id = auth.uid() AND role IN ('admin', 'staff')))));
 
+-- User Data RLS (Fixing "Không hiện lịch sử/nhiệm vụ" 🛡️)
+CREATE POLICY "View Own Read Chapters" ON public.shiroi_read_chapters FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "View Own XP Logs" ON public.shiroi_xp_logs FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "View Own History" ON public.shiroi_history FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "View Own Mission Claims" ON public.shiroi_mission_claims FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "View Own Follows" ON public.shiroi_follows FOR SELECT USING (user_id = auth.uid());
+
 -- 7. CHỈ MỤC TỐI ƯU (INDEXES) 🚀
 
 CREATE INDEX IF NOT EXISTS idx_manga_updated ON public.mangas(updated_at DESC);

@@ -49,14 +49,11 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     // Nếu có User, chúng ta CHỈ TIN vào Database để đảm bảo đồng bộ với Nhiệm vụ & XP
     if (userId) {
       try {
-        const { data: dbRead } = await supabase
-          .from('shiroi_read_chapters')
-          .select('chapter_id')
-          .eq('user_id', userId)
-          .eq('manga_id', mangaId);
+        const { loadMangaReadHistoryAction } = await import('@/lib/actions');
+        const res = await loadMangaReadHistoryAction(mangaId);
         
-        if (dbRead) {
-          const dbIds = dbRead.map(r => r.chapter_id);
+        if (res.success && res.dbRead) {
+          const dbIds = res.dbRead.map(r => r.chapter_id);
           read = dbIds; // 🛡️ Không gộp nữa, lấy trực tiếp từ DB để "thanh lọc" dữ liệu ảo cũ
           localStorage.setItem('shiroi_read_chapters', JSON.stringify(dbIds));
         }
@@ -74,28 +71,20 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
     const isLocalFollowed = followed.includes(mangaId);
     
     if (user && user.id) {
-       // 2. Chế độ có đăng nhập: Đồng bộ với Database ☁️
+       // 2. Chế độ có đăng nhập: Đồng bộ với Database qua Server Action ☁️
        try {
-         const { data, error } = await supabase
-           .from('shiroi_follows')
-           .select('id')
-           .eq('user_id', user.id)
-           .eq('manga_id', mangaId)
-           .maybeSingle();
+         const { checkFollowStatusAction } = await import('@/lib/actions');
+         const res = await checkFollowStatusAction(mangaId);
          
-         if (data) {
-           setIsFollowed(true);
-           // Cập nhật ngược lại local nếu chưa có
-           if (!isLocalFollowed) {
+         if (res.success) {
+           setIsFollowed(res.followed);
+           // Cập nhật ngược lại local nếu cần
+           if (res.followed && !isLocalFollowed) {
              followed.push(mangaId);
              localStorage.setItem('shiroi_followed', JSON.stringify(followed));
-           }
-         } else {
-           setIsFollowed(false);
-           // Nếu DB báo chưa follow mà local báo có -> Xóa local để đồng bộ
-           if (isLocalFollowed) {
-              const updated = followed.filter(id => id !== mangaId);
-              localStorage.setItem('shiroi_followed', JSON.stringify(updated));
+           } else if (!res.followed && isLocalFollowed) {
+             const updated = followed.filter(id => id !== mangaId);
+             localStorage.setItem('shiroi_followed', JSON.stringify(updated));
            }
          }
        } catch (err) {

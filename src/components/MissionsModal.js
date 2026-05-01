@@ -86,25 +86,27 @@ export default function MissionsModal({ isOpen, onClose }) {
 
     const loadProgress = async (userId) => {
         setLoading(true);
-        const data = await fetchUserMissionProgress(userId);
-        setMissions(data);
-        setLoading(false);
+        try {
+            const { fetchUserMissionProgressAction } = await import('@/lib/actions');
+            const res = await fetchUserMissionProgressAction();
+            if (res.success) {
+                setMissions(res.data);
+            }
+        } catch (err) {
+            console.error("Lỗi tải tiến trình nhiệm vụ:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const loadCompass = async (userId) => {
         try {
-            // Chạy song song 🚀
-            const [
-                { data: allManga, error: mangaErr },
-                { data: readLogs },
-                { data: allChapters }
-            ] = await Promise.all([
-                supabase.from('mangas').select('id, title, cover_image, status'),
-                supabase.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', userId),
-                supabase.from('chapters').select('id, manga_id')
-            ]);
+            const { loadCompassDataAction } = await import('@/lib/actions');
+            const res = await loadCompassDataAction();
+            
+            if (!res.success) return;
 
-            if (mangaErr || !allManga) return;
+            const { allManga, readLogs, allChapters } = res;
 
             const mangaMap = {};
             allManga.forEach(m => {

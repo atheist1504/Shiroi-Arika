@@ -19,7 +19,10 @@ import {
     getReportsAction,
     getReportMessagesAction,
     sendReportMessageAction,
-    submitReportAction
+    submitReportAction,
+    getUserStatsAction,
+    getUserXpLogsAction,
+    getUserCheckInDatesAction
 } from '@/lib/actions';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -213,9 +216,12 @@ function ProfileContent() {
   }, [router]);
 
   const fetchStats = async (userId) => {
-    const { count: mCount } = await supabase.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-    const { count: cCount } = await supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId);
-    setStats({ total_mangas: mCount || 0, total_chapters: cCount || 0 });
+    const res = await getUserStatsAction();
+    if (res.success) {
+        setStats({ total_mangas: res.total_mangas, total_chapters: res.total_chapters });
+    } else {
+        console.warn("⚠️ [Profile] Lỗi fetch stats:", res.error);
+    }
   };
 
   const fetchXpLogs = async (userId, page = 0) => {
@@ -225,31 +231,24 @@ function ProfileContent() {
     const from = page * limit;
     const to = from + limit - 1;
 
-    const { data, error } = await supabase
-      .from('shiroi_xp_logs')
-      .select('id, amount, type, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .range(from, to);
+    const res = await getUserXpLogsAction(limit, page);
     
-    if (!error && data) {
+    if (res.success && res.logs) {
       if (page === 0) {
-        setXpLogs(data);
+        setXpLogs(res.logs);
       } else {
-        setXpLogs(prev => [...prev, ...data]);
+        setXpLogs(prev => [...prev, ...res.logs]);
       }
-      setHasMoreXp(data.length === limit);
+      setHasMoreXp(res.logs.length === limit);
     }
 
     if (page === 0) {
-        // Chỉ lấy streak tháng 1 lần
-        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-        const { data: ciData } = await supabase.from('shiroi_xp_logs').select('created_at').eq('user_id', userId).eq('type', 'check_in').gte('created_at', startOfMonth);
-        if (ciData) {
-            setCheckInDates(ciData.map(l => new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' })));
+        // Lấy dữ liệu điểm danh qua Server Action 📅
+        const resCi = await getUserCheckInDatesAction();
+        if (resCi.success) {
+            setCheckInDates(resCi.dates);
+            setTotalCheckIns(resCi.totalCheckIns);
         }
-        const { count } = await supabase.from('shiroi_xp_logs').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'check_in');
-        setTotalCheckIns(count || 0);
         setLoading(false);
     }
   };
@@ -557,11 +556,15 @@ function ProfileContent() {
   const currentDynamicTitle = user ? (() => {
     const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
     const lvl = calculateLevel(user.xp);
-    const unlocked = isAdmin ? dynamicTitles : dynamicTitles.filter(t => lvl >= t.lv);
+    
+    // 🛡️ LOGIC MỚI: Nếu đã chọn Badge -> Ưu tiên hiển thị nó trước (Bypass Level check nếu đã sở hữu) 🍀
     if (user.selected_badge) {
         const selected = dynamicTitles.find(t => t.name.toUpperCase() === user.selected_badge.toUpperCase());
-        if (selected && (lvl >= selected.lv || isAdmin)) return selected;
+        if (selected) return selected;
     }
+
+    // Nếu không chọn hoặc badge không tồn tại -> Lấy theo Level đã mở khóa
+    const unlocked = isAdmin ? dynamicTitles : dynamicTitles.filter(t => lvl >= t.lv);
     return unlocked[0] || dynamicTitles[dynamicTitles.length - 1];
   })() : null;
 

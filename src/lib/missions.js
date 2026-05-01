@@ -127,8 +127,10 @@ export const getStartOfVNDay = () => {
 /**
  * 🧭 Tính toán tiến trình nhiệm vụ của người dùng
  */
-export const fetchUserMissionProgress = async (userId) => {
+export const fetchUserMissionProgress = async (userId, customClient = null) => {
     if (!userId) return [];
+    
+    const client = customClient || supabase;
 
     try {
         // 1. Lấy mốc thời gian "Hôm nay" chuẩn Việt Nam 🇻🇳
@@ -143,11 +145,11 @@ export const fetchUserMissionProgress = async (userId) => {
             { data: dailyComments },
             { data: claims }
         ] = await Promise.all([
-            supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            supabase.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO),
-            supabase.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            supabase.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO),
-            supabase.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId)
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO),
+            client.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO),
+            client.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId)
         ]);
         
         const dailyValidCommentsRaw = dailyComments?.filter(c => !isGibberish(c.content)) || [];
@@ -188,7 +190,7 @@ export const fetchUserMissionProgress = async (userId) => {
         // 3. Xử lý nhiệm vụ Chinh phục bộ truyện (Toàn bộ hệ thống) ⚔️
         try {
             // Lấy tất cả bộ truyện có trên hệ thống (Lấy thêm status để kiểm tra hoàn thành)
-            const { data: allMangas } = await supabase.from('mangas').select('id, title, genres, status');
+            const { data: allMangas } = await client.from('mangas').select('id, title, genres, status');
             if (allMangas && allMangas.length > 0) {
                 const mangaIds = allMangas.map(m => m.id);
                 
@@ -197,8 +199,8 @@ export const fetchUserMissionProgress = async (userId) => {
                     { data: chapterCounts },
                     { data: userReadCounts }
                 ] = await Promise.all([
-                    supabase.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000),
-                    supabase.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds)
+                    client.from('chapters').select('manga_id').in('manga_id', mangaIds).limit(10000),
+                    client.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId).in('manga_id', mangaIds)
                 ]);
 
                 const totalMap = {};

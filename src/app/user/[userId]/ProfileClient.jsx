@@ -9,6 +9,7 @@ import { optimizeImage } from '@/lib/cloudinary';
 import { motion } from 'framer-motion';
 import { requestNotificationPermission } from '@/lib/fcmClient';
 import { useMemo } from 'react';
+import { getPublicUserStatsAction } from '@/lib/actions';
 
 export default function ProfileClient({ userId, initialUser, initialStats, initialXpLogs }) {
   const router = useRouter();
@@ -78,21 +79,14 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
 
       setTargetUser(userData);
 
-      // 2. Fetch Stats
-      const { count: mangaCount } = await supabase
-        .from('shiroi_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userData.id);
-
-      const { count: chapterCount } = await supabase
-        .from('shiroi_read_chapters')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userData.id);
-
-      setStats({
-        total_mangas: mangaCount || 0,
-        total_chapters: chapterCount || 0
-      });
+      // 2. Fetch Stats via Server Action 🛡️
+      const resStats = await getPublicUserStatsAction(userData.id);
+      if (resStats.success) {
+        setStats({
+          total_mangas: resStats.total_mangas,
+          total_chapters: resStats.total_chapters
+        });
+      }
     } catch (err) {
       console.error("Lỗi tải hồ sơ:", err);
       setError('Lỗi kết nối hệ thống. Vui lòng thử lại sau.');

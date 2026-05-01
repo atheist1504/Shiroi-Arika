@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { cache } from 'react';
 import { sendMangaNotification, createInAppNotification } from './notifications';
 import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
-import { getStartOfVNDay } from './missions';
+import { getStartOfVNDay, fetchUserMissionProgress } from './missions';
 import { hashPassword, verifyPassword } from './crypto';
 
 const OWNER_USERNAME = process.env.NEXT_PUBLIC_OWNER_USERNAME?.toLowerCase() || 'atheist1504';
@@ -746,7 +746,7 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
 /**
  * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
  */
-export async function addReadXPAction(mangaId, chapterId) {
+export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
   try {
     const user = await getAuthenticatedUser();
     
@@ -757,7 +757,18 @@ export async function addReadXPAction(mangaId, chapterId) {
     const userId = user.id;
     const client = getDbClient();
 
-    // 1. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
+    // 1. LUÔN GHI NHẬN ĐÃ ĐỌC CHƯƠNG (Upsert) ✅
+    // Đảm bảo "Đã xem" luôn hoạt động dù user đã nhận XP hay chưa.
+    const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
+      user_id: userId, 
+      chapter_id: chapterId, 
+      manga_id: mangaId, 
+      read_at: new Date().toISOString() 
+    }, { onConflict: 'user_id,chapter_id' });
+
+    if (readError) throw readError;
+
+    // 2. Kiểm tra xem đã nhận thưởng XP cho chương này chưa (Tránh spam/double claim)
     const { data: alreadyRewarded } = await client
       .from('shiroi_xp_logs')
       .select('id')
@@ -766,27 +777,25 @@ export async function addReadXPAction(mangaId, chapterId) {
       .eq('reason', chapterId) 
       .maybeSingle();
 
-    if (alreadyRewarded) return { success: false, error: 'Bạn đã nhận thưởng đọc chương này trước đó rồi! 🛡️' };
+    // 3. Logic trả về dựa trên trạng thái
+    if (isInitial || alreadyRewarded) {
+        // Nếu là lần đầu mở trang hoặc đã có XP rồi thì không làm gì thêm
+        const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
+        return { 
+            success: true, 
+            alreadyRewarded: !!alreadyRewarded, 
+            isInitial, 
+            user: updatedUser 
+        };
+    }
 
-    // 2. Ghi nhận đã đọc chương (Vào Database) ✅
-    // Việc này sẽ giúp thanh tiến trình nhiệm vụ và La bàn chinh phục tăng lên
-    const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
-      user_id: userId, 
-      username: user.username, 
-      chapter_id: chapterId, 
-      manga_id: mangaId, 
-      read_at: new Date().toISOString() 
-    }, { onConflict: 'user_id,chapter_id' });
-
-    if (readError) throw readError;
-
-    // 3. Ghi log và nhận XP 💎
+    // 4. Ghi log và nhận XP 💎 (Chỉ khi !isInitial và !alreadyRewarded)
     const resLog = await recordXpLogAction(20, 'read', chapterId);
     if (!resLog.success) return resLog;
 
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
-    // 4. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
+    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Silent check) 🏆
     try {
         const { count: dailyRead } = await client
             .from('shiroi_read_chapters')
@@ -799,7 +808,7 @@ export async function addReadXPAction(mangaId, chapterId) {
             await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: dailyRead === 1 ? 'daily_read_1' : 'daily_read_3' });
         }
 
-        // 5. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
+        // 6. Tự động đánh dấu đã đọc cho thông báo chương mới của bộ này 📚
         await supabaseAdmin
             .from('shiroi_notifications')
             .update({ is_read: true })
@@ -810,7 +819,7 @@ export async function addReadXPAction(mangaId, chapterId) {
 
     } catch (e) {}
 
-    return { success: true, xpGain: 20, user: updatedUser };
+    return { success: true, xpGain: 20, alreadyRewarded: false, isInitial: false, user: updatedUser };
   } catch (error) {
     console.error('Lỗi addReadXPAction:', error);
     return { success: false, error: error.message };
@@ -1033,6 +1042,80 @@ export async function toggleFollowAction(mangaId, isFollowed) {
     console.error('Lỗi toggleFollowAction:', error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🕵️‍♂️ SERVER ACTION: Kiểm tra trạng thái theo dõi của một bộ truyện
+ */
+export async function checkFollowStatusAction(mangaId) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: true, followed: false };
+
+        const client = getDbClient();
+        const { data, error } = await client
+            .from('shiroi_follows')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('manga_id', mangaId)
+            .maybeSingle();
+        
+        if (error) throw error;
+        return { success: true, followed: !!data };
+    } catch (error) {
+        console.error('❌ Lỗi checkFollowStatusAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📚 SERVER ACTION: Lấy danh sách truyện đang theo dõi của người dùng
+ */
+export async function getFollowedMangasAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: "Chưa đăng nhập" };
+
+        const client = getDbClient();
+        
+        // 1. Lấy IDs truyện từ bảng follows
+        const { data: followData, error: followErr } = await client
+            .from('shiroi_follows')
+            .select('manga_id')
+            .eq('user_id', user.id);
+        
+        if (followErr) throw followErr;
+        const followedIds = followData?.map(f => f.manga_id) || [];
+        
+        if (followedIds.length === 0) return { success: true, mangas: [] };
+
+        // 2. Lấy thông tin chi tiết manga + chapter mới nhất 🚀
+        const { data, error } = await client
+            .from('mangas')
+            .select(`
+                id,
+                title,
+                cover_image,
+                status,
+                chapters (
+                    id,
+                    chapter_number
+                )
+            `)
+            .in('id', followedIds);
+
+        if (error) throw error;
+
+        const processed = data?.map(m => ({
+            ...m,
+            latestChapter: m.chapters?.sort((a, b) => b.chapter_number - a.chapter_number)[0] || null
+        })) || [];
+
+        return { success: true, mangas: processed };
+    } catch (error) {
+        console.error('❌ Lỗi getFollowedMangasAction:', error.message);
+        return { success: false, error: error.message };
+    }
 }
 
 /**
@@ -1280,6 +1363,180 @@ export async function getReportByIdAction(reportId) {
         return { success: true, report: data };
     } catch (error) {
         console.error('❌ Lỗi getReportByIdAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📅 SERVER ACTION: Lấy danh sách ngày điểm danh trong tháng
+ */
+export async function getUserCheckInDatesAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: "Chưa đăng nhập" };
+
+        const client = getDbClient();
+        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+
+        const { data: ciData, error } = await client
+            .from('shiroi_xp_logs')
+            .select('created_at')
+            .eq('user_id', user.id)
+            .eq('type', 'check_in')
+            .gte('created_at', startOfMonth);
+        
+        if (error) throw error;
+
+        const dates = (ciData || []).map(l => new Date(l.created_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }));
+        
+        const { count } = await client
+            .from('shiroi_xp_logs')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('type', 'check_in');
+
+        return { success: true, dates, totalCheckIns: count || 0 };
+    } catch (error) {
+        console.error('❌ Lỗi getUserCheckInDatesAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📊 SERVER ACTION: Lấy thống kê công khai của một người dùng bất kỳ
+ */
+export async function getPublicUserStatsAction(userId) {
+    try {
+        const client = getDbClient();
+        
+        const { count: mCount } = await client
+            .from('shiroi_history')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+            
+        const { count: cCount } = await client
+            .from('shiroi_read_chapters')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId);
+
+        return { 
+            success: true, 
+            total_mangas: mCount || 0, 
+            total_chapters: cCount || 0 
+        };
+    } catch (error) {
+        console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📚 SERVER ACTION: Lấy lịch sử đọc truyện của người dùng
+ */
+export async function getUserHistoryAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: false, error: "Chưa đăng nhập" };
+
+        const client = getDbClient();
+        
+        // Lấy lịch sử và join thông tin manga + chương mới nhất
+        const { data: history, error } = await client
+            .from('shiroi_history')
+            .select(`
+                id,
+                manga_id,
+                chapter_id,
+                updated_at,
+                mangas (
+                    id,
+                    title,
+                    cover_image,
+                    status
+                ),
+                chapters:chapter_id (
+                    id,
+                    chapter_number,
+                    title
+                )
+            `)
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Định dạng lại để khớp với UI
+        const formatted = (history || []).map(item => ({
+            ...item.mangas,
+            lastReadChapter: item.chapters,
+            updated_at: item.updated_at
+        }));
+
+        return { success: true, history: formatted };
+    } catch (error) {
+        console.error('❌ Lỗi getUserHistoryAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📊 SERVER ACTION: Lấy thống kê cá nhân của người dùng đang đăng nhập
+ */
+export async function getUserStatsAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: false, error: "Chưa đăng nhập" };
+        return await getPublicUserStatsAction(user.id);
+    } catch (error) {
+        console.error('❌ Lỗi getUserStatsAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📜 SERVER ACTION: Lấy nhật ký XP của người dùng
+ */
+export async function getUserXpLogsAction(limit = 20, page = 0) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: false, error: "Chưa đăng nhập" };
+
+        const client = getDbClient();
+        const from = page * limit;
+        const to = from + limit - 1;
+
+        const { data: logs, error } = await client
+            .from('shiroi_xp_logs')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .range(from, to);
+        
+        if (error) throw error;
+
+        return { success: true, logs: logs || [] };
+    } catch (error) {
+        console.error('❌ Lỗi getUserXpLogsAction:', error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🗑️ SERVER ACTION: Xóa toàn bộ lịch sử đọc của người dùng
+ */
+export async function clearUserHistoryAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) return { success: false, error: "Chưa đăng nhập" };
+
+        const client = getDbClient();
+        
+        await client.from('shiroi_history').delete().eq('user_id', user.id);
+        await client.from('shiroi_read_chapters').delete().eq('user_id', user.id);
+
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Lỗi clearUserHistoryAction:', error.message);
         return { success: false, error: error.message };
     }
 }
@@ -1924,7 +2181,7 @@ export async function getOfficialTitlesAction() {
     const { data, error } = await supabase
       .from('shiroi_titles')
       .select('*')
-      .order('lv', { ascending: false });
+      .order('lv', { ascending: true });
 
     if (error) throw error;
     return { success: true, titles: data };
@@ -2196,7 +2453,6 @@ export async function syncHistoryToDBAction(mangaId, chapterId) {
     // 1. Cập nhật hoặc thêm mới lịch sử đọc của bộ truyện này
     await client.from('shiroi_history').upsert({ 
       user_id: userId, 
-      username: user.username, 
       manga_id: mangaId, 
       chapter_id: chapterId, 
       last_read_at: new Date().toISOString() 
@@ -2225,4 +2481,73 @@ export async function syncHistoryToDBAction(mangaId, chapterId) {
     console.error('❌ Lỗi syncHistoryToDBAction:', error.message);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🎯 SERVER ACTION: Lấy tiến trình nhiệm vụ (Bảo mật 🛡️)
+ */
+export async function fetchUserMissionProgressAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) throw new Error("Chưa đăng nhập");
+
+        const client = getDbClient();
+        const data = await fetchUserMissionProgress(user.id, client);
+        
+        return { success: true, data };
+    } catch (error) {
+        console.error("❌ Lỗi fetchUserMissionProgressAction:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🧭 SERVER ACTION: Lấy dữ liệu La bàn Chinh phục (Compass)
+ */
+export async function loadCompassDataAction() {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) throw new Error("Chưa đăng nhập");
+
+        const client = getDbClient();
+        
+        const [
+            { data: allManga, error: mangaErr },
+            { data: readLogs },
+            { data: allChapters }
+        ] = await Promise.all([
+            client.from('mangas').select('id, title, cover_image, status'),
+            client.from('shiroi_read_chapters').select('manga_id, chapter_id').eq('user_id', user.id),
+            client.from('chapters').select('id, manga_id')
+        ]);
+
+        if (mangaErr) throw mangaErr;
+
+        return { success: true, allManga, readLogs, allChapters };
+    } catch (error) {
+        console.error("❌ Lỗi loadCompassDataAction:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 📚 SERVER ACTION: Lấy lịch sử đọc chương của một bộ truyện
+ */
+export async function loadMangaReadHistoryAction(mangaId) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: true, dbRead: [] };
+
+        const client = getDbClient();
+        const { data: dbRead } = await client
+            .from('shiroi_read_chapters')
+            .select('chapter_id')
+            .eq('user_id', user.id)
+            .eq('manga_id', mangaId);
+        
+        return { success: true, dbRead: dbRead || [] };
+    } catch (error) {
+        console.error("❌ Lỗi loadMangaReadHistoryAction:", error.message);
+        return { success: false, error: error.message };
+    }
 }
