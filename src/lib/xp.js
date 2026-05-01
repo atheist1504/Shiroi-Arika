@@ -11,8 +11,8 @@ export const XP_REWARDS = {
 };
 
 export const STREAK_BONUSES = {
-    DAY_3: 100,   // Thưởng thêm +100 XP (Tổng 200)
-    DAY_7: 200,   // Thưởng thêm +200 XP (Tổng 300)
+    DAY_3: 200,   // Thưởng thêm +200 XP (Tổng 300)
+    DAY_7: 300,   // Thưởng thêm +300 XP (Tổng 400)
     DAY_14: 500,  // Thưởng thêm +500 XP (Tổng 600)
     DAY_21: 500,  // Thưởng thêm +500 XP (Tổng 600)
     DAY_30: 1000, // Thưởng thêm +1000 XP (Tổng 1100)

@@ -956,8 +956,8 @@ function ProfileContent() {
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                             {[
-                                { day: '3 ngày', bonus: '+100' },
-                                { day: '7 ngày', bonus: '+200' },
+                                { day: '3 ngày', bonus: '+200' },
+                                { day: '7 ngày', bonus: '+300' },
                                 { day: '14 ngày', bonus: '+500' },
                                 { day: '21 ngày', bonus: '+500' },
                                 { day: '30 ngày', bonus: '+1000' }
