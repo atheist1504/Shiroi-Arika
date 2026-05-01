@@ -104,18 +104,20 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Rà soát và khôi phục toàn bộ các Server Action quan trọng, đảm bảo quy trình quản trị (`publishChapterAction`, `saveChapterDataAction`) hoạt động trơn tru. 🛠️✅
 - [x] **Production Readiness**: Xác nhận hệ thống đã sẵn sàng cho ngày khai trương 01/05 với hiệu năng cao nhất và bảo mật tuyệt đối. 💮🚀
 
-### 🛡️ Bảo Mật Tối Thượng & XP Atomic (v50 - Security & Reward Hardening) 🛡️⚡💎🥇
-- [x] **Atomic Reward System (Race Condition Shield)**:
-    - Chuyển đổi toàn bộ logic cộng XP (Bình luận, Báo cáo lỗi, Nhiệm vụ) sang cơ chế **Atomic thông qua Postgres RPC (`rpc_record_xp_log`, `rpc_claim_mission_reward`)**.
-    - Loại bỏ hoàn toàn rủi ro người dùng "spam" nhấn nút để nhận thưởng nhiều lần (Race Condition). 🛡️🚀
-- [x] **Secure Session Management**:
-    - Nâng cấp `logoutAction`: Sử dụng `maxAge: 0` để ép buộc trình duyệt xóa sạch session cookie, khắc phục lỗi session "ma" trên một số thiết bị. 🍪🔐
-    - **Auth Cache & Auto-healing**: Tích hợp `React cache()` vào `getAuthenticatedUser` để giảm tải DB (chỉ query 1 lần/request) và tự động cập nhật session nếu phát hiện quyền hạn (Role) bị thay đổi. 🔄⚡
-- [x] **Hardcode Cleanup & Ownership Protection**:
-    - Loại bỏ toàn bộ username Admin (`atheist1504`) bị hardcode trong code. Chuyển sang sử dụng biến môi trường `OWNER_USERNAME` để linh hoạt và bảo mật hơn. 🕵️‍♂️🛡️
-    - Tăng cường bảo vệ tài khoản "Boss" khỏi các lệnh quản trị hạ cấp chức vụ.
-- [x] **Reward Balancing**: Điều chỉnh XP thưởng báo cáo lỗi từ 500 XP xuống 100 XP để giữ cân bằng hệ thống (Platform Balance). Cập nhật đồng bộ cả Backend và UI hướng dẫn. 📉💎
 - [x] **Double XP Bugfix**: Khắc phục lỗi cộng điểm 2 lần khi duyệt gợi ý danh hiệu do xung đột giữa logic Server Action và Trigger Database. 🛠️✅
+
+### 🛡️ RLS Security Hardening & Title Logic (v51-52 - Final Grand Opening Prep) 🛡️⚡💎🥇
+- [x] **Full RLS Migration (v51)**:
+    - Hoàn tất di chuyển toàn bộ các truy vấn trực tiếp từ Client (`Profile`, `History`, `Bookmarks`) sang **Server Actions** an toàn.
+    - Khắc phục triệt để lỗi RLS chặn dữ liệu đối với người dùng sử dụng session cookie (vốn không có `auth.uid()` trong Supabase). 🛡️🔐
+    - Triển khai `getUserStatsAction`, `getUserXpLogsAction`, và `getUserHistoryAction` để khôi phục hiển thị thống kê cá nhân. 📊
+- [x] **Title Display & UX Overhaul (v52)**:
+    - **Legendary Badge Fix**: Sửa lỗi danh hiệu đặc biệt (như Á Quân Thử Nghiệm) bị ẩn trên trang cá nhân do kiểm tra level sai lệch. Hiện tại, danh hiệu đã chọn sẽ được ưu tiên hiển thị tuyệt đối. 🏆✨
+    - **Admin Title Management**: Tối ưu hóa trình quản lý danh hiệu, sắp xếp theo thứ tự **Tăng dần (ASC)** để Admin dễ dàng theo dõi và bổ sung chuỗi level (fix lỗi "nhảy vọt" từ lv 300 lên 100k). 🛠️📈
+    - **User Selection UX**: Giữ nguyên sắp xếp **Giảm dần (DESC)** trong danh sách chọn của người dùng để ưu tiên các thành tựu cao nhất lên đầu. 🥇
+- [x] **Deployment & Synchronization**: 
+    - Đồng bộ hóa thành công toàn bộ code lên GitHub.
+    - Xác nhận tính nhất quán giữa dữ liệu LocalStorage và Database cho lịch sử đọc truyện. 🔄🛡️
 
 ---
 
@@ -148,4 +150,4 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 - [x] **Lazy Migration Test**: Mật khẩu cũ tự động nâng cấp sang SHA-256 khi login. ✅
 
 ---
-*Cập nhật lần cuối: 16:25 - 28/04/2026 (Grand Opening Optimization - v49.0)*
+*Cập nhật lần cuối: 17:50 - 01/05/2026 (Grand Opening Readiness - v52.0)*
