@@ -2040,7 +2040,7 @@ export async function handleTitleSuggestionAction(id, status) {
     if (status === 'approved') {
         const userId = suggestion.user_id;
         const currentXp = suggestion.shiroi_users?.xp || 0;
-        const rewardXp = 500;
+        const rewardXp = XP_REWARDS.SUGGEST_TITLE;
 
         // 1. Cập nhật XP 🛡️
         await supabaseAdmin
@@ -2059,7 +2059,7 @@ export async function handleTitleSuggestionAction(id, status) {
             }]);
 
         // 3. Gửi thông báo cho người dùng 🔔
-        await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +500 XP thưởng! 🍀`);
+        await createInAppNotification(userId, "Chúc mừng! Gợi ý danh hiệu đã được duyệt 🏆", `Danh hiệu "${suggestion.title_name}" của bạn đã được Admin chấp thuận. Bạn nhận được +${rewardXp} XP thưởng! 🍀`);
 
         // 🚀 4. TỰ ĐỘNG THÊM VÀO DANH SÁCH CHÍNH THỨC ✨
         // Tìm cấp độ cao nhất hiện tại

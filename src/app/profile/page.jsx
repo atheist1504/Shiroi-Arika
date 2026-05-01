@@ -936,7 +936,7 @@ function ProfileContent() {
                             { label: 'Đọc chương', xp: '+20', icon: '📖', detail: 'Mỗi chương truyện' },
                             { label: 'Bình luận', xp: '+5~10', icon: '💬', detail: 'Tăng tương tác' },
                             { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯', detail: 'Kho thành tích' },
-                            { label: 'Gợi ý danh phẩm', xp: '+500', icon: '💡', detail: 'Khi Admin duyệt' },
+                            { label: 'Gợi ý danh phẩm', xp: '+200', icon: '💡', detail: 'Khi Admin duyệt' },
                             { label: 'Báo cáo lỗi', xp: '+500', icon: '🛡️', detail: 'Khi được xác nhận' },
                             { label: 'Bốc quà', xp: 'May rủi', icon: '🎁', detail: 'Vận khí mỗi ngày' }
                         ].map((item, idx) => (

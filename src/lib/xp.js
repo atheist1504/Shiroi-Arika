@@ -7,6 +7,7 @@ export const XP_REWARDS = {
   SUBSEQUENT_COMMENT: 5, // Thưởng 5 XP cho các bình luận tiếp theo
   MAX_DAILY_COMMENT_XP: 100, // Giới hạn 100 XP từ bình luận mỗi ngày
   COMMENT_COOLDOWN: 30000,   // 30 giây chờ giữa các lần nhận XP bình luận
+  SUGGEST_TITLE: 200,        // Thưởng 200 XP khi gợi ý danh phẩm được duyệt
 };
 
 export const STREAK_BONUSES = {
