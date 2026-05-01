@@ -94,6 +94,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   }, [allChapters, chapterSearchTerm]);
   // 🔄 ĐỒNG BỘ THEME & CHẾ ĐỘ ĐỌC VĨNH VIỄN (CHỈ TRONG READER) 🍀
   useEffect(() => {
+    setMounted(true);
     const savedTheme = localStorage.getItem('shiroi_reader_theme');
     const savedMode = localStorage.getItem('shiroi_reading_mode');
     if (savedMode) setReadingModeState(savedMode);
@@ -449,8 +450,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     }
   };
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+
 
   const jsonLd = { "@context": "https://schema.org", "@type": "Chapter", "name": `Chương ${chapter?.chapter_number} - ${manga?.title}`, "headline": `${manga?.title} - Chương ${chapter?.chapter_number}`, "url": `https://shiroi-arika.vercel.app/read/${chapterId}`, "isPartOf": { "@type": "BookSeries", "name": manga?.title, "url": `https://shiroi-arika.vercel.app/manga/${manga?.id}` } };
 
