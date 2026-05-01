@@ -26,27 +26,26 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
   const [isAscending, setIsAscending] = useState(false); // Mặc định: Mới nhất lên đầu (Descending) 🍀
 
   useEffect(() => {
-    // ĐỒNG BỘ SESSION CHO QUẢN TRỊ VIÊN 🍀
-    const checkSession = () => {
-      const storedUser = localStorage.getItem('shiroi_user');
-      if (storedUser) setUser(JSON.parse(storedUser));
-    };
-    checkSession();
-    window.addEventListener('storage', checkSession);
+    const storedUser = localStorage.getItem('shiroi_user');
+    const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+    if (parsedUser) setUser(parsedUser);
 
-    // Luôn bóc tách dữ liệu mới nhất từ server để tránh cache ảnh cũ 🍀
     fetchMangaDetails();
-    loadReadHistory(user?.id);
+    loadReadHistory(parsedUser?.id);
     checkFollowStatus();
 
+    const checkSession = () => {
+      const updatedUser = localStorage.getItem('shiroi_user');
+      if (updatedUser) setUser(JSON.parse(updatedUser));
+    };
+    window.addEventListener('storage', checkSession);
     return () => window.removeEventListener('storage', checkSession);
-  }, [mangaId, user?.id]);
+  }, [mangaId]); // Bỏ user?.id khỏi deps để tránh loop, xử lý trực tiếp từ Local 🍀
 
   const loadReadHistory = async (userId = null) => {
     let read = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
+    console.log(`🔍 [History] Đang tải lịch sử cho User: ${userId || 'Guest'}. Local hiện tại:`, read.length);
     
-    // ⚔️ ĐỒNG BỘ TỪ DATABASE NẾU ĐÃ ĐĂNG NHẬP 🍀
-    // Nếu có User, chúng ta CHỈ TIN vào Database để đảm bảo đồng bộ với Nhiệm vụ & XP
     if (userId) {
       try {
         const { loadMangaReadHistoryAction } = await import('@/lib/actions');
