@@ -1304,15 +1304,15 @@ export async function updateReportStatusAction(reportId, status) {
     // 🔔 Thông báo phản hồi & Cộng điểm thưởng 🍀
     try {
         if (report && report.user_id) {
-            // 💎 THƯỞNG 500 XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
+            // 💎 THƯỞNG XP NẾU BÁO CÁO CHÍNH XÁC (FIXED) 🛡️
             if (status === 'fixed' && report.status !== 'fixed') {
-                await recordXpLogAction(500, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
+                await recordXpLogAction(XP_REWARDS.REPORT_BUG, 'mission', `Báo cáo lỗi chính xác: ${report.description?.substring(0, 30)}...`, report.user_id);
                 
                 // Thông báo thưởng riêng cho User
                 await createInAppNotification(
                     report.user_id, 
                     "Phần thưởng báo cáo lỗi! 💎", 
-                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +500 XP thưởng! 🍀`,
+                    `Báo cáo của bạn đã được xác nhận chính xác. Bạn nhận được +${XP_REWARDS.REPORT_BUG} XP thưởng! 🍀`,
                     'system'
                 );
             }
@@ -2036,7 +2036,7 @@ export async function handleTitleSuggestionAction(id, status) {
 
     if (updateError) throw updateError;
 
-    // 💎 NẾU CHẤP THUẬN -> THƯỞNG 500 XP CHO NGƯỜI GỢI Ý 🎁
+    // 💎 NẾU CHẤP THUẬN -> THƯỞNG 200 XP CHO NGƯỜI GỢI Ý 🎁
     if (status === 'approved') {
         const userId = suggestion.user_id;
         const currentXp = suggestion.shiroi_users?.xp || 0;

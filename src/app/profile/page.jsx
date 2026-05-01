@@ -937,7 +937,7 @@ function ProfileContent() {
                             { label: 'Bình luận', xp: '+5~10', icon: '💬', detail: 'Tăng tương tác' },
                             { label: 'Nhiệm vụ', xp: 'Vô vàn', icon: '🎯', detail: 'Kho thành tích' },
                             { label: 'Gợi ý danh phẩm', xp: '+200', icon: '💡', detail: 'Khi Admin duyệt' },
-                            { label: 'Báo cáo lỗi', xp: '+500', icon: '🛡️', detail: 'Khi được xác nhận' },
+                            { label: 'Báo cáo lỗi', xp: '+100', icon: '🛡️', detail: 'Khi được xác nhận' },
                             { label: 'Bốc quà', xp: 'May rủi', icon: '🎁', detail: 'Vận khí mỗi ngày' }
                         ].map((item, idx) => (
                             <div key={idx} className="p-6 bg-black/20 border border-white/5 rounded-[32px] flex flex-col items-center text-center gap-1 group hover:border-[#4caf50]/30 transition-all">
