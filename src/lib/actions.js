@@ -2620,20 +2620,26 @@ export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
  */
 export async function getInitialProfileDataAction() {
     try {
-        const user = await getAuthenticatedUser();
-        if (!user) return { success: false, error: "Chưa đăng nhập" };
-        const userId = user.id;
+        const client = supabaseAdmin;
+        const sessionData = cookies().get('shiroi_session');
+        if (!sessionData) return { success: false, error: "Chưa đăng nhập" };
 
-        // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP (Sử dụng allSettled để tránh 1 cái chết cả lũ) 🚀
+        let sessionUser = JSON.parse(sessionData.value);
+        if (!sessionUser.id) return { success: false, error: "Phiên đăng nhập không hợp lệ" };
+        const userId = sessionUser.id;
+
+        // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP 🚀
         const results = await Promise.allSettled([
             getPublicUserStatsAction(userId),
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
             getUserNotificationsAction(),
             getOfficialTitlesAction(),
-            (user.role === 'admin' || user.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
-            (user.role === 'admin' || user.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
-            fetchUserMissionProgressAction()
+            (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
+            (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
+            fetchUserMissionProgressAction(),
+            // 🛡️ Lấy thông tin User mới nhất từ DB để đảm bảo XP/Level chuẩn 🍀
+            client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single()
         ]);
 
         // Trích xuất kết quả an toàn 🛡️
@@ -2650,10 +2656,12 @@ export async function getInitialProfileDataAction() {
         const personnel = getVal(5, { personnel: [] });
         const titleSuggestions = getVal(6, { suggestions: [] });
         const missionProgress = (results[7].status === 'fulfilled') ? results[7].value : [];
+        const dbUser = (results[8].status === 'fulfilled' && !results[8].value.error) ? results[8].value.data : sessionUser;
 
         return {
             success: true,
             data: {
+                user: dbUser,
                 stats: stats,
                 xpLogs: xpLogs.logs || [],
                 hasMoreXp: (xpLogs.logs?.length === 20),

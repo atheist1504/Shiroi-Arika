@@ -154,16 +154,31 @@ function ProfileContent() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const res = await getMyFullProfileAction();
+        const { getInitialProfileDataAction } = await import('@/lib/actions');
+        const res = await getInitialProfileDataAction();
+
         if (res.success) {
-          const data = res.user;
+          const d = res.data;
+          const data = d.user;
+          
           setUser(data);
           setDisplayName(data.display_name || '');
           setBio(data.bio || '');
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           
-          loadAllData();
+          // Cập nhật stats và các dữ liệu khác 🚀
+          if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
+          setXpLogs(d.xpLogs);
+          setHasMoreXp(d.hasMoreXp);
+          setCheckInDates(d.checkInDates);
+          setTotalCheckIns(d.totalCheckIns);
+          setNotifications(d.notifications);
+          setDynamicTitles(d.dynamicTitles || TITLES);
+          setMissionProgress(d.missionProgress || []);
+          setTitleSuggestions(d.titleSuggestions || []);
+          setPersonnel(d.personnel || []);
+
           cleanupXpLogsAction();
 
            // 🔄 ĐỒNG BỘ LỊCH SỬ TỪ LOCAL LÊN DATABASE (CHỈ CHẠY 1 LẦN KHI MOUNT) 🍀
@@ -182,7 +197,14 @@ function ProfileContent() {
                       // 🧹 DỌN DẸP LOCALSTORAGE SAU KHI ĐỒNG BỘ THÀNH CÔNG 🍀
                       localStorage.removeItem('shiroi_history');
                       localStorage.removeItem('shiroi_read_chapters');
-                      loadAllData(); 
+                      
+                      // Tải lại dữ liệu sau khi đồng bộ để cập nhật Stats mới nhất ⚡
+                      const refreshRes = await getInitialProfileDataAction();
+                      if (refreshRes.success) {
+                          const rd = refreshRes.data;
+                          if (rd.stats) setStats({ total_mangas: rd.stats.total_mangas, total_chapters: rd.stats.total_chapters });
+                          setXpLogs(rd.xpLogs);
+                      }
                   }
               }
            };
@@ -203,7 +225,17 @@ function ProfileContent() {
                 setDisplayName(data.display_name || '');
                 setBio(data.bio || '');
                 setAvatarUrl(data.avatar_url || '');
-                loadAllData();
+                
+                // Cố gắng tải lại data ngầm nếu có session
+                getInitialProfileDataAction().then(res => {
+                   if (res.success) {
+                       const d = res.data;
+                       setStats({ total_mangas: d.stats?.total_mangas || 0, total_chapters: d.stats?.total_chapters || 0 });
+                       setXpLogs(d.xpLogs);
+                       setCheckInDates(d.checkInDates);
+                       setDynamicTitles(d.dynamicTitles || TITLES);
+                   }
+                });
                 cleanupNotificationsAction();
                 cleanupXpLogsAction();
             } else {
@@ -220,23 +252,27 @@ function ProfileContent() {
     checkSession();
   }, [router]);
 
-  // 🚀 TỐI ƯU: Lấy toàn bộ dữ liệu khởi tạo trong 1 request duy nhất ⚡
-  const loadAllData = async () => {
+  const refreshData = async () => {
+    try {
       const { getInitialProfileDataAction } = await import('@/lib/actions');
       const res = await getInitialProfileDataAction();
       if (res.success) {
-          const d = res.data;
-          if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
-          setXpLogs(d.xpLogs);
-          setHasMoreXp(d.hasMoreXp);
-          setCheckInDates(d.checkInDates);
-          setTotalCheckIns(d.totalCheckIns);
-          setNotifications(d.notifications);
-          setDynamicTitles(d.dynamicTitles || TITLES);
-          setMissionProgress(d.missionProgress || []);
-          setTitleSuggestions(d.titleSuggestions || []);
-          setPersonnel(d.personnel || []);
+        const d = res.data;
+        if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
+        setXpLogs(d.xpLogs);
+        setHasMoreXp(d.hasMoreXp);
+        setCheckInDates(d.checkInDates);
+        setTotalCheckIns(d.totalCheckIns);
+        setNotifications(d.notifications);
+        setDynamicTitles(d.dynamicTitles || TITLES);
+        setMissionProgress(d.missionProgress || []);
+        setTitleSuggestions(d.titleSuggestions || []);
+        setPersonnel(d.personnel || []);
+        if (d.user) setUser(d.user);
       }
+    } catch (err) {
+      console.error("❌ Lỗi refreshData:", err);
+    }
   };
 
   const handleLoadMoreXp = async () => {
@@ -437,7 +473,7 @@ function ProfileContent() {
   const handleDeleteOfficialTitle = async (id) => {
     if (!confirm("Bạn có chắc chắn muốn xóa danh hiệu này không? 🗑️")) return;
     const res = await deleteOfficialTitleAction(id);
-    if (res.success) loadAllData();
+    if (res.success) refreshData();
   };
 
   const handleCreateOfficialTitle = async (e) => {
@@ -448,7 +484,7 @@ function ProfileContent() {
     if (res.success) {
         setNewTitleName('');
         setNewTitleLv('');
-        loadAllData();
+        refreshData();
     } else {
         alert(`Lỗi: ${res.error}`);
     }
@@ -457,7 +493,7 @@ function ProfileContent() {
 
   const handleProcessSuggestion = async (id, status) => {
     const res = await handleTitleSuggestionAction(id, status);
-    if (res.success) loadAllData();
+    if (res.success) refreshData();
   };
 
   const handleEnableNotifications = async () => {
@@ -523,7 +559,7 @@ function ProfileContent() {
     if (!confirm('Xác nhận đổi chức vụ?')) return;
     const { updateUserRoleAction } = await import('@/lib/actions');
     const res = await updateUserRoleAction(targetUserId, newRole);
-    if (res.success) loadAllData();
+    if (res.success) refreshData();
   };
 
   const handleGiveXp = async (targetUserId) => {
@@ -540,7 +576,7 @@ function ProfileContent() {
     
     if (res.success) {
         alert(`Đã tặng ${amount} XP cho người dùng thành công! ✨`);
-        loadAllData(); // Để cập nhật LV nếu có hiện
+        refreshData(); // Để cập nhật LV nếu có hiện
     } else {
         alert(`Lỗi: ${res.error}`);
     }
