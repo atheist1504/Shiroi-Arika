@@ -2610,22 +2610,33 @@ export async function getInitialProfileDataAction() {
         if (!sessionData) return { success: false, error: "Chưa đăng nhập" };
 
         let sessionUser = JSON.parse(sessionData.value);
-        if (!sessionUser.id) return { success: false, error: "Phiên đăng nhập không hợp lệ" };
-        const userId = sessionUser.id;
+        if (!sessionUser.username) return { success: false, error: "Phiên đăng nhập không hợp lệ" };
+
+        // 🛡️ BƯỚC 1: Lấy ID chuẩn nhất từ DB dựa trên Username (Anchor) 🍀
+        const { data: dbUserRecord } = await client
+            .from('shiroi_users')
+            .select(SAFE_USER_FIELDS)
+            .ilike('username', sessionUser.username.trim())
+            .single();
+
+        if (!dbUserRecord) return { success: false, error: "Không tìm thấy dữ liệu người dùng" };
+        const userId = dbUserRecord.id;
 
         // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP 🚀
         const results = await Promise.allSettled([
-            // 🚀 TRUY VẤN TRỰC TIẾP ĐỂ ĐẢM BẢO CHÍNH XÁC 100% 💮
+            // 🚀 ĐẾM THEO ID (Chuẩn) 💮
             client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
             client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            // 🚀 ĐẾM THEO USERNAME (Dự phòng cho tài khoản cũ/mới bị lệch ID) 🛡️
+            client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('username', sessionUser.username),
+            
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
             getUserNotificationsAction(),
             getOfficialTitlesAction(),
-            (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
-            (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
-            fetchUserMissionProgressAction(),
-            client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single()
+            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
+            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
+            fetchUserMissionProgressAction()
         ]);
 
         // Trích xuất kết quả an toàn 🛡️
@@ -2634,24 +2645,26 @@ export async function getInitialProfileDataAction() {
             return (res.status === 'fulfilled' && res.value?.success !== false) ? (res.value?.data || res.value) : defaultVal;
         };
 
-        // 📊 Xử lý thống kê (Index 0 và 1)
-        const mCount = (results[0].status === 'fulfilled') ? (results[0].value.count || 0) : 0;
-        const cCount = (results[1].status === 'fulfilled') ? (results[1].value.count || 0) : 0;
+        // 📊 Xử lý thống kê (Ưu tiên con số lớn nhất giữa ID và Username)
+        const mCountById = (results[0].status === 'fulfilled') ? (results[0].value.count || 0) : 0;
+        const cCountById = (results[1].status === 'fulfilled') ? (results[1].value.count || 0) : 0;
+        const mCountByUsername = (results[2].status === 'fulfilled') ? (results[2].value.count || 0) : 0;
         
-        const xpLogs = getVal(2, { logs: [] });
-        const checkInData = getVal(3, { dates: [], totalCheckIns: 0 });
-        const notifications = getVal(4, { notifications: [] });
-        const dynamicTitles = getVal(5, { titles: [] });
-        const personnel = getVal(6, { personnel: [] });
-        const titleSuggestions = getVal(7, { suggestions: [] });
-        const missionProgress = (results[8].status === 'fulfilled') ? (results[8].value?.data || results[8].value) : [];
-        const dbUser = (results[9].status === 'fulfilled' && !results[9].value.error) ? results[9].value.data : sessionUser;
+        const finalMangaCount = Math.max(mCountById, mCountByUsername);
+        
+        const xpLogs = getVal(3, { logs: [] });
+        const checkInData = getVal(4, { dates: [], totalCheckIns: 0 });
+        const notifications = getVal(5, { notifications: [] });
+        const dynamicTitles = getVal(6, { titles: [] });
+        const personnel = getVal(7, { personnel: [] });
+        const titleSuggestions = getVal(8, { suggestions: [] });
+        const missionProgress = (results[9].status === 'fulfilled') ? (results[9].value?.data || results[9].value) : [];
 
         return {
             success: true,
             data: {
-                user: dbUser,
-                stats: { total_mangas: mCount, total_chapters: cCount },
+                user: dbUserRecord,
+                stats: { total_mangas: finalMangaCount, total_chapters: cCountById },
                 xpLogs: xpLogs.logs || [],
                 hasMoreXp: (xpLogs.logs?.length === 20),
                 checkInDates: checkInData.dates || [],
