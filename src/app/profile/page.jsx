@@ -167,8 +167,12 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           
-          // Cập nhật stats và các dữ liệu khác 🚀
-          if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
+          // 🚀 KHÔI PHỤC: Lấy stats độc lập để đảm bảo ổn định 100% như trước khi gộp 💮
+          const { getPublicUserStatsAction } = await import('@/lib/actions');
+          getPublicUserStatsAction(data.id).then(sRes => {
+              if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+          });
+
           setXpLogs(d.xpLogs);
           setHasMoreXp(d.hasMoreXp);
           setCheckInDates(d.checkInDates);
@@ -202,7 +206,10 @@ function ProfileContent() {
                       const refreshRes = await getInitialProfileDataAction();
                       if (refreshRes.success) {
                           const rd = refreshRes.data;
-                          if (rd.stats) setStats({ total_mangas: rd.stats.total_mangas, total_chapters: rd.stats.total_chapters });
+                          const { getPublicUserStatsAction } = await import('@/lib/actions');
+                          getPublicUserStatsAction(rd.user.id).then(sRes => {
+                              if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+                          });
                           setXpLogs(rd.xpLogs);
                       }
                   }
@@ -258,7 +265,13 @@ function ProfileContent() {
       const res = await getInitialProfileDataAction();
       if (res.success) {
         const d = res.data;
-        if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
+        if (d.user) {
+            setUser(d.user);
+            const { getPublicUserStatsAction } = await import('@/lib/actions');
+            getPublicUserStatsAction(d.user.id).then(sRes => {
+                if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+            });
+        }
         setXpLogs(d.xpLogs);
         setHasMoreXp(d.hasMoreXp);
         setCheckInDates(d.checkInDates);
