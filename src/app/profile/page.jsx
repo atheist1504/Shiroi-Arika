@@ -177,11 +177,18 @@ function ProfileContent() {
           setHasMoreXp(d.hasMoreXp);
           setCheckInDates(d.checkInDates || []);
           setTotalCheckIns(d.totalCheckIns || 0);
-          setNotifications(d.notifications || []);
           setDynamicTitles(d.dynamicTitles || TITLES);
-          setMissionProgress(d.missionProgress || []);
           setTitleSuggestions(d.titleSuggestions || []);
           setPersonnel(d.personnel || []);
+
+          // 🚀 TẢI NGẦM CÁC THÀNH PHẦN NẶNG ĐỂ TRÁNH TREO TRANG 💮
+          const { getUserNotificationsAction, fetchUserMissionProgressAction } = await import('@/lib/actions');
+          getUserNotificationsAction().then(nRes => {
+              if (nRes.success) setNotifications(nRes.notifications || []);
+          });
+          fetchUserMissionProgressAction().then(mRes => {
+              if (mRes.success) setMissionProgress(mRes.data || []);
+          });
 
           cleanupXpLogsAction();
 
@@ -277,9 +284,8 @@ function ProfileContent() {
         }
         setXpLogs(d.xpLogs || []);
         setHasMoreXp(d.hasMoreXp);
-        setCheckInDates(d.checkInDates);
-        setTotalCheckIns(d.totalCheckIns);
-        setNotifications(d.notifications);
+        setCheckInDates(d.checkInDates || []);
+        setTotalCheckIns(d.totalCheckIns || 0);
         setDynamicTitles(d.dynamicTitles || TITLES);
         setMissionProgress(d.missionProgress || []);
         setTitleSuggestions(d.titleSuggestions || []);

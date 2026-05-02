@@ -2661,15 +2661,13 @@ export async function getInitialProfileDataAction() {
         if (!dbUserRecord) return { success: false, error: "Không tìm thấy dữ liệu người dùng" };
         const userId = dbUserRecord.id;
 
-        // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP 🚀
+        // Chạy các truy vấn CỐT LÕI song song (Tối giản để tránh treo trang) 🚀
         const results = await Promise.allSettled([
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
-            getUserNotificationsAction(),
             getOfficialTitlesAction(),
             (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
-            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
-            fetchUserMissionProgressAction()
+            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] })
         ]);
 
         // Trích xuất kết quả an toàn 🛡️
@@ -2680,11 +2678,9 @@ export async function getInitialProfileDataAction() {
 
         const xpLogs = getVal(0, { logs: [] });
         const checkInData = getVal(1, { dates: [], totalCheckIns: 0 });
-        const notifications = getVal(2, { notifications: [] });
-        const dynamicTitles = getVal(3, { titles: [] });
-        const personnel = getVal(4, { personnel: [] });
-        const titleSuggestions = getVal(5, { suggestions: [] });
-        const missionProgress = (results[6].status === 'fulfilled') ? (results[6].value?.data || results[6].value) : [];
+        const dynamicTitles = getVal(2, { titles: [] });
+        const personnel = getVal(3, { personnel: [] });
+        const titleSuggestions = getVal(4, { suggestions: [] });
 
         return {
             success: true,
@@ -2694,11 +2690,9 @@ export async function getInitialProfileDataAction() {
                 hasMoreXp: (xpLogs.logs?.length === 20),
                 checkInDates: checkInData.dates || [],
                 totalCheckIns: checkInData.totalCheckIns || 0,
-                notifications: notifications.notifications || [],
                 dynamicTitles: dynamicTitles.titles || [],
                 personnel: personnel.personnel || [],
-                titleSuggestions: titleSuggestions.suggestions || [],
-                missionProgress: missionProgress || []
+                titleSuggestions: titleSuggestions.suggestions || []
             }
         };
     } catch (error) {
