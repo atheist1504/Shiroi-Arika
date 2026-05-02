@@ -1446,7 +1446,7 @@ export async function getUserCheckInDatesAction() {
             .eq('user_id', user.id)
             .eq('type', 'check_in');
 
-        return { success: true, dates, totalCheckIns: count || 0 };
+        return { success: true, data: { dates, totalCheckIns: count || 0 } };
     } catch (error) {
         console.error('❌ Lỗi getUserCheckInDatesAction:', error.message);
         return { success: false, error: error.message };
@@ -1638,7 +1638,7 @@ export async function getUserXpLogsAction(limit = 20, page = 0) {
         
         if (error) throw error;
 
-        return { success: true, logs: logs || [] };
+        return { success: true, data: { logs: logs || [] } };
     } catch (error) {
         console.error('❌ Lỗi getUserXpLogsAction:', error.message);
         return { success: false, error: error.message };
@@ -2234,7 +2234,7 @@ export async function getPersonnelListAction() {
       .order('role', { ascending: true });
       
     if (error) throw error;
-    return { success: true, users: data };
+    return { success: true, data: { users: data } };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -2358,10 +2358,10 @@ export async function getOfficialTitlesAction() {
       .order('lv', { ascending: false });
 
     if (error) throw error;
-    return { success: true, titles: data };
+    return { success: true, data: { titles: data } };
   } catch (error) {
     console.error("❌ Lỗi lấy danh sách danh hiệu:", error);
-    return { success: true, titles: [] };
+    return { success: true, data: { titles: [] } };
   }
 }
 
@@ -2407,7 +2407,7 @@ export async function getTitleSuggestionsAction() {
 
     if (error) throw error;
     
-    return { success: true, suggestions: data };
+    return { success: true, data: { suggestions: data } };
   } catch (error) {
     console.error("❌ Lỗi lấy gợi ý danh hiệu:", error);
     return { success: false, error: error.message };
@@ -2756,8 +2756,8 @@ export async function getInitialProfileDataAction() {
             getUserCheckInDatesAction(),
             getOfficialTitlesAction(),
             getPublicUserStatsAction(userId), // 📊 THÊM: Lấy stats ngay từ đầu
-            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
-            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] })
+            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getPersonnelListAction() : Promise.resolve({ success: true, data: { users: [] } }),
+            (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, data: { suggestions: [] } })
         ]);
 
         // Trích xuất kết quả an toàn 🛡️
@@ -2774,7 +2774,7 @@ export async function getInitialProfileDataAction() {
         const checkInData = getVal(1, { dates: [], totalCheckIns: 0 });
         const dynamicTitles = getVal(2, { titles: [] });
         const stats = getVal(3, { total_mangas: 0, total_chapters: 0 });
-        const personnel = getVal(4, { personnel: [] });
+        const personnel = getVal(4, { users: [] });
         const titleSuggestions = getVal(5, { suggestions: [] });
 
         console.log("🚀 [Profile Action] Sending consolidated payload for:", dbUserRecord.username, "| Stats:", stats);
@@ -2789,7 +2789,7 @@ export async function getInitialProfileDataAction() {
                 totalCheckIns: checkInData.totalCheckIns || 0,
                 dynamicTitles: dynamicTitles.titles || [],
                 stats: stats, // 📊 Trả về stats kèm theo
-                personnel: personnel.personnel || [],
+                personnel: personnel.users || [],
                 titleSuggestions: titleSuggestions.suggestions || []
             }
         };
