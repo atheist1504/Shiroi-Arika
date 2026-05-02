@@ -2677,6 +2677,8 @@ export async function getInitialProfileDataAction() {
         let sessionUser = JSON.parse(sessionData.value);
         if (!sessionUser.username) return { success: false, error: "Phiên đăng nhập không hợp lệ" };
 
+        // 🚀 TỐI ƯU CPU: Kiểm tra cache nhanh trong bộ nhớ (nếu có thể) hoặc giới hạn xử lý 🍀
+
         // 🛡️ BƯỚC 1: Lấy ID chuẩn nhất từ DB dựa trên Username (Anchor) 🍀
         const { data: dbUserRecord } = await client
             .from('shiroi_users')
