@@ -1521,14 +1521,21 @@ export async function getPublicUserStatsAction(userIdOrUsername) {
 
         console.log(`📊 [Stats Debug] User: ${userIdOrUsername} | ID: ${finalUserId} | Mangas: ${totalMangas} | Chapters: ${totalChapters}`);
 
-        // 🛡️ BƯỚC 3: Dự phòng theo Username nếu vẫn bằng 0 (Dành cho data cũ chưa map ID)
-        if (totalMangas === 0 && finalUsername) {
+        // 🛡️ BƯỚC 3: Dự phòng và Tổng hợp (Dành cho data cũ hoặc session lệch ID) 🚀
+        if (finalUsername) {
+            // Đếm bổ sung theo Username cho Manga
             const { data: hDataName } = await client.from('shiroi_history').select('id').eq('username', finalUsername).limit(500);
-            if (hDataName && hDataName.length > 0) totalMangas = hDataName.length;
-        }
-        if (totalChapters === 0 && finalUsername) {
+            if (hDataName && hDataName.length > totalMangas) {
+                console.log(`🔄 [Stats] Phát hiện dữ liệu Manga theo Username (${hDataName.length}) nhiều hơn ID (${totalMangas}) cho ${finalUsername}`);
+                totalMangas = hDataName.length;
+            }
+
+            // Đếm bổ sung theo Username cho Chapters
             const { data: rDataName } = await client.from('shiroi_read_chapters').select('id').eq('username', finalUsername).limit(5000);
-            if (rDataName && rDataName.length > 0) totalChapters = rDataName.length;
+            if (rDataName && rDataName.length > totalChapters) {
+                console.log(`🔄 [Stats] Phát hiện dữ liệu Chapters theo Username (${rDataName.length}) nhiều hơn ID (${totalChapters}) cho ${finalUsername}`);
+                totalChapters = rDataName.length;
+            }
         }
 
         console.log(`📊 [Stats] Kết quả cuối cùng cho ${userIdOrUsername}: Mangas=${totalMangas}, Chapters=${totalChapters}`);
