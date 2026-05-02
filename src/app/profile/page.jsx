@@ -173,11 +173,11 @@ function ProfileContent() {
               if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
           });
 
-          setXpLogs(d.xpLogs);
+          setXpLogs(d.xpLogs || []);
           setHasMoreXp(d.hasMoreXp);
-          setCheckInDates(d.checkInDates);
-          setTotalCheckIns(d.totalCheckIns);
-          setNotifications(d.notifications);
+          setCheckInDates(d.checkInDates || []);
+          setTotalCheckIns(d.totalCheckIns || 0);
+          setNotifications(d.notifications || []);
           setDynamicTitles(d.dynamicTitles || TITLES);
           setMissionProgress(d.missionProgress || []);
           setTitleSuggestions(d.titleSuggestions || []);
@@ -237,10 +237,14 @@ function ProfileContent() {
                 getInitialProfileDataAction().then(res => {
                    if (res.success) {
                        const d = res.data;
-                       setStats({ total_mangas: d.stats?.total_mangas || 0, total_chapters: d.stats?.total_chapters || 0 });
-                       setXpLogs(d.xpLogs);
-                       setCheckInDates(d.checkInDates);
+                       setXpLogs(d.xpLogs || []);
+                       setCheckInDates(d.checkInDates || []);
                        setDynamicTitles(d.dynamicTitles || TITLES);
+                       
+                       // Lấy stats riêng lẻ
+                       getPublicUserStatsAction(data.id).then(sRes => {
+                           if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+                       });
                    }
                 });
                 cleanupNotificationsAction();
@@ -267,12 +271,11 @@ function ProfileContent() {
         const d = res.data;
         if (d.user) {
             setUser(d.user);
-            const { getPublicUserStatsAction } = await import('@/lib/actions');
             getPublicUserStatsAction(d.user.id).then(sRes => {
                 if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
             });
         }
-        setXpLogs(d.xpLogs);
+        setXpLogs(d.xpLogs || []);
         setHasMoreXp(d.hasMoreXp);
         setCheckInDates(d.checkInDates);
         setTotalCheckIns(d.totalCheckIns);
