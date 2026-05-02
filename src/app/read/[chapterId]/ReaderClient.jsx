@@ -214,10 +214,9 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   }, [chapterId, chapter?.manga_id]);
 
   const giveReadXP = useCallback(async (isInitial = false) => {
-    const storedUser = localStorage.getItem('shiroi_user');
-    if (!chapterId) return;
+    if (!chapterId || !chapter?.manga_id) return;
 
-    // 1. LUÔN ĐÁNH DẤU "ĐÃ XEM" LOCAL TRƯỚC ĐỂ UI PHẢN HỒI TỨC THÌ ⚡
+    // 1. LUÔN ĐÁNH DẤU "ĐÃ XEM" LOCAL ⚡
     const readKey = 'shiroi_read_chapters';
     const currentRead = JSON.parse(localStorage.getItem(readKey) || '[]');
     if (!currentRead.includes(chapterId)) {
@@ -227,33 +226,38 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         console.log("✅ [Local] Đã đánh dấu chương đã xem.");
     }
 
-    // Nếu chưa đăng nhập thì dừng ở đây (không gọi Action)
-    if (!storedUser) return;
-    
-    // 2. GỌI SERVER ACTION ĐỂ ĐỒNG BỘ DB & NHẬN XP 💎
-    const sessionKey = `xp_read_${chapterId}`;
+    // 2. GỌI SERVER ACTION ĐỂ NHẬN XP & ĐỒNG BỘ DB 💎
+    const sessionKey = `xp_done_${chapterId}`;
+    if (sessionStorage.getItem(sessionKey)) return; // Chống spam trong 1 lần đọc
+
     try {
-      console.log(`🎯 [Reader] Đang đồng bộ DB cho chương: ${chapterId}`);
+      const storedUser = localStorage.getItem('shiroi_user');
+      if (!storedUser) {
+          console.warn("⚠️ [Reader] Chưa đăng nhập, bỏ qua cộng XP.");
+          return;
+      }
+
+      console.log(`🎯 [Reader] Gửi yêu cầu nhận XP (Initial: ${isInitial}) cho chương: ${chapterId}`);
       const { addReadXPAction } = await import('@/lib/actions');
       const res = await addReadXPAction(chapter.manga_id, chapterId, isInitial);
       
+      console.log("📥 [Reader] Kết quả từ Server:", res);
+
       if (res.success) {
-        // 🛡️ Cập nhật thông tin User nếu có (Chỉ khi có XP hoặc thay đổi)
+        sessionStorage.setItem(sessionKey, 'true');
         if (res.user) {
             localStorage.setItem('shiroi_user', JSON.stringify(res.user));
+            window.dispatchEvent(new Event('storage'));
         }
-
-        // 🎊 CHỈ HIỂN THỊ TOAST XP NẾU LÀ LẦN ĐẦU VÀ KHÔNG PHẢI INITIAL 🍀
-        if (!res.alreadyRewarded && !res.isInitial && !sessionStorage.getItem(sessionKey)) {
+        if (res.justRewarded) {
             setXpToast(true);
-            sessionStorage.setItem(sessionKey, 'true');
             setTimeout(() => setXpToast(false), 4000);
         }
-        
-        window.dispatchEvent(new Event('storage'));
+      } else {
+        console.error("❌ [Reader] Server từ chối cộng XP:", res.error);
       }
     } catch (err) { 
-      console.error("Lỗi đồng bộ DB:", err); 
+      console.error("❌ [Reader] Lỗi kết nối Server Action:", err); 
     }
   }, [chapterId, chapter?.manga_id]);
 
