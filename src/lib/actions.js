@@ -154,9 +154,9 @@ export async function signupAction(userData) {
 }
 
 /**
- * 🔐 HELPER: Lấy thông tin người dùng đang đăng nhập (Auto-healing) 🛡️
+ * 🔐 HELPER: Lấy thông tin người dùng đang đăng nhập (Ổn định 🛡️)
  */
-export const getAuthenticatedUser = cache(async () => {
+export const getAuthenticatedUser = async () => {
   const sessionData = cookies().get('shiroi_session');
   if (!sessionData) return null;
 
@@ -165,45 +165,28 @@ export const getAuthenticatedUser = cache(async () => {
     
     // 🔍 CƠ CHẾ TỰ KHÔI PHỤC (AUTO-HEALING) 🩹
     if (!user.id && user.username?.toLowerCase() === OWNER_USERNAME) {
-      console.log(`⚠️ [Auth] Phát hiện session thiếu ID cho Admin ${user.username}, đang khôi phục...`);
       const client = getDbClient();
-      const { data, error } = await client
-        .from('shiroi_users')
-        .select('id, username, role')
-        .eq('username', user.username)  
-        .single();
-      
-      if (!error && data) {
+      const { data } = await client.from('shiroi_users').select('id, username, role').eq('username', user.username).single();
+      if (data) {
         user.id = data.id;
         user.role = data.role || 'user';
       }
     }
 
-    // 🔍 LUÔN CẬP NHẬT ROLE TỪ DB: Đảm bảo phân quyền chính xác nhất (Tránh session stale) 🩹
+    // 🔍 LUÔN CẬP NHẬT ROLE TỪ DB: Đảm bảo phân quyền chính xác nhất
     if (user.id) {
         const client = getDbClient();
         const { data } = await client.from('shiroi_users').select('role').eq('id', user.id).single();
-        
         if (data && data.role !== user.role) {
-            console.log(`🔄 [Auth] Cập nhật quyền mới cho ${user.username}: ${data.role}`);
             user.role = data.role;
-            // Cập nhật Cookie để UI và các request sau không bị stale 🍪
-            cookies().set('shiroi_session', JSON.stringify(user), { 
-                httpOnly: true, 
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60 * 24 * 7,
-                path: '/',
-                sameSite: 'lax'
-            });
         }
     }
 
     return user.id ? user : null;
   } catch (err) {
-    console.error("❌ Lỗi giải mã Session:", err.message);
     return null;
   }
-});
+};
 
 /**
  * 👤 SERVER ACTION: Lấy toàn bộ thông tin hồ sơ của bản thân (Bypass RLS) 🛡️
@@ -767,105 +750,61 @@ export async function recordXpLogAction(amount, type, reason = null, targetUserI
 }
 
 /**
- * 💎 SERVER ACTION: Cộng XP khi đọc chương (Bảo mật 🛡️)
+ * 💎 SERVER ACTION: Cộng XP khi đọc chương (Siêu Tối Ưu V2 🚀)
+ * Đã hợp nhất 9+ truy vấn DB thành 1 lệnh RPC duy nhất để tiết kiệm 4h CPU.
  */
 export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
   try {
     const user = await getAuthenticatedUser();
-    
-    if (!user || !user.id) {
-       throw new Error("Phiên làm việc lỗi (Thiếu ID). Vui lòng đăng xuất và đăng nhập lại! 🛡️");
-    }
+    if (!user || !user.id) throw new Error("Chưa đăng nhập! 🛡️");
 
-    const userId = user.id;
     const client = getDbClient();
 
-    // 1. LUÔN GHI NHẬN ĐÃ ĐỌC CHƯƠNG (Upsert) ✅
-    const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
-      user_id: userId, 
-      username: user.username, // 🛡️ Bổ sung để khớp với NOT NULL constraint của DB
-      chapter_id: chapterId, 
-      manga_id: mangaId, 
-      read_at: new Date().toISOString() 
-    }, { onConflict: 'user_id,chapter_id' });
+    // 🚀 GỌI RPC TỐI ƯU: Xử lý toàn bộ logic (Read, XP, Mission Check, Notification Cleanup) trong 1 Transaction
+    const { data, error } = await client.rpc('rpc_handle_read_chapter_optimized', {
+        p_user_id: user.id,
+        p_username: user.username,
+        p_manga_id: mangaId,
+        p_chapter_id: chapterId,
+        p_is_initial: isInitial
+    });
 
-    if (readError) throw readError;
+    if (error) throw error;
+    if (!data.success) throw new Error(data.error);
 
-    // 2. Kiểm tra xem đã nhận thưởng XP cho chương này chưa
-    const { data: alreadyRewarded } = await client
-      .from('shiroi_xp_logs')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('type', 'read')
-      .eq('reason', chapterId) 
-      .maybeSingle();
-
-    let alreadyRewardedStatus = !!alreadyRewarded;
-
-    // 3. Ghi log và nhận XP 💎 (Chỉ khi !isInitial và chưa nhận bao giờ)
-    let justRewarded = false;
-    if (!isInitial && !alreadyRewardedStatus) {
-        const resLog = await recordXpLogAction(20, 'read', chapterId);
-        if (resLog.success) {
-            justRewarded = true;
-        } else {
-            console.warn("⚠️ [addReadXP] Không thể cộng XP:", resLog.error);
-        }
+    // 🔔 Gửi thông báo Hoàn thành nhiệm vụ nếu RPC báo cáo (Xử lý ở Server Action để linh hoạt UI)
+    if (data.missionCompletedKey) {
+        const mTitle = data.missionCompletedKey === "daily_read_1" ? "Độc hành giả I" : "Độc hành giả II";
+        await createInAppNotification(user.id, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: data.missionCompletedKey });
     }
 
-    // 4. Lấy thông tin User đã cập nhật (Bao gồm XP mới nếu vừa được cộng) 📈
-    const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
+    // 🏆 Thông báo Lên cấp nếu có
+    if (data.levelUp) {
+        await createInAppNotification(user.id, `Thăng cấp rồi! ✨`, `Chúc mừng bạn đã đạt cấp ${data.newLevel}! Khí thế tu hành thật đáng nể. 🍀`, 'system', { level: data.newLevel });
+    }
 
-    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Daily Missions) 🏆
-    try {
-        const { count: dailyRead } = await client
-            .from('shiroi_read_chapters')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', userId)
-            .gte('read_at', getStartOfVNDay().toISOString());
-        
-        if (dailyRead === 1 || dailyRead === 3) {
-            const mKey = dailyRead === 1 ? "daily_read_1" : "daily_read_3";
-            const mTitle = dailyRead === 1 ? "Độc hành giả I" : "Độc hành giả II";
+    // ⚡ Lấy lại thông tin user tinh gọn để trả về Client
+    const updatedUser = {
+        ...user,
+        xp: data.totalXp,
+        level: data.newLevel,
+        role: data.role || user.role
+    };
 
-            const { data: alreadyClaimed } = await client
-                .from('shiroi_mission_claims')
-                .select('id')
-                .eq('user_id', userId)
-                .eq('mission_key', mKey)
-                .gte('claimed_at', getStartOfVNDay().toISOString())
-                .maybeSingle();
-
-            if (!alreadyClaimed) {
-                await createInAppNotification(userId, `Hoàn thành nhiệm vụ! 🎯`, `Bạn đã xong "${mTitle}". Hãy mở Kho thành tựu để nhận thưởng! 🍀`, 'system', { missionKey: mKey });
-            }
-        }
-    } catch (err) { console.warn("Lỗi check mission:", err); }
-
-    // 6. Tự động đánh dấu đã đọc cho thông báo chương mới 📚
-    try {
-        await client
-            .from('shiroi_notifications')
-            .update({ is_read: true })
-            .eq('user_id', userId)
-            .eq('type', 'chapter_update')
-            .eq('is_read', false)
-            .filter('data->>mangaId', 'eq', mangaId);
-    } catch (e) {}
-
-    // 7. Refresh cache 🚀
-    revalidatePath('/profile');
-    revalidatePath(`/user/${userId}`);
+    // Chỉ revalidate khi thực sự cần thiết (tiết kiệm CPU rendering)
+    if (data.xpGained > 0 || data.missionCompletedKey) {
+        revalidatePath('/profile');
+    }
 
     return { 
         success: true, 
-        alreadyRewarded: alreadyRewardedStatus || !justRewarded, 
-        justRewarded,
+        alreadyRewarded: data.xpGained === 0, 
+        justRewarded: data.xpGained > 0,
         isInitial, 
         user: updatedUser 
     };
   } catch (err) {
-    console.error("Lỗi addReadXPAction:", err);
+    console.error("❌ Lỗi addReadXPAction (Optimized):", err.message);
     return { success: false, error: err.message };
   }
 }
@@ -2767,11 +2706,14 @@ export async function getInitialProfileDataAction() {
         // Trích xuất kết quả an toàn 🛡️
         const getVal = (idx, defaultVal) => {
             const res = results[idx];
-            if (res.status !== 'fulfilled' || res.value?.success === false) return defaultVal;
+            if (res.status !== 'fulfilled' || res.value?.success === false) {
+                if (res.status === 'rejected') console.error(`❌ [Profile Data] Task ${idx} rejected:`, res.reason);
+                return defaultVal;
+            }
             
-            // Ưu tiên bóc tách từ key 'data', nếu không có thì tìm các key đặc thù, cuối cùng là trả về chính nó
             const val = res.value;
-            return val.data || val;
+            // Nếu có key 'data' thì lấy, nếu không lấy cả object (cho các action trả về kiểu { success, history, ... })
+            return val.data !== undefined ? val.data : val;
         };
 
         const xpLogs = getVal(0, { logs: [] });
@@ -2780,8 +2722,6 @@ export async function getInitialProfileDataAction() {
         const stats = getVal(3, { total_mangas: 0, total_chapters: 0 });
         const personnel = getVal(4, { users: [] });
         const titleSuggestions = getVal(5, { suggestions: [] });
-
-        console.log("🚀 [Profile Action] Sending consolidated payload for:", dbUserRecord.username, "| Stats:", stats);
 
         return {
             success: true,
@@ -2793,8 +2733,8 @@ export async function getInitialProfileDataAction() {
                 totalCheckIns: checkInData.totalCheckIns || 0,
                 dynamicTitles: dynamicTitles.titles || [],
                 stats: stats,
-                personnel: personnel.users || [],
-                titleSuggestions: titleSuggestions.suggestions || []
+                personnel: personnel.users || personnel.data?.users || [],
+                titleSuggestions: titleSuggestions.suggestions || titleSuggestions.data?.suggestions || []
             }
         };
     } catch (error) {
