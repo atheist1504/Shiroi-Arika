@@ -1464,12 +1464,6 @@ export async function getPublicUserStatsAction(userIdOrUsername) {
 
         if (!userIdOrUsername) return { success: false, error: "Thiếu thông tin người dùng" };
 
-        // 🕵️‍♂️ DIAGNOSTIC: Kiểm tra dữ liệu thực tế trong bảng 🔍
-        const { data: testHistory } = await client.from('shiroi_history').select('user_id, username').ilike('username', 'ShiroiArika').limit(5);
-        if (testHistory && testHistory.length > 0) {
-            throw new Error("DIAGNOSTIC_DATA:" + JSON.stringify(testHistory));
-        }
-        
         // 🛡️ BƯỚC 1: Xác định danh tính (ID hoặc Username) 🍀
         if (userIdOrUsername.length === 36) {
             finalUserId = userIdOrUsername;
