@@ -431,10 +431,6 @@ function ProfileContent() {
     setSuggesting(false);
   };
 
-
-    if (res.success) loadAllData();
-  };
-
   const handleDeleteOfficialTitle = async (id) => {
     if (!confirm("Bạn có chắc chắn muốn xóa danh hiệu này không? 🗑️")) return;
     const res = await deleteOfficialTitleAction(id);
@@ -524,7 +520,7 @@ function ProfileContent() {
     if (!confirm('Xác nhận đổi chức vụ?')) return;
     const { updateUserRoleAction } = await import('@/lib/actions');
     const res = await updateUserRoleAction(targetUserId, newRole);
-    if (res.success) fetchPersonnel();
+    if (res.success) loadAllData();
   };
 
   const handleGiveXp = async (targetUserId) => {
@@ -541,7 +537,7 @@ function ProfileContent() {
     
     if (res.success) {
         alert(`Đã tặng ${amount} XP cho người dùng thành công! ✨`);
-        fetchPersonnel(); // Để cập nhật LV nếu có hiện
+        loadAllData(); // Để cập nhật LV nếu có hiện
     } else {
         alert(`Lỗi: ${res.error}`);
     }
