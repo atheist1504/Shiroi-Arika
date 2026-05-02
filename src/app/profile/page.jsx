@@ -163,10 +163,7 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           
-          fetchStats();
-          fetchXpLogs();
-          fetchNotifications();
-          fetchDynamicTitles();
+          loadAllData();
           cleanupXpLogsAction();
 
            // 🔄 ĐỒNG BỘ LỊCH SỬ TỪ LOCAL LÊN DATABASE (CHỈ CHẠY 1 LẦN KHI MOUNT) 🍀
@@ -182,18 +179,12 @@ function ProfileContent() {
                   const syncRes = await syncBulkReadHistoryAction(localHistory, localRead);
                   if (syncRes.success && (syncRes.syncedCount > 0 || syncRes.xpGranted > 0)) {
                       console.log(`🚀 [Sync] Đã đồng bộ ${syncRes.syncedCount} chương và bù ${syncRes.xpGranted} XP!`);
-                      fetchStats(); 
-                      fetchXpLogs(); 
+                      loadAllData(); 
                   }
               }
            };
            runSync();
           
-          if (data.role === 'admin' || data.role === 'staff') {
-             fetchPersonnel();
-             fetchTitleSuggestions();
-          }
-
           cleanupNotificationsAction();
 
           // 🔔 Kiểm tra trạng thái thông báo đẩy (Push) 🍀
@@ -209,10 +200,9 @@ function ProfileContent() {
                 setDisplayName(data.display_name || '');
                 setBio(data.bio || '');
                 setAvatarUrl(data.avatar_url || '');
-                fetchDynamicTitles();
+                loadAllData();
                 cleanupNotificationsAction();
                 cleanupXpLogsAction();
-                fetchXpLogs();
             } else {
                 router.push('/login');
             }
@@ -227,53 +217,35 @@ function ProfileContent() {
     checkSession();
   }, [router]);
 
-  const fetchStats = async () => {
-    try {
-      const res = await getUserStatsAction();
+  // 🚀 TỐI ƯU: Lấy toàn bộ dữ liệu khởi tạo trong 1 request duy nhất ⚡
+  const loadAllData = async () => {
+      const { getInitialProfileDataAction } = await import('@/lib/actions');
+      const res = await getInitialProfileDataAction();
       if (res.success) {
-          setStats({ total_mangas: res.total_mangas, total_chapters: res.total_chapters });
-      } else {
-          console.error("⚠️ [Stats] Failed to fetch stats:", res.error);
+          const d = res.data;
+          if (d.stats) setStats({ total_mangas: d.stats.total_mangas, total_chapters: d.stats.total_chapters });
+          setXpLogs(d.xpLogs);
+          setHasMoreXp(d.hasMoreXp);
+          setCheckInDates(d.checkInDates);
+          setTotalCheckIns(d.totalCheckIns);
+          setNotifications(d.notifications);
+          setDynamicTitles(d.dynamicTitles || TITLES);
+          setMissionProgress(d.missionProgress || []);
+          setTitleSuggestions(d.titleSuggestions || []);
+          setPersonnel(d.personnel || []);
       }
-    } catch (err) {
-      console.error("❌ [Stats] Fetch error:", err.message);
-    }
-  };
-
-  const fetchXpLogs = async (userId, page = 0) => {
-    if (page === 0) setLoading(true);
-    
-    const limit = 20;
-    const from = page * limit;
-    const to = from + limit - 1;
-
-    const res = await getUserXpLogsAction(limit, page);
-    
-    if (res.success && res.logs) {
-      if (page === 0) {
-        setXpLogs(res.logs);
-      } else {
-        setXpLogs(prev => [...prev, ...res.logs]);
-      }
-      setHasMoreXp(res.logs.length === limit);
-    }
-
-    if (page === 0) {
-        // Lấy dữ liệu điểm danh qua Server Action 📅
-        const resCi = await getUserCheckInDatesAction();
-        if (resCi.success) {
-            setCheckInDates(resCi.dates);
-            setTotalCheckIns(resCi.totalCheckIns);
-        }
-        setLoading(false);
-    }
   };
 
   const handleLoadMoreXp = async () => {
     if (loadingMoreXp || !hasMoreXp || !user) return;
     setLoadingMoreXp(true);
     const nextPage = xpPage + 1;
-    await fetchXpLogs(user.id, nextPage);
+    const { getUserXpLogsAction } = await import('@/lib/actions');
+    const res = await getUserXpLogsAction(20, nextPage);
+    if (res.success && res.logs) {
+        setXpLogs(prev => [...prev, ...res.logs]);
+        setHasMoreXp(res.logs.length === 20);
+    }
     setXpPage(nextPage);
     setLoadingMoreXp(false);
   };
@@ -459,27 +431,14 @@ function ProfileContent() {
     setSuggesting(false);
   };
 
-  const fetchDynamicTitles = async () => {
-    const res = await getOfficialTitlesAction();
-    if (res.success && res.titles?.length > 0) {
-        setDynamicTitles(res.titles);
-    }
-  };
 
-  const fetchTitleSuggestions = async () => {
-    const res = await getTitleSuggestionsAction();
-    if (res.success) setTitleSuggestions(res.suggestions);
-  };
-
-  const handleProcessSuggestion = async (id, status) => {
-    const res = await handleTitleSuggestionAction(id, status);
-    if (res.success) fetchTitleSuggestions();
+    if (res.success) loadAllData();
   };
 
   const handleDeleteOfficialTitle = async (id) => {
     if (!confirm("Bạn có chắc chắn muốn xóa danh hiệu này không? 🗑️")) return;
     const res = await deleteOfficialTitleAction(id);
-    if (res.success) fetchDynamicTitles();
+    if (res.success) loadAllData();
   };
 
   const handleCreateOfficialTitle = async (e) => {
@@ -490,11 +449,16 @@ function ProfileContent() {
     if (res.success) {
         setNewTitleName('');
         setNewTitleLv('');
-        fetchDynamicTitles();
+        loadAllData();
     } else {
         alert(`Lỗi: ${res.error}`);
     }
     setAddingTitle(false);
+  };
+
+  const handleProcessSuggestion = async (id, status) => {
+    const res = await handleTitleSuggestionAction(id, status);
+    if (res.success) loadAllData();
   };
 
   const handleEnableNotifications = async () => {
@@ -547,12 +511,6 @@ function ProfileContent() {
         alert("❌ Có lỗi xảy ra trong quá trình hủy kích hoạt.");
     }
     setFcmLoading(false);
-  };
-
-  const fetchPersonnel = async () => {
-    const { getPersonnelListAction } = await import('@/lib/actions');
-    const res = await getPersonnelListAction();
-    if (res.success) setFoundUsers(res.users);
   };
 
   const handleSearchUsers = async (e) => {
