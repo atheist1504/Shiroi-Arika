@@ -145,9 +145,13 @@ export default function ProfileClient({ userId, initialUser, initialStats, initi
             </div>
 
             <div className="flex flex-col items-center gap-5">
-               <div className="px-5 py-2 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full backdrop-blur-md shadow-inner">
+               <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="px-5 py-2 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full backdrop-blur-md shadow-inner"
+               >
                   <span className="text-[10px] font-black text-[#4caf50] uppercase tracking-[0.4em]">{userTitle.name}</span>
-               </div>
+               </motion.div>
                <h1 className="text-4xl md:text-7xl font-black tracking-tighter uppercase gradient-text drop-shadow-2xl leading-none">
                   {targetUser?.display_name || targetUser?.username || 'Thành viên Shiroi'}
                </h1>

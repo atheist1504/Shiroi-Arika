@@ -140,18 +140,22 @@ export const fetchUserMissionProgress = async (userId, customClient = null) => {
 
         // Chạy song song các truy vấn cơ bản để tối ưu tốc độ 🚀
         const [
-            { count: totalRead },
+            { count: dbTotalRead },
+            { count: logTotalRead },
             { count: dailyRead },
             { count: totalValidComments },
             { data: dailyComments },
             { data: claims }
         ] = await Promise.all([
             client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'read'),
             client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('read_at', startOfTodayISO),
             client.from('comments').select('*', { count: 'exact', head: true }).eq('user_id', userId),
             client.from('comments').select('content, created_at').eq('user_id', userId).gte('created_at', startOfTodayISO),
             client.from('shiroi_mission_claims').select('mission_key, claimed_at').eq('user_id', userId)
         ]);
+
+        const totalRead = Math.max(dbTotalRead || 0, logTotalRead || 0);
         
         const dailyValidCommentsRaw = dailyComments?.filter(c => !isGibberish(c.content)) || [];
         const dailyContributionCount = Math.min(dailyValidCommentsRaw.length, 10);

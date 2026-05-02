@@ -1453,18 +1453,25 @@ export async function getPublicUserStatsAction(userId) {
     try {
         const client = supabaseAdmin || getDbClient();
         
-        const [mRes, cRes] = await Promise.all([
+        // 💎 TỐI ƯU: Đếm số chương dựa trên XP Logs (Chính xác nhất vì XP đã được bù) 💮
+        const [mRes, cRes, logCountRes] = await Promise.all([
             client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'read')
         ]);
             
         if (mRes.error) console.error('⚠️ [Stats] History Error:', mRes.error.message);
-        if (cRes.error) console.error('⚠️ [Stats] Read Chapters Error:', cRes.error.message);
+        if (logCountRes.error) console.error('⚠️ [Stats] XP Log Count Error:', logCountRes.error.message);
+
+        // Số truyện đã xem = max(số record trong history, số manga_id duy nhất từ read_chapters)
+        const totalMangas = Math.max(mRes.count || 0, cRes.count || 0);
+        // Số chương đã đọc = max(số record trong read_chapters, số log XP loại read)
+        const totalChapters = Math.max(cRes.count || 0, logCountRes.count || 0);
 
         return { 
             success: true, 
-            total_mangas: mRes.count || 0, 
-            total_chapters: cRes.count || 0 
+            total_mangas: totalMangas, 
+            total_chapters: totalChapters 
         };
     } catch (error) {
         console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
@@ -2537,6 +2544,74 @@ export async function syncHistoryToDBAction(mangaId, chapterId) {
     console.error('❌ Lỗi syncHistoryToDBAction:', error.message);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * 🔄 SERVER ACTION: Đồng bộ hàng loạt lịch sử đọc từ LocalStorage lên DB (Backfill) 🚀
+ */
+export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user || !user.id) return { success: false, error: "Chưa đăng nhập" };
+
+        const userId = user.id;
+        const client = getDbClient();
+        let syncedCount = 0;
+        let xpGranted = 0;
+
+        // 1. Đồng bộ Lịch sử (shiroi_history) - Dựa trên object { mangaId: chapterId }
+        if (historyObj && typeof historyObj === 'object') {
+            const historyEntries = Object.entries(historyObj).map(([mId, cId]) => ({
+                user_id: userId,
+                username: user.username,
+                manga_id: mId,
+                chapter_id: cId,
+                last_read_at: new Date().toISOString()
+            }));
+
+            if (historyEntries.length > 0) {
+                await client.from('shiroi_history').upsert(historyEntries, { onConflict: 'user_id, manga_id' });
+            }
+        }
+
+        // 2. Đồng bộ Chương đã đọc (shiroi_read_chapters) & Cộng XP 💎
+        if (readChapterIds && Array.isArray(readChapterIds) && readChapterIds.length > 0) {
+            // Giới hạn xử lý tối đa 200 chương gần nhất để tránh overload 🛡️
+            const targetIds = readChapterIds.slice(-200);
+            
+            // Lấy danh sách manga_id tương ứng cho chapter_id (Cần để insert vào shiroi_read_chapters)
+            const { data: chapterData } = await client
+                .from('chapters')
+                .select('id, manga_id')
+                .in('id', targetIds);
+
+            if (chapterData && chapterData.length > 0) {
+                const readEntries = chapterData.map(c => ({
+                    user_id: userId,
+                    username: user.username,
+                    chapter_id: c.id,
+                    manga_id: c.manga_id,
+                    read_at: new Date().toISOString()
+                }));
+
+                // Upsert vào bảng đã đọc
+                await client.from('shiroi_read_chapters').upsert(readEntries, { onConflict: 'user_id, chapter_id' });
+                syncedCount = readEntries.length;
+
+                // Thử cộng XP cho từng chương qua RPC (RPC đã có check duplicate logs) 💮
+                // Chúng ta chạy song song nhưng giới hạn số lượng để ổn định
+                const xpPromises = targetIds.map(cId => recordXpLogAction(20, 'read', cId));
+                const results = await Promise.all(xpPromises);
+                xpGranted = results.filter(r => r.success).length;
+            }
+        }
+
+        revalidatePath('/profile');
+        return { success: true, syncedCount, xpGranted };
+    } catch (error) {
+        console.error('❌ Lỗi syncBulkReadHistoryAction:', error.message);
+        return { success: false, error: error.message };
+    }
 }
 
 /**

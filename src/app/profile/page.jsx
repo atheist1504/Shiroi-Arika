@@ -167,6 +167,23 @@ function ProfileContent() {
           fetchNotifications();
           fetchDynamicTitles();
           cleanupXpLogsAction();
+
+          // 🔄 ĐỒNG BỘ LỊCH SỬ TỪ LOCAL LÊN DATABASE (CHỈ CHẠY 1 LẦN KHI MOUNT) 🍀
+          const runSync = async () => {
+              const localHistory = JSON.parse(localStorage.getItem('shiroi_history') || '{}');
+              const localRead = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
+              
+              if (Object.keys(localHistory).length > 0 || localRead.length > 0) {
+                  const { syncBulkReadHistoryAction } = await import('@/lib/actions');
+                  const syncRes = await syncBulkReadHistoryAction(localHistory, localRead);
+                  if (syncRes.success && (syncRes.syncedCount > 0 || syncRes.xpGranted > 0)) {
+                      console.log(`🚀 [Sync] Đã đồng bộ ${syncRes.syncedCount} chương và bù ${syncRes.xpGranted} XP!`);
+                      fetchStats(); // Tải lại stats mới nhất sau khi đồng bộ
+                      fetchXpLogs(); // Tải lại logs mới nhất
+                  }
+              }
+           };
+           runSync();
           
           if (data.role === 'admin' || data.role === 'staff') {
              fetchPersonnel();
@@ -666,9 +683,14 @@ function ProfileContent() {
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
                                     <h2 className="text-3xl font-black italic tracking-tighter text-white">{user?.display_name || user?.username}</h2>
                                     {currentDynamicTitle && (
-                                        <span className="px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-[#4caf50] shadow-[0_0_15px_rgba(76,175,80,0.1)]">
+                                        <motion.span 
+                                            key={currentDynamicTitle.name}
+                                            initial={{ opacity: 0, y: 5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="px-4 py-1.5 bg-[#4caf50]/10 border border-[#4caf50]/20 rounded-full text-[9px] font-black uppercase tracking-[0.2em] text-[#4caf50] shadow-[0_0_15px_rgba(76,175,80,0.1)]"
+                                        >
                                             {currentDynamicTitle.name}
-                                        </span>
+                                        </motion.span>
                                     )}
                                 </div>
                                 <p className="text-[10px] font-bold text-gray-500 uppercase tracking-[0.4em]">{user?.username}</p>
@@ -775,8 +797,8 @@ function ProfileContent() {
                         <div className="h-[2px] flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[360px] overflow-y-auto pr-4 custom-scrollbar">
-                        {[...dynamicTitles].reverse().map((title) => {
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                        {dynamicTitles.map((title, tIdx) => {
                             const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
                             
                             // 🛡️ LOGIC MỚI: 
@@ -797,9 +819,12 @@ function ProfileContent() {
                             
                             return (
                                 <motion.button
+                                    key={title.name}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: (tIdx % 10) * 0.05 }}
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                    key={title.name}
                                     type="button"
                                     disabled={!isUnlocked || updating}
                                     onClick={async () => {

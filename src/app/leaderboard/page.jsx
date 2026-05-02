@@ -405,9 +405,9 @@ function LeaderboardContent() {
         <style jsx global>{`
             @keyframes float {
                 0%, 100% { transform: translateY(0px); }
-                50% { transform: translateY(-15px); }
+                50% { transform: translateY(-8px); }
             }
-            .animate-float { animation: float 4s ease-in-out infinite; }
+            .animate-float { animation: float 6s ease-in-out infinite; }
         `}</style>
     </div>
   );
