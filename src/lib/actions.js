@@ -1421,11 +1421,13 @@ export async function getUserCheckInDatesAction() {
 
         const client = getDbClient();
         
-        // 🇻🇳 Tính mốc bắt đầu tháng chuẩn giờ Việt Nam (GMT+7)
+        // 🇻🇳 Cách tính mốc đầu tháng chuẩn và an toàn nhất (Không phụ thuộc locale)
         const now = new Date();
-        const vnDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
-        const [year, month] = vnDateStr.split('-');
-        const startOfMonth = new Date(`${year}-${month}-01T00:00:00+07:00`).toISOString();
+        const offset = 7 * 60 * 60 * 1000; // GMT+7
+        const vnNow = new Date(now.getTime() + offset);
+        const year = vnNow.getUTCFullYear();
+        const month = String(vnNow.getUTCMonth() + 1).padStart(2, '0');
+        const startOfMonth = `${year}-${month}-01T00:00:00+07:00`;
 
         const { data: ciData, error } = await client
             .from('shiroi_xp_logs')
