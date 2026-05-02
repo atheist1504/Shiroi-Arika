@@ -1454,22 +1454,24 @@ export async function getPublicUserStatsAction(userId) {
         const client = supabaseAdmin || getDbClient();
         
         // 💎 TỐI ƯU: Đếm số chương dựa trên XP Logs (Chính xác nhất vì XP đã được bù) 💮
-        const [mRes, cRes, logCountRes] = await Promise.all([
+        // 🚀 LOGIC: Phải đếm Manga DUY NHẤT (Unique) và Chương TỔNG (Total)
+        const [mRes, cRes, logCountRes, readMangasRes] = await Promise.all([
             client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
             client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            client.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'read')
+            client.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'read'),
+            // Lấy danh sách manga_id để đếm Unique
+            client.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId)
         ]);
             
         if (mRes.error) console.error('⚠️ [Stats] History Error:', mRes.error.message);
         
-        // 🚀 LOGIC CẬP NHẬT: Ưu tiên con số thực tế từ XP Nhật ký
-        const totalMangas = Math.max(mRes.count || 0, cRes.count || 0);
+        // 1. Số truyện đã xem: Lấy max giữa bảng shiroi_history và số manga_id duy nhất từ shiroi_read_chapters
+        const uniqueMangaIdsInRead = new Set(readMangasRes.data?.map(i => i.manga_id) || []).size;
+        const totalMangas = Math.max(mRes.count || 0, uniqueMangaIdsInRead);
         
-        // Tính toán số chương dự kiến từ XP (Nếu logCountRes thấp bất thường so với XP thực tế)
-        // Mỗi chương đọc được 20 XP.
+        // 2. Số chương đã đọc: Lấy max giữa bảng read_chapters và nhật ký XP 📖
         const totalChaptersFromLogs = logCountRes.count || 0;
         const totalChaptersFromHistory = cRes.count || 0;
-        
         const totalChapters = Math.max(totalChaptersFromHistory, totalChaptersFromLogs);
 
         return { 
@@ -2234,7 +2236,7 @@ export async function getOfficialTitlesAction() {
     const { data, error } = await supabase
       .from('shiroi_titles')
       .select('*')
-      .order('lv', { ascending: true });
+      .order('lv', { ascending: false });
 
     if (error) throw error;
     return { success: true, titles: data };

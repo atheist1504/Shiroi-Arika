@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.comments (
     likes_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
-
+c:\Users\betub\AppData\Local\Packages\MicrosoftWindows.Client.Core_cw5n1h2txyewy\TempState\ScreenClip\{30E7F106-669A-4508-95A4-E3A8ABF88E63}.png
 -- Nhật ký XP (XP Logs)
 CREATE TABLE IF NOT EXISTS public.shiroi_xp_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

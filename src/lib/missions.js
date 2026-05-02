@@ -66,7 +66,8 @@ export const calculateConquestReward = (totalChapters) => {
     if (totalChapters >= 100) return 2000;
     if (totalChapters >= 50) return 1000;
     if (totalChapters >= 20) return 500;
-    return 200;
+    if (totalChapters >= 10) return 200;
+    return 50;
 };
 
 /**
@@ -232,8 +233,8 @@ export const fetchUserMissionProgress = async (userId, customClient = null) => {
                     if (read >= total && isFinished) {
                         const mKey = `finish_series_${m.id}`;
                         
-                        // Tính toán thưởng: 1 chương (One-shot) = 50 XP, nhiều chương = Dùng hàm tính toán 💎
-                        const rewardXp = total === 1 ? 50 : calculateConquestReward(total);
+                        // Tính toán thưởng dựa trên số chương 💎
+                        const rewardXp = calculateConquestReward(total);
 
                         results.push({
                             key: mKey,
