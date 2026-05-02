@@ -179,6 +179,9 @@ function ProfileContent() {
                   const syncRes = await syncBulkReadHistoryAction(localHistory, localRead);
                   if (syncRes.success && (syncRes.syncedCount > 0 || syncRes.xpGranted > 0)) {
                       console.log(`🚀 [Sync] Đã đồng bộ ${syncRes.syncedCount} chương và bù ${syncRes.xpGranted} XP!`);
+                      // 🧹 DỌN DẸP LOCALSTORAGE SAU KHI ĐỒNG BỘ THÀNH CÔNG 🍀
+                      localStorage.removeItem('shiroi_history');
+                      localStorage.removeItem('shiroi_read_chapters');
                       loadAllData(); 
                   }
               }

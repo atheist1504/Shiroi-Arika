@@ -2589,8 +2589,8 @@ export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
 
         // 2. Đồng bộ Chương đã đọc & Cộng XP qua 1 RPC duy nhất (SIÊU TỐC ⚡)
         if (readChapterIds && Array.isArray(readChapterIds) && readChapterIds.length > 0) {
-            // Giới hạn 200 chương để đảm bảo performance 🛡️
-            const targetIds = readChapterIds.slice(-200);
+            // Giới hạn 1000 chương để đảm bảo performance nhưng vẫn đủ bao quát 🛡️
+            const targetIds = readChapterIds.slice(-1000);
             
             const { data: rpcRes, error: rpcErr } = await client.rpc('rpc_bulk_sync_read_chapters', {
                 p_user_id: userId,

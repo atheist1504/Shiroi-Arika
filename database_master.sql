@@ -370,7 +370,59 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
     RETURN json_build_object('success', false, 'error', SQLERRM);
 END;
+-- [RPC] Đồng bộ Chương đã đọc hàng loạt (Bulk Sync) ⚡
+CREATE OR REPLACE FUNCTION rpc_bulk_sync_read_chapters(
+    p_user_id UUID,
+    p_username TEXT,
+    p_chapter_ids UUID[]
+)
+RETURNS JSON AS $$
+DECLARE
+    v_synced_count INT := 0;
+    v_xp_gain INT := 0;
+    v_cid UUID;
+    v_already_read BOOLEAN;
+BEGIN
+    -- Lặp qua danh sách chương để xử lý từng cái 💮
+    FOREACH v_cid IN ARRAY p_chapter_ids
+    LOOP
+        -- 1. Kiểm tra xem đã đọc chưa (Tránh spam dữ liệu) 🛡️
+        SELECT EXISTS (
+            SELECT 1 FROM public.shiroi_read_chapters 
+            WHERE user_id = p_user_id AND chapter_id = v_cid
+        ) INTO v_already_read;
+
+        IF NOT v_already_read THEN
+            -- 2. Ghi nhận đã đọc 📖
+            INSERT INTO public.shiroi_read_chapters (user_id, username, chapter_id, manga_id)
+            SELECT p_user_id, p_username, v_cid, c.manga_id
+            FROM public.chapters c WHERE c.id = v_cid;
+
+            -- 3. Cộng XP (20 XP mỗi chương) - Ghi vào Log 💎
+            -- Trigger fn_sync_user_xp_and_monthly sẽ tự động cập nhật tổng XP và BXH tháng
+            INSERT INTO public.shiroi_xp_logs (user_id, amount, type, reason)
+            SELECT p_user_id, 20, 'read', 'Đồng bộ: ' || m.title || ' - Ch: ' || c.chapter_number
+            FROM public.chapters c
+            JOIN public.mangas m ON c.manga_id = m.id
+            WHERE c.id = v_cid;
+
+            v_synced_count := v_synced_count + 1;
+            v_xp_gain := v_xp_gain + 20;
+        END IF;
+    END LOOP;
+
+    RETURN json_build_object(
+        'success', true, 
+        'synced_count', v_synced_count, 
+        'xp_gain', v_xp_gain
+    );
+EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION public.rpc_bulk_sync_read_chapters(UUID, TEXT, UUID[]) TO authenticated, service_role;
+
 
 -- Cấp quyền thực thi cho các Role
 GRANT EXECUTE ON FUNCTION public.rpc_record_xp_log(integer, text, text, uuid) TO anon, authenticated, service_role;
