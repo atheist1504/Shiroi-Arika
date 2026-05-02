@@ -1456,21 +1456,60 @@ export async function getUserCheckInDatesAction() {
 /**
  * 📊 SERVER ACTION: Lấy thống kê công khai của một người dùng bất kỳ
  */
-export async function getPublicUserStatsAction(userId) {
+export async function getPublicUserStatsAction(userIdOrUsername) {
     try {
-        // 🛡️ LUÔN DÙNG ADMIN CLIENT ĐỂ BYPASS RLS (Đảm bảo chủ sở hữu luôn thấy data của mình) 🍀
         const client = supabaseAdmin;
+        let finalUserId = null;
+        let finalUsername = null;
+
+        if (!userIdOrUsername) return { success: false, error: "Thiếu thông tin người dùng" };
+
+        // 🛡️ BƯỚC 1: Xác định danh tính (ID hoặc Username) 🍀
+        if (userIdOrUsername.length === 36) {
+            finalUserId = userIdOrUsername;
+            // Lấy username dự phòng
+            const { data } = await client.from('shiroi_users').select('username').eq('id', finalUserId).single();
+            if (data) finalUsername = data.username;
+        } else {
+            finalUsername = userIdOrUsername;
+            const { data } = await client.from('shiroi_users').select('id').eq('username', finalUsername).single();
+            if (data) finalUserId = data.id;
+        }
+
+        // 🛡️ BƯỚC 2: Truy quét chéo toàn bộ các bảng 🚀
+        const queries = [];
+        if (finalUserId) {
+            queries.push(client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', finalUserId));
+            queries.push(client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', finalUserId));
+        }
+        if (finalUsername) {
+            queries.push(client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('username', finalUsername));
+            queries.push(client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('username', finalUsername));
+        }
+
+        if (queries.length === 0) return { success: true, total_mangas: 0, total_chapters: 0 };
+
+        const results = await Promise.all(queries);
         
-        // 🚀 LẤY THỐNG KÊ TRỰC TIẾP TỪ DATABASE (GIỐNG TRANG CÔNG KHAI) 💮
-        const [mRes, cRes] = await Promise.all([
-            client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
-        ]);
-            
+        // 🛡️ BƯỚC 3: Lấy con số lớn nhất 💎
+        let totalMangas = 0;
+        let totalChapters = 0;
+
+        results.forEach((res, idx) => {
+            if (res.error) return;
+            const count = res.count || 0;
+            // logic: Chẵn là Manga, Lẻ là Chapters
+            if (idx % 2 === 0) { 
+                totalMangas = Math.max(totalMangas, count);
+            } else { 
+                totalChapters = Math.max(totalChapters, count);
+            }
+        });
+
         return { 
             success: true, 
-            total_mangas: mRes.count || 0, 
-            total_chapters: cRes.count || 0 
+            total_mangas: totalMangas, 
+            total_chapters: totalChapters 
         };
     } catch (error) {
         console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
