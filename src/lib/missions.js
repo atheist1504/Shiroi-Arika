@@ -107,6 +107,7 @@ export const recordUniqueRead = async (userId, username, mangaId, chapterId) => 
     try {
         const { error } = await supabase.from('shiroi_read_chapters').insert([{
             user_id: userId,
+            username: username,
             chapter_id: chapterId,
             manga_id: mangaId
         }]);

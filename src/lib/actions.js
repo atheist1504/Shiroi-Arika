@@ -783,6 +783,7 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
     // 1. LUÔN GHI NHẬN ĐÃ ĐỌC CHƯƠNG (Upsert) ✅
     const { error: readError } = await client.from('shiroi_read_chapters').upsert({ 
       user_id: userId, 
+      username: user.username, // 🛡️ Bổ sung để khớp với NOT NULL constraint của DB
       chapter_id: chapterId, 
       manga_id: mangaId, 
       read_at: new Date().toISOString() 
@@ -802,16 +803,20 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
     let alreadyRewardedStatus = !!alreadyRewarded;
 
     // 3. Ghi log và nhận XP 💎 (Chỉ khi !isInitial và chưa nhận bao giờ)
+    let justRewarded = false;
     if (!isInitial && !alreadyRewardedStatus) {
         const resLog = await recordXpLogAction(20, 'read', chapterId);
         if (resLog.success) {
-            alreadyRewardedStatus = false; // Đánh dấu là vừa nhận xong
+            justRewarded = true;
+        } else {
+            console.warn("⚠️ [addReadXP] Không thể cộng XP:", resLog.error);
         }
     }
 
+    // 4. Lấy thông tin User đã cập nhật (Bao gồm XP mới nếu vừa được cộng) 📈
     const { data: updatedUser } = await client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single();
 
-    // 4. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Daily Missions) 🏆
+    // 5. Kiểm tra hoàn thành nhiệm vụ Đọc truyện (Daily Missions) 🏆
     try {
         const { count: dailyRead } = await client
             .from('shiroi_read_chapters')
@@ -837,7 +842,7 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
         }
     } catch (err) { console.warn("Lỗi check mission:", err); }
 
-    // 5. Tự động đánh dấu đã đọc cho thông báo chương mới 📚
+    // 6. Tự động đánh dấu đã đọc cho thông báo chương mới 📚
     try {
         await client
             .from('shiroi_notifications')
@@ -848,13 +853,14 @@ export async function addReadXPAction(mangaId, chapterId, isInitial = false) {
             .filter('data->>mangaId', 'eq', mangaId);
     } catch (e) {}
 
-    // 6. Refresh cache 🚀
+    // 7. Refresh cache 🚀
     revalidatePath('/profile');
     revalidatePath(`/user/${userId}`);
 
     return { 
         success: true, 
-        alreadyRewarded: alreadyRewardedStatus, 
+        alreadyRewarded: alreadyRewardedStatus || !justRewarded, 
+        justRewarded,
         isInitial, 
         user: updatedUser 
     };
@@ -2498,6 +2504,7 @@ export async function syncHistoryToDBAction(mangaId, chapterId) {
     // 1. Cập nhật hoặc thêm mới lịch sử đọc của bộ truyện này
     await client.from('shiroi_history').upsert({ 
       user_id: userId, 
+      username: user.username, // 🛡️ Bổ sung để khớp với NOT NULL constraint của DB
       manga_id: mangaId, 
       chapter_id: chapterId, 
       last_read_at: new Date().toISOString() 

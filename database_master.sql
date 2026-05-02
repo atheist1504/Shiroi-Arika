@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS public.shiroi_users (
     last_lucky_draw TIMESTAMPTZ,
     check_in_streak INTEGER DEFAULT 0,
     selected_badge TEXT DEFAULT 'Lữ Khách',
+    unlocked_badges TEXT[] DEFAULT '{}', -- 🏆 Danh sách danh hiệu đã mở khóa vĩnh viễn
     fcm_token TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
@@ -104,6 +105,7 @@ CREATE TABLE IF NOT EXISTS public.shiroi_monthly_stats (
 CREATE TABLE IF NOT EXISTS public.shiroi_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES shiroi_users(id) ON DELETE CASCADE,
+    username TEXT, -- Lưu tên để hiển thị nhanh không cần Join
     manga_id UUID REFERENCES mangas(id) ON DELETE CASCADE,
     chapter_id UUID REFERENCES chapters(id) ON DELETE CASCADE,
     last_read_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -114,6 +116,7 @@ CREATE TABLE IF NOT EXISTS public.shiroi_history (
 CREATE TABLE IF NOT EXISTS public.shiroi_read_chapters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES public.shiroi_users(id) ON DELETE CASCADE,
+    username TEXT, -- Lưu tên để hiển thị nhanh
     chapter_id UUID REFERENCES public.chapters(id) ON DELETE CASCADE,
     manga_id UUID REFERENCES public.mangas(id) ON DELETE CASCADE,
     read_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
@@ -301,6 +304,78 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- [RPC] Ghi nhật ký XP an toàn (Atomic & Secure) 💎
+DROP FUNCTION IF EXISTS public.rpc_record_xp_log(integer, text, text, uuid);
+CREATE OR REPLACE FUNCTION public.rpc_record_xp_log(
+    p_amount INTEGER,
+    p_type TEXT,
+    p_reason TEXT,
+    p_user_id UUID
+)
+RETURNS JSON AS $$
+DECLARE
+    v_already_exists BOOLEAN;
+BEGIN
+    -- 🛡️ CHỐNG NHẬN TRÙNG: Chỉ áp dụng cho loại 'read' (1 lần/chương) 💮
+    IF p_type = 'read' THEN
+        SELECT EXISTS (
+            SELECT 1 FROM public.shiroi_xp_logs 
+            WHERE user_id = p_user_id AND type = 'read' AND reason = p_reason
+        ) INTO v_already_exists;
+        
+        IF v_already_exists THEN
+            RETURN json_build_object('success', false, 'error', 'Chương này đã được nhận thưởng rồi! 🛡️');
+        END IF;
+    END IF;
+
+    -- 📝 GHI NHẬT KÝ (Trigger fn_sync_user_xp_and_monthly sẽ lo phần cộng XP)
+    INSERT INTO public.shiroi_xp_logs (user_id, amount, type, reason)
+    VALUES (p_user_id, p_amount, p_type, p_reason);
+    
+    RETURN json_build_object('success', true);
+EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- [RPC] Ghi nhật ký XP an toàn (Atomic & Secure) 💎
+DROP FUNCTION IF EXISTS public.rpc_record_xp_log(integer, text, text, uuid);
+CREATE OR REPLACE FUNCTION public.rpc_record_xp_log(
+    p_amount INTEGER,
+    p_type TEXT,
+    p_reason TEXT,
+    p_user_id UUID
+)
+RETURNS JSON AS $$
+DECLARE
+    v_already_exists BOOLEAN;
+BEGIN
+    -- 🛡️ CHỐNG NHẬN TRÙNG: Chỉ áp dụng cho loại 'read' (1 lần/chương) 💮
+    IF p_type = 'read' THEN
+        SELECT EXISTS (
+            SELECT 1 FROM public.shiroi_xp_logs 
+            WHERE user_id = p_user_id AND type = 'read' AND reason = p_reason
+        ) INTO v_already_exists;
+        
+        IF v_already_exists THEN
+            RETURN json_build_object('success', false, 'error', 'Chương này đã được nhận thưởng rồi! 🛡️');
+        END IF;
+    END IF;
+
+    -- 📝 GHI NHẬT KÝ (Trigger fn_sync_user_xp_and_monthly sẽ lo phần cộng XP)
+    INSERT INTO public.shiroi_xp_logs (user_id, amount, type, reason)
+    VALUES (p_user_id, p_amount, p_type, p_reason);
+    
+    RETURN json_build_object('success', true);
+EXCEPTION WHEN OTHERS THEN
+    RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Cấp quyền thực thi cho các Role
+GRANT EXECUTE ON FUNCTION public.rpc_record_xp_log(integer, text, text, uuid) TO anon, authenticated, service_role;
+
+
 -- [RPC] BXH Tháng (Monthly Leaderboard)
 CREATE OR REPLACE FUNCTION get_monthly_leaderboard(month_offset INT DEFAULT 0)
 RETURNS TABLE (id UUID, username TEXT, display_name TEXT, avatar_url TEXT, selected_badge TEXT, total_xp BIGINT, monthly_xp BIGINT) 
@@ -365,7 +440,7 @@ CREATE POLICY "Admin Only Write" ON public.shiroi_users FOR ALL USING (false);
 
 -- Quyền riêng tư cho Users (Ẩn mật khẩu và Token)
 REVOKE SELECT ON public.shiroi_users FROM anon, authenticated;
-GRANT SELECT (id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, created_at) ON public.shiroi_users TO anon, authenticated;
+GRANT SELECT (id, username, display_name, avatar_url, bio, role, xp, level, last_check_in, last_lucky_draw, check_in_streak, selected_badge, unlocked_badges, created_at) ON public.shiroi_users TO anon, authenticated;
 
 -- Reports System RLS
 CREATE POLICY "View Own Reports" ON public.shiroi_reports FOR SELECT USING (user_id = auth.uid() OR EXISTS (SELECT 1 FROM shiroi_users WHERE id = auth.uid() AND role IN ('admin', 'staff')));
