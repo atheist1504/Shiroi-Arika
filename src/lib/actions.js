@@ -1542,8 +1542,10 @@ export async function getPublicUserStatsAction(userIdOrUsername) {
 
         return { 
             success: true, 
-            total_mangas: totalMangas, 
-            total_chapters: totalChapters,
+            data: {
+                total_mangas: totalMangas, 
+                total_chapters: totalChapters
+            },
             _debug: debug
         };
     } catch (error) {
@@ -2761,7 +2763,11 @@ export async function getInitialProfileDataAction() {
         // Trích xuất kết quả an toàn 🛡️
         const getVal = (idx, defaultVal) => {
             const res = results[idx];
-            return (res.status === 'fulfilled' && res.value?.success !== false) ? (res.value?.data || res.value) : defaultVal;
+            if (res.status !== 'fulfilled' || res.value?.success === false) return defaultVal;
+            
+            // Ưu tiên bóc tách từ key 'data', nếu không có thì tìm các key đặc thù, cuối cùng là trả về chính nó
+            const val = res.value;
+            return val.data || val;
         };
 
         const xpLogs = getVal(0, { logs: [] });
