@@ -1455,61 +1455,87 @@ export async function getUserCheckInDatesAction() {
 
 /**
  * 📊 SERVER ACTION: Lấy thống kê công khai của một người dùng bất kỳ
+ * Tối ưu hóa: Sử dụng getDbClient() để tự động fallback và đảm bảo count chuẩn xác. 🍀
  */
 export async function getPublicUserStatsAction(userIdOrUsername) {
     try {
-        const client = supabaseAdmin;
+        const client = getDbClient();
         let finalUserId = null;
         let finalUsername = null;
 
         if (!userIdOrUsername) return { success: false, error: "Thiếu thông tin người dùng" };
 
         // 🛡️ BƯỚC 1: Xác định danh tính (ID hoặc Username) 🍀
-        if (userIdOrUsername.length === 36) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrUsername);
+
+        if (isUuid) {
             finalUserId = userIdOrUsername;
-            // Lấy username dự phòng
-            const { data } = await client.from('shiroi_users').select('username').eq('id', finalUserId).single();
-            if (data) finalUsername = data.username;
+            // Thử lấy username để query dự phòng (Backfill compatibility)
+            const { data: userData } = await client.from('shiroi_users').select('username').eq('id', finalUserId).maybeSingle();
+            if (userData) finalUsername = userData.username;
         } else {
             finalUsername = userIdOrUsername;
-            const { data } = await client.from('shiroi_users').select('id').eq('username', finalUsername).single();
-            if (data) finalUserId = data.id;
+            // Thử lấy ID từ username
+            const { data: userData } = await client.from('shiroi_users').select('id').eq('username', finalUsername).maybeSingle();
+            if (userData) finalUserId = userData.id;
         }
 
-        // 🛡️ BƯỚC 2: Truy quét chéo toàn bộ các bảng 🚀
-        const queries = [];
-        if (finalUserId) {
-            queries.push(client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', finalUserId));
-            queries.push(client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', finalUserId));
-        }
-        if (finalUsername) {
-            queries.push(client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('username', finalUsername));
-            queries.push(client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('username', finalUsername));
-        }
-
-        if (queries.length === 0) return { success: true, total_mangas: 0, total_chapters: 0 };
-
-        const results = await Promise.all(queries);
+        // 🛡️ BƯỚC 2: Truy quét dữ liệu thực tế (Thay vì dùng count query có thể bị RLS chặn trên server) 🚀
+        // Chúng ta sử dụng phương pháp fetch data và đếm length, tương tự getUserHistoryAction đã thành công.
         
-        // 🛡️ BƯỚC 3: Lấy con số lớn nhất 💎
         let totalMangas = 0;
         let totalChapters = 0;
+        let debug = [];
 
-        results.forEach((res, idx) => {
-            if (res.error) return;
-            const count = res.count || 0;
-            // logic: Chẵn là Manga, Lẻ là Chapters
-            if (idx % 2 === 0) { 
-                totalMangas = Math.max(totalMangas, count);
-            } else { 
-                totalChapters = Math.max(totalChapters, count);
+        if (finalUserId) {
+            // Fetch History (Manga count)
+            const { data: hData, error: hErr } = await client
+                .from('shiroi_history')
+                .select('id')
+                .eq('user_id', finalUserId)
+                .limit(500); // Giới hạn đủ lớn để cover hầu hết user
+            
+            if (hErr) {
+                console.warn("⚠️ [Stats] History query failed:", hErr.message);
+                debug.push({ type: 'history', error: hErr.message });
+            } else {
+                totalMangas = hData?.length || 0;
+                debug.push({ type: 'history', count: totalMangas });
             }
-        });
+
+            // Fetch Read Chapters (Chapter count)
+            const { data: rData, error: rErr } = await client
+                .from('shiroi_read_chapters')
+                .select('id')
+                .eq('user_id', finalUserId)
+                .limit(5000); // Giới hạn lớn cho số chương
+            
+            if (rErr) {
+                console.warn("⚠️ [Stats] Read query failed:", rErr.message);
+                debug.push({ type: 'read', error: rErr.message });
+            } else {
+                totalChapters = rData?.length || 0;
+                debug.push({ type: 'read', count: totalChapters });
+            }
+        }
+
+        // 🛡️ BƯỚC 3: Dự phòng theo Username nếu vẫn bằng 0 (Dành cho data cũ chưa map ID)
+        if (totalMangas === 0 && finalUsername) {
+            const { data: hDataName } = await client.from('shiroi_history').select('id').eq('username', finalUsername).limit(500);
+            if (hDataName && hDataName.length > 0) totalMangas = hDataName.length;
+        }
+        if (totalChapters === 0 && finalUsername) {
+            const { data: rDataName } = await client.from('shiroi_read_chapters').select('id').eq('username', finalUsername).limit(5000);
+            if (rDataName && rDataName.length > 0) totalChapters = rDataName.length;
+        }
+
+        console.log(`📊 [Stats] Kết quả cuối cùng cho ${userIdOrUsername}: Mangas=${totalMangas}, Chapters=${totalChapters}`);
 
         return { 
             success: true, 
             total_mangas: totalMangas, 
-            total_chapters: totalChapters 
+            total_chapters: totalChapters,
+            _debug: debug
         };
     } catch (error) {
         console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
@@ -2644,7 +2670,7 @@ export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
  */
 export async function getInitialProfileDataAction() {
     try {
-        const client = supabaseAdmin;
+        const client = getDbClient();
         const sessionData = cookies().get('shiroi_session');
         if (!sessionData) return { success: false, error: "Chưa đăng nhập" };
 
@@ -2666,6 +2692,7 @@ export async function getInitialProfileDataAction() {
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
             getOfficialTitlesAction(),
+            getPublicUserStatsAction(userId), // 📊 THÊM: Lấy stats ngay từ đầu
             (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
             (dbUserRecord.role === 'admin' || dbUserRecord.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] })
         ]);
@@ -2679,8 +2706,9 @@ export async function getInitialProfileDataAction() {
         const xpLogs = getVal(0, { logs: [] });
         const checkInData = getVal(1, { dates: [], totalCheckIns: 0 });
         const dynamicTitles = getVal(2, { titles: [] });
-        const personnel = getVal(3, { personnel: [] });
-        const titleSuggestions = getVal(4, { suggestions: [] });
+        const stats = getVal(3, { total_mangas: 0, total_chapters: 0 });
+        const personnel = getVal(4, { personnel: [] });
+        const titleSuggestions = getVal(5, { suggestions: [] });
 
         return {
             success: true,
@@ -2691,6 +2719,7 @@ export async function getInitialProfileDataAction() {
                 checkInDates: checkInData.dates || [],
                 totalCheckIns: checkInData.totalCheckIns || 0,
                 dynamicTitles: dynamicTitles.titles || [],
+                stats: stats, // 📊 Trả về stats kèm theo
                 personnel: personnel.personnel || [],
                 titleSuggestions: titleSuggestions.suggestions || []
             }

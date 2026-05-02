@@ -167,20 +167,13 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           
-          // 🚀 KHÔI PHỤC: Lấy stats độc lập và đảm bảo KHÔNG bị ghi đè 💮
-          const { getPublicUserStatsAction } = await import('@/lib/actions');
-          getPublicUserStatsAction(data.id || data.username).then(sRes => {
-              if (sRes.success) {
-                  console.log("📊 [Profile] Stats nhận được:", sRes.total_mangas, sRes.total_chapters);
-                  setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
-              }
-          });
 
           setXpLogs(d.xpLogs || []);
           setHasMoreXp(d.hasMoreXp);
           setCheckInDates(d.checkInDates || []);
           setTotalCheckIns(d.totalCheckIns || 0);
           setDynamicTitles(d.dynamicTitles || TITLES);
+          setStats(d.stats || { total_mangas: 0, total_chapters: 0 }); // 📊 NHẬN STATS TRỰC TIẾP TỪ ACTION 🚀
           setTitleSuggestions(d.titleSuggestions || []);
           setPersonnel(d.personnel || []);
 
@@ -215,11 +208,6 @@ function ProfileContent() {
                       // Tải lại dữ liệu sau khi đồng bộ để cập nhật Stats mới nhất ⚡
                       const refreshRes = await getInitialProfileDataAction();
                       if (refreshRes.success) {
-                          const rd = refreshRes.data;
-                          const { getPublicUserStatsAction } = await import('@/lib/actions');
-                          getPublicUserStatsAction(rd.user.id || rd.user.username).then(sRes => {
-                              if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
-                          });
                           setXpLogs(rd.xpLogs);
                       }
                   }
@@ -281,18 +269,12 @@ function ProfileContent() {
         const d = res.data;
         if (d.user) {
             setUser(d.user);
-            getPublicUserStatsAction(d.user.id || d.user.username).then(sRes => {
-                if (sRes.success) {
-                    console.log("📊 [Refresh] Stats nhận được:", sRes.total_mangas, sRes.total_chapters);
-                    setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
-                }
-            });
-        }
         setXpLogs(d.xpLogs || []);
         setHasMoreXp(d.hasMoreXp);
         setCheckInDates(d.checkInDates || []);
         setTotalCheckIns(d.totalCheckIns || 0);
         setDynamicTitles(d.dynamicTitles || TITLES);
+        setStats(d.stats || { total_mangas: 0, total_chapters: 0 }); // 📊 REFRESH STATS
         setMissionProgress(d.missionProgress || []);
         setTitleSuggestions(d.titleSuggestions || []);
         setPersonnel(d.personnel || []);
