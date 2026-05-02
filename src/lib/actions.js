@@ -1898,6 +1898,56 @@ export async function addCommentAction(commentData) {
     }
 }
 
+/**
+ * ❤️ SERVER ACTION: Thả tim bình luận 🍀
+ */
+export async function toggleCommentLikeAction(commentId, newCount) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) throw new Error("Chưa đăng nhập");
+        
+        const client = getDbClient();
+        const { error } = await client
+            .from('comments')
+            .update({ likes_count: newCount })
+            .eq('id', commentId);
+            
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Lỗi toggleCommentLikeAction:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * 🗑️ SERVER ACTION: Xóa bình luận 🛡️
+ */
+export async function deleteCommentAction(id) {
+    try {
+        const user = await getAuthenticatedUser();
+        if (!user) throw new Error("Chưa đăng nhập");
+
+        const client = getDbClient();
+        
+        // 🛡️ Kiểm tra quyền: Admin hoặc Chủ sở hữu bình luận
+        const { data: comment } = await client.from('comments').select('user_id').eq('id', id).single();
+        const isAdmin = user.role === 'admin' || user.username?.toLowerCase() === OWNER_USERNAME;
+        
+        if (!isAdmin && comment?.user_id !== user.id) {
+            throw new Error("Bạn không có quyền xóa bình luận này! 🛡️");
+        }
+
+        const { error } = await client.from('comments').delete().eq('id', id);
+        if (error) throw error;
+        
+        return { success: true };
+    } catch (error) {
+        console.error("❌ Lỗi deleteCommentAction:", error.message);
+        return { success: false, error: error.message };
+    }
+}
+
 export async function getNotificationsAction(limit = 20, offset = 0) {
     try {
         const user = await getAuthenticatedUser();
