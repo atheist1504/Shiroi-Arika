@@ -1519,6 +1519,8 @@ export async function getPublicUserStatsAction(userIdOrUsername) {
             }
         }
 
+        console.log(`📊 [Stats Debug] User: ${userIdOrUsername} | ID: ${finalUserId} | Mangas: ${totalMangas} | Chapters: ${totalChapters}`);
+
         // 🛡️ BƯỚC 3: Dự phòng theo Username nếu vẫn bằng 0 (Dành cho data cũ chưa map ID)
         if (totalMangas === 0 && finalUsername) {
             const { data: hDataName } = await client.from('shiroi_history').select('id').eq('username', finalUsername).limit(500);
@@ -2711,6 +2713,8 @@ export async function getInitialProfileDataAction() {
         const stats = getVal(3, { total_mangas: 0, total_chapters: 0 });
         const personnel = getVal(4, { personnel: [] });
         const titleSuggestions = getVal(5, { suggestions: [] });
+
+        console.log("🚀 [Profile Action] Sending consolidated payload for:", dbUserRecord.username, "| Stats:", stats);
 
         return {
             success: true,
