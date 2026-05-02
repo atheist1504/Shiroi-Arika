@@ -280,7 +280,8 @@ function ProfileContent() {
         setPersonnel(d.personnel || []);
         if (d.user) setUser(d.user);
       }
-    } catch (err) {
+    }
+  } catch (err) {
       console.error("❌ Lỗi refreshData:", err);
     }
   };
