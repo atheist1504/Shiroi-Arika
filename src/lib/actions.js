@@ -1458,7 +1458,8 @@ export async function getUserCheckInDatesAction() {
  */
 export async function getPublicUserStatsAction(userId) {
     try {
-        const client = supabaseAdmin || getDbClient();
+        // 🛡️ LUÔN DÙNG ADMIN CLIENT ĐỂ BYPASS RLS (Đảm bảo chủ sở hữu luôn thấy data của mình) 🍀
+        const client = supabaseAdmin;
         
         // 💎 TỐI ƯU: Đếm số chương dựa trên XP Logs (Chính xác nhất vì XP đã được bù) 💮
         // 🚀 LOGIC: Phải đếm Manga DUY NHẤT (Unique) và Chương TỔNG (Total)
