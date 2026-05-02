@@ -180,7 +180,6 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
         //     read.push(chapterId);
         //     localStorage.setItem(readKey, JSON.stringify(read));
         // }
-        syncHistoryToDB();
     }
 
     if (manga?.id) {
@@ -197,14 +196,22 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
     // giveReadXP(true); // Gỡ bỏ việc gọi "giả" khi vừa mở trang 🛡️
   }, [chapterId, chapter, manga, initialSiblings]);
 
-  const syncHistoryToDB = async () => {
-    try {
-      const { syncHistoryToDBAction } = await import('@/lib/actions');
-      await syncHistoryToDBAction(chapter.manga_id, chapterId);
-    } catch (err) { 
-      console.error("Lỗi đồng bộ lịch sử:", err); 
-    }
-  };
+  useEffect(() => {
+    if (!chapterId || !chapter?.manga_id) return;
+
+    // 🛡️ CHỐNG SPAM: Đợi 5 giây mới đồng bộ (Chỉ tính là đã đọc nếu ở lại đủ lâu) 🍀
+    const timer = setTimeout(async () => {
+        try {
+          const { syncHistoryToDBAction } = await import('@/lib/actions');
+          await syncHistoryToDBAction(chapter.manga_id, chapterId);
+          console.log("🔄 [Reader] Đã đồng bộ lịch sử đọc sau 5s.");
+        } catch (err) { 
+          console.error("Lỗi đồng bộ lịch sử:", err); 
+        }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [chapterId, chapter?.manga_id]);
 
   const giveReadXP = useCallback(async (isInitial = false) => {
     const storedUser = localStorage.getItem('shiroi_user');
