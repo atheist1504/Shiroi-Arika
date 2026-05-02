@@ -2704,10 +2704,14 @@ export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
             // Giới hạn 1000 chương để đảm bảo performance nhưng vẫn đủ bao quát 🛡️
             const targetIds = readChapterIds.slice(-1000);
             
+            // 🇻🇳 Luôn lấy mốc thời gian VN hiện tại để đồng bộ nhiệm vụ hàng ngày
+            const nowVN = new Date().toISOString(); 
+
             const { data: rpcRes, error: rpcErr } = await client.rpc('rpc_bulk_sync_read_chapters', {
                 p_user_id: userId,
                 p_username: user.username,
-                p_chapter_ids: targetIds
+                p_chapter_ids: targetIds,
+                p_read_at: nowVN // Truyền thêm thời gian để RPC xử lý
             });
 
             if (rpcErr) throw rpcErr;
@@ -2788,7 +2792,7 @@ export async function getInitialProfileDataAction() {
                 checkInDates: checkInData.dates || [],
                 totalCheckIns: checkInData.totalCheckIns || 0,
                 dynamicTitles: dynamicTitles.titles || [],
-                stats: stats, // 📊 Trả về stats kèm theo
+                stats: stats,
                 personnel: personnel.users || [],
                 titleSuggestions: titleSuggestions.suggestions || []
             }
