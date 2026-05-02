@@ -1420,7 +1420,12 @@ export async function getUserCheckInDatesAction() {
         if (!user) return { success: false, error: "Chưa đăng nhập" };
 
         const client = getDbClient();
-        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+        
+        // 🇻🇳 Tính mốc bắt đầu tháng chuẩn giờ Việt Nam (GMT+7)
+        const now = new Date();
+        const vnDateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+        const [year, month] = vnDateStr.split('-');
+        const startOfMonth = new Date(`${year}-${month}-01T00:00:00+07:00`).toISOString();
 
         const { data: ciData, error } = await client
             .from('shiroi_xp_logs')
