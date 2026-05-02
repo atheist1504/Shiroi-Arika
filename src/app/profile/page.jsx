@@ -60,6 +60,7 @@ function ProfileContent() {
   const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [hasSynced, setHasSynced] = useState(false); // 🛡️ LOCK: Ngăn sync lặp lại gây lag 🚀
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -168,18 +169,21 @@ function ProfileContent() {
           fetchDynamicTitles();
           cleanupXpLogsAction();
 
-          // 🔄 ĐỒNG BỘ LỊCH SỬ TỪ LOCAL LÊN DATABASE (CHỈ CHẠY 1 LẦN KHI MOUNT) 🍀
-          const runSync = async () => {
+           // 🔄 ĐỒNG BỘ LỊCH SỬ TỪ LOCAL LÊN DATABASE (CHỈ CHẠY 1 LẦN KHI MOUNT) 🍀
+           const runSync = async () => {
+              if (hasSynced) return;
+              
               const localHistory = JSON.parse(localStorage.getItem('shiroi_history') || '{}');
               const localRead = JSON.parse(localStorage.getItem('shiroi_read_chapters') || '[]');
               
               if (Object.keys(localHistory).length > 0 || localRead.length > 0) {
+                  setHasSynced(true); // Khóa ngay lập tức
                   const { syncBulkReadHistoryAction } = await import('@/lib/actions');
                   const syncRes = await syncBulkReadHistoryAction(localHistory, localRead);
                   if (syncRes.success && (syncRes.syncedCount > 0 || syncRes.xpGranted > 0)) {
                       console.log(`🚀 [Sync] Đã đồng bộ ${syncRes.syncedCount} chương và bù ${syncRes.xpGranted} XP!`);
-                      fetchStats(); // Tải lại stats mới nhất sau khi đồng bộ
-                      fetchXpLogs(); // Tải lại logs mới nhất
+                      fetchStats(); 
+                      fetchXpLogs(); 
                   }
               }
            };
@@ -798,7 +802,7 @@ function ProfileContent() {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                        {dynamicTitles.map((title, tIdx) => {
+                        {[...dynamicTitles].reverse().map((title, tIdx) => {
                             const isAdmin = user?.role === 'admin' || user?.username?.toLowerCase() === 'atheist1504';
                             
                             // 🛡️ LOGIC MỚI: 

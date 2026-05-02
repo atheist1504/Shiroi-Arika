@@ -46,11 +46,20 @@ export default function LuckyDraw() {
             .subscribe();
     }
 
-    window.addEventListener("storage", checkStatus);
+    let syncTimeout;
+    const debouncedCheckStatus = () => {
+        clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+            checkStatus();
+        }, 500);
+    };
+
+    window.addEventListener("storage", debouncedCheckStatus);
     return () => {
-        window.removeEventListener("storage", checkStatus);
+        window.removeEventListener("storage", debouncedCheckStatus);
         if (channel) supabase.removeChannel(channel);
         document.body.style.overflow = 'unset';
+        clearTimeout(syncTimeout);
     };
   }, []);
 

@@ -106,6 +106,14 @@ export default function Navbar() {
     const storedUser = localStorage.getItem('shiroi_user');
     const initialUser = storedUser ? JSON.parse(storedUser) : null;
 
+    let syncTimeout;
+    const debouncedCheckUser = () => {
+        clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+            checkUser();
+        }, 500);
+    };
+
     const setupUserSync = (userId) => {
         if (!userId) return null;
         const channel = supabase
@@ -119,10 +127,9 @@ export default function Navbar() {
               filter: `id=eq.${userId}`
             },
             (payload) => {
-              console.log('✨ [Navbar] Đồng bộ Real-time:', payload.new);
+              console.log('✨ [Navbar] Đồng bộ Real-time (Debounced):', payload.new);
               localStorage.setItem('shiroi_user', JSON.stringify(payload.new));
-              setUser(payload.new);
-              window.dispatchEvent(new Event('storage'));
+              debouncedCheckUser(); // Dùng debounced để cập nhật UI mượt mà 🍀
             }
           )
           .subscribe();
@@ -132,7 +139,6 @@ export default function Navbar() {
 
     const subCleanup = initialUser ? setupUserSync(initialUser.id) : null;
 
-    // 🔔 Đăng ký Service Worker cho FCM (Thông báo đẩy) 🍀
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/firebase-messaging-sw.js')
@@ -140,12 +146,6 @@ export default function Navbar() {
           .catch(err => console.error('❌ SW registration failed:', err));
       });
     }
-
-    checkUser();
-    window.addEventListener('storage', checkUser);
-    
-    setIsMounted(true);
-
 
     const handleClickOutside = (event) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
@@ -158,11 +158,18 @@ export default function Navbar() {
         setIsMobileMenuOpen(false);
       }
     };
+
+    checkUser();
+    window.addEventListener('storage', debouncedCheckUser);
     document.addEventListener("mousedown", handleClickOutside);
+    
+    setIsMounted(true);
+
     return () => {
+      window.removeEventListener('storage', debouncedCheckUser);
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener('storage', checkUser);
       if (subCleanup) subCleanup();
+      clearTimeout(syncTimeout);
       document.body.style.overflow = 'unset';
     };
   }, [pathname, isMobileMenuOpen]);

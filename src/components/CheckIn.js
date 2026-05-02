@@ -46,10 +46,19 @@ export default function CheckIn() {
             .subscribe();
     }
 
-    window.addEventListener("storage", checkUserAndStatus);
+    let syncTimeout;
+    const debouncedCheckUser = () => {
+        clearTimeout(syncTimeout);
+        syncTimeout = setTimeout(() => {
+            checkUserAndStatus();
+        }, 500);
+    };
+
+    window.addEventListener("storage", debouncedCheckUser);
     return () => {
-        window.removeEventListener("storage", checkUserAndStatus);
+        window.removeEventListener("storage", debouncedCheckUser);
         if (channel) supabase.removeChannel(channel);
+        clearTimeout(syncTimeout);
     };
   }, []);
 

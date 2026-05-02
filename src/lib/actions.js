@@ -1461,12 +1461,16 @@ export async function getPublicUserStatsAction(userId) {
         ]);
             
         if (mRes.error) console.error('⚠️ [Stats] History Error:', mRes.error.message);
-        if (logCountRes.error) console.error('⚠️ [Stats] XP Log Count Error:', logCountRes.error.message);
-
-        // Số truyện đã xem = max(số record trong history, số manga_id duy nhất từ read_chapters)
+        
+        // 🚀 LOGIC CẬP NHẬT: Ưu tiên con số thực tế từ XP Nhật ký
         const totalMangas = Math.max(mRes.count || 0, cRes.count || 0);
-        // Số chương đã đọc = max(số record trong read_chapters, số log XP loại read)
-        const totalChapters = Math.max(cRes.count || 0, logCountRes.count || 0);
+        
+        // Tính toán số chương dự kiến từ XP (Nếu logCountRes thấp bất thường so với XP thực tế)
+        // Mỗi chương đọc được 20 XP.
+        const totalChaptersFromLogs = logCountRes.count || 0;
+        const totalChaptersFromHistory = cRes.count || 0;
+        
+        const totalChapters = Math.max(totalChaptersFromHistory, totalChaptersFromLogs);
 
         return { 
             success: true, 
@@ -2574,35 +2578,21 @@ export async function syncBulkReadHistoryAction(historyObj, readChapterIds) {
             }
         }
 
-        // 2. Đồng bộ Chương đã đọc (shiroi_read_chapters) & Cộng XP 💎
+        // 2. Đồng bộ Chương đã đọc & Cộng XP qua 1 RPC duy nhất (SIÊU TỐC ⚡)
         if (readChapterIds && Array.isArray(readChapterIds) && readChapterIds.length > 0) {
-            // Giới hạn xử lý tối đa 200 chương gần nhất để tránh overload 🛡️
+            // Giới hạn 200 chương để đảm bảo performance 🛡️
             const targetIds = readChapterIds.slice(-200);
             
-            // Lấy danh sách manga_id tương ứng cho chapter_id (Cần để insert vào shiroi_read_chapters)
-            const { data: chapterData } = await client
-                .from('chapters')
-                .select('id, manga_id')
-                .in('id', targetIds);
+            const { data: rpcRes, error: rpcErr } = await client.rpc('rpc_bulk_sync_read_chapters', {
+                p_user_id: userId,
+                p_username: user.username,
+                p_chapter_ids: targetIds
+            });
 
-            if (chapterData && chapterData.length > 0) {
-                const readEntries = chapterData.map(c => ({
-                    user_id: userId,
-                    username: user.username,
-                    chapter_id: c.id,
-                    manga_id: c.manga_id,
-                    read_at: new Date().toISOString()
-                }));
-
-                // Upsert vào bảng đã đọc
-                await client.from('shiroi_read_chapters').upsert(readEntries, { onConflict: 'user_id, chapter_id' });
-                syncedCount = readEntries.length;
-
-                // Thử cộng XP cho từng chương qua RPC (RPC đã có check duplicate logs) 💮
-                // Chúng ta chạy song song nhưng giới hạn số lượng để ổn định
-                const xpPromises = targetIds.map(cId => recordXpLogAction(20, 'read', cId));
-                const results = await Promise.all(xpPromises);
-                xpGranted = results.filter(r => r.success).length;
+            if (rpcErr) throw rpcErr;
+            if (rpcRes?.success) {
+                syncedCount = rpcRes.synced_count;
+                xpGranted = rpcRes.xp_gain / 20; // 20 XP mỗi chương
             }
         }
 
