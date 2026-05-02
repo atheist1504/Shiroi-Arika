@@ -167,10 +167,13 @@ function ProfileContent() {
           setAvatarUrl(data.avatar_url || '');
           localStorage.setItem('shiroi_user', JSON.stringify(data));
           
-          // 🚀 KHÔI PHỤC: Lấy stats độc lập để đảm bảo ổn định 100% như trước khi gộp 💮
+          // 🚀 KHÔI PHỤC: Lấy stats độc lập và đảm bảo KHÔNG bị ghi đè 💮
           const { getPublicUserStatsAction } = await import('@/lib/actions');
           getPublicUserStatsAction(data.id || data.username).then(sRes => {
-              if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+              if (sRes.success) {
+                  console.log("📊 [Profile] Stats nhận được:", sRes.total_mangas, sRes.total_chapters);
+                  setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+              }
           });
 
           setXpLogs(d.xpLogs || []);
@@ -279,7 +282,10 @@ function ProfileContent() {
         if (d.user) {
             setUser(d.user);
             getPublicUserStatsAction(d.user.id || d.user.username).then(sRes => {
-                if (sRes.success) setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+                if (sRes.success) {
+                    console.log("📊 [Refresh] Stats nhận được:", sRes.total_mangas, sRes.total_chapters);
+                    setStats({ total_mangas: sRes.total_mangas, total_chapters: sRes.total_chapters });
+                }
             });
         }
         setXpLogs(d.xpLogs || []);
