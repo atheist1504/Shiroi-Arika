@@ -2623,17 +2623,8 @@ export async function getInitialProfileDataAction() {
         if (!user) return { success: false, error: "Chưa đăng nhập" };
         const userId = user.id;
 
-        // Chạy tất cả các truy vấn song song 🚀
-        const [
-            stats,
-            xpLogs,
-            checkInData,
-            notifications,
-            dynamicTitles,
-            personnel,
-            titleSuggestions,
-            missionProgress
-        ] = await Promise.all([
+        // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP (Sử dụng allSettled để tránh 1 cái chết cả lũ) 🚀
+        const results = await Promise.allSettled([
             getPublicUserStatsAction(userId),
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
@@ -2644,18 +2635,33 @@ export async function getInitialProfileDataAction() {
             fetchUserMissionProgressAction()
         ]);
 
+        // Trích xuất kết quả an toàn 🛡️
+        const getVal = (idx, defaultVal) => {
+            const res = results[idx];
+            return (res.status === 'fulfilled' && res.value?.success) ? res.value : defaultVal;
+        };
+
+        const stats = getVal(0, { total_mangas: 0, total_chapters: 0 });
+        const xpLogs = getVal(1, { logs: [] });
+        const checkInData = getVal(2, { dates: [], totalCheckIns: 0 });
+        const notifications = getVal(3, { notifications: [] });
+        const dynamicTitles = getVal(4, { titles: [] });
+        const personnel = getVal(5, { personnel: [] });
+        const titleSuggestions = getVal(6, { suggestions: [] });
+        const missionProgress = (results[7].status === 'fulfilled') ? results[7].value : [];
+
         return {
             success: true,
             data: {
-                stats: stats.success ? stats : null,
-                xpLogs: xpLogs.success ? xpLogs.logs : [],
-                hasMoreXp: xpLogs.success ? xpLogs.logs.length === 20 : false,
-                checkInDates: checkInData.success ? checkInData.dates : [],
-                totalCheckIns: checkInData.success ? checkInData.totalCheckIns : 0,
-                notifications: notifications.success ? notifications.notifications : [],
-                dynamicTitles: dynamicTitles.success ? dynamicTitles.titles : [],
-                personnel: personnel.success ? personnel.personnel : [],
-                titleSuggestions: titleSuggestions.success ? titleSuggestions.suggestions : [],
+                stats: stats,
+                xpLogs: xpLogs.logs || [],
+                hasMoreXp: (xpLogs.logs?.length === 20),
+                checkInDates: checkInData.dates || [],
+                totalCheckIns: checkInData.totalCheckIns || 0,
+                notifications: notifications.notifications || [],
+                dynamicTitles: dynamicTitles.titles || [],
+                personnel: personnel.personnel || [],
+                titleSuggestions: titleSuggestions.suggestions || [],
                 missionProgress: missionProgress || []
             }
         };
