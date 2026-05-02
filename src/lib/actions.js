@@ -2615,7 +2615,9 @@ export async function getInitialProfileDataAction() {
 
         // Chạy tất cả các truy vấn song song nhưng ĐỘC LẬP 🚀
         const results = await Promise.allSettled([
-            getPublicUserStatsAction(userId),
+            // 🚀 TRUY VẤN TRỰC TIẾP ĐỂ ĐẢM BẢO CHÍNH XÁC 100% 💮
+            client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
             getUserXpLogsAction(20, 0),
             getUserCheckInDatesAction(),
             getUserNotificationsAction(),
@@ -2623,31 +2625,33 @@ export async function getInitialProfileDataAction() {
             (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? fetchPersonnelAction() : Promise.resolve({ success: true, personnel: [] }),
             (sessionUser.role === 'admin' || sessionUser.role === 'staff') ? getTitleSuggestionsAction() : Promise.resolve({ success: true, suggestions: [] }),
             fetchUserMissionProgressAction(),
-            // 🛡️ Lấy thông tin User mới nhất từ DB để đảm bảo XP/Level chuẩn 🍀
             client.from('shiroi_users').select(SAFE_USER_FIELDS).eq('id', userId).single()
         ]);
 
         // Trích xuất kết quả an toàn 🛡️
         const getVal = (idx, defaultVal) => {
             const res = results[idx];
-            return (res.status === 'fulfilled' && res.value?.success) ? res.value : defaultVal;
+            return (res.status === 'fulfilled' && res.value?.success !== false) ? (res.value?.data || res.value) : defaultVal;
         };
 
-        const stats = getVal(0, { total_mangas: 0, total_chapters: 0 });
-        const xpLogs = getVal(1, { logs: [] });
-        const checkInData = getVal(2, { dates: [], totalCheckIns: 0 });
-        const notifications = getVal(3, { notifications: [] });
-        const dynamicTitles = getVal(4, { titles: [] });
-        const personnel = getVal(5, { personnel: [] });
-        const titleSuggestions = getVal(6, { suggestions: [] });
-        const missionProgress = (results[7].status === 'fulfilled') ? results[7].value : [];
-        const dbUser = (results[8].status === 'fulfilled' && !results[8].value.error) ? results[8].value.data : sessionUser;
+        // 📊 Xử lý thống kê (Index 0 và 1)
+        const mCount = (results[0].status === 'fulfilled') ? (results[0].value.count || 0) : 0;
+        const cCount = (results[1].status === 'fulfilled') ? (results[1].value.count || 0) : 0;
+        
+        const xpLogs = getVal(2, { logs: [] });
+        const checkInData = getVal(3, { dates: [], totalCheckIns: 0 });
+        const notifications = getVal(4, { notifications: [] });
+        const dynamicTitles = getVal(5, { titles: [] });
+        const personnel = getVal(6, { personnel: [] });
+        const titleSuggestions = getVal(7, { suggestions: [] });
+        const missionProgress = (results[8].status === 'fulfilled') ? (results[8].value?.data || results[8].value) : [];
+        const dbUser = (results[9].status === 'fulfilled' && !results[9].value.error) ? results[9].value.data : sessionUser;
 
         return {
             success: true,
             data: {
                 user: dbUser,
-                stats: stats,
+                stats: { total_mangas: mCount, total_chapters: cCount },
                 xpLogs: xpLogs.logs || [],
                 hasMoreXp: (xpLogs.logs?.length === 20),
                 checkInDates: checkInData.dates || [],
