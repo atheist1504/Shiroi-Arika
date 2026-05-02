@@ -1461,31 +1461,16 @@ export async function getPublicUserStatsAction(userId) {
         // 🛡️ LUÔN DÙNG ADMIN CLIENT ĐỂ BYPASS RLS (Đảm bảo chủ sở hữu luôn thấy data của mình) 🍀
         const client = supabaseAdmin;
         
-        // 💎 TỐI ƯU: Đếm số chương dựa trên XP Logs (Chính xác nhất vì XP đã được bù) 💮
-        // 🚀 LOGIC: Phải đếm Manga DUY NHẤT (Unique) và Chương TỔNG (Total)
-        const [mRes, cRes, logCountRes, readMangasRes] = await Promise.all([
+        // 🚀 LẤY THỐNG KÊ TRỰC TIẾP TỪ DATABASE (GIỐNG TRANG CÔNG KHAI) 💮
+        const [mRes, cRes] = await Promise.all([
             client.from('shiroi_history').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-            client.from('shiroi_xp_logs').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('type', 'read'),
-            // Lấy danh sách manga_id để đếm Unique
-            client.from('shiroi_read_chapters').select('manga_id').eq('user_id', userId)
+            client.from('shiroi_read_chapters').select('*', { count: 'exact', head: true }).eq('user_id', userId)
         ]);
             
-        if (mRes.error) console.error('⚠️ [Stats] History Error:', mRes.error.message);
-        
-        // 1. Số truyện đã xem: Lấy max giữa bảng shiroi_history và số manga_id duy nhất từ shiroi_read_chapters
-        const uniqueMangaIdsInRead = new Set(readMangasRes.data?.map(i => i.manga_id) || []).size;
-        const totalMangas = Math.max(mRes.count || 0, uniqueMangaIdsInRead);
-        
-        // 2. Số chương đã đọc: Lấy max giữa bảng read_chapters và nhật ký XP 📖
-        const totalChaptersFromLogs = logCountRes.count || 0;
-        const totalChaptersFromHistory = cRes.count || 0;
-        const totalChapters = Math.max(totalChaptersFromHistory, totalChaptersFromLogs);
-
         return { 
             success: true, 
-            total_mangas: totalMangas, 
-            total_chapters: totalChapters 
+            total_mangas: mRes.count || 0, 
+            total_chapters: cRes.count || 0 
         };
     } catch (error) {
         console.error('❌ Lỗi getPublicUserStatsAction:', error.message);
