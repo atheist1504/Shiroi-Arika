@@ -374,7 +374,8 @@ END;
 CREATE OR REPLACE FUNCTION rpc_bulk_sync_read_chapters(
     p_user_id UUID,
     p_username TEXT,
-    p_chapter_ids UUID[]
+    p_chapter_ids UUID[],
+    p_read_at TIMESTAMPTZ DEFAULT now()
 )
 RETURNS JSON AS $$
 DECLARE
@@ -394,14 +395,14 @@ BEGIN
 
         IF NOT v_already_read THEN
             -- 2. Ghi nhận đã đọc 📖
-            INSERT INTO public.shiroi_read_chapters (user_id, username, chapter_id, manga_id)
-            SELECT p_user_id, p_username, v_cid, c.manga_id
+            INSERT INTO public.shiroi_read_chapters (user_id, username, chapter_id, manga_id, read_at)
+            SELECT p_user_id, p_username, v_cid, c.manga_id, p_read_at
             FROM public.chapters c WHERE c.id = v_cid;
 
             -- 3. Cộng XP (20 XP mỗi chương) - Ghi vào Log 💎
             -- Trigger fn_sync_user_xp_and_monthly sẽ tự động cập nhật tổng XP và BXH tháng
-            INSERT INTO public.shiroi_xp_logs (user_id, amount, type, reason)
-            SELECT p_user_id, 20, 'read', 'Đồng bộ: ' || m.title || ' - Ch: ' || c.chapter_number
+            INSERT INTO public.shiroi_xp_logs (user_id, amount, type, reason, created_at)
+            SELECT p_user_id, 20, 'read', 'Đồng bộ: ' || m.title || ' - Ch: ' || c.chapter_number, p_read_at
             FROM public.chapters c
             JOIN public.mangas m ON c.manga_id = m.id
             WHERE c.id = v_cid;
@@ -421,7 +422,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-GRANT EXECUTE ON FUNCTION public.rpc_bulk_sync_read_chapters(UUID, TEXT, UUID[]) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.rpc_bulk_sync_read_chapters(UUID, TEXT, UUID[], TIMESTAMPTZ) TO authenticated, service_role;
 
 
 -- Cấp quyền thực thi cho các Role
