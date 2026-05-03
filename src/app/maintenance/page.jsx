@@ -1,9 +1,6 @@
+"use client";
 import React from 'react';
 
-export const metadata = {
-  title: 'Shiroi Arika - Hệ thống đang bảo trì',
-  description: 'Chúng mình đang cập nhật hệ thống để mang lại trải nghiệm tốt hơn.',
-};
 
 export default function MaintenancePage() {
   return (
