@@ -54,7 +54,8 @@ export async function middleware(request) {
       const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      // Gọi trực tiếp REST API của Supabase để tối ưu tốc độ tại Edge (Middleware)
+      // Debug: console.log("Checking maintenance mode...");
+
       const response = await fetch(
         `${SUPABASE_URL}/rest/v1/shiroi_config?key=eq.maintenance_mode&select=value`,
         {
@@ -62,15 +63,16 @@ export async function middleware(request) {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
           },
-          // Cache nhẹ kết quả để không spam Database
           cache: 'no-store'
         }
       );
 
       const config = await response.json();
-      const isMaintenance = config?.[0]?.value === true;
+      // Chấp nhận cả boolean true hoặc chuỗi "true"
+      const isMaintenance = config?.[0]?.value === true || config?.[0]?.value === "true";
 
       if (isMaintenance) {
+        // console.log("Maintenance mode is ON. Redirecting...");
         return NextResponse.redirect(new URL('/maintenance', request.url));
       }
     } catch (error) {
