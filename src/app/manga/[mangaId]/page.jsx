@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import MangaClient from "./MangaClient";
 import { notFound } from "next/navigation";
+import { getCachedData } from "@/lib/redis";
 
 export const revalidate = 3600; // Cache trang chi tiết trong 1 giờ
 
@@ -8,11 +9,15 @@ export const revalidate = 3600; // Cache trang chi tiết trong 1 giờ
 export async function generateMetadata({ params }) {
   const { mangaId } = params;
 
-  const { data: manga } = await supabase
-    .from("mangas")
-    .select("title, description, cover_image")
-    .eq("id", mangaId)
-    .single();
+  // Cache metadata trong 1 giờ
+  const manga = await getCachedData(`manga_meta_${mangaId}`, async () => {
+    const { data } = await supabase
+      .from("mangas")
+      .select("title, description, cover_image")
+      .eq("id", mangaId)
+      .single();
+    return data;
+  }, 3600);
 
   if (!manga) {
     return {
@@ -53,18 +58,24 @@ export async function generateMetadata({ params }) {
 export default async function MangaPage({ params }) {
   const { mangaId } = params;
 
-  // Fetch initial data in parallel ⚡
-  const [mangaRes, chaptersRes] = await Promise.all([
-    supabase.from("mangas").select("*").eq("id", mangaId).single(),
-    supabase.from("chapters").select("*").eq("manga_id", mangaId).order("chapter_number", { ascending: false })
-  ]);
+  // Fetch initial data with Redis Cache ⚡ - Cache 1 giờ
+  const manga = await getCachedData(`manga_detail_${mangaId}`, async () => {
+    const { data } = await supabase.from("mangas").select("*").eq("id", mangaId).single();
+    return data;
+  }, 3600);
 
-  if (mangaRes.error || !mangaRes.data) {
+  if (!manga) {
     notFound();
   }
 
-  const manga = mangaRes.data;
-  const chapters = chaptersRes.data;
+  const chapters = await getCachedData(`manga_chapters_${mangaId}`, async () => {
+    const { data } = await supabase
+      .from("chapters")
+      .select("*")
+      .eq("manga_id", mangaId)
+      .order("chapter_number", { ascending: false });
+    return data || [];
+  }, 1800); // Chapter list cache 30p
 
   return (
     <MangaClient 

@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
+import { Redis } from '@upstash/redis';
+
+// 🚀 Khởi tạo Redis client cho Edge Runtime
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+});
 
 /**
  * 🛡️ SHIROI MULTI-PURPOSE MIDDLEWARE
  * 1. Bảo vệ Route Admin
- * 2. Quản lý Chế độ Bảo trì (Maintenance Mode)
+ * 2. Quản lý Chế độ Bảo trì (Maintenance Mode) sử dụng Redis Cache
  */
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
   // --- 0. SKIP CHO CÁC FILE TĨNH ---
-  // Lưu ý: Matcher đã lọc bớt, nhưng lọc thêm ở đây cho chắc chắn
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/fonts') ||
@@ -42,7 +48,6 @@ export async function middleware(request) {
   }
 
   // --- 3. KIỂM TRA CHẾ ĐỘ BẢO TRÌ (MAINTENANCE MODE) ---
-  // Không chặn Admin, không chặn trang /maintenance, /login, /signup, /api/auth
   const isPublicRoute = 
     pathname === '/maintenance' || 
     pathname === '/login' || 
@@ -51,28 +56,34 @@ export async function middleware(request) {
   
   if (!isAdminOrStaff && !isPublicRoute) {
     try {
-      const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      // 🏎️ THỬ LẤY TỪ REDIS TRƯỚC (GIẢM TẢI CPU & DB)
+      let isMaintenance = await redis.get('config:maintenance_mode');
 
-      // Debug: console.log("Checking maintenance mode...");
+      if (isMaintenance === null) {
+        // Nếu không có trong Redis, mới fetch từ Supabase
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-      const response = await fetch(
-        `${SUPABASE_URL}/rest/v1/shiroi_config?key=eq.maintenance_mode&select=value`,
-        {
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-          cache: 'no-store'
-        }
-      );
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/shiroi_config?key=eq.maintenance_mode&select=value`,
+          {
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            cache: 'no-store'
+          }
+        );
 
-      const config = await response.json();
-      // Chấp nhận cả boolean true hoặc chuỗi "true"
-      const isMaintenance = config?.[0]?.value === true || config?.[0]?.value === "true";
+        const config = await response.json();
+        const value = config?.[0]?.value;
+        isMaintenance = value === true || value === "true";
 
-      if (isMaintenance) {
-        // console.log("Maintenance mode is ON. Redirecting...");
+        // Lưu vào Redis với TTL ngắn (60 giây) để đảm bảo cập nhật
+        await redis.set('config:maintenance_mode', isMaintenance, { ex: 60 });
+      }
+
+      if (isMaintenance === true || isMaintenance === "true") {
         return NextResponse.redirect(new URL('/maintenance', request.url));
       }
     } catch (error) {
@@ -88,7 +99,7 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes - cho phép chạy ngầm)
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)

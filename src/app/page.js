@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import HomeClient from "./HomeClient";
+import { getCachedData } from "@/lib/redis";
 
 export const revalidate = 3600; // Cache trang chủ trong 1 giờ, tự động làm mới khi có truyện mới 🚀
 
@@ -14,24 +15,37 @@ export default async function Home({ searchParams }) {
   const from = (currentPage - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  // 1. Lấy danh sách SIÊU PHẨM (Được Ghim) 🍀
-  const { data: featuredMangas } = await supabase
-    .from("mangas")
-    .select("id, title, cover_image, description, genres, is_featured")
-    .eq("is_featured", true)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  // 1. Lấy danh sách SIÊU PHẨM (Được Ghim) 🍀 - Cache 1 giờ
+  const featuredMangas = await getCachedData('home_featured_mangas', async () => {
+    const { data } = await supabase
+      .from("mangas")
+      .select("id, title, cover_image, description, genres, is_featured")
+      .eq("is_featured", true)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    return data || [];
+  }, 3600);
 
-  // 2. Lấy danh sách TRUYỆN MỚI CẬP NHẬT (Sử dụng Cache) 🕒
-  const { data: latestMangas, error, count } = await supabase
-    .from("mangas")
-    .select("id, title, cover_image, description, genres, updated_at, total_chapters, latest_chapter_number", { count: 'exact' })
-    .order("updated_at", { ascending: false })
-    .range(from, to);
+  // 2. Lấy danh sách TRUYỆN MỚI CẬP NHẬT (Sử dụng Cache) 🕒 - Cache 10 phút (600s) cho trang 1, 1 giờ cho trang khác
+  const cacheKey = `home_latest_mangas_p${currentPage}`;
+  const ttl = currentPage === 1 ? 600 : 3600;
 
-  if (error) {
-    console.error("Lỗi khi tải truyện mới:", error);
-  }
+  const cacheResult = await getCachedData(cacheKey, async () => {
+    const { data, error, count } = await supabase
+      .from("mangas")
+      .select("id, title, cover_image, description, genres, updated_at, total_chapters, latest_chapter_number", { count: 'exact' })
+      .order("updated_at", { ascending: false })
+      .range(from, to);
+    
+    if (error) {
+      console.error("Lỗi khi tải truyện mới:", error);
+      return { data: [], count: 0 };
+    }
+    return { data: data || [], count: count || 0 };
+  }, ttl);
+
+  const latestMangas = cacheResult?.data || [];
+  const count = cacheResult?.count || 0;
 
   const jsonLd = {
     "@context": "https://schema.org",

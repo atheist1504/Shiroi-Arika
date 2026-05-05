@@ -10,6 +10,7 @@ import { sendMangaNotification, createInAppNotification } from './notifications'
 import { XP_REWARDS, getStreakBonus, calculateLevel, TITLES } from './xp';
 import { getStartOfVNDay, fetchUserMissionProgress } from './missions';
 import { hashPassword, verifyPassword } from './crypto';
+import { invalidateCache } from './redis';
 
 const OWNER_USERNAME = process.env.NEXT_PUBLIC_OWNER_USERNAME?.toLowerCase() || 'atheist1504';
 
@@ -363,6 +364,13 @@ export async function deleteMangaAction(mangaId) {
     revalidatePath('/latest');
     revalidatePath(`/manga/${mangaId}`);
 
+    // 🧹 XÓA CACHE REDIS
+    await invalidateCache('home_featured_mangas');
+    await invalidateCache('home_latest_mangas_p1');
+    await invalidateCache(`manga_detail_${mangaId}`);
+    await invalidateCache(`manga_meta_${mangaId}`);
+    await invalidateCache(`manga_chapters_${mangaId}`);
+
     return { success: true };
   } catch (error) {
     console.error("❌ Lỗi deleteMangaAction:", error);
@@ -402,6 +410,10 @@ export async function deleteChapterAction(chapterId) {
     if (chapter) {
       revalidatePath(`/manga/${chapter.manga_id}`);
       revalidatePath('/');
+      
+      // 🧹 XÓA CACHE REDIS
+      await invalidateCache(`manga_chapters_${chapter.manga_id}`);
+      await invalidateCache('home_latest_mangas_p1');
     }
 
     return { success: true };
@@ -875,6 +887,10 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
     revalidatePath(`/manga/${mangaId}`);
     revalidatePath(`/read/${chapter.id}`);
 
+    // 🧹 XÓA CACHE REDIS
+    await invalidateCache(`manga_chapters_${mangaId}`);
+    await invalidateCache('home_latest_mangas_p1');
+
     return { success: true, chapterId: chapter.id };
   } catch (error) {
     console.error('❌ Lỗi publishChapterAction:', error);
@@ -926,6 +942,10 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     revalidatePath(`/manga/${chapterPayload.manga_id}`);
     revalidatePath('/latest');
     revalidatePath('/');
+
+    // 🧹 XÓA CACHE REDIS
+    await invalidateCache(`manga_chapters_${chapterPayload.manga_id}`);
+    await invalidateCache('home_latest_mangas_p1');
 
     return { success: true, chapterId: chapId };
   } catch (error) {
@@ -980,6 +1000,14 @@ export async function saveMangaAction(mangaData, mangaId = null) {
     revalidatePath('/');
     revalidatePath('/latest');
     if (mangaId || resultData?.id) revalidatePath(`/manga/${mangaId || resultData?.id}`);
+
+    // 🧹 XÓA CACHE REDIS
+    await invalidateCache('home_featured_mangas');
+    await invalidateCache('home_latest_mangas_p1');
+    if (mangaId || resultData?.id) {
+        await invalidateCache(`manga_detail_${mangaId || resultData?.id}`);
+        await invalidateCache(`manga_meta_${mangaId || resultData?.id}`);
+    }
 
     return { success: true, data: resultData };
   } catch (error) {
