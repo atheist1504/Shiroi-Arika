@@ -10,7 +10,7 @@ const redis = new Redis({
 /**
  * 🛡️ SHIROI MULTI-PURPOSE MIDDLEWARE
  * 1. Bảo vệ Route Admin
- * 2. Quản lý Chế độ Bảo trì (Maintenance Mode) sử dụng Redis Cache
+ * 2. Quản lý Chế độ Bảo trì (Maintenance Mode) sử dụng Redis Cache & Supabase Fallback
  */
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
@@ -19,7 +19,7 @@ export async function middleware(request) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/fonts') ||
-    pathname.includes('.') // favicon.ico, images...
+    pathname.includes('.')
   ) {
     return NextResponse.next();
   }
@@ -55,12 +55,29 @@ export async function middleware(request) {
     pathname.startsWith('/api/auth');
   
   if (!isAdminOrStaff && !isPublicRoute) {
-    try {
-      // 🏎️ THỬ LẤY TỪ REDIS TRƯỚC (GIẢM TẢI CPU & DB)
-      let isMaintenance = await redis.get('config:maintenance_mode');
+    let isMaintenance = false;
 
-      if (isMaintenance === null) {
-        // Nếu không có trong Redis, mới fetch từ Supabase
+    try {
+      // 🏎️ BƯỚC 1: THỬ LẤY TỪ REDIS (GIẢM TẢI CPU & DB)
+      if (process.env.UPSTASH_REDIS_REST_URL) {
+        const cached = await redis.get('config:maintenance_mode');
+        if (cached !== null) {
+          isMaintenance = cached === true || cached === "true";
+        } else {
+          // Nếu không có trong Redis, đánh dấu để fetch từ DB bên dưới
+          isMaintenance = null;
+        }
+      } else {
+        isMaintenance = null; // Buộc fetch từ DB
+      }
+    } catch (redisError) {
+      console.error("⚠️ Redis Middleware Error:", redisError.message);
+      isMaintenance = null; // Fallback sang DB
+    }
+
+    // 🧱 BƯỚC 2: FALLBACK SANG DB NẾU REDIS TRỐNG HOẶC LỖI
+    if (isMaintenance === null) {
+      try {
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -79,31 +96,26 @@ export async function middleware(request) {
         const value = config?.[0]?.value;
         isMaintenance = value === true || value === "true";
 
-        // Lưu vào Redis với TTL ngắn (60 giây) để đảm bảo cập nhật
-        await redis.set('config:maintenance_mode', isMaintenance, { ex: 60 });
+        // Cập nhật lại vào Redis để lần sau nhanh hơn (Nếu có URL)
+        if (process.env.UPSTASH_REDIS_REST_URL) {
+          await redis.set('config:maintenance_mode', isMaintenance, { ex: 60 }).catch(() => {});
+        }
+      } catch (dbError) {
+        console.error("❌ Database Maintenance Check Error:", dbError.message);
       }
+    }
 
-      if (isMaintenance === true || isMaintenance === "true") {
-        return NextResponse.redirect(new URL('/maintenance', request.url));
-      }
-    } catch (error) {
-      console.error("Maintenance check error:", error);
+    // 🛑 CHẶN NẾU ĐANG BẢO TRÌ
+    if (isMaintenance === true) {
+      return NextResponse.redirect(new URL('/maintenance', request.url));
     }
   }
 
   return NextResponse.next();
 }
 
-// 🎯 Áp dụng cho mọi route trừ assets và api quan trọng
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|maintenance).*)',
   ],
 };
