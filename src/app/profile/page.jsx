@@ -101,6 +101,8 @@ function ProfileContent() {
   // 🕵️‍♂️ STATE CHO QUẢN LÝ NHÂN SỰ 🛡️
   const [searchQuery, setSearchQuery] = useState('');
   const [foundUsers, setFoundUsers] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
+  const [missionProgress, setMissionProgress] = useState([]);
 
   const [stats, setStats] = useState({ total_mangas: 0, total_chapters: 0 });
   const [xpLogs, setXpLogs] = useState([]);
@@ -207,9 +209,9 @@ function ProfileContent() {
                       
                       // Tải lại dữ liệu sau khi đồng bộ để cập nhật Stats mới nhất ⚡
                       const refreshRes = await getInitialProfileDataAction();
-                      if (refreshRes.success) {
-                          setXpLogs(rd.xpLogs);
-                      }
+                        if (refreshRes.success) {
+                            setXpLogs(refreshRes.data.xpLogs);
+                        }
                   }
               }
            };
@@ -1437,7 +1439,7 @@ function ProfileContent() {
                        <button className="bg-red-500 text-white px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 active:scale-95 transition-all">TÌM</button>
                     </form>
                     <div className="grid grid-cols-1 gap-3">
-                       {foundUsers.map(u => (
+                       {(searchQuery ? foundUsers : personnel).map(u => (
                          <div key={u.id} className="p-6 bg-white/5 rounded-[32px] border border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
                                <img src={u.avatar_url || 'https://psgivxgycjireinwnelc.supabase.co/storage/v1/object/public/avatars/default-avatar.png'} className="w-12 h-12 rounded-2xl object-cover border-2 border-white/10 shadow-lg" alt=""/>
