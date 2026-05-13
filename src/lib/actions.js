@@ -359,17 +359,16 @@ export async function deleteMangaAction(mangaId) {
     const { error: mangaDelError } = await client.from('mangas').delete().eq('id', mangaId);
     if (mangaDelError) throw mangaDelError;
 
-    // 🚀 XÓA CACHE ĐỂ CẬP NHẬT TRUYỆN ĐÃ XÓA KHỎI TRANG CHỦ & DANH SÁCH ⚡
-    revalidatePath('/');
-    revalidatePath('/latest');
-    revalidatePath(`/manga/${mangaId}`);
+    // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT TRUYỆN ĐÃ XÓA ⚡
+    revalidatePath('/', 'layout');
 
-    // 🧹 XÓA CACHE REDIS
+    // 🧹 XÓA CACHE REDIS CHI TIẾT
     await invalidateCache('home_featured_mangas');
     await invalidateCache('home_latest_mangas_p1');
     await invalidateCache(`manga_detail_${mangaId}`);
     await invalidateCache(`manga_meta_${mangaId}`);
     await invalidateCache(`manga_chapters_${mangaId}`);
+    await invalidateCache(`manga_siblings_${mangaId}`);
 
     return { success: true };
   } catch (error) {
@@ -406,14 +405,17 @@ export async function deleteChapterAction(chapterId) {
     const { error } = await client.from('chapters').delete().eq('id', chapterId);
     if (error) throw error;
 
-    // 4. Refresh cache
+    // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT CHƯƠNG ĐÃ XÓA ⚡
     if (chapter) {
-      revalidatePath(`/manga/${chapter.manga_id}`);
-      revalidatePath('/');
+      revalidatePath('/', 'layout');
       
       // 🧹 XÓA CACHE REDIS
       await invalidateCache(`manga_chapters_${chapter.manga_id}`);
+      await invalidateCache(`manga_detail_${chapter.manga_id}`);
       await invalidateCache('home_latest_mangas_p1');
+      await invalidateCache(`read_meta_chap_${chapterId}`);
+      await invalidateCache(`read_chap_detail_${chapterId}`);
+      await invalidateCache(`read_chap_pages_${chapterId}`);
     }
 
     return { success: true };
@@ -881,14 +883,12 @@ export async function publishChapterAction(mangaId, mangaTitle, chapterData, pag
     // Gửi thông báo ngầm
     notifyNewChapterAction(mangaId, mangaTitle, chapter.chapter_number, coverImage).catch(() => {});
 
-    // 🚀 XÓA CACHE ĐỂ CẬP NHẬT CHƯƠNG MỚI LÊN TRANG CHỦ & TRANG CHI TIẾT ⚡
-    revalidatePath('/');
-    revalidatePath('/latest');
-    revalidatePath(`/manga/${mangaId}`);
-    revalidatePath(`/read/${chapter.id}`);
+    // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT CHƯƠNG MỚI LÊN TRANG CHỦ & TRANG CHI TIẾT ⚡
+    revalidatePath('/', 'layout');
 
     // 🧹 XÓA CACHE REDIS
     await invalidateCache(`manga_chapters_${mangaId}`);
+    await invalidateCache(`manga_detail_${mangaId}`);
     await invalidateCache('home_latest_mangas_p1');
 
     return { success: true, chapterId: chapter.id };
@@ -938,14 +938,16 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     const pagesWithId = pagesData.map(p => ({ ...p, chapter_id: chapId }));
     await client.from("pages").insert(pagesWithId);
 
-    revalidatePath(`/read/${chapId}`);
-    revalidatePath(`/manga/${chapterPayload.manga_id}`);
-    revalidatePath('/latest');
-    revalidatePath('/');
+    // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT DỮ LIỆU CHƯƠNG ⚡
+    revalidatePath('/', 'layout');
 
     // 🧹 XÓA CACHE REDIS
     await invalidateCache(`manga_chapters_${chapterPayload.manga_id}`);
+    await invalidateCache(`manga_detail_${chapterPayload.manga_id}`);
     await invalidateCache('home_latest_mangas_p1');
+    await invalidateCache(`read_meta_chap_${chapId}`);
+    await invalidateCache(`read_chap_detail_${chapId}`);
+    await invalidateCache(`read_chap_pages_${chapId}`);
 
     return { success: true, chapterId: chapId };
   } catch (error) {
@@ -996,17 +998,17 @@ export async function saveMangaAction(mangaData, mangaId = null) {
       resultData = data;
     }
 
-    // 🚀 XÓA CACHE ĐỂ CẬP NHẬT TRUYỆN MỚI / CẬP NHẬT ⚡
-    revalidatePath('/');
-    revalidatePath('/latest');
-    if (mangaId || resultData?.id) revalidatePath(`/manga/${mangaId || resultData?.id}`);
+    // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT TRUYỆN MỚI / CẬP NHẬT ⚡
+    revalidatePath('/', 'layout');
 
     // 🧹 XÓA CACHE REDIS
     await invalidateCache('home_featured_mangas');
     await invalidateCache('home_latest_mangas_p1');
     if (mangaId || resultData?.id) {
-        await invalidateCache(`manga_detail_${mangaId || resultData?.id}`);
-        await invalidateCache(`manga_meta_${mangaId || resultData?.id}`);
+        const targetId = mangaId || resultData?.id;
+        await invalidateCache(`manga_detail_${targetId}`);
+        await invalidateCache(`manga_meta_${targetId}`);
+        await invalidateCache(`manga_siblings_${targetId}`);
     }
 
     return { success: true, data: resultData };

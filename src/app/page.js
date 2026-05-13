@@ -2,7 +2,8 @@ import { supabase } from "@/lib/supabase";
 import HomeClient from "./HomeClient";
 import { getCachedData } from "@/lib/redis";
 
-export const revalidate = 3600; // Cache trang chủ trong 1 giờ, tự động làm mới khi có truyện mới 🚀
+export const revalidate = 0; // Tắt hoàn toàn cache tự động 🚀
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Shiroi Arika (🍀) - Đọc Truyện Tranh Online Miễn Phí",

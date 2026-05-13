@@ -3,7 +3,8 @@ import MangaClient from "./MangaClient";
 import { notFound } from "next/navigation";
 import { getCachedData } from "@/lib/redis";
 
-export const revalidate = 3600; // Cache trang chi tiết trong 1 giờ
+export const revalidate = 0; // Tắt cache 🛡️
+export const dynamic = 'force-dynamic';
 
 // CHỈNH SỬA SEO ĐỘNG CHO TỪNG BỘ TRUYỆN
 export async function generateMetadata({ params }) {

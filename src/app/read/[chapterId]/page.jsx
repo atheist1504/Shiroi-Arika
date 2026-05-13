@@ -4,7 +4,8 @@ import ReaderClient from "./ReaderClient";
 import { notFound } from "next/navigation";
 import { getCachedData } from "@/lib/redis";
 
-export const revalidate = 3600; // Cache trang đọc trong 1 giờ 🍀
+export const revalidate = 0; // Tắt cache trang đọc 🍀
+export const dynamic = 'force-dynamic';
 
 // 🕵️‍♂️ HÀM HỖ TRỢ CHỌN CLIENT (Server-side)
 const getDbClient = () => supabaseAdmin || supabase;

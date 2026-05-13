@@ -29,10 +29,10 @@ export default function MaintenancePage() {
         {/* Content */}
         <div className="space-y-4">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight bg-gradient-to-r from-white via-white/80 to-white/50 bg-clip-text text-transparent">
-            Bảo Trì Hệ Thống
+            Hệ Thống Đang Nâng Cấp
           </h1>
           <p className="text-gray-400 text-lg md:text-xl max-w-md mx-auto leading-relaxed">
-            Shiroi Arika đang tạm đóng cửa để Admin cập nhật thêm chương mới và tối ưu hóa hệ thống.
+            Chúng tôi đang thực hiện một số nâng cấp quan trọng về hạ tầng kỹ thuật để cải thiện trải nghiệm và hiệu suất. 
           </p>
         </div>
 
@@ -40,13 +40,13 @@ export default function MaintenancePage() {
         <div className="bg-[#111] border border-white/5 rounded-2xl p-6 max-w-sm mx-auto backdrop-blur-sm">
           <div className="flex items-center justify-center gap-3 text-sm font-medium">
             <span className="flex h-2 w-2 rounded-full bg-purple-500 animate-ping"></span>
-            <span className="text-purple-400 uppercase tracking-widest">Đang thực hiện</span>
+            <span className="text-purple-400 uppercase tracking-widest">Đang tối ưu hóa</span>
           </div>
           <div className="mt-4 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 w-2/3 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"></div>
+            <div className="h-full bg-gradient-to-r from-purple-600 to-pink-600 w-3/4 rounded-full shadow-[0_0_15px_rgba(147,51,234,0.5)]"></div>
           </div>
           <p className="mt-4 text-xs text-gray-500 italic">
-            Dự kiến quay trở lại sớm nhất. Cảm ơn bạn đã kiên nhẫn!
+            Dự kiến hoàn tất trong thời gian sớm nhất. Xin lỗi vì sự bất tiện này!
           </p>
         </div>
 

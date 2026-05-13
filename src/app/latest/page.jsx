@@ -1,7 +1,8 @@
 import { supabase } from "@/lib/supabase";
 import Link from 'next/link';
 
-export const revalidate = 60; // Cache 60 giây (Cập nhật liên tục nhưng vẫn giảm tải DB)
+export const revalidate = 0; // Tắt cache tự động ⚡
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Truyện Mới Cập Nhật - Shiroi Arika 🍀",

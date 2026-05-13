@@ -2,9 +2,7 @@ export default function robots() {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
-      disallow: ['/admin/', '/profile/', '/api/'],
+      disallow: '/',
     },
-    sitemap: 'https://shiroiarika.vercel.app/sitemap.xml',
   }
 }

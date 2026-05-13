@@ -5,14 +5,14 @@ import { Suspense } from 'react';
 
 export const metadata = {
   metadataBase: new URL('https://shiroi-arika.vercel.app'),
-  title: "Shiroi Arika 🍀 - Đọc Manga Online Premium Không Quảng Cáo",
-  description: "Trang đọc truyện tranh online miễn phí chất lượng cao bản đẹp, không quảng cáo. Trải nghiệm đọc manga premium với tốc độ cực nhanh tại Shiroi Arika.",
-  keywords: ["manga", "đọc truyện tranh", "manga online", "truyện tranh online", "Shiroi Arika", "manga việt hóa", "manga premium", "đọc truyện không quảng cáo"],
+  title: "Hệ Thống Đang Nâng Cấp",
+  description: "Hệ thống đang được nâng cấp hạ tầng kỹ thuật để cải thiện hiệu suất. Vui lòng quay lại sau.",
+  keywords: ["system update", "maintenance", "technical upgrade"],
   openGraph: {
-    title: "Shiroi Arika 🍀 - Manga Online Premium",
-    description: "Trang đọc truyện tranh chất lượng cao, không quảng cáo. Cảm ơn bạn đã đồng hành cùng Shiroi~",
+    title: "Hệ Thống Đang Nâng Cấp",
+    description: "Hệ thống đang được bảo trì định kỳ.",
     url: 'https://shiroi-arika.vercel.app',
-    siteName: 'Shiroi Arika',
+    siteName: 'Technical System',
     images: [
       {
         url: '/og-banner-v8.png?v=8',
