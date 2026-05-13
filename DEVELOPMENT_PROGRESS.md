@@ -119,6 +119,17 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
     - Đồng bộ hóa thành công toàn bộ code lên GitHub.
     - Xác nhận tính nhất quán giữa dữ liệu LocalStorage và Database cho lịch sử đọc truyện. 🔄🛡️
 
+### 🛡️ Stealth Mode & Performance Guard (v53 - Privacy & Cache Overhaul) 🛡️⚡🕵️‍♂️
+- [x] **Stealth Mode Implementation**: 
+    - **Hide from Search Engines**: Cập nhật `robots.js` chặn 100% các loại Bot (Google, Bing, DMCA Bots) để tránh bị rà quét bản quyền. 🕵️‍♂️🛑
+    - **Sitemap Deactivation**: Vô hiệu hóa `sitemap.js` để ẩn hoàn toàn cấu trúc đường dẫn các bộ truyện và chương truyện. 🗺️🔒
+    - **UI Camouflage**: Ngụy trang tiêu đề (Metadata) và trang Bảo trì thành nội dung "Nâng cấp hạ tầng kỹ thuật" trung lập, không để lộ thông tin về Manga. 🏗️🛡️
+- [x] **Full-Scale Cache Overhaul**:
+    - **Dynamic Enforcement**: Chuyển đổi Trang chủ, Trang mới nhất, và Trang đọc sang `revalidate = 0` và `force-dynamic`. Đảm bảo dữ liệu luôn được tải mới từ DB mà không bị kẹt cache cũ của Vercel. 🚀⚡
+    - **Atomic Cache Invalidation**: Nâng cấp toàn bộ Server Actions quản trị (`saveManga`, `publishChapter`, `deleteManga`) với cơ chế `revalidatePath('/', 'layout')`. 
+    - **Redis Sync Clean**: Bổ sung logic xóa triệt để các khóa Redis chi tiết (meta, detail, siblings) ngay khi có thay đổi, đảm bảo tính nhất quán 100% giữa Admin và User. 🧹💎
+- [x] **Maintenance Enforcement**: Kích hoạt Chế độ bảo trì thông qua DB & Redis, chỉ cho phép Admin/Staff truy cập nội dung web. 🛑🔐
+
 ---
 
 ### 🎮 Gamification & Hệ Thống User (Premium Experience) 🍀
