@@ -1,15 +1,15 @@
 /**
  * CLOUDINARY MAGIC WRAPPER 🍀
- * Giúp tối ưu hóa mọi hình ảnh qua hệ thống CDN của Cloudinary
+ * ⚠️ CLOUDINARY ACCOUNT (dcfxienmu) ĐÃ BỊ KHÓA/HẠN CHẾ (401 Unauthorized)
+ * → Tạm thời bypass Cloudinary, hiển thị ảnh trực tiếp từ URL gốc.
+ * → Khi có tài khoản Cloudinary mới, bật lại bằng cách đổi USE_CLOUDINARY = true
  */
 
-const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo'; // Thay 'demo' bằng Cloud Name của bạn
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+const USE_CLOUDINARY = false; // 🔴 TẮT CLOUDINARY (Account bị khóa)
 
 export const optimizeImage = (url, width = '', height = '') => {
-  // 🚀 TỐI ƯU HIỂN THỊ: Không qua Cloudinary nếu là ảnh local hoặc đã nằm trên R2 🍀
-  const r2PublicUrl = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || '';
-  const r2Domain = r2PublicUrl.replace(/^https?:\/\//, '').split('/')[0];
-
+  // 🛡️ Trả về ngay nếu URL không hợp lệ
   if (
     !url || 
     url.startsWith('blob:') || 
@@ -20,18 +20,25 @@ export const optimizeImage = (url, width = '', height = '') => {
     return url;
   }
 
-  try {
-    // Cấu hình tối ưu "Thần thánh" cho các nguồn ảnh khác (Supabase, v.v.)
-    let transformations = 'f_auto,q_auto:best';
-    if (width) transformations += `,w_${width}`;
-    if (height) transformations += `,h_${height},c_fill`;
+  // 🔧 Luôn sửa URL R2 trước
+  const cleanUrl = fixR2Url(url);
 
-    // Sử dụng Cloudinary Fetch API
-    return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(url)}`;
-  } catch (err) {
-    console.warn("Lỗi tối ưu ảnh, dùng ảnh gốc:", err);
-    return url; // Fallback về ảnh gốc nếu có lỗi 🛡️
+  // 🚀 NẾU CLOUDINARY ĐANG BẬT VÀ HOẠT ĐỘNG
+  if (USE_CLOUDINARY) {
+    try {
+      let transformations = 'f_auto,q_auto:best';
+      if (width) transformations += `,w_${width}`;
+      if (height) transformations += `,h_${height},c_fill`;
+
+      return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
+    } catch (err) {
+      console.warn("Lỗi tối ưu ảnh, dùng ảnh gốc:", err);
+      return cleanUrl;
+    }
   }
+
+  // 🟢 BYPASS MODE: Trả về URL gốc trực tiếp (không qua Cloudinary)
+  return cleanUrl;
 };
 
 /**
@@ -52,7 +59,6 @@ export const fixR2Url = (url) => {
     }
 
     // 2. Tự động chuyển đổi Domain R2 cũ sang mới
-    // Nếu link chứa r2.dev nhưng không khớp domain hiện tại (Chỉ áp dụng nếu có config r2Url)
     if (finalData.includes('r2.dev') && cleanR2Url && !finalData.includes(cleanR2Url)) {
         const pathMatch = finalData.match(/r2\.dev\/(.*)/);
         const cleanPath = pathMatch ? pathMatch[1] : null;
@@ -72,18 +78,19 @@ export const fixR2Url = (url) => {
 
 /**
  * 🎨 GENERATE OG IMAGE (ZALO/FB Optimization) 🍀
- * Biến ảnh dọc thành ngang 1200x630 chuẩn SEO, thêm hiệu ứng Blur cạnh
+ * Biến ảnh dọc thành ngang 1200x630 chuẩn SEO
  */
 export const getOgImageUrl = (url) => {
-    if (!url) return 'https://shiroi-arika.vercel.app/logo.png';
+    if (!url) return 'https://shiroi-arika.vercel.app/og-banner-v8.png';
     
-    // Fix link R2 trước khi gửi cho Cloudinary
     const cleanUrl = fixR2Url(url);
     
-    // Sử dụng Cloudinary Fetch với bộ lọc "Thần thánh":
-    // c_pad: Thêm khoảng trắng để đủ kích thước
-    // b_auto:blur_2000: Lấy chính ảnh đó làm mờ để lấp đầy khoảng trắng (Trông rất Pro)
-    const transformations = 'w_1200,h_630,c_pad,b_auto:blur_2000,q_auto,f_jpg';
-    
-    return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
+    // 🚀 Nếu Cloudinary đang bật, dùng Cloudinary transform
+    if (USE_CLOUDINARY) {
+        const transformations = 'w_1200,h_630,c_pad,b_auto:blur_2000,q_auto,f_jpg';
+        return `https://res.cloudinary.com/${CLOUD_NAME}/image/fetch/${transformations}/${encodeURIComponent(cleanUrl)}`;
+    }
+
+    // 🟢 BYPASS MODE: Trả về ảnh gốc (không transform)
+    return cleanUrl;
 };
