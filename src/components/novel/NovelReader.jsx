@@ -5,7 +5,77 @@ import React, { useState, useEffect, useMemo } from 'react';
 /**
  * 📖 NOVEL READER COMPONENT (TRÌNH ĐỌC TIỂU THUYẾT / TRUYỆN CHỮ) 🍀
  * Trải nghiệm đọc cao cấp: Tùy biến cỡ chữ, font chữ, giãn dòng, theme màu chống mỏi mắt.
+ * v2 — Sửa lỗi font tiếng Việt bị tách dấu, thêm inline markdown (bold, italic, image).
  */
+
+// ========== FONT STACK HỖ TRỢ TIẾNG VIỆT ==========
+const FONT_STACKS = {
+  serif: '"Noto Serif", "Palatino Linotype", "Book Antiqua", "Segoe UI", serif',
+  sans: '"Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif',
+  mono: '"Cascadia Code", "Fira Code", "Consolas", "Noto Sans Mono", monospace',
+};
+
+// ========== INLINE MARKDOWN PARSER ==========
+// Parse **bold**, *italic*, ![alt](url) bên trong một đoạn text
+function parseInlineMarkdown(text) {
+  if (!text) return [text];
+
+  const result = [];
+  // Regex: **bold** | *italic* | ![alt](url)
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)|(!?\[([^\]]*)\]\(([^)]+)\))/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Push text trước match
+    if (match.index > lastIndex) {
+      result.push(text.slice(lastIndex, match.index));
+    }
+
+    if (match[1]) {
+      // **bold**
+      result.push(
+        <strong key={`b-${match.index}`} className="font-bold text-white">
+          {match[2]}
+        </strong>
+      );
+    } else if (match[3]) {
+      // *italic*
+      result.push(
+        <em key={`i-${match.index}`} className="italic opacity-90">
+          {match[4]}
+        </em>
+      );
+    } else if (match[0].startsWith('![')) {
+      // ![alt](url) — inline image
+      result.push(
+        <span key={`img-${match.index}`} className="block my-4 flex flex-col items-center">
+          <img
+            src={match[7]}
+            alt={match[6] || 'Ảnh minh họa'}
+            className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl object-contain border border-white/10"
+            loading="lazy"
+          />
+          {match[6] && match[6] !== 'Ảnh minh họa' && (
+            <span className="text-[11px] text-gray-500 italic mt-2 text-center">
+              {match[6]}
+            </span>
+          )}
+        </span>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Push phần text còn lại
+  if (lastIndex < text.length) {
+    result.push(text.slice(lastIndex));
+  }
+
+  return result.length > 0 ? result : [text];
+}
+
 export default function NovelReader({
   content = '',
   chapterTitle = '',
@@ -56,7 +126,7 @@ export default function NovelReader({
     localStorage.setItem('shiroi_novel_align', align);
   };
 
-  // 2. Parser nội dung thành các phần tử UI
+  // 2. Parser nội dung thành các phần tử UI (hỗ trợ inline markdown)
   const parsedElements = useMemo(() => {
     if (!content) return [];
     const lines = content.split(/\r?\n/);
@@ -67,7 +137,7 @@ export default function NovelReader({
       if (currentParagraph.length > 0) {
         elements.push({
           type: 'paragraph',
-          text: currentParagraph.join(' '),
+          text: currentParagraph.join('\n'),
         });
         currentParagraph = [];
       }
@@ -107,8 +177,8 @@ export default function NovelReader({
         return;
       }
 
-      // 4. Ảnh minh họa: ![alt](url)
-      const imgMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
+      // 4. Ảnh minh họa trên dòng riêng: ![alt](url)
+      const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
       if (imgMatch) {
         flushParagraph();
         elements.push({
@@ -125,14 +195,6 @@ export default function NovelReader({
     flushParagraph();
     return elements;
   }, [content]);
-
-  // Style class cho Font Family
-  const fontClass =
-    fontFamily === 'serif'
-      ? 'font-serif'
-      : fontFamily === 'mono'
-      ? 'font-mono'
-      : 'font-sans';
 
   // Thống kê số từ
   const wordCount = useMemo(() => {
@@ -203,19 +265,22 @@ export default function NovelReader({
             <div className="flex bg-white/5 p-1 rounded-xl border border-white/5">
               <button
                 onClick={() => changeFontFamily('serif')}
-                className={`flex-1 py-1.5 rounded-lg font-serif transition-colors ${fontFamily === 'serif' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-1.5 rounded-lg transition-colors ${fontFamily === 'serif' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                style={{ fontFamily: FONT_STACKS.serif }}
               >
                 Serif (Sách)
               </button>
               <button
                 onClick={() => changeFontFamily('sans')}
-                className={`flex-1 py-1.5 rounded-lg font-sans transition-colors ${fontFamily === 'sans' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-1.5 rounded-lg transition-colors ${fontFamily === 'sans' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                style={{ fontFamily: FONT_STACKS.sans }}
               >
                 Sans (Hiện đại)
               </button>
               <button
                 onClick={() => changeFontFamily('mono')}
-                className={`flex-1 py-1.5 rounded-lg font-mono transition-colors ${fontFamily === 'mono' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                className={`flex-1 py-1.5 rounded-lg transition-colors ${fontFamily === 'mono' ? 'bg-[#4caf50] text-black font-black' : 'text-gray-400 hover:text-white'}`}
+                style={{ fontFamily: FONT_STACKS.mono }}
               >
                 Mono
               </button>
@@ -273,7 +338,7 @@ export default function NovelReader({
         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4caf50]">
           {mangaTitle}
         </span>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight leading-snug">
+        <h1 className="text-2xl sm:text-3xl font-black leading-snug">
           Chương {chapterNumber}
           {chapterTitle ? `: ${chapterTitle}` : ''}
         </h1>
@@ -281,11 +346,14 @@ export default function NovelReader({
 
       {/* KHU VỰC VĂN BẢN CHÍNH */}
       <div
-        className={`${fontClass} transition-all duration-300 space-y-6 leading-relaxed`}
+        className="transition-all duration-300 space-y-6 leading-relaxed"
         style={{
+          fontFamily: FONT_STACKS[fontFamily] || FONT_STACKS.serif,
           fontSize: `${fontSize}px`,
           lineHeight: lineHeight,
           textAlign: textAlign,
+          wordBreak: 'keep-all',
+          overflowWrap: 'break-word',
         }}
       >
         {parsedElements.map((el, idx) => {
@@ -293,10 +361,14 @@ export default function NovelReader({
             return (
               <h3
                 key={idx}
-                className="font-black text-[#4caf50] tracking-wide pt-4 pb-2"
-                style={{ fontSize: `${Math.round(fontSize * 1.25)}px` }}
+                className="font-black text-[#4caf50] pt-4 pb-2"
+                style={{
+                  fontSize: `${Math.round(fontSize * 1.25)}px`,
+                  fontFamily: FONT_STACKS.sans,
+                  letterSpacing: '0.01em',
+                }}
               >
-                {el.text}
+                {parseInlineMarkdown(el.text)}
               </h3>
             );
           }
@@ -307,7 +379,7 @@ export default function NovelReader({
                 key={idx}
                 className="pl-5 py-2 my-4 border-l-4 border-[#4caf50] bg-white/[0.02] rounded-r-xl italic opacity-90"
               >
-                {el.text}
+                {parseInlineMarkdown(el.text)}
               </blockquote>
             );
           }
@@ -338,10 +410,10 @@ export default function NovelReader({
             );
           }
 
-          // Đoạn văn thông thường
+          // Đoạn văn thông thường — parse inline bold/italic/image
           return (
-            <p key={idx} className="tracking-normal select-text">
-              {el.text}
+            <p key={idx} className="select-text" style={{ letterSpacing: '0.01em' }}>
+              {parseInlineMarkdown(el.text)}
             </p>
           );
         })}
