@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Comments from '@/components/Comments';
+import NovelReader from '@/components/novel/NovelReader';
+import FloatingAudioPlayer from '@/components/novel/FloatingAudioPlayer';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { XP_REWARDS, recordXpLog } from '@/lib/xp';
 import { submitReportAction } from '@/lib/actions';
@@ -60,6 +62,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
   const [chapter] = useState(initialChapter);
   const [pages] = useState(initialPages);
   const [manga] = useState(initialManga);
+  const isNovel = manga?.type === 'novel' || Boolean(chapter?.content);
   const [readingMode, setReadingModeState] = useState('scroll'); 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [isImageLoading, setIsImageLoading] = useState(true); // 🌀 TRẠNG THÁI LOADING ẢNH
@@ -563,7 +566,7 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
       <div className={`max-w-5xl mx-auto flex flex-col items-center pt-[70px] md:pt-[80px] transition-colors duration-500 bg-[var(--bg-reader)] ${readingMode === 'page' ? 'h-screen justify-center' : ''}`}>
         
         {/* 💮 TRƯỜNG HỢP TRỐNG TRANG (Dành cho Guest/Lỗi Cache) */}
-        {pages.length === 0 && (
+        {!isNovel && pages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-40 px-6 text-center space-y-6 animate-fade-in">
              <div className="relative">
                 <span className="text-8xl opacity-10 grayscale">💮</span>
@@ -586,7 +589,40 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
           </div>
         )}
 
-        {readingMode === 'scroll' && pages.length > 0 && (
+        {isNovel && (
+          <div className="w-full">
+            <NovelReader
+              content={chapter?.content || ''}
+              chapterTitle={chapter?.title}
+              chapterNumber={chapter?.chapter_number}
+              mangaTitle={manga?.title}
+              theme={theme}
+              endOfChapterRef={endOfChapterRef}
+            />
+            <div className="space-y-10 mt-10">
+               <div className={`py-12 w-full flex flex-col items-center gap-6 border-t ${theme === 'light' ? 'bg-gray-50 border-black/5' : 'bg-[#0a0c0a] border-white/5'}`}>
+                   <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme === 'light' ? 'text-gray-400' : 'text-gray-700'}`}>ĐÃ HẾT CHƯƠNG {chapter?.chapter_number}</span>
+                   <div className="flex flex-col sm:flex-row gap-4 items-center">
+                     <button onClick={() => setShowChapterModal(true)} className="px-12 py-5 bg-[#4caf50] text-[#0a0c0a] hover:bg-[#66bb6a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95 flex items-center gap-3">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                        MỞ DANH SÁCH CHƯƠNG 📖
+                     </button>
+                     {nextChapterId && (
+                       <button onClick={goToNextChapter} className="px-12 py-5 bg-[#1a221a] text-[#4caf50] hover:bg-[#4caf50] hover:text-[#0a0c0a] border border-[#4caf50]/30 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl hover:scale-105 active:scale-95">
+                          ĐỌC CHƯƠNG TIẾP THEO 🚀
+                       </button>
+                     )}
+                   </div>
+               </div>
+               <div className={`w-full pb-40 ${theme === 'light' ? 'bg-white text-black' : ''}`}>
+                   <div className={`h-px mb-12 ${theme === 'light' ? 'bg-gray-200' : 'bg-gradient-to-r from-transparent via-white/5 to-transparent'}`}></div>
+                   <Comments chapterId={chapterId} mangaId={chapter?.manga_id} />
+               </div>
+            </div>
+          </div>
+        )}
+
+        {!isNovel && readingMode === 'scroll' && pages.length > 0 && (
           <div className="w-full">
             <MangaPages pages={pages} theme={theme} optimizeImage={optimizeImage} fixR2Url={fixR2Url} />
             <div className="space-y-10 mt-10">
@@ -849,6 +885,19 @@ export default function ReaderClient({ chapterId, initialChapter, initialManga, 
             </div>
           )}
         </AnimatePresence>
+
+      {/* 🎧 FLOATING AUDIO NOVEL PLAYER */}
+      {chapter?.audio_url && (
+        <FloatingAudioPlayer
+          audioUrl={chapter.audio_url}
+          chapterTitle={chapter?.title}
+          chapterNumber={chapter?.chapter_number}
+          mangaTitle={manga?.title}
+          chapterId={chapterId}
+          theme={theme}
+          onAudioComplete={() => giveReadXP()}
+        />
+      )}
       </ReaderPortal>
     </div>
   );

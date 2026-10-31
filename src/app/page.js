@@ -20,7 +20,7 @@ export default async function Home({ searchParams }) {
   const featuredMangas = await getCachedData('home_featured_mangas', async () => {
     const { data } = await supabase
       .from("mangas")
-      .select("id, title, cover_image, description, genres, is_featured")
+      .select("id, title, cover_image, description, genres, is_featured, type")
       .eq("is_featured", true)
       .order("created_at", { ascending: false })
       .limit(5);
@@ -34,7 +34,7 @@ export default async function Home({ searchParams }) {
   const cacheResult = await getCachedData(cacheKey, async () => {
     const { data, error, count } = await supabase
       .from("mangas")
-      .select("id, title, cover_image, description, genres, updated_at, total_chapters, latest_chapter_number", { count: 'exact' })
+      .select("id, title, cover_image, description, genres, updated_at, total_chapters, latest_chapter_number, type", { count: 'exact' })
       .order("updated_at", { ascending: false })
       .range(from, to);
     

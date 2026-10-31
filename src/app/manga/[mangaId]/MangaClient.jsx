@@ -283,6 +283,15 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
             </h1>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-8">
+               {manga.type === 'novel' ? (
+                 <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border bg-[#ff9800]/15 border-[#ff9800]/40 text-[#ff9800] flex items-center gap-1.5 shadow-[0_0_15px_rgba(255,152,0,0.2)]">
+                   <span>📖</span> TIỂU THUYẾT
+                 </span>
+               ) : (
+                 <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border bg-[#4caf50]/15 border-[#4caf50]/40 text-[#4caf50] flex items-center gap-1.5 shadow-[0_0_15px_rgba(76,175,80,0.2)]">
+                   <span>🖼️</span> TRUYỆN TRANH
+                 </span>
+               )}
                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${manga.status === 'completed' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-[#4caf50]/10 border-[#4caf50]/30 text-[#4caf50]'}`}>
                   {manga.status === 'completed' ? 'Hoàn thành' : 'Đang tiến hành'}
                </span>
@@ -446,7 +455,12 @@ export default function MangaClient({ mangaId, initialManga, initialChapters }) 
                                 </div>
                            </div>
 
-                          <div className="flex items-center gap-3 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
+                                {chap.audio_url && (
+                                  <span className="flex items-center gap-1 text-[8px] font-black uppercase text-[#4caf50] bg-[#4caf50]/15 border border-[#4caf50]/30 px-2 py-0.5 rounded-full">
+                                    <span>🎧</span> Audio
+                                  </span>
+                                )}
                                 <span className="text-[9px] font-black text-gray-700 bg-black/20 px-2 py-1 rounded-lg border border-white/5">
                                     {new Date(chap.created_at).toLocaleDateString('vi-VN')}
                                 </span>

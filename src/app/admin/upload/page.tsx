@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AdminButton } from '@/components/admin/AdminCommon';
-import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction, leechChapterAction, uploadFromUrlAction } from '@/lib/actions';
+import { getUploadUrlAction, getStorageUsageAction, notifyNewChapterAction, uploadChapterPageAction, saveChapterDataAction, deleteChapterAction, leechChapterAction, uploadFromUrlAction, uploadAudioAction } from '@/lib/actions';
 import { optimizeImage, fixR2Url } from '@/lib/cloudinary';
 import { StorageMeter } from '@/components/admin/AdminCommon';
 import { parseMHTMLImages } from '@/lib/mhtml-parser';
@@ -182,6 +182,13 @@ export default function AdminUploadPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [storageInfo, setStorageInfo] = useState<{totalGB: number, limitGB: number} | null>(null);
 
+  // 🚀 NOVEL & AUDIO STATES (NEW) 📖🎧
+  const [novelContent, setNovelContent] = useState('');
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioUrl, setAudioUrl] = useState('');
+  const [audioDuration, setAudioDuration] = useState<number | null>(null);
+  const [audioPreviewUrl, setAudioPreviewUrl] = useState<string | null>(null);
+
   // 🚀 AUTO-LEECH STATES (NEW) 🕵️‍♂️
   const [uploadMode, setUploadMode] = useState<'file' | 'leech'>('file');
   const [leechUrl, setLeechUrl] = useState('');
@@ -234,8 +241,26 @@ export default function AdminUploadPage() {
   }, []); 
 
   const fetchMangas = async () => {
-    const { data } = await supabase.from('mangas').select('id, title').order('title');
+    const { data } = await supabase.from('mangas').select('id, title, type, cover_image').order('title');
     setMangas(data || []);
+  };
+
+  const currentManga = mangas.find(m => m.id === selectedMangaId);
+  const isNovel = currentManga?.type === 'novel';
+
+  const handleAudioFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAudioFile(file);
+      const url = URL.createObjectURL(file);
+      setAudioPreviewUrl(url);
+      const tempAudio = new Audio(url);
+      tempAudio.onloadedmetadata = () => {
+        if (tempAudio.duration && isFinite(tempAudio.duration)) {
+          setAudioDuration(Math.round(tempAudio.duration));
+        }
+      };
+    }
   };
 
   // 🕵️‍♂️ HÀM TRIỆU HỒI TRUYỆN (AUTO-LEECH) 🚀
@@ -318,7 +343,17 @@ export default function AdminUploadPage() {
 
   const loadChapterData = async (id: string) => {
     const { data: chap } = await supabase.from('chapters').select('*').eq('id', id).single();
-    if (chap) { setChapterNumber(chap.chapter_number.toString()); setChapterTitle(chap.title || ''); setSelectedMangaId(chap.manga_id); }
+    if (chap) { 
+      setChapterNumber(chap.chapter_number.toString()); 
+      setChapterTitle(chap.title || ''); 
+      setSelectedMangaId(chap.manga_id);
+      if (chap.content) setNovelContent(chap.content);
+      if (chap.audio_url) {
+        setAudioUrl(chap.audio_url);
+        setAudioPreviewUrl(chap.audio_url);
+      }
+      if (chap.audio_duration) setAudioDuration(chap.audio_duration);
+    }
     const { data: pgs } = await supabase.from('pages').select('id, image_url, page_number').eq('chapter_id', id).order('page_number');
     if (pgs) {
         setItems(pgs.map(p => {
@@ -431,6 +466,53 @@ export default function AdminUploadPage() {
     setMessage({ type: "info", text: "🚀 ĐANG KÍCH HOẠT QUY TRÌNH UPLOAD TURBO PROXY... 🌪️" });
     
     try {
+      if (isNovel) {
+        if (!novelContent.trim()) {
+          throw new Error("Vui lòng nhập nội dung tiểu thuyết cho chương này! 📖");
+        }
+
+        let finalAudioUrl = audioUrl.trim() || null;
+        let finalDuration = audioDuration;
+
+        if (audioFile) {
+          setMessage({ type: "info", text: "🎧 ĐANG TẢI FILE AUDIO LÊN CLOUDFLARE R2... ⏳" });
+          const audioFormData = new FormData();
+          audioFormData.append('file', audioFile);
+          const audioRes = await uploadAudioAction(audioFormData);
+          if (!audioRes.success) throw new Error("Lỗi tải lên file audio: " + audioRes.error);
+          finalAudioUrl = audioRes.url;
+        }
+
+        const chapterPayload = {
+          id: pendingFolderId,
+          manga_id: selectedMangaId,
+          chapter_number: parseFloat(chapterNumber),
+          title: chapterTitle || null,
+          content: novelContent,
+          audio_url: finalAudioUrl,
+          audio_duration: finalDuration
+        };
+
+        const saveRes = await saveChapterDataAction(chapterPayload, [], isEditing, existingChapterId);
+        if (!saveRes.success) throw new Error(saveRes.error);
+
+        const selectedManga = mangas.find(m => m.id === selectedMangaId);
+        if (selectedManga && !isEditing) {
+           try {
+              await notifyNewChapterAction(
+                selectedMangaId, 
+                selectedManga.title, 
+                chapterNumber, 
+                selectedManga.cover_image
+              );
+           } catch (e) { console.warn("Lỗi gửi thông báo:", e); }
+        }
+
+        setMessage({ type: "success", text: "🚀 XUẤT BẢN TIỂU THUYẾT THÀNH CÔNG!" });
+        setTimeout(() => router.push(`/manga/${selectedMangaId}`), 1000);
+        return;
+      }
+
       const chapterPayload = { 
         id: pendingFolderId, // 🛡️ Ép Database dùng đúng ID này để đồng bộ với Folder R2
         manga_id: selectedMangaId, 
@@ -615,9 +697,18 @@ export default function AdminUploadPage() {
            <div className="bg-white/[0.02] p-6 rounded-3xl border border-white/5 shadow-2xl">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
                  <div className="md:col-span-12 lg:col-span-6 space-y-2">
-                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Bộ manga</label>
-                    <div className="p-4 rounded-2xl bg-black border border-white/5 shadow-inner">
-                       <p className="text-sm font-black text-[#4caf50] uppercase truncate">{mangas.find(m => m.id === selectedMangaId)?.title || "..."}</p>
+                    <label className="text-[9px] font-black text-gray-500 uppercase tracking-widest pl-1">Bộ truyện</label>
+                    <div className="p-4 rounded-2xl bg-black border border-white/5 shadow-inner flex items-center justify-between gap-3">
+                       <p className="text-sm font-black text-[#4caf50] uppercase truncate">{currentManga?.title || "..."}</p>
+                       {isNovel ? (
+                         <span className="bg-[#ff9800]/20 text-[#ff9800] border border-[#ff9800]/30 px-2.5 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap">
+                           📖 TIỂU THUYẾT
+                         </span>
+                       ) : (
+                         <span className="bg-[#4caf50]/20 text-[#4caf50] border border-[#4caf50]/30 px-2.5 py-0.5 rounded-full text-[9px] font-black whitespace-nowrap">
+                           🖼️ TRUYỆN TRANH
+                         </span>
+                       )}
                     </div>
                  </div>
                  <div className="md:col-span-4 lg:col-span-2 space-y-2">
@@ -631,7 +722,163 @@ export default function AdminUploadPage() {
               </div>
            </div>
 
-           {/* CHỌN PHƯƠNG THỨC NẠP ẢNH */}
+           {/* GIAO DIỆN DÀNH CHO TIỂU THUYẾT / TRUYỆN CHỮ 📖 */}
+            {isNovel ? (
+              <div className="space-y-8 animate-fade-in">
+                {/* 1. KHU VỰC VĂN BẢN TIỂU THUYẾT */}
+                <div className="bg-white/[0.02] p-6 sm:p-8 rounded-3xl border border-white/5 shadow-2xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">✍️</span>
+                      <div>
+                        <h2 className="text-xs font-black uppercase tracking-widest text-[#4caf50]">NỘI DUNG CHƯƠNG TIỂU THUYẾT</h2>
+                        <p className="text-[10px] text-gray-500 font-medium">Hỗ trợ ngắt đoạn văn, in đậm (**chữ**), in nghiêng (*chữ*), tiêu đề (###)...</p>
+                      </div>
+                    </div>
+                    
+                    {/* Đếm số từ và thời lượng đọc ước tính */}
+                    <div className="flex items-center gap-3 bg-black/40 px-4 py-2 rounded-xl border border-white/5 text-[10px] font-black">
+                      <span className="text-gray-400">
+                        📝 <strong className="text-white">{novelContent.trim() ? novelContent.trim().split(/\s+/).length : 0}</strong> TỪ
+                      </span>
+                      <span className="text-gray-600">|</span>
+                      <span className="text-[#4caf50]">
+                        ⏳ ~{Math.max(1, Math.ceil((novelContent.trim() ? novelContent.trim().split(/\s+/).length : 0) / 220))} PHÚT ĐỌC
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Thanh công cụ định dạng nhanh */}
+                  <div className="flex flex-wrap gap-2 pt-1 pb-2 border-b border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + '\n### Tiêu đề phụ\n')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
+                    >
+                      H3 Tiêu đề
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + ' **nội dung in đậm** ')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
+                    >
+                      <strong>B</strong> In đậm
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + ' *nội dung in nghiêng* ')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors italic"
+                    >
+                      <em>I</em> In nghiêng
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + '\n> Lời trích dẫn hoặc thoại nổi bật...\n')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
+                    >
+                      ❝ Trích dẫn
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + '\n---\n')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
+                    >
+                      ➖ Phân cách
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovelContent(prev => prev + '\n![Ảnh minh họa](https://link-anh...)\n')}
+                      className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
+                    >
+                      🖼️ Chèn ảnh minh họa
+                    </button>
+                  </div>
+
+                  {/* Vùng gõ nội dung */}
+                  <textarea
+                    rows={16}
+                    value={novelContent}
+                    onChange={(e) => setNovelContent(e.target.value)}
+                    placeholder="Nhập hoặc dán nội dung chương tiểu thuyết vào đây... Bạn có thể xuống dòng thoải mái để tạo các đoạn văn."
+                    className="w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-sm sm:text-base leading-relaxed font-sans outline-none focus:border-[#4caf50] transition-colors resize-y min-h-[350px]"
+                  />
+                </div>
+
+                {/* 2. KHU VỰC AUDIO DIỄN ĐỌC (AUDIO NOVEL) 🎧 */}
+                <div className="bg-gradient-to-br from-[#4caf50]/5 to-transparent p-6 sm:p-8 rounded-3xl border border-[#4caf50]/20 shadow-2xl space-y-6">
+                  <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                    <div className="w-10 h-10 rounded-2xl bg-[#4caf50]/20 text-[#4caf50] flex items-center justify-center text-lg">
+                      🎧
+                    </div>
+                    <div>
+                      <h2 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
+                        AUDIO NOVEL / SÁCH NÓI DIỄN ĐỌC <span className="text-[9px] text-[#4caf50] bg-[#4caf50]/10 px-2 py-0.5 rounded-full">(TÙY CHỌN)</span>
+                      </h2>
+                      <p className="text-[10px] text-gray-400 font-medium">Tác giả/Dịch giả tự thu âm lồng tiếng (MP3 / M4A / WAV). Độc giả có thể vừa đọc chữ vừa bật nghe.</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    {/* Tải file từ máy tính */}
+                    <div className="relative group border-2 border-dashed border-white/10 hover:border-[#4caf50]/40 rounded-2xl p-6 bg-black/40 flex flex-col items-center justify-center gap-3 transition-colors text-center cursor-pointer">
+                      <input
+                        type="file"
+                        accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                        onChange={handleAudioFileChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="w-12 h-12 rounded-full bg-[#4caf50]/10 text-[#4caf50] flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                        📁
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-white truncate max-w-[240px]">
+                          {audioFile ? audioFile.name : "Tải lên file âm thanh (.mp3, .m4a)"}
+                        </p>
+                        <p className="text-[9px] text-gray-500 font-medium mt-1">
+                          {audioFile ? `${(audioFile.size / (1024 * 1024)).toFixed(2)} MB (Đã sẵn sàng tải lên)` : "Kéo thả hoặc nhấn để chọn file audio"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Hoặc dán direct url */}
+                    <div className="space-y-3 bg-black/40 p-5 rounded-2xl border border-white/5">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block">
+                        Hoặc dán Link Audio trực tiếp (Direct URL)
+                      </label>
+                      <input
+                        type="url"
+                        value={audioUrl}
+                        onChange={(e) => {
+                          setAudioUrl(e.target.value);
+                          setAudioPreviewUrl(e.target.value);
+                        }}
+                        placeholder="https://example.com/audio/chap1.mp3"
+                        className="w-full bg-black border border-white/10 rounded-xl p-3.5 text-xs outline-none focus:border-[#4caf50] transition-colors"
+                      />
+                      {audioDuration ? (
+                        <p className="text-[10px] text-[#4caf50] font-bold">
+                          ⏱️ Thời lượng phát hiện: {Math.floor(audioDuration / 60)} phút {audioDuration % 60} giây
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Trình phát nghe thử Audio nếu có file hoặc link */}
+                  {audioPreviewUrl && (
+                    <div className="bg-black/60 p-4 rounded-2xl border border-white/10 space-y-2 animate-fade-in">
+                      <div className="flex items-center justify-between text-[10px] font-black uppercase text-[#4caf50]">
+                        <span>🔊 NGHE THỬ AUDIO TRƯỚC KHI XUẤT BẢN:</span>
+                        {audioDuration ? <span>{Math.floor(audioDuration / 60)}:{String(audioDuration % 60).padStart(2, '0')}</span> : null}
+                      </div>
+                      <audio src={audioPreviewUrl} controls className="w-full h-10 accent-[#4caf50]" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* GIAO DIỆN DÀNH CHO TRUYỆN TRANH (MANGA) 🖼️ */
+              <div className="space-y-12">
+            {/* CHỌN PHƯƠNG THỨC NẠP ẢNH */}
            <div className="space-y-6">
               <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl w-fit">
                  <button onClick={() => setUploadMode('file')} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${uploadMode === 'file' ? 'bg-[#4caf50] text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}>Tải file (MHTML/Ảnh)</button>
@@ -713,6 +960,8 @@ export default function AdminUploadPage() {
               </DndContext>
            </div>
         </div>
+     )}
+    </div>
 
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-6">
            <div className="p-4 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col gap-4">
@@ -724,8 +973,8 @@ export default function AdminUploadPage() {
               )}
               <button 
                 onClick={handleUpload} 
-                disabled={uploading || items.length === 0} 
-                className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || items.length === 0 ? 'bg-white/5 text-white/20' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-xl shadow-[#4caf50]/20'}`}
+                disabled={uploading || (isNovel ? !novelContent.trim() : items.length === 0)} 
+                className={`w-full h-14 rounded-2xl font-black text-[11px] tracking-[0.4em] uppercase transition-all active:scale-95 ${uploading || (isNovel ? !novelContent.trim() : items.length === 0) ? 'bg-white/5 text-white/20' : 'bg-[#4caf50] text-black hover:bg-[#5fd364] shadow-xl shadow-[#4caf50]/20'}`}
               >
                  {uploading ? 'ĐANG XUẤT BẢN...' : 'XUẤT BẢN NGAY 🚀'}
               </button>

@@ -57,7 +57,7 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
     try {
       const { data, error } = await supabase
         .from("mangas")
-        .select("id, title, cover_image, status, genres")
+        .select("id, title, cover_image, status, genres, type")
         .ilike("title", `%${searchTerm}%`)
         .limit(6);
 
@@ -282,6 +282,14 @@ export default function HomeClient({ initialFeatured, initialLatest, totalCount,
                           </div>
                         )}
                         
+                        {manga.type === 'novel' && (
+                          <div className="absolute top-2 left-2 z-20">
+                            <div className="bg-[#ff9800] text-[#0a0c0a] px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest shadow-xl flex items-center gap-1">
+                              <span>📖</span> NOVEL
+                            </div>
+                          </div>
+                        )}
+
                         {manga.latest_chapter_number && (
                           <div className="absolute top-2 right-2 z-20">
                             <div className="bg-[#4caf50] text-[#0a0c0a] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl border border-[#4caf50]/20">

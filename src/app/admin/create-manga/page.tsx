@@ -22,6 +22,7 @@ export default function CreateMangaPage() {
   const [defaultReadingMode, setDefaultReadingMode] = useState("scroll");
   const [isFeatured, setIsFeatured] = useState(false);
   const [status, setStatus] = useState("ongoing");
+  const [type, setType] = useState<"manga" | "novel">("manga");
   
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,6 +54,7 @@ export default function CreateMangaPage() {
         setDefaultReadingMode(data.default_reading_mode || "scroll");
         setIsFeatured(data.is_featured || false);
         setStatus(data.status || "ongoing");
+        setType(data.type || "manga");
         setIsEditing(true);
       }
     } catch (err) {
@@ -108,7 +110,8 @@ export default function CreateMangaPage() {
         cover_image: coverImageUrl,
         default_reading_mode: defaultReadingMode,
         is_featured: isFeatured,
-        status: status
+        status: status,
+        type: type
       };
 
       const { saveMangaAction } = await import("../../../lib/actions");
@@ -219,6 +222,26 @@ export default function CreateMangaPage() {
                     </div>
                     <input type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*" onChange={handleCoverChange} />
                  </div>
+
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#4caf50]/70 uppercase tracking-widest block pl-1">Hình thức tác phẩm</label>
+                    <div className="grid grid-cols-2 gap-2 bg-black/50 p-1 rounded-xl border border-[#2a332a] shadow-inner">
+                       <button 
+                         type="button" 
+                         onClick={() => setType("manga")}
+                         className={`py-3 px-2 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 ${type === "manga" ? "bg-[#4caf50] text-[#0a0c0a] shadow-lg" : "text-gray-400 hover:text-white"}`}
+                       >
+                         <span>🖼️</span> TRUYỆN TRANH
+                       </button>
+                       <button 
+                         type="button" 
+                         onClick={() => setType("novel")}
+                         className={`py-3 px-2 text-[10px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 ${type === "novel" ? "bg-[#4caf50] text-[#0a0c0a] shadow-lg" : "text-gray-400 hover:text-white"}`}
+                       >
+                         <span>📖</span> TIỂU THUYẾT
+                       </button>
+                    </div>
+                  </div>
 
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-[#4caf50]/70 uppercase tracking-widest block pl-1">Vị trí hiển thị</label>

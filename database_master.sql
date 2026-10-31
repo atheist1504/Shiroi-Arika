@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.mangas (
     cover_image TEXT,
     genres TEXT[], 
     status TEXT DEFAULT 'ONGOING' CHECK (status IN ('ONGOING', 'COMPLETED')),
+    type TEXT DEFAULT 'manga' CHECK (type IN ('manga', 'novel')),
     is_featured BOOLEAN DEFAULT false,
     default_reading_mode TEXT DEFAULT 'scroll',
     size_kb FLOAT DEFAULT 300,
@@ -32,6 +33,9 @@ CREATE TABLE IF NOT EXISTS public.chapters (
     manga_id UUID REFERENCES public.mangas(id) ON DELETE CASCADE,
     chapter_number NUMERIC NOT NULL,
     title TEXT,
+    content TEXT, -- Nội dung văn bản tiểu thuyết
+    audio_url TEXT, -- Link file âm thanh
+    audio_duration INTEGER, -- Thời lượng audio (giây)
     uploader_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     UNIQUE(manga_id, chapter_number)
@@ -82,7 +86,7 @@ CREATE TABLE IF NOT EXISTS public.comments (
     likes_count INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
-c:\Users\betub\AppData\Local\Packages\MicrosoftWindows.Client.Core_cw5n1h2txyewy\TempState\ScreenClip\{30E7F106-669A-4508-95A4-E3A8ABF88E63}.png
+
 -- Nhật ký XP (XP Logs)
 CREATE TABLE IF NOT EXISTS public.shiroi_xp_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

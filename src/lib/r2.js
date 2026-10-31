@@ -26,7 +26,7 @@ const getS3Client = () => {
   });
 };
 
-export const uploadToR2 = async (file, fileName) => {
+export const uploadToR2 = async (file, fileName, contentType = "image/webp") => {
   const bucketName = process.env.R2_BUCKET_NAME || process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'shiroi';
   const S3 = getS3Client();
   
@@ -42,7 +42,7 @@ export const uploadToR2 = async (file, fileName) => {
       Bucket: bucketName,
       Key: fileName,
       Body: bodyValue,
-      ContentType: "image/webp",
+      ContentType: contentType,
       CacheControl: "public, max-age=31536000, immutable",
     });
 
@@ -69,16 +69,16 @@ export const uploadToR2 = async (file, fileName) => {
 
 /**
  * 🎫 TẠO VÉ THÔNG HÀNH (SIGNED URL)
- * Cho phép Client nộp ảnh thẳng lên R2 🍀
+ * Cho phép Client nộp ảnh hoặc file media thẳng lên R2 🍀
  */
-export const getPresignedUploadUrl = async (fileName) => {
+export const getPresignedUploadUrl = async (fileName, contentType = "image/webp") => {
   const bucketName = process.env.R2_BUCKET_NAME || process.env.NEXT_PUBLIC_R2_BUCKET_NAME || 'shiroi';
   const S3 = getS3Client();
 
   const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: fileName,
-    ContentType: "image/webp",
+    ContentType: contentType,
     CacheControl: "public, max-age=31536000, immutable",
   });
 

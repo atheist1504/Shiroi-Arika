@@ -4,6 +4,27 @@ Dự án Manga Platform thế hệ mới - Trải nghiệm Premium, Bảo mật 
 
 ## ✅ ĐÃ HOÀN THÀNH (LATEST UPDATES)
 
+### 📖 Hệ Sinh Thái Tiểu Thuyết & Audio Novel (v48 - Novel & Audio Release) 🎧🍀✨
+- [x] **Schema & Database Integration**:
+    - Bổ sung trường `type` (`manga` | `novel`) cho bảng `mangas`.
+    - Bổ sung `content` (văn bản chương), `audio_url`, `audio_duration` cho bảng `chapters`.
+    - Tạo tệp di chuyển tự động `scripts/migrate_novel_audio.sql` và cập nhật `database_master.sql`.
+- [x] **Cloudflare R2 Audio Streaming Support**:
+    - Nâng cấp `r2.js` để hỗ trợ đa dạng MIME Content-Type (`audio/mpeg`, `audio/mp4`, `audio/wav`).
+    - Triển khai Server Action `uploadAudioAction` giúp Admin/Creator tải trực tiếp file lồng tiếng lên R2 với HTTP Range streaming mượt mà.
+    - Cập nhật `saveChapterDataAction` hỗ trợ lưu chương chữ mà không yêu cầu ảnh trang.
+- [x] **Admin Novel Publishing Hub**:
+    - **Quản lý Truyện (`/admin/create-manga`)**: Bổ sung bộ chọn Hình thức tác phẩm (Truyện tranh 🖼️ / Tiểu thuyết 📖).
+    - **Soạn thảo Chương (`/admin/upload`)**: Chế độ thông minh tự động nhận diện Novel để kích hoạt Text Editor chuyên dụng kèm thanh công cụ định dạng nhanh, đếm từ, ước tính thời gian đọc.
+    - **Trình upload Audio**: Kéo thả file mp3/m4a, tự động tính thời lượng audio (duration), kèm trình nghe thử trước khi xuất bản.
+- [x] **NovelReader & Floating Audio Player**:
+    - **NovelReader (`NovelReader.jsx`)**: Tùy chỉnh cỡ chữ (A- / A+), 3 bộ font (Serif, Sans, Mono), giãn dòng (1.7 - 2.1), canh lề, tương thích 100% với các theme Sáng, Tối, Sepia chống mỏi mắt.
+    - **FloatingAudioPlayer (`FloatingAudioPlayer.jsx`)**: Thanh phát audio nổi ghim đáy màn hình, tua -10s/+15s, thanh timeline kéo thả mượt mà, đổi tốc độ đọc (0.8x - 2.0x), ghi nhớ vị trí nghe dở vào `localStorage`.
+    - **Gamification Sync**: Đọc đến cuối chương hoặc nghe đạt >= 70% thời lượng audio sẽ tự động kích hoạt nhận XP tu luyện và đồng bộ lịch sử đọc!
+- [x] **UI Identity & Badges**:
+    - Gắn nhãn `📖 NOVEL` trên thẻ truyện ở Trang chủ.
+    - Gắn nhãn `📖 TIỂU THUYẾT` trên trang chi tiết và `🎧 Audio` tại từng chương có âm thanh.
+
 ### 🛡️ Bảo Mật Toàn Diện & Chống Sập Hệ Thống (v44 - Security Overhaul) 🛡️⚡💎
 - [x] **Database Hardening (RLS & RBAC)**:
     - Kích hoạt **Row Level Security (RLS)** trên toàn bộ các bảng hạt nhân.

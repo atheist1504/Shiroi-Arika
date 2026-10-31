@@ -656,6 +656,38 @@ export async function uploadImageAction(formData) {
 }
 
 /**
+ * 🎧 SERVER ACTION: Upload Audio file (.mp3, .m4a, .wav) to R2
+ */
+export async function uploadAudioAction(formData) {
+  try {
+    if (!(await checkStaffAuth())) throw new Error("Quyền hạn không đủ! 🛡️");
+    const file = formData.get('file');
+    if (!file) throw new Error("Không tìm thấy file audio!");
+
+    const originalName = file.name || 'audio.mp3';
+    const ext = originalName.split('.').pop()?.toLowerCase() || 'mp3';
+    const cleanName = originalName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `audios/${Date.now()}-${cleanName}`;
+    
+    // Xác định ContentType chuẩn cho streaming
+    let contentType = file.type;
+    if (!contentType || contentType === 'application/octet-stream') {
+      if (ext === 'mp3') contentType = 'audio/mpeg';
+      else if (ext === 'm4a') contentType = 'audio/mp4';
+      else if (ext === 'wav') contentType = 'audio/wav';
+      else if (ext === 'ogg') contentType = 'audio/ogg';
+      else contentType = 'audio/mpeg';
+    }
+
+    const result = await uploadToR2(file, fileName, contentType);
+    return { success: true, url: result };
+  } catch (error) {
+    console.error('❌ Lỗi uploadAudioAction:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * 🔔 SERVER ACTION: Gửi thông báo chương mới
  * Xử lý cả Push Notification và In-app cho người theo dõi 🍀
  */
@@ -935,8 +967,10 @@ export async function saveChapterDataAction(chapterPayload, pagesData, isEditing
     }
 
     await client.from("pages").delete().eq("chapter_id", chapId);
-    const pagesWithId = pagesData.map(p => ({ ...p, chapter_id: chapId }));
-    await client.from("pages").insert(pagesWithId);
+    if (pagesData && pagesData.length > 0) {
+      const pagesWithId = pagesData.map(p => ({ ...p, chapter_id: chapId }));
+      await client.from("pages").insert(pagesWithId);
+    }
 
     // 🚀 XÓA TOÀN BỘ CACHE ĐỂ CẬP NHẬT DỮ LIỆU CHƯƠNG ⚡
     revalidatePath('/', 'layout');
