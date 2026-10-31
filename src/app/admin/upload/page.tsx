@@ -787,7 +787,34 @@ export default function AdminUploadPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setNovelContent(prev => prev + '\n![Ảnh minh họa](https://link-anh...)\n')}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = async (e: any) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            setMessage({ type: 'info', text: '⏳ Đang tải ảnh minh họa lên R2...' });
+                            // Tạo tên file duy nhất
+                            const ext = file.name.split('.').pop() || 'webp';
+                            const fileName = `novels/${selectedMangaId}/illustrations/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            formData.append('fileName', fileName);
+                            const result = await uploadChapterPageAction(formData);
+                            if (result?.success && result?.url) {
+                              setNovelContent(prev => prev + `\n![Ảnh minh họa](${result.url})\n`);
+                              setMessage({ type: 'success', text: '✅ Đã chèn ảnh minh họa thành công!' });
+                            } else {
+                              setMessage({ type: 'error', text: `❌ Upload thất bại: ${result?.error || 'không nhận được URL'}` });
+                            }
+                          } catch (err: any) {
+                            setMessage({ type: 'error', text: `❌ Lỗi upload ảnh: ${err.message}` });
+                          }
+                        };
+                        input.click();
+                      }}
                       className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-bold text-gray-300 transition-colors"
                     >
                       🖼️ Chèn ảnh minh họa
